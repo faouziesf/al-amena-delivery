@@ -10,6 +10,7 @@ use App\Models\ClientProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
@@ -67,7 +68,7 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
@@ -79,19 +80,61 @@ class ClientController extends Controller
             'fiscal_number' => 'nullable|string|max:50',
             'business_sector' => 'nullable|string|max:100',
             'identity_document' => 'nullable|string|max:100',
+        ], [
+            'name.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'email est obligatoire.',
+            'email.email' => 'L\'email doit être valide.',
+            'email.unique' => 'Cet email est déjà utilisé.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'phone.required' => 'Le téléphone est obligatoire.',
+            'address.required' => 'L\'adresse est obligatoire.',
+            'delivery_price.required' => 'Le prix de livraison est obligatoire.',
+            'delivery_price.numeric' => 'Le prix de livraison doit être un nombre.',
+            'delivery_price.min' => 'Le prix de livraison ne peut pas être négatif.',
+            'return_price.required' => 'Le prix de retour est obligatoire.',
+            'return_price.numeric' => 'Le prix de retour doit être un nombre.',
+            'return_price.min' => 'Le prix de retour ne peut pas être négatif.',
         ]);
 
         try {
             $client = $this->commercialService->createClientAccount(
-                $request->all(),
+                $validated,
                 Auth::user()
             );
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Compte client créé avec succès pour {$client->name}.",
+                    'client' => [
+                        'id' => $client->id,
+                        'name' => $client->name,
+                        'email' => $client->email,
+                        'account_status' => $client->account_status
+                    ]
+                ], 201);
+            }
 
             return redirect()->route('commercial.clients.index')
                 ->with('success', "Compte client créé avec succès pour {$client->name}. Email: {$client->email}");
         } catch (\Exception $e) {
+            \Log::error('Erreur création client:', [
+                'error' => $e->getMessage(),
+                'data' => $request->except(['password', 'password_confirmation']),
+                'commercial_id' => Auth::id()
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la création: ' . $e->getMessage()
+                ], 422);
+            }
+
             return back()->withErrors(['error' => 'Erreur lors de la création: ' . $e->getMessage()])
-                ->withInput();
+                ->withInput($request->except(['password', 'password_confirmation']));
         }
     }
 
@@ -142,7 +185,7 @@ class ClientController extends Controller
             abort(404);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($client->id)],
             'phone' => 'required|string|max:20',
@@ -153,13 +196,22 @@ class ClientController extends Controller
             'fiscal_number' => 'nullable|string|max:50',
             'business_sector' => 'nullable|string|max:100',
             'identity_document' => 'nullable|string|max:100',
+            'new_password' => 'nullable|min:6|confirmed',
+        ], [
+            'new_password.min' => 'Le nouveau mot de passe doit contenir au moins 6 caractères.',
+            'new_password.confirmed' => 'Les mots de passe ne correspondent pas.',
         ]);
 
         try {
             // Mise à jour utilisateur
-            $client->update($request->only([
-                'name', 'email', 'phone', 'address'
-            ]));
+            $userData = $request->only(['name', 'email', 'phone', 'address']);
+            
+            // Si un nouveau mot de passe est fourni
+            if ($request->filled('new_password')) {
+                $userData['password'] = Hash::make($request->new_password);
+            }
+            
+            $client->update($userData);
 
             // Mise à jour profil client
             $client->clientProfile()->updateOrCreate(
@@ -170,11 +222,35 @@ class ClientController extends Controller
                 ])
             );
 
+            // Log de l'action
+            app(\App\Services\ActionLogService::class)->log(
+                'CLIENT_PROFILE_UPDATED',
+                'User',
+                $client->id,
+                'profile_data',
+                'updated',
+                [
+                    'updated_by' => Auth::user()->name,
+                    'fields_updated' => array_keys($request->only([
+                        'name', 'email', 'phone', 'address', 'shop_name', 
+                        'fiscal_number', 'business_sector', 'identity_document',
+                        'delivery_price', 'return_price'
+                    ])),
+                    'password_changed' => $request->filled('new_password')
+                ]
+            );
+
             return redirect()->route('commercial.clients.show', $client)
                 ->with('success', 'Informations client mises à jour avec succès.');
         } catch (\Exception $e) {
+            \Log::error('Erreur mise à jour client:', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+                'commercial_id' => Auth::id()
+            ]);
+
             return back()->withErrors(['error' => 'Erreur lors de la mise à jour: ' . $e->getMessage()])
-                ->withInput();
+                ->withInput($request->except(['new_password', 'new_password_confirmation']));
         }
     }
 
@@ -280,9 +356,13 @@ class ClientController extends Controller
             abort(404);
         }
 
+        $currentBalance = $client->wallet->balance ?? 0;
+        
         $request->validate([
-            'amount' => 'required|numeric|min:0.001|max:' . ($client->wallet->balance ?? 0),
+            'amount' => 'required|numeric|min:0.001|max:' . $currentBalance,
             'description' => 'required|string|max:255',
+        ], [
+            'amount.max' => 'Le montant ne peut pas dépasser le solde actuel (' . number_format($currentBalance, 3) . ' DT).'
         ]);
 
         try {
@@ -349,5 +429,29 @@ class ClientController extends Controller
             'packages_delivered' => $client->packages()->delivered()->count(),
             'pending_complaints' => $client->complaints()->where('status', 'PENDING')->count(),
         ]);
+    }
+
+    public function apiRecentClients()
+    {
+        $clients = User::where('role', 'CLIENT')
+                      ->where('created_by', Auth::id())
+                      ->with(['clientProfile', 'wallet'])
+                      ->orderBy('created_at', 'desc')
+                      ->limit(10)
+                      ->get()
+                      ->map(function ($client) {
+                          return [
+                              'id' => $client->id,
+                              'name' => $client->name,
+                              'email' => $client->email,
+                              'shop_name' => $client->clientProfile->shop_name ?? null,
+                              'account_status' => $client->account_status,
+                              'wallet_balance' => number_format($client->wallet->balance ?? 0, 3),
+                              'created_at' => $client->created_at->diffForHumans(),
+                              'show_url' => route('commercial.clients.show', $client->id),
+                          ];
+                      });
+
+        return response()->json($clients);
     }
 }

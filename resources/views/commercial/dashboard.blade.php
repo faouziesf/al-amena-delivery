@@ -323,7 +323,7 @@
     <!-- Modal Create Client -->
     <div id="create-client-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full">
+            <div class="relative bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center p-6 border-b">
                     <h3 class="text-lg font-bold text-gray-900">Nouveau Client</h3>
                     <button onclick="closeCreateClientModal()" 
@@ -336,47 +336,110 @@
                 
                 <form id="create-client-form" onsubmit="createClient(event)">
                     <div class="p-6 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                            <input id="client-name" type="text" required 
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                            <input id="client-email" type="email" required 
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                            <input id="client-phone" type="text" required 
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                            <input id="client-address" type="text" 
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom Boutique</label>
-                            <input id="client-shop" type="text" 
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
+                        <!-- Informations de base -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Prix Livraison (DT) *</label>
-                                <input id="delivery-price" type="number" step="0.001" required 
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom <span class="text-red-500">*</span></label>
+                                <input id="client-name" type="text" required 
                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Prix Retour (DT) *</label>
-                                <input id="return-price" type="number" step="0.001" required 
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                                <input id="client-email" type="email" required 
                                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone <span class="text-red-500">*</span></label>
+                                <input id="client-phone" type="text" required 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nom Boutique</label>
+                                <input id="client-shop" type="text" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse <span class="text-red-500">*</span></label>
+                            <input id="client-address" type="text" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+
+                        <!-- Mots de passe -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe <span class="text-red-500">*</span></label>
+                                <input id="client-password" type="password" required minlength="6" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                                <p class="text-xs text-gray-500 mt-1">Minimum 6 caractères</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Confirmer mot de passe <span class="text-red-500">*</span></label>
+                                <input id="client-password-confirmation" type="password" required minlength="6" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <!-- Informations professionnelles -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Matricule Fiscal</label>
+                                <input id="client-fiscal" type="text" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Secteur d'Activité</label>
+                                <input id="client-sector" type="text" 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Document d'Identité</label>
+                            <input id="client-identity" type="text" 
+                                   placeholder="CIN, Passeport, Registre de commerce..."
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+
+                        <!-- Tarification -->
+                        <div class="border-t pt-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Offre Tarifaire</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix Livraison (DT) <span class="text-red-500">*</span></label>
+                                    <input id="delivery-price" type="number" step="0.001" required min="0" 
+                                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <p class="text-xs text-gray-500 mt-1">Frais de livraison en cas de succès</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix Retour (DT) <span class="text-red-500">*</span></label>
+                                    <input id="return-price" type="number" step="0.001" required min="0" 
+                                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <p class="text-xs text-gray-500 mt-1">Frais de retour en cas d'échec</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages d'erreur -->
+                        <div id="form-errors" class="hidden bg-red-50 border border-red-200 rounded-md p-3">
+                            <div class="flex">
+                                <svg class="h-5 w-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="ml-2">
+                                    <p class="text-sm text-red-800" id="error-message"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex space-x-3 p-6 border-t">
+
+                    <div class="flex space-x-3 p-6 border-t bg-gray-50">
                         <button type="submit" 
-                                class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 disabled:opacity-50">
+                                class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="create-btn-text">Créer Client</span>
                         </button>
                         <button type="button" onclick="closeCreateClientModal()" 
@@ -426,18 +489,25 @@
             };
             document.getElementById('section-title').textContent = titles[sectionName] || 'Dashboard';
             currentSection = sectionName;
+
+            // Charger les données spécifiques à la section
+            if (sectionName === 'clients') {
+                loadClients();
+            }
         }
 
         // Modal Management
         function openCreateClientModal() {
             document.getElementById('create-client-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            hideFormErrors();
         }
 
         function closeCreateClientModal() {
             document.getElementById('create-client-modal').classList.add('hidden');
             document.body.style.overflow = 'auto';
             resetCreateClientForm();
+            hideFormErrors();
         }
 
         function resetCreateClientForm() {
@@ -445,23 +515,61 @@
             document.getElementById('create-btn-text').textContent = 'Créer Client';
         }
 
+        function showFormErrors(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('form-errors').classList.remove('hidden');
+        }
+
+        function hideFormErrors() {
+            document.getElementById('form-errors').classList.add('hidden');
+        }
+
+        // Validation des mots de passe
+        function validatePasswords() {
+            const password = document.getElementById('client-password').value;
+            const confirmation = document.getElementById('client-password-confirmation').value;
+            
+            if (password.length < 6) {
+                showFormErrors('Le mot de passe doit contenir au moins 6 caractères.');
+                return false;
+            }
+            
+            if (password !== confirmation) {
+                showFormErrors('Les mots de passe ne correspondent pas.');
+                return false;
+            }
+            
+            return true;
+        }
+
         // Create Client
         async function createClient(event) {
             event.preventDefault();
             if (isLoading) return;
             
+            hideFormErrors();
+            
+            // Validation côté client
+            if (!validatePasswords()) {
+                return;
+            }
+            
             isLoading = true;
-            document.getElementById('create-btn-text').textContent = 'Création...';
+            document.getElementById('create-btn-text').textContent = 'Création en cours...';
             
             const formData = {
-                name: document.getElementById('client-name').value,
-                email: document.getElementById('client-email').value,
-                phone: document.getElementById('client-phone').value,
-                address: document.getElementById('client-address').value,
-                shop_name: document.getElementById('client-shop').value,
-                delivery_price: document.getElementById('delivery-price').value,
-                return_price: document.getElementById('return-price').value,
-                password: 'password123'
+                name: document.getElementById('client-name').value.trim(),
+                email: document.getElementById('client-email').value.trim(),
+                phone: document.getElementById('client-phone').value.trim(),
+                address: document.getElementById('client-address').value.trim(),
+                shop_name: document.getElementById('client-shop').value.trim(),
+                fiscal_number: document.getElementById('client-fiscal').value.trim(),
+                business_sector: document.getElementById('client-sector').value.trim(),
+                identity_document: document.getElementById('client-identity').value.trim(),
+                delivery_price: parseFloat(document.getElementById('delivery-price').value),
+                return_price: parseFloat(document.getElementById('return-price').value),
+                password: document.getElementById('client-password').value,
+                password_confirmation: document.getElementById('client-password-confirmation').value
             };
 
             try {
@@ -469,21 +577,30 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(formData)
                 });
 
+                const result = await response.json();
+
                 if (response.ok) {
-                    showSuccessMessage('Client créé avec succès !');
+                    showSuccessMessage(`Client créé avec succès ! Email: ${formData.email}`);
                     closeCreateClientModal();
                     refreshStats();
                 } else {
-                    const error = await response.json();
-                    showErrorMessage(error.message || 'Erreur lors de la création');
+                    // Gestion des erreurs de validation Laravel
+                    if (result.errors) {
+                        const errorMessages = Object.values(result.errors).flat();
+                        showFormErrors(errorMessages.join(' '));
+                    } else {
+                        showFormErrors(result.message || 'Erreur lors de la création du client.');
+                    }
                 }
             } catch (error) {
-                showErrorMessage('Erreur réseau: ' + error.message);
+                console.error('Erreur réseau:', error);
+                showFormErrors('Erreur de connexion. Veuillez réessayer.');
             } finally {
                 isLoading = false;
                 document.getElementById('create-btn-text').textContent = 'Créer Client';
@@ -668,6 +785,26 @@
             if (!notifPanel.contains(e.target) && !notifButton && !notifPanel.classList.contains('hidden')) {
                 notifPanel.classList.add('hidden');
             }
+        });
+
+        // Validation temps réel des mots de passe
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordField = document.getElementById('client-password');
+            const confirmationField = document.getElementById('client-password-confirmation');
+            
+            function validatePasswordsRealTime() {
+                const password = passwordField.value;
+                const confirmation = confirmationField.value;
+                
+                if (confirmation && password !== confirmation) {
+                    confirmationField.setCustomValidity('Les mots de passe ne correspondent pas');
+                } else {
+                    confirmationField.setCustomValidity('');
+                }
+            }
+            
+            passwordField.addEventListener('input', validatePasswordsRealTime);
+            confirmationField.addEventListener('input', validatePasswordsRealTime);
         });
 
         // Initialize

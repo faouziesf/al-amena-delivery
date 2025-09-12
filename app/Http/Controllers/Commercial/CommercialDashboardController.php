@@ -305,52 +305,97 @@ class CommercialDashboardController extends Controller
         return view('commercial.packages.show', compact('package'));
     }
 
-    // ==================== API ENDPOINTS ====================
+    // ==================== API ENDPOINTS MANQUANTS ====================
+
+    public function api_getDashboardStats()
+    {
+        try {
+            $stats = $this->commercialService->getDashboardStats();
+            return response()->json($stats);
+        } catch (\Exception $e) {
+            \Log::error('Erreur API dashboard stats:', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Erreur lors du chargement des statistiques'], 500);
+        }
+    }
 
     public function api_getComplaintsCount()
     {
-        return response()->json([
-            'count' => Complaint::pending()->count(),
-            'urgent' => Complaint::pending()->where('priority', 'URGENT')->count()
-        ]);
+        try {
+            $count = \App\Models\Complaint::pending()->count();
+            $urgent = \App\Models\Complaint::pending()->where('priority', 'URGENT')->count();
+            
+            return response()->json([
+                'count' => $count,
+                'urgent' => $urgent
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur API complaints count:', ['error' => $e->getMessage()]);
+            return response()->json(['count' => 0, 'urgent' => 0]);
+        }
     }
 
     public function api_getWithdrawalsCount()
     {
-        return response()->json([
-            'count' => WithdrawalRequest::pending()->count()
-        ]);
+        try {
+            $count = \App\Models\WithdrawalRequest::pending()->count();
+            
+            return response()->json([
+                'count' => $count
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur API withdrawals count:', ['error' => $e->getMessage()]);
+            return response()->json(['count' => 0]);
+        }
     }
 
     public function api_searchClients(Request $request)
     {
-        $search = $request->input('q');
-        
-        $clients = User::where('role', 'CLIENT')
-            ->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-            })
-            ->limit(10)
-            ->get(['id', 'name', 'email', 'phone']);
+        try {
+            $search = $request->input('q', '');
+            
+            if (strlen($search) < 2) {
+                return response()->json([]);
+            }
+            
+            $clients = \App\Models\User::where('role', 'CLIENT')
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })
+                ->limit(10)
+                ->get(['id', 'name', 'email', 'phone']);
 
-        return response()->json($clients);
+            return response()->json($clients);
+        } catch (\Exception $e) {
+            \Log::error('Erreur API search clients:', ['error' => $e->getMessage()]);
+            return response()->json([]);
+        }
     }
 
     public function api_searchDeliverers(Request $request)
     {
-        $search = $request->input('q');
-        
-        $deliverers = User::where('role', 'DELIVERER')
-            ->where('account_status', 'ACTIVE')
-            ->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-            })
-            ->limit(10)
-            ->get(['id', 'name', 'phone']);
+        try {
+            $search = $request->input('q', '');
+            
+            if (strlen($search) < 2) {
+                return response()->json([]);
+            }
+            
+            $deliverers = \App\Models\User::where('role', 'DELIVERER')
+                ->where('account_status', 'ACTIVE')
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })
+                ->limit(10)
+                ->get(['id', 'name', 'phone']);
 
-        return response()->json($deliverers);
+            return response()->json($deliverers);
+        } catch (\Exception $e) {
+            \Log::error('Erreur API search deliverers:', ['error' => $e->getMessage()]);
+            return response()->json([]);
+        }
     }
+
 }
