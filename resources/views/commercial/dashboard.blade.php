@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Commercial - Al-Amena Delivery</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
         tailwind.config = {
             theme: {
@@ -24,7 +24,7 @@
     </script>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-purple-100 min-h-screen">
-    <div x-data="commercialDashboard()" class="flex h-screen">
+    <div id="app" class="flex h-screen">
         <!-- Sidebar -->
         <div class="w-64 bg-white shadow-lg">
             <!-- Logo -->
@@ -35,71 +35,56 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-2">
-                <a href="#" @click="activeSection = 'dashboard'" 
-                   :class="activeSection === 'dashboard' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('dashboard')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                     </svg>
                     Dashboard
-                </a>
+                </button>
 
-                <a href="#" @click="activeSection = 'clients'" 
-                   :class="activeSection === 'clients' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('clients')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
                     </svg>
                     Clients
-                </a>
+                </button>
 
-                <a href="#" @click="activeSection = 'complaints'" 
-                   :class="activeSection === 'complaints' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('complaints')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                     </svg>
                     Réclamations
-                    <span x-show="stats.pending_complaints > 0" 
-                          x-text="stats.pending_complaints"
-                          class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    </span>
-                </a>
+                    <span id="complaints-badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                </button>
 
-                <a href="#" @click="activeSection = 'withdrawals'" 
-                   :class="activeSection === 'withdrawals' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('withdrawals')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
                     Retraits
-                    <span x-show="stats.pending_withdrawals > 0" 
-                          x-text="stats.pending_withdrawals"
-                          class="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                    </span>
-                </a>
+                    <span id="withdrawals-badge" class="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                </button>
 
-                <a href="#" @click="activeSection = 'deliverers'" 
-                   :class="activeSection === 'deliverers' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('deliverers')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
                     Livreurs
-                    <span x-show="stats.high_balance_deliverers > 0" 
-                          x-text="stats.high_balance_deliverers"
-                          class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                    </span>
-                </a>
+                    <span id="deliverers-badge" class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                </button>
 
-                <a href="#" @click="activeSection = 'packages'" 
-                   :class="activeSection === 'packages' ? 'bg-purple-100 text-purple-600' : 'text-gray-700 hover:bg-purple-50'"
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors">
+                <button onclick="showSection('packages')" 
+                        class="nav-item w-full flex items-center px-4 py-3 rounded-lg transition-colors text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                     Colis
-                </a>
+                </button>
             </nav>
 
             <!-- User Info -->
@@ -127,23 +112,36 @@
             <!-- Header -->
             <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
-                    <h2 x-text="getSectionTitle()" class="text-2xl font-bold text-gray-900"></h2>
+                    <h2 id="section-title" class="text-2xl font-bold text-gray-900">Dashboard Commercial</h2>
                     <div class="flex items-center space-x-4">
                         <!-- Notifications -->
                         <div class="relative">
-                            <button class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-100 rounded-lg">
+                            <button onclick="toggleNotifications()" 
+                                    class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-100 rounded-lg">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
                                 </svg>
-                                <span x-show="totalNotifications > 0" 
-                                      x-text="totalNotifications"
-                                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                </span>
+                                <span id="notifications-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                             </button>
+                            
+                            <!-- Notifications Panel -->
+                            <div id="notifications-panel" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50 hidden">
+                                <div class="p-4 border-b">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-sm text-purple-600 hover:text-purple-800">
+                                            Marquer tout lu
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="notifications-list" class="max-h-96 overflow-y-auto">
+                                    <p class="p-4 text-gray-500 text-center">Aucune notification</p>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Quick Actions -->
-                        <button @click="activeSection = 'clients'; showCreateClientModal = true" 
+                        <button onclick="openCreateClientModal()" 
                                 class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                             Nouveau Client
                         </button>
@@ -154,7 +152,7 @@
             <!-- Dashboard Content -->
             <div class="p-6">
                 <!-- Dashboard Section -->
-                <div x-show="activeSection === 'dashboard'">
+                <div id="dashboard-section" class="content-section">
                     <!-- Statistics Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div class="bg-white rounded-lg shadow-sm p-6 border border-purple-100">
@@ -166,7 +164,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm text-gray-600">Réclamations Urgentes</p>
-                                    <p x-text="stats.urgent_complaints" class="text-2xl font-bold text-gray-900">{{ $complaintsStats['urgent'] }}</p>
+                                    <p id="urgent-complaints-count" class="text-2xl font-bold text-gray-900">{{ $complaintsStats['urgent'] ?? 0 }}</p>
                                 </div>
                             </div>
                         </div>
@@ -180,7 +178,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm text-gray-600">Retraits en Attente</p>
-                                    <p x-text="stats.pending_withdrawals" class="text-2xl font-bold text-gray-900">{{ $stats['pending_withdrawals'] }}</p>
+                                    <p id="pending-withdrawals-count" class="text-2xl font-bold text-gray-900">{{ $stats['pending_withdrawals'] ?? 0 }}</p>
                                 </div>
                             </div>
                         </div>
@@ -194,7 +192,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm text-gray-600">Wallets à Vider</p>
-                                    <p x-text="stats.high_balance_deliverers" class="text-2xl font-bold text-gray-900">{{ $stats['high_balance_deliverers'] }}</p>
+                                    <p id="high-balance-deliverers-count" class="text-2xl font-bold text-gray-900">{{ $stats['high_balance_deliverers'] ?? 0 }}</p>
                                 </div>
                             </div>
                         </div>
@@ -208,7 +206,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm text-gray-600">Colis Aujourd'hui</p>
-                                    <p x-text="stats.packages_today" class="text-2xl font-bold text-gray-900">{{ $stats['packages_today'] }}</p>
+                                    <p id="packages-today-count" class="text-2xl font-bold text-gray-900">{{ $stats['packages_today'] ?? 0 }}</p>
                                 </div>
                             </div>
                         </div>
@@ -221,8 +219,8 @@
                             <div class="p-6 border-b border-gray-200">
                                 <h3 class="text-lg font-semibold text-gray-900">Réclamations Récentes</h3>
                             </div>
-                            <div class="p-6">
-                                @if($recentActivity['complaints']->count() > 0)
+                            <div class="p-6" id="recent-complaints">
+                                @if(isset($recentActivity['complaints']) && $recentActivity['complaints']->count() > 0)
                                     <div class="space-y-4">
                                         @foreach($recentActivity['complaints']->take(5) as $complaint)
                                         <div class="flex items-start space-x-3">
@@ -236,7 +234,7 @@
                                                 <p class="text-sm text-gray-600">{{ $complaint->client->name }} - {{ $complaint->package->package_code }}</p>
                                                 <p class="text-xs text-gray-500">{{ $complaint->created_at->diffForHumans() }}</p>
                                             </div>
-                                            <button @click="viewComplaint({{ $complaint->id }})" 
+                                            <button onclick="quickAction('complaint', {{ $complaint->id }})" 
                                                     class="text-purple-600 hover:text-purple-800 text-sm">
                                                 Traiter
                                             </button>
@@ -254,8 +252,8 @@
                             <div class="p-6 border-b border-gray-200">
                                 <h3 class="text-lg font-semibold text-gray-900">Modifications COD Récentes</h3>
                             </div>
-                            <div class="p-6">
-                                @if($recentActivity['cod_modifications']->count() > 0)
+                            <div class="p-6" id="recent-cod-modifications">
+                                @if(isset($recentActivity['cod_modifications']) && $recentActivity['cod_modifications']->count() > 0)
                                     <div class="space-y-4">
                                         @foreach($recentActivity['cod_modifications']->take(5) as $mod)
                                         <div class="flex items-start space-x-3">
@@ -283,62 +281,36 @@
                     </div>
                 </div>
 
-                <!-- Clients Section -->
-                <div x-show="activeSection === 'clients'">
-                    <div class="bg-white rounded-lg shadow-sm border border-purple-100">
-                        <div class="p-6 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-900">Gestion des Clients</h3>
-                                <button @click="showCreateClientModal = true" 
-                                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                                    Nouveau Client
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <p class="text-gray-600">Interface de gestion des clients sera ici...</p>
-                        </div>
+                <!-- Other Sections -->
+                <div id="clients-section" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Gestion des Clients</h3>
+                        <p class="text-gray-600">Interface de gestion des clients sera ici...</p>
                     </div>
                 </div>
 
-                <!-- Complaints Section -->
-                <div x-show="activeSection === 'complaints'">
-                    <div class="bg-white rounded-lg shadow-sm border border-purple-100">
-                        <div class="p-6 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-900">Réclamations en Attente</h3>
-                                <div class="flex space-x-2">
-                                    <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-                                        {{ $complaintsStats['urgent'] }} Urgentes
-                                    </span>
-                                    <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
-                                        {{ $complaintsStats['cod_changes'] }} Changements COD
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <p class="text-gray-600">Interface de gestion des réclamations sera ici...</p>
-                        </div>
+                <div id="complaints-section" class="content-section hidden">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Gestion des Réclamations</h3>
+                        <p class="text-gray-600">Interface de gestion des réclamations sera ici...</p>
                     </div>
                 </div>
 
-                <!-- Autres sections... -->
-                <div x-show="activeSection === 'withdrawals'">
+                <div id="withdrawals-section" class="content-section hidden">
                     <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Demandes de Retrait</h3>
                         <p class="text-gray-600">Interface de gestion des retraits sera ici...</p>
                     </div>
                 </div>
 
-                <div x-show="activeSection === 'deliverers'">
+                <div id="deliverers-section" class="content-section hidden">
                     <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Gestion des Livreurs</h3>
                         <p class="text-gray-600">Interface de gestion des livreurs sera ici...</p>
                     </div>
                 </div>
 
-                <div x-show="activeSection === 'packages'">
+                <div id="packages-section" class="content-section hidden">
                     <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Suivi Global des Colis</h3>
                         <p class="text-gray-600">Interface de suivi des colis sera ici...</p>
@@ -349,53 +321,65 @@
     </div>
 
     <!-- Modal Create Client -->
-    <div x-show="showCreateClientModal" 
-         x-transition:enter="ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Nouveau Client</h3>
-                <form @submit.prevent="createClient()">
-                    <div class="space-y-4">
+    <div id="create-client-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-lg shadow-lg max-w-md w-full">
+                <div class="flex justify-between items-center p-6 border-b">
+                    <h3 class="text-lg font-bold text-gray-900">Nouveau Client</h3>
+                    <button onclick="closeCreateClientModal()" 
+                            class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="create-client-form" onsubmit="createClient(event)">
+                    <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Nom</label>
-                            <input x-model="newClient.name" type="text" required 
-                                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                            <input id="client-name" type="text" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input x-model="newClient.email" type="email" required 
-                                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                            <input id="client-email" type="email" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Téléphone</label>
-                            <input x-model="newClient.phone" type="text" required 
-                                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
+                            <input id="client-phone" type="text" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                            <input id="client-address" type="text" 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom Boutique</label>
+                            <input id="client-shop" type="text" 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Prix Livraison (DT)</label>
-                                <input x-model="newClient.delivery_price" type="number" step="0.001" required 
-                                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Prix Livraison (DT) *</label>
+                                <input id="delivery-price" type="number" step="0.001" required 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Prix Retour (DT)</label>
-                                <input x-model="newClient.return_price" type="number" step="0.001" required 
-                                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Prix Retour (DT) *</label>
+                                <input id="return-price" type="number" step="0.001" required 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 flex space-x-3">
+                    <div class="flex space-x-3 p-6 border-t">
                         <button type="submit" 
-                                class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
-                            Créer Client
+                                class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 disabled:opacity-50">
+                            <span id="create-btn-text">Créer Client</span>
                         </button>
-                        <button type="button" @click="showCreateClientModal = false" 
+                        <button type="button" onclick="closeCreateClientModal()" 
                                 class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400">
                             Annuler
                         </button>
@@ -406,272 +390,297 @@
     </div>
 
     <script>
-        function commercialDashboard() {
-            return {
-                activeSection: 'dashboard',
-                showCreateClientModal: false,
-                showComplaintModal: false,
-                showNotificationPanel: false,
-                selectedComplaint: null,
-                selectedPackage: null,
-                loading: false,
-                
-                stats: {
-                    pending_complaints: {{ $stats['pending_complaints'] }},
-                    urgent_complaints: {{ $complaintsStats['urgent'] }},
-                    pending_withdrawals: {{ $stats['pending_withdrawals'] }},
-                    high_balance_deliverers: {{ $stats['high_balance_deliverers'] }},
-                    packages_today: {{ $stats['packages_today'] }},
-                    packages_in_progress: {{ $stats['packages_in_progress'] }},
-                    cod_modifications_today: {{ $stats['cod_modifications_today'] }}
-                },
-                
-                recentActivity: {
-                    complaints: @json($recentActivity['complaints']->take(5)),
-                    withdrawals: @json($recentActivity['withdrawals']->take(5)),
-                    codModifications: @json($recentActivity['cod_modifications']->take(5))
-                },
-                
-                notifications: [],
-                unreadNotifications: 0,
-                
-                newClient: {
-                    name: '',
-                    email: '',
-                    phone: '',
-                    address: '',
-                    shop_name: '',
-                    fiscal_number: '',
-                    delivery_price: '',
-                    return_price: '',
-                    password: 'password123'
-                },
+        // Configuration
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        let currentSection = 'dashboard';
+        let isLoading = false;
 
-                get totalNotifications() {
-                    return this.unreadNotifications || (this.stats.pending_complaints + this.stats.pending_withdrawals);
-                },
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show target section
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-purple-100', 'text-purple-600');
+                item.classList.add('text-gray-700', 'hover:bg-purple-50');
+            });
+            
+            // Highlight active nav item
+            event.target.classList.add('bg-purple-100', 'text-purple-600');
+            event.target.classList.remove('text-gray-700', 'hover:bg-purple-50');
+            
+            // Update title
+            const titles = {
+                'dashboard': 'Dashboard Commercial',
+                'clients': 'Gestion des Clients',
+                'complaints': 'Gestion des Réclamations',
+                'withdrawals': 'Demandes de Retrait',
+                'deliverers': 'Gestion des Livreurs',
+                'packages': 'Suivi Global des Colis'
+            };
+            document.getElementById('section-title').textContent = titles[sectionName] || 'Dashboard';
+            currentSection = sectionName;
+        }
 
-                getSectionTitle() {
-                    const titles = {
-                        'dashboard': 'Dashboard Commercial',
-                        'clients': 'Gestion des Clients',
-                        'complaints': 'Gestion des Réclamations',
-                        'withdrawals': 'Demandes de Retrait',
-                        'deliverers': 'Gestion des Livreurs',
-                        'packages': 'Suivi Global des Colis',
-                        'notifications': 'Notifications'
-                    };
-                    return titles[this.activeSection] || 'Dashboard';
-                },
+        // Modal Management
+        function openCreateClientModal() {
+            document.getElementById('create-client-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
 
-                async createClient() {
-                    if (this.loading) return;
-                    this.loading = true;
-                    
-                    try {
-                        const response = await fetch('/commercial/clients', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': window.csrfToken
-                            },
-                            body: JSON.stringify(this.newClient)
-                        });
+        function closeCreateClientModal() {
+            document.getElementById('create-client-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            resetCreateClientForm();
+        }
 
-                        const result = await response.json();
-                        
-                        if (response.ok) {
-                            this.showCreateClientModal = false;
-                            this.resetNewClientForm();
-                            this.showSuccessMessage('Client créé avec succès !');
-                            await this.refreshStats();
-                        } else {
-                            this.showErrorMessage(result.error || 'Erreur lors de la création du client');
-                        }
-                    } catch (error) {
-                        this.showErrorMessage('Erreur réseau: ' + error.message);
-                    } finally {
-                        this.loading = false;
-                    }
-                },
+        function resetCreateClientForm() {
+            document.getElementById('create-client-form').reset();
+            document.getElementById('create-btn-text').textContent = 'Créer Client';
+        }
 
-                resetNewClientForm() {
-                    this.newClient = {
-                        name: '', email: '', phone: '', address: '', shop_name: '',
-                        fiscal_number: '', delivery_price: '', return_price: '', password: 'password123'
-                    };
-                },
+        // Create Client
+        async function createClient(event) {
+            event.preventDefault();
+            if (isLoading) return;
+            
+            isLoading = true;
+            document.getElementById('create-btn-text').textContent = 'Création...';
+            
+            const formData = {
+                name: document.getElementById('client-name').value,
+                email: document.getElementById('client-email').value,
+                phone: document.getElementById('client-phone').value,
+                address: document.getElementById('client-address').value,
+                shop_name: document.getElementById('client-shop').value,
+                delivery_price: document.getElementById('delivery-price').value,
+                return_price: document.getElementById('return-price').value,
+                password: 'password123'
+            };
 
-                async refreshStats() {
-                    try {
-                        const [statsResponse, notifResponse] = await Promise.all([
-                            fetch('/commercial/api/dashboard-stats'),
-                            fetch('/commercial/notifications/api/unread-count')
-                        ]);
-                        
-                        if (statsResponse.ok) {
-                            const newStats = await statsResponse.json();
-                            this.stats = { ...this.stats, ...newStats };
-                        }
-                        
-                        if (notifResponse.ok) {
-                            const notifData = await notifResponse.json();
-                            this.unreadNotifications = notifData.unread_count;
-                        }
-                    } catch (error) {
-                        console.error('Erreur refresh stats:', error);
-                    }
-                },
+            try {
+                const response = await fetch('/commercial/clients', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-                async loadNotifications() {
-                    try {
-                        const response = await fetch('/commercial/notifications/api/recent');
-                        if (response.ok) {
-                            this.notifications = await response.json();
-                        }
-                    } catch (error) {
-                        console.error('Erreur chargement notifications:', error);
-                    }
-                },
-
-                async markNotificationAsRead(notificationId) {
-                    try {
-                        const response = await fetch(`/commercial/notifications/mark-read/${notificationId}`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': window.csrfToken,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            await this.loadNotifications();
-                            this.unreadNotifications = Math.max(0, this.unreadNotifications - 1);
-                        }
-                    } catch (error) {
-                        console.error('Erreur marquage notification:', error);
-                    }
-                },
-
-                async markAllNotificationsAsRead() {
-                    try {
-                        const response = await fetch('/commercial/notifications/api/mark-read', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': window.csrfToken,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ mark_all: true })
-                        });
-                        
-                        if (response.ok) {
-                            await this.loadNotifications();
-                            this.unreadNotifications = 0;
-                        }
-                    } catch (error) {
-                        console.error('Erreur marquage toutes notifications:', error);
-                    }
-                },
-
-                async quickAction(actionType, itemId, additionalData = {}) {
-                    if (this.loading) return;
-                    this.loading = true;
-
-                    try {
-                        let url, method = 'POST', body = { ...additionalData };
-                        
-                        switch (actionType) {
-                            case 'approve_withdrawal':
-                                url = `/commercial/withdrawals/${itemId}/approve`;
-                                break;
-                            case 'assign_complaint':
-                                url = `/commercial/complaints/${itemId}/assign`;
-                                break;
-                            case 'resolve_complaint':
-                                url = `/commercial/complaints/${itemId}/resolve`;
-                                break;
-                            default:
-                                throw new Error('Action non reconnue');
-                        }
-
-                        const response = await fetch(url, {
-                            method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': window.csrfToken
-                            },
-                            body: JSON.stringify(body)
-                        });
-
-                        if (response.ok) {
-                            this.showSuccessMessage('Action exécutée avec succès !');
-                            await this.refreshStats();
-                        } else {
-                            const error = await response.json();
-                            this.showErrorMessage(error.message || 'Erreur lors de l\'action');
-                        }
-                    } catch (error) {
-                        this.showErrorMessage('Erreur: ' + error.message);
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                showSuccessMessage(message) {
-                    // Simple toast notification
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-                    toast.textContent = message;
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
-                },
-
-                showErrorMessage(message) {
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-                    toast.textContent = message;
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 5000);
-                },
-
-                formatCurrency(amount) {
-                    return new Intl.NumberFormat('fr-TN', {
-                        style: 'currency',
-                        currency: 'TND',
-                        minimumFractionDigits: 3
-                    }).format(amount);
-                },
-
-                formatDate(dateString) {
-                    return new Date(dateString).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                },
-
-                init() {
-                    // Refresh stats every 30 seconds
-                    setInterval(() => {
-                        this.refreshStats();
-                    }, 30000);
-
-                    // Load initial notifications
-                    this.loadNotifications();
-
-                    // Handle outside clicks for modals
-                    document.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('modal-backdrop')) {
-                            this.showCreateClientModal = false;
-                            this.showComplaintModal = false;
-                            this.showNotificationPanel = false;
-                        }
-                    });
+                if (response.ok) {
+                    showSuccessMessage('Client créé avec succès !');
+                    closeCreateClientModal();
+                    refreshStats();
+                } else {
+                    const error = await response.json();
+                    showErrorMessage(error.message || 'Erreur lors de la création');
                 }
+            } catch (error) {
+                showErrorMessage('Erreur réseau: ' + error.message);
+            } finally {
+                isLoading = false;
+                document.getElementById('create-btn-text').textContent = 'Créer Client';
             }
         }
+
+        // Notifications
+        function toggleNotifications() {
+            const panel = document.getElementById('notifications-panel');
+            if (panel.classList.contains('hidden')) {
+                loadNotifications();
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/commercial/notifications/api/recent');
+                if (response.ok) {
+                    const notifications = await response.json();
+                    displayNotifications(notifications);
+                    updateNotificationCount(notifications.filter(n => !n.read).length);
+                }
+            } catch (error) {
+                console.error('Erreur chargement notifications:', error);
+            }
+        }
+
+        function displayNotifications(notifications) {
+            const list = document.getElementById('notifications-list');
+            
+            if (notifications.length === 0) {
+                list.innerHTML = '<p class="p-4 text-gray-500 text-center">Aucune notification</p>';
+                return;
+            }
+
+            list.innerHTML = notifications.map(notification => `
+                <div class="p-4 border-b hover:bg-gray-50 ${notification.read ? 'opacity-75' : ''}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <p class="font-medium text-sm text-gray-900">${notification.title}</p>
+                            <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                            <p class="text-xs text-gray-500 mt-2">${notification.created_at_human}</p>
+                        </div>
+                        <div class="ml-2">
+                            <span class="inline-block px-2 py-1 text-xs rounded-full ${notification.priority_color}">
+                                ${notification.priority_display}
+                            </span>
+                            ${!notification.read ? `
+                                <button onclick="markNotificationRead(${notification.id})" 
+                                        class="ml-2 text-xs text-purple-600 hover:text-purple-800">
+                                    Marquer lu
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function markNotificationRead(notificationId) {
+            try {
+                const response = await fetch(`/commercial/notifications/mark-read/${notificationId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                if (response.ok) {
+                    loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur marquage notification:', error);
+            }
+        }
+
+        async function markAllNotificationsRead() {
+            try {
+                const response = await fetch('/commercial/notifications/api/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ mark_all: true })
+                });
+                if (response.ok) {
+                    loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur marquage toutes notifications:', error);
+            }
+        }
+
+        function updateNotificationCount(count) {
+            const badge = document.getElementById('notifications-count');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Stats Management
+        async function refreshStats() {
+            try {
+                // Update notification count
+                const notifResponse = await fetch('/commercial/notifications/api/unread-count');
+                if (notifResponse.ok) {
+                    const data = await notifResponse.json();
+                    updateNotificationCount(data.unread_count);
+                    updateBadges(data);
+                }
+            } catch (error) {
+                console.error('Erreur refresh stats:', error);
+            }
+        }
+
+        function updateBadges(data) {
+            const complaintsCount = data.urgent_count || 0;
+            const withdrawalsCount = data.pending_withdrawals || 0;
+            const deliverersCount = data.high_balance_deliverers || 0;
+
+            updateBadge('complaints-badge', complaintsCount);
+            updateBadge('withdrawals-badge', withdrawalsCount);
+            updateBadge('deliverers-badge', deliverersCount);
+        }
+
+        function updateBadge(badgeId, count) {
+            const badge = document.getElementById(badgeId);
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Messages
+        function showSuccessMessage(message) {
+            showMessage(message, 'bg-green-500');
+        }
+
+        function showErrorMessage(message) {
+            showMessage(message, 'bg-red-500');
+        }
+
+        function showMessage(message, colorClass) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 ${colorClass} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => toast.classList.add('translate-x-0'), 10);
+            
+            // Remove after delay
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Quick Actions
+        function quickAction(type, id) {
+            showSuccessMessage('Action rapide: ' + type + ' #' + id);
+        }
+
+        // Event Listeners
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCreateClientModal();
+                document.getElementById('notifications-panel').classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            const notifPanel = document.getElementById('notifications-panel');
+            const notifButton = e.target.closest('[onclick="toggleNotifications()"]');
+            
+            if (!notifPanel.contains(e.target) && !notifButton && !notifPanel.classList.contains('hidden')) {
+                notifPanel.classList.add('hidden');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial active nav item
+            document.querySelector('[onclick="showSection(\'dashboard\')"]').classList.add('bg-purple-100', 'text-purple-600');
+            
+            // Load initial data
+            refreshStats();
+            
+            // Auto refresh every 30 seconds
+            setInterval(refreshStats, 30000);
+        });
     </script>
 </body>
 </html>
