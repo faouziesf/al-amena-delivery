@@ -189,27 +189,31 @@ class ClientController extends Controller
 
         $client->load(['clientProfile', 'wallet', 'createdBy', 'verifiedBy']);
 
-        // Charger les transactions récentes
-        $client->load(['transactions' => function ($query) {
-            $query->orderBy('created_at', 'desc')->limit(20);
-        }]);
+        // Charger les transactions récentes - CORRECTION
+        $transactions = FinancialTransaction::where('user_id', $client->id)
+                                         ->orderBy('created_at', 'desc')
+                                         ->limit(20)
+                                         ->get();
+
+        // Assigner les transactions au client pour la vue
+        $client->setRelation('transactions', $transactions);
 
         // Charger les colis récents
-        $packages = $client->packages()
+        $packages = Package::where('sender_id', $client->id)
                           ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer'])
                           ->orderBy('created_at', 'desc')
                           ->limit(20)
                           ->get();
 
-        // Calculer les statistiques
+        // Calculer les statistiques avec vérifications
         $stats = [
-            'wallet_balance' => $client->wallet->balance ?? 0,
-            'pending_amount' => $client->wallet->pending_amount ?? 0,
-            'total_packages' => $client->packages()->count(),
-            'packages_in_progress' => $client->packages()->inProgress()->count(),
-            'packages_delivered' => $client->packages()->delivered()->count(),
-            'complaints' => $client->complaints()->count(),
-            'pending_complaints' => $client->complaints()->where('status', 'PENDING')->count(),
+            'wallet_balance' => $client->wallet ? $client->wallet->balance : 0,
+            'pending_amount' => $client->wallet ? $client->wallet->pending_amount : 0,
+            'total_packages' => Package::where('sender_id', $client->id)->count(),
+            'packages_in_progress' => Package::where('sender_id', $client->id)->inProgress()->count(),
+            'packages_delivered' => Package::where('sender_id', $client->id)->delivered()->count(),
+            'complaints' => 0, // Placeholder - ajustez selon vos besoins
+            'pending_complaints' => 0, // Placeholder - ajustez selon vos besoins
         ];
 
         return view('commercial.clients.show', compact('client', 'packages', 'stats'));
@@ -418,6 +422,8 @@ class ClientController extends Controller
         return view('commercial.clients.wallet', compact('client', 'wallet', 'transactions'));
     }
 
+// ==================== MÉTHODES WALLET CORRIGÉES ====================
+
     public function addFunds(Request $request, User $client)
     {
         if ($client->role !== 'CLIENT') {
@@ -427,35 +433,96 @@ class ClientController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.001|max:9999.999',
             'description' => 'required|string|max:255',
-        ], [
-            'amount.min' => 'Le montant minimum est de 0.001 DT.',
-            'amount.max' => 'Le montant maximum est de 9999.999 DT.',
-            'description.required' => 'La description est obligatoire.'
         ]);
 
         try {
-            $result = $this->commercialService->addFundsToWallet(
-                $client,
-                $request->amount,
-                $request->description,
-                Auth::user()
-            );
+            DB::beginTransaction();
+
+            // S'assurer que le client a un wallet
+            if (!$client->wallet) {
+                UserWallet::create([
+                    'user_id' => $client->id,
+                    'balance' => 0,
+                    'pending_amount' => 0,
+                    'frozen_amount' => 0,
+                ]);
+                $client->load('wallet');
+            }
+
+            $oldBalance = $client->wallet->balance;
+            $newBalance = $oldBalance + $request->amount;
+
+            // Mettre à jour le wallet
+            $client->wallet->update([
+                'balance' => $newBalance,
+                'last_transaction_at' => now()
+            ]);
+
+            // Créer la transaction
+            FinancialTransaction::create([
+                'transaction_id' => 'TXN_ADD_' . strtoupper(uniqid()),
+                'user_id' => $client->id,
+                'type' => 'CREDIT',
+                'amount' => $request->amount,
+                'status' => 'COMPLETED',
+                'description' => $request->description,
+                'wallet_balance_before' => $oldBalance,
+                'wallet_balance_after' => $newBalance,
+                'metadata' => json_encode([
+                    'added_by_commercial' => Auth::id(),
+                    'commercial_name' => Auth::user()->name,
+                    'ip_address' => $request->ip()
+                ]),
+                'completed_at' => now()
+            ]);
+
+            // Log de l'action
+            if (app()->bound(\App\Services\ActionLogService::class)) {
+                app(\App\Services\ActionLogService::class)->log(
+                    'WALLET_FUNDS_ADDED',
+                    'UserWallet',
+                    $client->wallet->id,
+                    $oldBalance,
+                    $newBalance,
+                    [
+                        'amount' => $request->amount,
+                        'description' => $request->description,
+                        'added_by' => Auth::user()->name
+                    ]
+                );
+            }
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Fonds ajoutés avec succès.',
-                    'new_balance' => $result['wallet_balance']
+                    'new_balance' => $newBalance
                 ]);
             }
 
             return back()->with('success', 
-                "Fonds ajoutés avec succès. Nouveau solde: " . number_format($result['wallet_balance'], 3) . " DT"
+                "Fonds ajoutés avec succès. Nouveau solde: " . number_format($newBalance, 3) . " DT"
             );
+
         } catch (\Exception $e) {
+            DB::rollback();
+            
+            Log::error('Erreur ajout fonds:', [
+                'client_id' => $client->id,
+                'amount' => $request->amount,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Erreur lors de l\'ajout: ' . $e->getMessage()], 422);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'ajout: ' . $e->getMessage()
+                ], 500);
             }
+
             return back()->withErrors(['error' => 'Erreur lors de l\'ajout: ' . $e->getMessage()]);
         }
     }
@@ -466,40 +533,141 @@ class ClientController extends Controller
             abort(404);
         }
 
-        $currentBalance = $client->wallet->balance ?? 0;
+        $currentBalance = $client->wallet ? $client->wallet->balance : 0;
         
         $request->validate([
             'amount' => 'required|numeric|min:0.001|max:' . $currentBalance,
             'description' => 'required|string|max:255',
-        ], [
-            'amount.max' => 'Le montant ne peut pas dépasser le solde actuel (' . number_format($currentBalance, 3) . ' DT).',
-            'description.required' => 'La description est obligatoire.'
         ]);
 
         try {
-            $result = $this->commercialService->deductFundsFromWallet(
-                $client,
-                $request->amount,
-                $request->description,
-                Auth::user()
-            );
+            DB::beginTransaction();
+
+            if (!$client->wallet) {
+                throw new \Exception('Le client n\'a pas de wallet.');
+            }
+
+            if ($client->wallet->balance < $request->amount) {
+                throw new \Exception('Solde insuffisant.');
+            }
+
+            $oldBalance = $client->wallet->balance;
+            $newBalance = $oldBalance - $request->amount;
+
+            // Mettre à jour le wallet
+            $client->wallet->update([
+                'balance' => $newBalance,
+                'last_transaction_at' => now()
+            ]);
+
+            // Créer la transaction
+            FinancialTransaction::create([
+                'transaction_id' => 'TXN_DED_' . strtoupper(uniqid()),
+                'user_id' => $client->id,
+                'type' => 'DEBIT',
+                'amount' => -$request->amount,
+                'status' => 'COMPLETED',
+                'description' => $request->description,
+                'wallet_balance_before' => $oldBalance,
+                'wallet_balance_after' => $newBalance,
+                'metadata' => json_encode([
+                    'deducted_by_commercial' => Auth::id(),
+                    'commercial_name' => Auth::user()->name,
+                    'ip_address' => $request->ip()
+                ]),
+                'completed_at' => now()
+            ]);
+
+            // Log de l'action
+            if (app()->bound(\App\Services\ActionLogService::class)) {
+                app(\App\Services\ActionLogService::class)->log(
+                    'WALLET_FUNDS_DEDUCTED',
+                    'UserWallet',
+                    $client->wallet->id,
+                    $oldBalance,
+                    $newBalance,
+                    [
+                        'amount' => $request->amount,
+                        'description' => $request->description,
+                        'deducted_by' => Auth::user()->name
+                    ]
+                );
+            }
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Fonds déduits avec succès.',
-                    'new_balance' => $result['wallet_balance']
+                    'new_balance' => $newBalance
                 ]);
             }
 
             return back()->with('success', 
-                "Fonds déduits avec succès. Nouveau solde: " . number_format($result['wallet_balance'], 3) . " DT"
+                "Fonds déduits avec succès. Nouveau solde: " . number_format($newBalance, 3) . " DT"
             );
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            Log::error('Erreur déduction fonds:', [
+                'client_id' => $client->id,
+                'amount' => $request->amount,
+                'current_balance' => $currentBalance,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la déduction: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'Erreur lors de la déduction: ' . $e->getMessage()]);
+        }
+    }
+
+    // ==================== OPÉRATIONS GROUPÉES ====================
+
+    public function bulkValidate(Request $request)
+    {
+        $request->validate([
+            'client_ids' => 'required|array|min:1',
+            'client_ids.*' => 'exists:users,id',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $validatedCount = 0;
+            $clients = User::whereIn('id', $request->client_ids)
+                          ->where('role', 'CLIENT')
+                          ->where('account_status', 'PENDING')
+                          ->get();
+
+            foreach ($clients as $client) {
+                $this->commercialService->validateClientAccount($client, Auth::user(), [
+                    'validation_notes' => $request->notes ?? 'Validation groupée'
+                ]);
+                $validatedCount++;
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "$validatedCount compte(s) validé(s) avec succès.",
+                    'validated_count' => $validatedCount
+                ]);
+            }
+
+            return back()->with('success', "$validatedCount compte(s) validé(s) avec succès.");
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Erreur lors de la déduction: ' . $e->getMessage()], 422);
+                return response()->json(['message' => 'Erreur lors de la validation groupée: ' . $e->getMessage()], 422);
             }
-            return back()->withErrors(['error' => 'Erreur lors de la déduction: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Erreur lors de la validation groupée: ' . $e->getMessage()]);
         }
     }
 
@@ -578,7 +746,7 @@ class ClientController extends Controller
             abort(404);
         }
 
-        $client->load(['clientProfile', 'wallet', 'packages', 'transactions', 'complaints']);
+        $client->load(['clientProfile', 'wallet', 'packages', 'transactions']);
 
         $filename = 'client_' . $client->id . '_' . now()->format('Y_m_d_H_i_s') . '.json';
         
@@ -610,7 +778,6 @@ class ClientController extends Controller
             'statistics' => [
                 'total_packages' => $client->packages->count(),
                 'delivered_packages' => $client->packages->where('status', 'DELIVERED')->count(),
-                'total_complaints' => $client->complaints->count(),
                 'total_transactions' => $client->transactions->count(),
             ],
             'export_info' => [
@@ -711,13 +878,19 @@ class ClientController extends Controller
             return response()->json(['error' => 'Client not found'], 404);
         }
 
+        // Charger le wallet si il n'est pas déjà chargé
+        if (!$client->relationLoaded('wallet')) {
+            $client->load('wallet');
+        }
+
         $stats = [
-            'wallet_balance' => $client->wallet->balance ?? 0,
-            'pending_amount' => $client->wallet->pending_amount ?? 0,
+            'wallet_balance' => $client->wallet ? (float) $client->wallet->balance : 0,
+            'pending_amount' => $client->wallet ? (float) $client->wallet->pending_amount : 0,
             'total_packages' => $client->packages()->count(),
             'packages_in_progress' => $client->packages()->inProgress()->count(),
             'packages_delivered' => $client->packages()->delivered()->count(),
-            'pending_complaints' => $client->complaints()->where('status', 'PENDING')->count(),
+            'complaints' => method_exists($client, 'complaints') ? $client->complaints()->count() : 0,
+            'pending_complaints' => method_exists($client, 'complaints') ? $client->complaints()->where('status', 'PENDING')->count() : 0,
         ];
 
         return response()->json($stats);
@@ -774,6 +947,28 @@ class ClientController extends Controller
         ]);
     }
 
+    public function apiClientForDuplication(User $client)
+    {
+        if ($client->role !== 'CLIENT') {
+            return response()->json(['error' => 'Client not found'], 404);
+        }
+
+        $client->load('clientProfile');
+
+        return response()->json([
+            'name' => $client->name,
+            'phone' => $client->phone,
+            'address' => $client->address,
+            'shop_name' => $client->clientProfile->shop_name ?? '',
+            'fiscal_number' => $client->clientProfile->fiscal_number ?? '',
+            'business_sector' => $client->clientProfile->business_sector ?? '',
+            'identity_document' => $client->clientProfile->identity_document ?? '',
+            'delivery_price' => $client->clientProfile->offer_delivery_price ?? 0,
+            'return_price' => $client->clientProfile->offer_return_price ?? 0,
+            'internal_notes' => $client->clientProfile->internal_notes ?? '',
+        ]);
+    }
+
     // ==================== DASHBOARD STATS ====================
 
     public function apiGlobalStats()
@@ -795,47 +990,5 @@ class ClientController extends Controller
         ];
 
         return response()->json($stats);
-    }
-
-    // ==================== MÉTHODES PRIVÉES ====================
-
-    private function validateClientData(array $data)
-    {
-        // Validation supplémentaire pour les données clients
-        if (isset($data['fiscal_number']) && !empty($data['fiscal_number'])) {
-            // Validation du format du matricule fiscal tunisien
-            if (!preg_match('/^[0-9]{7}[A-Z][A-Z][A-Z][0-9]{3}$/', $data['fiscal_number'])) {
-                throw new \InvalidArgumentException('Le format du matricule fiscal n\'est pas valide.');
-            }
-        }
-
-        if (isset($data['email'])) {
-            // Vérification supplémentaire de l'email
-            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-                throw new \InvalidArgumentException('L\'adresse email n\'est pas valide.');
-            }
-        }
-
-        return true;
-    }
-
-    private function formatClientForExport(User $client)
-    {
-        return [
-            'id' => $client->id,
-            'name' => $client->name,
-            'email' => $client->email,
-            'phone' => $client->phone,
-            'address' => $client->address,
-            'shop_name' => $client->clientProfile->shop_name ?? '',
-            'fiscal_number' => $client->clientProfile->fiscal_number ?? '',
-            'business_sector' => $client->clientProfile->business_sector ?? '',
-            'delivery_price' => number_format($client->clientProfile->offer_delivery_price ?? 0, 3),
-            'return_price' => number_format($client->clientProfile->offer_return_price ?? 0, 3),
-            'wallet_balance' => number_format($client->wallet->balance ?? 0, 3),
-            'account_status' => $client->account_status,
-            'created_at' => $client->created_at->format('d/m/Y H:i'),
-            'verified_at' => $client->verified_at ? $client->verified_at->format('d/m/Y H:i') : '',
-        ];
     }
 }

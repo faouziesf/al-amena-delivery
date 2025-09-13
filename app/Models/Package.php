@@ -88,6 +88,7 @@ class Package extends Model
         });
     }
 
+    // SCOPES MANQUANTS AJOUTÉS
     public function scopeInProgress($query)
     {
         return $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
@@ -127,13 +128,19 @@ class Package extends Model
     public function getFormattedRecipientAttribute()
     {
         $data = $this->recipient_data;
-        return $data['name'] . ' - ' . $data['phone'] . ' - ' . $data['address'];
+        if (!$data || !is_array($data)) {
+            return 'N/A';
+        }
+        return ($data['name'] ?? 'N/A') . ' - ' . ($data['phone'] ?? 'N/A') . ' - ' . ($data['address'] ?? 'N/A');
     }
 
     public function getFormattedSenderAttribute()
     {
         $data = $this->sender_data;
-        return $data['name'] . ' - ' . $data['phone'] . ' - ' . $data['address'];
+        if (!$data || !is_array($data)) {
+            return 'N/A';
+        }
+        return ($data['name'] ?? 'N/A') . ' - ' . ($data['phone'] ?? 'N/A') . ' - ' . ($data['address'] ?? 'N/A');
     }
 
     // Méthodes de gestion des statuts
@@ -141,34 +148,38 @@ class Package extends Model
     {
         $oldStatus = $this->status;
         
-        // Enregistrer dans l'historique
-        PackageStatusHistory::create([
-            'package_id' => $this->id,
-            'previous_status' => $oldStatus,
-            'new_status' => $newStatus,
-            'changed_by' => $user->id,
-            'changed_by_role' => $user->role,
-            'notes' => $notes,
-            'additional_data' => $additionalData,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        // Enregistrer dans l'historique si le modèle existe
+        if (class_exists(PackageStatusHistory::class)) {
+            PackageStatusHistory::create([
+                'package_id' => $this->id,
+                'previous_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'changed_by' => $user->id,
+                'changed_by_role' => $user->role,
+                'notes' => $notes,
+                'additional_data' => $additionalData,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        }
 
         // Mettre à jour le statut
         $this->update(['status' => $newStatus]);
 
-        // Log de l'action
-        app(\App\Services\ActionLogService::class)->log(
-            'PACKAGE_STATUS_CHANGE',
-            'Package',
-            $this->id,
-            $oldStatus,
-            $newStatus,
-            array_merge([
-                'package_code' => $this->package_code,
-                'notes' => $notes
-            ], $additionalData)
-        );
+        // Log de l'action si le service existe
+        if (app()->bound(\App\Services\ActionLogService::class)) {
+            app(\App\Services\ActionLogService::class)->log(
+                'PACKAGE_STATUS_CHANGE',
+                'Package',
+                $this->id,
+                $oldStatus,
+                $newStatus,
+                array_merge([
+                    'package_code' => $this->package_code,
+                    'notes' => $notes
+                ], $additionalData)
+            );
+        }
 
         return $this;
     }

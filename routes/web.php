@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Dashboard Principal
         Route::get('/dashboard', [CommercialDashboardController::class, 'index'])->name('dashboard');
 
-        // ==================== GESTION CLIENTS ====================
+// ==================== GESTION CLIENTS ====================
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/create', [ClientController::class, 'create'])->name('create');
@@ -81,20 +81,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{client}/wallet/deduct', [ClientController::class, 'deductFunds'])->name('wallet.deduct');
             Route::get('/{client}/wallet/export', [ClientController::class, 'exportWalletHistory'])->name('wallet.export');
             
-            // API Endpoints
+            // Export
             Route::get('/{client}/export', [ClientController::class, 'exportClientData'])->name('export.data');
     
-            // Opérations groupées (nouvelles routes)
+            // Opérations groupées
             Route::post('/bulk/validate', [ClientController::class, 'bulkValidate'])->name('bulk.validate');
             
-            // API Endpoints (nouvelles routes)
+            // API Endpoints - CORRECTION: Ajout de la route manquante
+            Route::get('/{client}/api/stats', [ClientController::class, 'apiStats'])->name('api.stats');
+            
             Route::prefix('api')->name('api.')->group(function () {
                 Route::get('/search', [ClientController::class, 'apiSearch'])->name('search');
-                Route::get('/{client}/stats', [ClientController::class, 'apiStats'])->name('stats');
+                Route::get('/{client}/profile', [ClientController::class, 'apiClientProfile'])->name('profile');
                 Route::get('/{client}/duplicate-data', [ClientController::class, 'apiClientForDuplication'])->name('duplicate.data');
                 Route::get('/recent', [ClientController::class, 'apiRecentClients'])->name('recent');
+                Route::get('/global-stats', [ClientController::class, 'apiGlobalStats'])->name('global.stats');
             });
-
         });
 
         // ==================== GESTION RÉCLAMATIONS ====================

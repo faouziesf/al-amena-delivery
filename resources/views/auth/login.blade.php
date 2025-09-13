@@ -244,44 +244,7 @@
                     </button>
                 </form>
 
-                <!-- Account Types Info avec design moderne -->
-                <div class="mt-8 p-6 bg-gradient-to-r from-white to-purple-100 bg-opacity-5 rounded-xl border border-white border-opacity-10 backdrop-blur-sm">
-                    <p class="text-purple-200 text-sm font-medium mb-4 text-center">🎯 Comptes de test disponibles :</p>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-white bg-opacity-5 hover:bg-opacity-10 transition-all">
-                            <span class="flex items-center text-purple-200">
-                                <div class="w-3 h-3 bg-red-400 rounded-full mr-3 animate-pulse"></div>
-                                👑 Superviseur
-                            </span>
-                            <span class="font-mono text-purple-300 text-xs">supervisor@alamena.tn</span>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-white bg-opacity-5 hover:bg-opacity-10 transition-all">
-                            <span class="flex items-center text-purple-200">
-                                <div class="w-3 h-3 bg-orange-400 rounded-full mr-3 animate-pulse" style="animation-delay: 0.5s;"></div>
-                                🏢 Commercial
-                            </span>
-                            <span class="font-mono text-purple-300 text-xs">commercial@alamena.tn</span>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-white bg-opacity-5 hover:bg-opacity-10 transition-all">
-                            <span class="flex items-center text-purple-200">
-                                <div class="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse" style="animation-delay: 1s;"></div>
-                                🚚 Livreur
-                            </span>
-                            <span class="font-mono text-purple-300 text-xs">livreur1@alamena.tn</span>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-white bg-opacity-5 hover:bg-opacity-10 transition-all">
-                            <span class="flex items-center text-purple-200">
-                                <div class="w-3 h-3 bg-blue-400 rounded-full mr-3 animate-pulse" style="animation-delay: 1.5s;"></div>
-                                👥 Client
-                            </span>
-                            <span class="font-mono text-purple-300 text-xs">sarra@boutique.tn</span>
-                        </div>
-                        <div class="text-center mt-4 pt-3 border-t border-purple-400 border-opacity-30">
-                            <span class="text-purple-300">🔑 Mot de passe pour tous : </span>
-                            <span class="font-mono font-bold text-white bg-purple-600 bg-opacity-30 px-3 py-1 rounded-lg">password</span>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
 
             <!-- Footer avec style moderne -->
