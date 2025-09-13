@@ -756,14 +756,21 @@ function clientProfileApp() {
 
         init() {
             this.loadStats();
-            setInterval(() => this.loadStats(), 30000);
+            setInterval(() => this.loadStats(), 60000);
         },
 
         async loadStats() {
             try {
-                const response = await fetch(`/commercial/clients/${CLIENT_ID}/api/stats`);
+                const response = await fetch(`/commercial/clients/${CLIENT_ID}/api/stats`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN
+                    }
+                });
+                
                 if (response.ok) {
-                    this.stats = await response.json();
+                    const newStats = await response.json();
+                    this.stats = { ...this.stats, ...newStats };
                 }
             } catch (error) {
                 console.error('Erreur chargement stats:', error);
@@ -820,9 +827,18 @@ function clientProfileApp() {
             };
         },
 
+        // SOLUTION DÉFINITIVE - TRANSACTION WALLET
         async submitWalletForm() {
+            // Validation des champs
             if (!this.walletForm.amount || !this.walletForm.description) {
                 this.showToast('Tous les champs sont requis', 'error');
+                return;
+            }
+
+            // Validation du montant
+            const amount = parseFloat(this.walletForm.amount);
+            if (amount <= 0) {
+                this.showToast('Le montant doit être positif', 'error');
                 return;
             }
 
@@ -830,11 +846,19 @@ function clientProfileApp() {
 
             try {
                 const endpoint = this.walletForm.action === 'add' ? 'add' : 'deduct';
+                
+                console.log('Envoi de la requête:', {
+                    url: `/commercial/clients/${CLIENT_ID}/wallet/${endpoint}`,
+                    amount: this.walletForm.amount,
+                    description: this.walletForm.description
+                });
+
                 const response = await fetch(`/commercial/clients/${CLIENT_ID}/wallet/${endpoint}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': CSRF_TOKEN
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Accept': 'application/json',
                     },
                     body: JSON.stringify({
                         amount: this.walletForm.amount,
@@ -842,17 +866,39 @@ function clientProfileApp() {
                     })
                 });
 
-                const data = await response.json();
+                console.log('Réponse reçue:', response.status);
 
                 if (response.ok) {
-                    this.showToast('Wallet mis à jour avec succès', 'success');
+                    const data = await response.json();
+                    console.log('Données reçues:', data);
+                    
+                    // Fermer le modal
                     this.closeWalletModal();
+                    
+                    // Afficher le message de succès
+                    this.showToast('Transaction effectuée avec succès', 'success');
+                    
+                    // Recharger les stats
                     await this.loadStats();
+                    
                 } else {
-                    this.showToast(data.message || 'Erreur lors de la mise à jour', 'error');
+                    // Erreur HTTP
+                    let errorMessage = 'Erreur lors de la transaction';
+                    
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        console.error('Erreur parsing JSON:', e);
+                    }
+                    
+                    console.error('Erreur HTTP:', response.status, errorMessage);
+                    this.showToast(errorMessage, 'error');
                 }
+
             } catch (error) {
-                this.showToast('Erreur de connexion', 'error');
+                console.error('Erreur réseau ou JavaScript:', error);
+                this.showToast('Erreur de connexion: ' + error.message, 'error');
             } finally {
                 this.isSubmitting = false;
             }
@@ -901,14 +947,13 @@ function clientProfileApp() {
         },
 
         showToast(message, type = 'info') {
-            // Utilise le gestionnaire de toast global
             if (window.showToast) {
                 window.showToast(message, type);
             } else {
-                alert(message); // Fallback
+                alert(message);
             }
         }
-    }
+    };
 }
 
 // Toast Manager Component
@@ -918,7 +963,6 @@ function toastManager() {
         nextId: 1,
 
         init() {
-            // Expose la fonction globalement
             window.showToast = (message, type = 'info') => {
                 this.addToast(message, type);
             };
@@ -934,7 +978,6 @@ function toastManager() {
 
             this.toasts.push(toast);
 
-            // Auto-remove après 5 secondes
             setTimeout(() => {
                 this.removeToast(toast.id);
             }, 5000);
@@ -949,7 +992,7 @@ function toastManager() {
                 }, 300);
             }
         }
-    }
+    };
 }
 
 // Global Functions
@@ -986,15 +1029,27 @@ async function validateClient() {
 // Laravel Success/Error Messages
 document.addEventListener('DOMContentLoaded', function() {
     @if(session('success'))
-        window.showToast('{{ session('success') }}', 'success');
+        setTimeout(() => {
+            if (window.showToast) {
+                window.showToast('{{ session('success') }}', 'success');
+            }
+        }, 100);
     @endif
 
     @if(session('error'))
-        window.showToast('{{ session('error') }}', 'error');
+        setTimeout(() => {
+            if (window.showToast) {
+                window.showToast('{{ session('error') }}', 'error');
+            }
+        }, 100);
     @endif
 
     @if($errors->any())
-        window.showToast('{{ $errors->first() }}', 'error');
+        setTimeout(() => {
+            if (window.showToast) {
+                window.showToast('{{ $errors->first() }}', 'error');
+            }
+        }, 100);
     @endif
 });
 </script>

@@ -11,6 +11,7 @@ use App\Models\WithdrawalRequest;
 use App\Models\Delegation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CommercialDashboardController extends Controller
 {
@@ -305,7 +306,7 @@ class CommercialDashboardController extends Controller
         return view('commercial.packages.show', compact('package'));
     }
 
-    // ==================== API ENDPOINTS MANQUANTS ====================
+    // ==================== API ENDPOINTS CORRIGÉS ====================
 
     public function api_getDashboardStats()
     {
@@ -313,23 +314,40 @@ class CommercialDashboardController extends Controller
             $stats = $this->commercialService->getDashboardStats();
             return response()->json($stats);
         } catch (\Exception $e) {
-            \Log::error('Erreur API dashboard stats:', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Erreur lors du chargement des statistiques'], 500);
+            Log::error('Erreur API dashboard stats:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Retourner des stats par défaut en cas d'erreur
+            return response()->json([
+                'total_clients' => 0,
+                'active_clients' => 0,
+                'pending_clients' => 0,
+                'suspended_clients' => 0,
+                'total_packages' => 0,
+                'packages_in_progress' => 0,
+                'delivered_today' => 0,
+                'pending_complaints' => 0,
+                'pending_withdrawals' => 0,
+                'clients_this_month' => 0,
+                'validated_this_week' => 0,
+            ]);
         }
     }
 
     public function api_getComplaintsCount()
     {
         try {
-            $count = \App\Models\Complaint::pending()->count();
-            $urgent = \App\Models\Complaint::pending()->where('priority', 'URGENT')->count();
+            $count = Complaint::where('status', 'PENDING')->count();
+            $urgent = Complaint::where('status', 'PENDING')->where('priority', 'URGENT')->count();
             
             return response()->json([
                 'count' => $count,
                 'urgent' => $urgent
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur API complaints count:', ['error' => $e->getMessage()]);
+            Log::error('Erreur API complaints count:', ['error' => $e->getMessage()]);
             return response()->json(['count' => 0, 'urgent' => 0]);
         }
     }
@@ -337,13 +355,13 @@ class CommercialDashboardController extends Controller
     public function api_getWithdrawalsCount()
     {
         try {
-            $count = \App\Models\WithdrawalRequest::pending()->count();
+            $count = WithdrawalRequest::where('status', 'PENDING')->count();
             
             return response()->json([
                 'count' => $count
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur API withdrawals count:', ['error' => $e->getMessage()]);
+            Log::error('Erreur API withdrawals count:', ['error' => $e->getMessage()]);
             return response()->json(['count' => 0]);
         }
     }
@@ -357,7 +375,7 @@ class CommercialDashboardController extends Controller
                 return response()->json([]);
             }
             
-            $clients = \App\Models\User::where('role', 'CLIENT')
+            $clients = User::where('role', 'CLIENT')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
@@ -368,7 +386,7 @@ class CommercialDashboardController extends Controller
 
             return response()->json($clients);
         } catch (\Exception $e) {
-            \Log::error('Erreur API search clients:', ['error' => $e->getMessage()]);
+            Log::error('Erreur API search clients:', ['error' => $e->getMessage()]);
             return response()->json([]);
         }
     }
@@ -382,7 +400,7 @@ class CommercialDashboardController extends Controller
                 return response()->json([]);
             }
             
-            $deliverers = \App\Models\User::where('role', 'DELIVERER')
+            $deliverers = User::where('role', 'DELIVERER')
                 ->where('account_status', 'ACTIVE')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -393,9 +411,8 @@ class CommercialDashboardController extends Controller
 
             return response()->json($deliverers);
         } catch (\Exception $e) {
-            \Log::error('Erreur API search deliverers:', ['error' => $e->getMessage()]);
+            Log::error('Erreur API search deliverers:', ['error' => $e->getMessage()]);
             return response()->json([]);
         }
     }
-
 }

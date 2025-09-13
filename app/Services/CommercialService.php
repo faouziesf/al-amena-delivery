@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Models\ClientProfile;
 use App\Models\UserWallet;
 use App\Models\FinancialTransaction;
+use App\Models\Package;
+use App\Models\Complaint;
+use App\Models\WithdrawalRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -276,6 +279,147 @@ class CommercialService
 
             return $client;
         });
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Obtenir les statistiques du dashboard
+     */
+    public function getDashboardStats()
+    {
+        try {
+            return [
+                'total_clients' => User::where('role', 'CLIENT')->count(),
+                'active_clients' => User::where('role', 'CLIENT')->where('account_status', 'ACTIVE')->count(),
+                'pending_clients' => User::where('role', 'CLIENT')->where('account_status', 'PENDING')->count(),
+                'suspended_clients' => User::where('role', 'CLIENT')->where('account_status', 'SUSPENDED')->count(),
+                'total_packages' => Package::count(),
+                'packages_in_progress' => Package::whereIn('status', ['ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY'])->count(),
+                'delivered_today' => Package::where('status', 'DELIVERED')->whereDate('updated_at', today())->count(),
+                'pending_complaints' => Complaint::where('status', 'PENDING')->count(),
+                'pending_withdrawals' => WithdrawalRequest::where('status', 'PENDING')->count(),
+                'clients_this_month' => User::where('role', 'CLIENT')
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count(),
+                'validated_this_week' => User::where('role', 'CLIENT')
+                    ->where('account_status', 'ACTIVE')
+                    ->whereBetween('verified_at', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->count(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erreur getDashboardStats:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Retourner des stats par défaut en cas d'erreur
+            return [
+                'total_clients' => 0,
+                'active_clients' => 0,
+                'pending_clients' => 0,
+                'suspended_clients' => 0,
+                'total_packages' => 0,
+                'packages_in_progress' => 0,
+                'delivered_today' => 0,
+                'pending_complaints' => 0,
+                'pending_withdrawals' => 0,
+                'clients_this_month' => 0,
+                'validated_this_week' => 0,
+            ];
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Résumé des réclamations
+     */
+    public function getComplaintsSummary()
+    {
+        try {
+            return [
+                'total' => Complaint::count(),
+                'pending' => Complaint::where('status', 'PENDING')->count(),
+                'urgent' => Complaint::where('priority', 'URGENT')->count(),
+                'resolved_today' => Complaint::where('status', 'RESOLVED')->whereDate('updated_at', today())->count(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erreur getComplaintsSummary:', ['error' => $e->getMessage()]);
+            return ['total' => 0, 'pending' => 0, 'urgent' => 0, 'resolved_today' => 0];
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Activité récente
+     */
+    public function getRecentActivity()
+    {
+        try {
+            return [
+                'recent_clients' => User::where('role', 'CLIENT')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'name', 'email', 'created_at', 'account_status']),
+                'recent_packages' => Package::with(['sender:id,name'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'package_code', 'sender_id', 'status', 'created_at']),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erreur getRecentActivity:', ['error' => $e->getMessage()]);
+            return ['recent_clients' => [], 'recent_packages' => []];
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Réclamations en attente
+     */
+    public function getPendingComplaints(User $commercial = null)
+    {
+        try {
+            $query = Complaint::with(['package', 'client'])->where('status', 'PENDING');
+            
+            if ($commercial) {
+                // Filtrer par commercial si nécessaire
+                $query->where('assigned_to', $commercial->id);
+            }
+            
+            return $query->orderBy('created_at', 'desc')->limit(20)->get();
+        } catch (\Exception $e) {
+            Log::error('Erreur getPendingComplaints:', ['error' => $e->getMessage()]);
+            return collect([]);
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Demandes de retrait en attente
+     */
+    public function getPendingWithdrawals()
+    {
+        try {
+            return WithdrawalRequest::with(['client'])
+                ->where('status', 'PENDING')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get();
+        } catch (\Exception $e) {
+            Log::error('Erreur getPendingWithdrawals:', ['error' => $e->getMessage()]);
+            return collect([]);
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Livreurs avec wallets
+     */
+    public function getDeliverersWithWallets()
+    {
+        try {
+            return User::with(['wallet'])
+                ->where('role', 'DELIVERER')
+                ->orderBy('name')
+                ->get();
+        } catch (\Exception $e) {
+            Log::error('Erreur getDeliverersWithWallets:', ['error' => $e->getMessage()]);
+            return collect([]);
+        }
     }
 
     /**

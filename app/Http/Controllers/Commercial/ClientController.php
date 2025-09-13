@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CommercialService;
 use App\Services\ActionLogService;
 use App\Models\User;
+use App\Models\UserWallet;          // ← LIGNE AJOUTÉE
 use App\Models\Delegation;
 use App\Models\ClientProfile;
 use App\Models\FinancialTransaction;
