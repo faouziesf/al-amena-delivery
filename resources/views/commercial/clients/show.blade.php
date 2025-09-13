@@ -1,0 +1,879 @@
+@extends('layouts.commercial')
+
+@section('title', 'Profil Client - ' . $client->name)
+@section('page-title', $client->name)
+@section('page-description', 'Profil détaillé et gestion du compte client')
+
+@section('header-actions')
+<div class="flex items-center space-x-3">
+    <a href="{{ route('commercial.clients.index') }}" 
+       class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Retour à la liste
+    </a>
+    
+    @if($client->account_status === 'PENDING')
+        <button onclick="validateClient()" 
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Valider le Compte
+        </button>
+    @endif
+    
+    <a href="{{ route('commercial.clients.edit', $client) }}" 
+       class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Modifier
+    </a>
+</div>
+@endsection
+
+@section('content')
+<div x-data="clientProfileApp()" x-init="init()" class="space-y-6">
+    
+    <!-- Client Header Card -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg text-white p-8">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start space-x-6">
+                <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <span class="text-3xl font-bold text-white">{{ substr($client->name, 0, 2) }}</span>
+                </div>
+                
+                <div class="space-y-2">
+                    <h1 class="text-3xl font-bold">{{ $client->name }}</h1>
+                    @if($client->clientProfile->shop_name)
+                        <p class="text-xl text-purple-100">{{ $client->clientProfile->shop_name }}</p>
+                    @endif
+                    <div class="flex items-center space-x-4 text-purple-100">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            {{ $client->email }}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            {{ $client->phone }}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10h6V11M6 7h12l-1 10H7L6 7z"/>
+                            </svg>
+                            Client #{{ $client->id }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-right">
+                @if($client->account_status === 'ACTIVE')
+                    <span class="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-green-500 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Compte Actif
+                    </span>
+                @elseif($client->account_status === 'PENDING')
+                    <span class="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-orange-500 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        En Attente de Validation
+                    </span>
+                @else
+                    <span class="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-red-500 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Compte Suspendu
+                    </span>
+                @endif
+                
+                <div class="mt-2 text-purple-100 text-sm">
+                    Créé le {{ $client->created_at->format('d/m/Y') }}
+                    @if($client->createdBy)
+                        <br>par {{ $client->createdBy->name }}
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-purple-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Solde Wallet</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="formatAmount(stats.wallet_balance)"></p>
+                    @if(($stats['pending_amount'] ?? 0) > 0)
+                        <p class="text-xs text-orange-600">
+                            En attente: {{ number_format($stats['pending_amount'], 3) }} DT
+                        </p>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-purple-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Colis</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['total_packages'] ?? 0 }}</p>
+                    <p class="text-xs text-blue-600">{{ $stats['packages_in_progress'] ?? 0 }} en cours</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-purple-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Livrés</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['packages_delivered'] ?? 0 }}</p>
+                    <p class="text-xs text-green-600">
+                        {{ $stats['total_packages'] > 0 ? round(($stats['packages_delivered'] / $stats['total_packages']) * 100, 1) : 0 }}% succès
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-purple-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Réclamations</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['complaints'] ?? 0 }}</p>
+                    @if(($stats['pending_complaints'] ?? 0) > 0)
+                        <p class="text-xs text-red-600">{{ $stats['pending_complaints'] }} en attente</p>
+                    @else
+                        <p class="text-xs text-green-600">Aucune en attente</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="bg-white rounded-xl shadow-sm border border-purple-100">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" x-data="{ activeTab: '{{ request('tab', 'overview') }}' }">
+                <button @click="activeTab = 'overview'; updateUrl('overview')" 
+                        :class="activeTab === 'overview' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Vue d'ensemble
+                </button>
+                <button @click="activeTab = 'wallet'; updateUrl('wallet')" 
+                        :class="activeTab === 'wallet' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Wallet & Transactions
+                </button>
+                <button @click="activeTab = 'packages'; updateUrl('packages')" 
+                        :class="activeTab === 'packages' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    Colis ({{ $stats['total_packages'] ?? 0 }})
+                </button>
+                <button @click="activeTab = 'history'; updateUrl('history')" 
+                        :class="activeTab === 'history' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Historique
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+            <!-- Overview Tab -->
+            <div x-show="activeTab === 'overview'" x-transition>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Client Information -->
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations Client</h3>
+                            <dl class="space-y-3">
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Nom complet:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->name }}</dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Email:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->email }}</dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Téléphone:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->phone }}</dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Adresse:</dt>
+                                    <dd class="text-sm font-medium text-gray-900 text-right max-w-xs">{{ $client->address }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Business Information -->
+                        @if($client->clientProfile && ($client->clientProfile->shop_name || $client->clientProfile->fiscal_number || $client->clientProfile->business_sector))
+                        <div class="bg-blue-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations Professionnelles</h3>
+                            <dl class="space-y-3">
+                                @if($client->clientProfile->shop_name)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Boutique/Entreprise:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->clientProfile->shop_name }}</dd>
+                                </div>
+                                @endif
+                                @if($client->clientProfile->fiscal_number)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Matricule fiscal:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->clientProfile->fiscal_number }}</dd>
+                                </div>
+                                @endif
+                                @if($client->clientProfile->business_sector)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Secteur d'activité:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->clientProfile->business_sector }}</dd>
+                                </div>
+                                @endif
+                                @if($client->clientProfile->identity_document)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Document d'identité:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->clientProfile->identity_document }}</dd>
+                                </div>
+                                @endif
+                            </dl>
+                        </div>
+                        @endif
+                    </div>
+
+                    <!-- Pricing & Account Info -->
+                    <div class="space-y-6">
+                        <!-- Pricing Configuration -->
+                        <div class="bg-purple-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Configuration Tarifaire</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-4 bg-white rounded-lg border border-green-200">
+                                    <div class="text-2xl font-bold text-green-600">
+                                        {{ number_format($client->clientProfile->offer_delivery_price ?? 0, 3) }} DT
+                                    </div>
+                                    <div class="text-sm text-gray-600">Livraison réussie</div>
+                                </div>
+                                <div class="text-center p-4 bg-white rounded-lg border border-red-200">
+                                    <div class="text-2xl font-bold text-red-600">
+                                        {{ number_format($client->clientProfile->offer_return_price ?? 0, 3) }} DT
+                                    </div>
+                                    <div class="text-sm text-gray-600">Retour échec</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Information -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations Compte</h3>
+                            <dl class="space-y-3">
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Date de création:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->created_at->format('d/m/Y H:i') }}</dd>
+                                </div>
+                                @if($client->createdBy)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Créé par:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->createdBy->name }}</dd>
+                                </div>
+                                @endif
+                                @if($client->verified_at)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Validé le:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->verified_at->format('d/m/Y H:i') }}</dd>
+                                </div>
+                                @endif
+                                @if($client->verifiedBy)
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Validé par:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $client->verifiedBy->name }}</dd>
+                                </div>
+                                @endif
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-600">Dernière connexion:</dt>
+                                    <dd class="text-sm font-medium text-gray-900">
+                                        {{ $client->last_login ? $client->last_login->diffForHumans() : 'Jamais connecté' }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white border-2 border-purple-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="manageWallet()" 
+                                        class="flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    Gérer Wallet
+                                </button>
+                                
+                                <button onclick="createPackage()" 
+                                        class="flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    Nouveau Colis
+                                </button>
+                                
+                                <button onclick="duplicateClient()" 
+                                        class="flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    Dupliquer
+                                </button>
+                                
+                                @if($client->account_status === 'ACTIVE')
+                                <button onclick="suspendClient()" 
+                                        class="flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636"/>
+                                    </svg>
+                                    Suspendre
+                                </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Tab -->
+            <div x-show="activeTab === 'wallet'" x-transition>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Wallet Summary -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+                            <h3 class="text-lg font-semibold mb-2">Solde Actuel</h3>
+                            <div class="text-3xl font-bold" x-text="formatAmount(stats.wallet_balance)"></div>
+                            @if(($stats['pending_amount'] ?? 0) > 0)
+                                <div class="mt-2 text-green-100">
+                                    En attente: {{ number_format($stats['pending_amount'], 3) }} DT
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Actions Wallet</h4>
+                            <div class="space-y-3">
+                                <button onclick="addFunds()" 
+                                        class="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    Ajouter des fonds
+                                </button>
+                                <button onclick="deductFunds()" 
+                                        class="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                    </svg>
+                                    Déduire des fonds
+                                </button>
+                                <button onclick="exportWalletHistory()" 
+                                        class="w-full flex items-center justify-center px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50 transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    Exporter historique
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white border border-gray-200 rounded-lg">
+                            <div class="p-6 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900">Historique des Transactions</h3>
+                            </div>
+                            
+                            <div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                                @forelse($client->transactions->take(20) as $transaction)
+                                <div class="p-4 hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                                {{ $transaction->amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' }}">
+                                                @if($transaction->amount > 0)
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                                    </svg>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900">{{ $transaction->description }}</p>
+                                                <p class="text-xs text-gray-500">{{ $transaction->created_at->format('d/m/Y H:i') }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-medium {{ $transaction->amount > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                                {{ $transaction->amount > 0 ? '+' : '' }}{{ number_format($transaction->amount, 3) }} DT
+                                            </div>
+                                            <div class="text-xs text-gray-500">{{ ucfirst($transaction->status) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @empty
+                                <div class="p-8 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune transaction</h3>
+                                    <p class="mt-1 text-sm text-gray-500">L'historique des transactions apparaîtra ici.</p>
+                                </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packages Tab -->
+            <div x-show="activeTab === 'packages'" x-transition>
+                <div class="space-y-6">
+                    <!-- Package Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ $stats['total_packages'] ?? 0 }}</div>
+                            <div class="text-sm text-blue-600">Total Colis</div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-orange-600">{{ $stats['packages_in_progress'] ?? 0 }}</div>
+                            <div class="text-sm text-orange-600">En cours</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-green-600">{{ $stats['packages_delivered'] ?? 0 }}</div>
+                            <div class="text-sm text-green-600">Livrés</div>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-red-600">{{ $stats['complaints'] ?? 0 }}</div>
+                            <div class="text-sm text-red-600">Réclamations</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Packages -->
+                    <div class="bg-white border border-gray-200 rounded-lg">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Colis Récents</h3>
+                                <a href="{{ route('commercial.packages.index') }}?sender_id={{ $client->id }}" 
+                                   class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                                    Voir tous les colis →
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="divide-y divide-gray-200">
+                            @forelse($packages->take(10) as $package)
+                            <div class="p-4 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ $package->package_code }}</p>
+                                            <p class="text-xs text-gray-500">
+                                                Vers {{ $package->recipient_data['name'] ?? 'N/A' }} - 
+                                                {{ $package->delegationTo->name ?? 'N/A' }}
+                                            </p>
+                                            <p class="text-xs text-gray-400">{{ $package->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            @if($package->status === 'DELIVERED') bg-green-100 text-green-800
+                                            @elseif($package->status === 'RETURNED') bg-red-100 text-red-800
+                                            @elseif(in_array($package->status, ['PICKED_UP', 'ACCEPTED'])) bg-blue-100 text-blue-800
+                                            @else bg-gray-100 text-gray-800 @endif">
+                                            {{ $package->status }}
+                                        </span>
+                                        <div class="text-sm font-medium text-gray-900 mt-1">
+                                            {{ number_format($package->cod_amount, 3) }} DT
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="p-8 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun colis</h3>
+                                <p class="mt-1 text-sm text-gray-500">Ce client n'a pas encore envoyé de colis.</p>
+                                <div class="mt-6">
+                                    <button onclick="createPackage()" 
+                                            class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        Créer le premier colis
+                                    </button>
+                                </div>
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div x-show="activeTab === 'history'" x-transition>
+                <div class="bg-white border border-gray-200 rounded-lg">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Journal d'Activité</h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flow-root">
+                            <ul class="-mb-8">
+                                <li class="relative pb-8">
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                                <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">
+                                                    Compte client <span class="font-medium text-gray-900">créé</span>
+                                                    @if($client->createdBy)
+                                                        par <span class="font-medium text-gray-900">{{ $client->createdBy->name }}</span>
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                <time>{{ $client->created_at->format('d/m/Y H:i') }}</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                
+                                @if($client->verified_at)
+                                <li class="relative pb-8">
+                                    <div class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></div>
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">
+                                                    Compte <span class="font-medium text-gray-900">validé</span>
+                                                    @if($client->verifiedBy)
+                                                        par <span class="font-medium text-gray-900">{{ $client->verifiedBy->name }}</span>
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                <time>{{ $client->verified_at->format('d/m/Y H:i') }}</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                @endif
+                                
+                                <!-- Add more activity items here as needed -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('modals')
+<!-- Wallet Management Modal -->
+<div id="wallet-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Gérer le Wallet</h3>
+                <button onclick="closeWalletModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="wallet-form" class="p-6 space-y-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-sm text-gray-600">Solde actuel</div>
+                    <div class="text-2xl font-bold text-gray-900" x-text="formatAmount(stats.wallet_balance)"></div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                    <select id="wallet-action" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        <option value="add">Ajouter des fonds</option>
+                        <option value="deduct">Déduire des fonds</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Montant (DT)</label>
+                    <input type="number" id="wallet-amount" step="0.001" min="0.001" required 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="wallet-description" rows="3" required
+                              placeholder="Motif de l'ajustement..."
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700">
+                        Confirmer
+                    </button>
+                    <button type="button" onclick="closeWalletModal()" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+function clientProfileApp() {
+    return {
+        stats: {
+            wallet_balance: {{ $client->wallet->balance ?? 0 }},
+            pending_amount: {{ $client->wallet->pending_amount ?? 0 }},
+            total_packages: {{ $stats['total_packages'] ?? 0 }},
+            packages_in_progress: {{ $stats['packages_in_progress'] ?? 0 }},
+            packages_delivered: {{ $stats['packages_delivered'] ?? 0 }},
+            complaints: {{ $stats['complaints'] ?? 0 }},
+            pending_complaints: {{ $stats['pending_complaints'] ?? 0 }}
+        },
+
+        init() {
+            this.loadStats();
+            
+            // Auto-refresh stats every 30 seconds
+            setInterval(() => {
+                this.loadStats();
+            }, 30000);
+        },
+
+        async loadStats() {
+            try {
+                const response = await fetch(`/commercial/clients/{{ $client->id }}/api/stats`);
+                if (response.ok) {
+                    this.stats = await response.json();
+                }
+            } catch (error) {
+                console.error('Erreur chargement stats:', error);
+            }
+        },
+
+        formatAmount(amount) {
+            return parseFloat(amount || 0).toFixed(3) + ' DT';
+        },
+
+        updateUrl(tab) {
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.pushState({}, '', url);
+        }
+    }
+}
+
+// Global functions
+async function validateClient() {
+    if (!confirm('Êtes-vous sûr de vouloir valider ce compte client ?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/commercial/clients/{{ $client->id }}/validate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                notes: 'Compte validé depuis le profil client'
+            })
+        });
+
+        if (response.ok) {
+            showToast('Compte client validé avec succès', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast(data.message || 'Erreur lors de la validation', 'error');
+        }
+    } catch (error) {
+        showToast('Erreur de connexion', 'error');
+    }
+}
+
+async function suspendClient() {
+    const reason = prompt('Motif de suspension:');
+    if (!reason) return;
+
+    try {
+        const response = await fetch(`/commercial/clients/{{ $client->id }}/suspend`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        if (response.ok) {
+            showToast('Compte client suspendu avec succès', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast(data.message || 'Erreur lors de la suspension', 'error');
+        }
+    } catch (error) {
+        showToast('Erreur de connexion', 'error');
+    }
+}
+
+function manageWallet() {
+    document.getElementById('wallet-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeWalletModal() {
+    document.getElementById('wallet-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.getElementById('wallet-form').reset();
+}
+
+function addFunds() {
+    document.getElementById('wallet-action').value = 'add';
+    manageWallet();
+}
+
+function deductFunds() {
+    document.getElementById('wallet-action').value = 'deduct';
+    manageWallet();
+}
+
+function createPackage() {
+    // TODO: Redirect to package creation with client pre-selected
+    showToast('Redirection vers création de colis...', 'info');
+    window.location.href = `/commercial/packages/create?client_id={{ $client->id }}`;
+}
+
+function duplicateClient() {
+    if (confirm('Créer un nouveau client basé sur les informations de ce client ?')) {
+        window.location.href = `/commercial/clients/create?duplicate={{ $client->id }}`;
+    }
+}
+
+function exportWalletHistory() {
+    window.open(`/commercial/clients/{{ $client->id }}/wallet/export`, '_blank');
+}
+
+// Wallet form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const walletForm = document.getElementById('wallet-form');
+    if (walletForm) {
+        walletForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const action = document.getElementById('wallet-action').value;
+            const amount = parseFloat(document.getElementById('wallet-amount').value);
+            const description = document.getElementById('wallet-description').value;
+            
+            if (!amount || !description) {
+                showToast('Tous les champs sont requis', 'error');
+                return;
+            }
+            
+            try {
+                const endpoint = action === 'add' ? 'add' : 'deduct';
+                const response = await fetch(`/commercial/clients/{{ $client->id }}/wallet/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ amount, description })
+                });
+
+                if (response.ok) {
+                    showToast(`Wallet mis à jour avec succès`, 'success');
+                    closeWalletModal();
+                    // Trigger stats reload
+                    document.querySelector('[x-data*="clientProfileApp"]').__x.$data.loadStats();
+                } else {
+                    const data = await response.json();
+                    showToast(data.message || 'Erreur lors de la mise à jour', 'error');
+                }
+            } catch (error) {
+                showToast('Erreur de connexion', 'error');
+            }
+        });
+    }
+});
+</script>
+@endpush

@@ -76,13 +76,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{client}/suspend', [ClientController::class, 'suspendAccount'])->name('suspend');
             
             // Gestion Wallet
-            Route::get('/{client}/wallet', [ClientController::class, 'walletHistory'])->name('wallet');
+            Route::get('/{client}/wallet', [ClientController::class, 'walletHistory'])->name('wallet.history');
             Route::post('/{client}/wallet/add', [ClientController::class, 'addFunds'])->name('wallet.add');
             Route::post('/{client}/wallet/deduct', [ClientController::class, 'deductFunds'])->name('wallet.deduct');
+            Route::get('/{client}/wallet/export', [ClientController::class, 'exportWalletHistory'])->name('wallet.export');
             
             // API Endpoints
-            Route::get('/api/search', [ClientController::class, 'apiSearch'])->name('api.search');
-            Route::get('/{client}/api/stats', [ClientController::class, 'apiStats'])->name('api.stats');
+            Route::get('/{client}/export', [ClientController::class, 'exportClientData'])->name('export.data');
+    
+            // Opérations groupées (nouvelles routes)
+            Route::post('/bulk/validate', [ClientController::class, 'bulkValidate'])->name('bulk.validate');
+            
+            // API Endpoints (nouvelles routes)
+            Route::prefix('api')->name('api.')->group(function () {
+                Route::get('/search', [ClientController::class, 'apiSearch'])->name('search');
+                Route::get('/{client}/stats', [ClientController::class, 'apiStats'])->name('stats');
+                Route::get('/{client}/duplicate-data', [ClientController::class, 'apiClientForDuplication'])->name('duplicate.data');
+                Route::get('/recent', [ClientController::class, 'apiRecentClients'])->name('recent');
+            });
+
         });
 
         // ==================== GESTION RÉCLAMATIONS ====================
