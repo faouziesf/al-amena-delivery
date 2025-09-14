@@ -224,4 +224,46 @@ class ActionLogService
             ];
         }
     }
+
+    /**
+     * Enregistrer une connexion utilisateur
+     */
+    public function logLogin($user)
+    {
+        $this->log(
+            'USER_LOGIN',
+            'User',
+            $user->id,
+            null,
+            null,
+            [
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'user_role' => $user->role,
+                'login_time' => now()->toDateTimeString()
+            ]
+        );
+    }
+
+    /**
+     * Enregistrer une déconnexion utilisateur
+     */
+    public function logLogout($user)
+    {
+        $this->log(
+            'USER_LOGOUT',
+            'User',
+            $user->id,
+            null,
+            null,
+            [
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'user_role' => $user->role,
+                'logout_time' => now()->toDateTimeString()
+            ]
+        );
+    }
+
+
 }

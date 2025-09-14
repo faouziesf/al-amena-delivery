@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CommercialService;
 use App\Services\ActionLogService;
 use App\Models\User;
-use App\Models\UserWallet;          // ← LIGNE AJOUTÉE
+use App\Models\UserWallet;
 use App\Models\Delegation;
 use App\Models\ClientProfile;
 use App\Models\FinancialTransaction;
@@ -423,7 +423,7 @@ class ClientController extends Controller
         return view('commercial.clients.wallet', compact('client', 'wallet', 'transactions'));
     }
 
-// ==================== MÉTHODES WALLET CORRIGÉES ====================
+    // ==================== MÉTHODES WALLET CORRIGÉES ====================
 
     public function addFunds(Request $request, User $client)
     {
@@ -439,22 +439,18 @@ class ClientController extends Controller
         try {
             DB::beginTransaction();
 
-            // S'assurer que le client a un wallet
-            if (!$client->wallet) {
-                UserWallet::create([
-                    'user_id' => $client->id,
-                    'balance' => 0,
-                    'pending_amount' => 0,
-                    'frozen_amount' => 0,
-                ]);
-                $client->load('wallet');
+            // CORRIGÉ : Utiliser la méthode ensureWallet() sécurisée
+            $wallet = $client->ensureWallet();
+            
+            if (!$wallet) {
+                throw new \Exception('Impossible de créer ou récupérer le wallet du client.');
             }
 
-            $oldBalance = $client->wallet->balance;
+            $oldBalance = $wallet->balance;
             $newBalance = $oldBalance + $request->amount;
 
             // Mettre à jour le wallet
-            $client->wallet->update([
+            $wallet->update([
                 'balance' => $newBalance,
                 'last_transaction_at' => now()
             ]);
@@ -482,7 +478,7 @@ class ClientController extends Controller
                 app(\App\Services\ActionLogService::class)->log(
                     'WALLET_FUNDS_ADDED',
                     'UserWallet',
-                    $client->wallet->id,
+                    $wallet->id,
                     $oldBalance,
                     $newBalance,
                     [
@@ -534,7 +530,9 @@ class ClientController extends Controller
             abort(404);
         }
 
-        $currentBalance = $client->wallet ? $client->wallet->balance : 0;
+        // CORRIGÉ : Utiliser ensureWallet() et vérifier l'existence
+        $wallet = $client->ensureWallet();
+        $currentBalance = $wallet ? $wallet->balance : 0;
         
         $request->validate([
             'amount' => 'required|numeric|min:0.001|max:' . $currentBalance,
@@ -544,19 +542,19 @@ class ClientController extends Controller
         try {
             DB::beginTransaction();
 
-            if (!$client->wallet) {
+            if (!$wallet) {
                 throw new \Exception('Le client n\'a pas de wallet.');
             }
 
-            if ($client->wallet->balance < $request->amount) {
+            if ($wallet->balance < $request->amount) {
                 throw new \Exception('Solde insuffisant.');
             }
 
-            $oldBalance = $client->wallet->balance;
+            $oldBalance = $wallet->balance;
             $newBalance = $oldBalance - $request->amount;
 
             // Mettre à jour le wallet
-            $client->wallet->update([
+            $wallet->update([
                 'balance' => $newBalance,
                 'last_transaction_at' => now()
             ]);
@@ -584,7 +582,7 @@ class ClientController extends Controller
                 app(\App\Services\ActionLogService::class)->log(
                     'WALLET_FUNDS_DEDUCTED',
                     'UserWallet',
-                    $client->wallet->id,
+                    $wallet->id,
                     $oldBalance,
                     $newBalance,
                     [

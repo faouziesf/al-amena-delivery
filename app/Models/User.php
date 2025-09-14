@@ -451,21 +451,44 @@ class User extends Authenticatable
         return in_array($this->role, ['CLIENT', 'DELIVERER']) && !$this->wallet;
     }
 
-    public function createWalletIfNotExists()
+    /**
+     * Méthode sécurisée pour créer ou récupérer un wallet
+     * CORRIGÉE pour éviter les doublons
+     */
+    public function ensureWallet()
     {
-        if (!$this->wallet && in_array($this->role, ['CLIENT', 'DELIVERER'])) {
-            UserWallet::create([
-                'user_id' => $this->id,
-                'balance' => 0,
-                'pending_amount' => 0,
-                'frozen_amount' => 0,
-            ]);
-            
-            // Recharger la relation
+        if (!in_array($this->role, ['CLIENT', 'DELIVERER'])) {
+            return null;
+        }
+
+        if ($this->wallet) {
+            return $this->wallet;
+        }
+
+        // Utiliser firstOrCreate pour éviter les doublons
+        $wallet = UserWallet::firstOrCreate(
+            ['user_id' => $this->id],
+            [
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+            ]
+        );
+
+        // Recharger la relation si elle n'était pas chargée
+        if (!$this->relationLoaded('wallet')) {
             $this->load('wallet');
         }
-        
-        return $this->wallet;
+
+        return $wallet;
+    }
+
+    /**
+     * @deprecated Utiliser ensureWallet() à la place
+     */
+    public function createWalletIfNotExists()
+    {
+        return $this->ensureWallet();
     }
 
     // ==================== FORMATTING METHODS ====================
@@ -604,21 +627,24 @@ class User extends Authenticatable
         return $query->where('verified_by', $commercialId);
     }
 
-    // ==================== BOOT METHOD ====================
+    // ==================== BOOT METHOD - CORRIGÉ ====================
 
     protected static function boot()
     {
         parent::boot();
 
+        // CORRIGÉ : Utiliser firstOrCreate au lieu de create pour éviter les doublons
         static::created(function ($user) {
             if (in_array($user->role, ['CLIENT', 'DELIVERER'])) {
                 try {
-                    UserWallet::create([
-                        'user_id' => $user->id,
-                        'balance' => 0,
-                        'pending_amount' => 0,
-                        'frozen_amount' => 0,
-                    ]);
+                    UserWallet::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'balance' => 0.000,
+                            'pending_amount' => 0.000,
+                            'frozen_amount' => 0.000,
+                        ]
+                    );
                 } catch (\Exception $e) {
                     \Log::error('Erreur création wallet pour user ' . $user->id . ': ' . $e->getMessage());
                 }

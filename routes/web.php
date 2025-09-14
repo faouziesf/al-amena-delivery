@@ -46,7 +46,84 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // ==================== CLIENT ROUTES ====================
     Route::middleware(['role:CLIENT'])->prefix('client')->name('client.')->group(function () {
+        
+        // Dashboard Principal
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
+
+        // ==================== GESTION DES COLIS ====================
+        Route::prefix('packages')->name('packages.')->group(function () {
+            Route::get('/', [ClientDashboardController::class, 'packages'])->name('index');
+            Route::get('/create', [ClientDashboardController::class, 'createPackage'])->name('create');
+            Route::post('/', [ClientDashboardController::class, 'storePackage'])->name('store');
+            Route::get('/{package}', [ClientDashboardController::class, 'packageShow'])->name('show');
+        });
+
+        // ==================== GESTION WALLET ====================
+        Route::prefix('wallet')->name('wallet.')->group(function () {
+            Route::get('/', [ClientDashboardController::class, 'wallet'])->name('index');
+            Route::get('/withdrawal', [ClientDashboardController::class, 'createWithdrawal'])->name('withdrawal');
+            Route::post('/withdrawal', [ClientDashboardController::class, 'storeWithdrawal'])->name('store-withdrawal');
+        });
+
+        // ==================== DEMANDES DE RETRAIT ====================
+        Route::get('/withdrawals', [ClientDashboardController::class, 'withdrawals'])->name('withdrawals');
+
+        // ==================== RÉCLAMATIONS ====================
+        Route::prefix('complaints')->name('complaints.')->group(function () {
+            Route::get('/', [ClientDashboardController::class, 'complaints'])->name('index');
+            Route::get('/create/{package}', [ClientDashboardController::class, 'createComplaint'])->name('create');
+            Route::post('/{package}', [ClientDashboardController::class, 'storeComplaint'])->name('store');
+        });
+
+        // ==================== NOTIFICATIONS ====================
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', function() {
+                $user = auth()->user();
+                $notifications = $user->notifications()->orderBy('created_at', 'desc')->paginate(20);
+                return view('client.notifications.index', compact('notifications'));
+            })->name('index');
+            
+            Route::post('/{notification}/mark-read', function($notificationId) {
+                $notification = auth()->user()->notifications()->findOrFail($notificationId);
+                $notification->update(['read' => true, 'read_at' => now()]);
+                return response()->json(['success' => true]);
+            })->name('mark-read');
+            
+            Route::post('/mark-all-read', function() {
+                auth()->user()->notifications()->where('read', false)->update([
+                    'read' => true, 
+                    'read_at' => now()
+                ]);
+                return response()->json(['success' => true]);
+            })->name('mark-all-read');
+        });
+
+        // ==================== API ENDPOINTS CLIENT ====================
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/dashboard-stats', [ClientDashboardController::class, 'apiStats'])->name('dashboard.stats');
+            Route::get('/wallet/balance', [ClientDashboardController::class, 'apiWalletBalance'])->name('wallet.balance');
+            
+            // Notifications API
+            Route::get('/notifications/unread-count', function() {
+                return response()->json([
+                    'count' => auth()->user()->notifications()->where('read', false)->count()
+                ]);
+            })->name('notifications.unread.count');
+            
+            Route::get('/notifications/recent', function() {
+                $notifications = auth()->user()->notifications()
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->get();
+                return response()->json(['notifications' => $notifications]);
+            })->name('notifications.recent');
+            
+            // Packages API
+            Route::get('/packages/{package}/status', function($packageId) {
+                $package = auth()->user()->sentPackages()->findOrFail($packageId);
+                return response()->json(['status' => $package->status]);
+            })->name('packages.status');
+        });
     });
 
     // ==================== DELIVERER ROUTES ====================
@@ -62,7 +139,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Dashboard Principal
         Route::get('/dashboard', [CommercialDashboardController::class, 'index'])->name('dashboard');
 
-// ==================== GESTION CLIENTS ====================
+        // ==================== GESTION CLIENTS ====================
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/create', [ClientController::class, 'create'])->name('create');
@@ -87,7 +164,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Opérations groupées
             Route::post('/bulk/validate', [ClientController::class, 'bulkValidate'])->name('bulk.validate');
             
-            // API Endpoints - CORRECTION: Ajout de la route manquante
+            // API Endpoints
             Route::get('/{client}/api/stats', [ClientController::class, 'apiStats'])->name('api.stats');
             
             Route::prefix('api')->name('api.')->group(function () {
@@ -230,6 +307,109 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Le superviseur a accès à toutes les routes commercial
         // Plus des routes spécifiques de supervision (à implémenter)
+        
+        // ==================== GESTION DÉLÉGATIONS ====================
+        Route::prefix('delegations')->name('delegations.')->group(function () {
+            Route::get('/', function() {
+                $delegations = \App\Models\Delegation::with('creator')->orderBy('name')->paginate(20);
+                return view('supervisor.delegations.index', compact('delegations'));
+            })->name('index');
+            
+            Route::get('/create', function() {
+                return view('supervisor.delegations.create');
+            })->name('create');
+            
+            Route::post('/', function(\Illuminate\Http\Request $request) {
+                $validated = $request->validate([
+                    'name' => 'required|string|max:255|unique:delegations',
+                    'zone' => 'nullable|string|max:255',
+                    'active' => 'boolean'
+                ]);
+                
+                \App\Models\Delegation::create([
+                    'name' => $validated['name'],
+                    'zone' => $validated['zone'],
+                    'active' => $validated['active'] ?? true,
+                    'created_by' => auth()->id()
+                ]);
+                
+                return redirect()->route('supervisor.delegations.index')
+                    ->with('success', 'Délégation créée avec succès');
+            })->name('store');
+            
+            Route::get('/{delegation}/edit', function(\App\Models\Delegation $delegation) {
+                return view('supervisor.delegations.edit', compact('delegation'));
+            })->name('edit');
+            
+            Route::put('/{delegation}', function(\App\Models\Delegation $delegation, \Illuminate\Http\Request $request) {
+                $validated = $request->validate([
+                    'name' => 'required|string|max:255|unique:delegations,name,' . $delegation->id,
+                    'zone' => 'nullable|string|max:255',
+                    'active' => 'boolean'
+                ]);
+                
+                $delegation->update($validated);
+                
+                return redirect()->route('supervisor.delegations.index')
+                    ->with('success', 'Délégation mise à jour avec succès');
+            })->name('update');
+            
+            Route::delete('/{delegation}', function(\App\Models\Delegation $delegation) {
+                if (!$delegation->canBeDeleted()) {
+                    return redirect()->back()
+                        ->with('error', 'Cette délégation ne peut pas être supprimée car elle est utilisée par des colis.');
+                }
+                
+                $delegation->delete();
+                
+                return redirect()->route('supervisor.delegations.index')
+                    ->with('success', 'Délégation supprimée avec succès');
+            })->name('destroy');
+        });
+
+        // ==================== GESTION UTILISATEURS ====================
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', function() {
+                $users = \App\Models\User::with(['creator', 'verifier'])->orderBy('created_at', 'desc')->paginate(20);
+                return view('supervisor.users.index', compact('users'));
+            })->name('index');
+            
+            Route::get('/create', function() {
+                return view('supervisor.users.create');
+            })->name('create');
+            
+            Route::post('/', function(\Illuminate\Http\Request $request) {
+                $validated = $request->validate([
+                    'name' => 'required|string|max:255',
+                    'email' => 'required|email|unique:users',
+                    'phone' => 'required|string|max:20',
+                    'address' => 'required|string|max:500',
+                    'role' => 'required|in:CLIENT,DELIVERER,COMMERCIAL,SUPERVISOR',
+                    'password' => 'required|min:8|confirmed'
+                ]);
+                
+                $user = \App\Models\User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'role' => $validated['role'],
+                    'password' => bcrypt($validated['password']),
+                    'account_status' => 'ACTIVE',
+                    'created_by' => auth()->id(),
+                    'verified_at' => now(),
+                    'verified_by' => auth()->id()
+                ]);
+                
+                // Créer le wallet si nécessaire
+                if (in_array($validated['role'], ['CLIENT', 'DELIVERER'])) {
+                    $user->ensureWallet();
+                }
+                
+                return redirect()->route('supervisor.users.index')
+                    ->with('success', 'Utilisateur créé avec succès');
+            })->name('store');
+        });
     });
 });
 

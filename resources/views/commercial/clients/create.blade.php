@@ -291,13 +291,29 @@
                                        class="w-full border border-red-300 rounded-lg px-4 py-3 pr-12 focus:ring-red-500 focus:border-red-500">
                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-red-600 font-medium">DT</span>
                             </div>
-                            <p class="text-xs text-red-600 mt-1">Montant facturé quand le colis est retourné</p>
+                            <p class="text-xs text-red-600 mt-1">Montant facturé quand le colis est retourné (peut être 0 pour un retour gratuit)</p>
                         </div>
 
                         <div class="bg-red-100 p-3 rounded-lg">
                             <p class="text-sm text-red-700">
                                 <span class="font-medium">Scénario :</span> Le client paie ce montant quand le destinataire refuse le colis.
+                                <br>
+                                <span class="font-medium">Note :</span> Vous pouvez définir 0 DT pour offrir un retour gratuit à ce client.
                             </p>
+                        </div>
+
+                        <!-- Additional info for 0 return price -->
+                        <div x-show="form.return_price == 0" class="mt-3 bg-yellow-100 border border-yellow-300 p-3 rounded-lg">
+                            <div class="flex">
+                                <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="text-sm text-yellow-700">
+                                    <span class="font-medium">Retour gratuit activé :</span> 
+                                    Ce client ne sera pas facturé pour les colis retournés. 
+                                    Cette configuration peut impacter votre rentabilité.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -314,6 +330,9 @@
                     <div class="bg-white p-4 rounded-lg border border-purple-200">
                         <div class="text-sm text-gray-600">Retour échec</div>
                         <div class="text-2xl font-bold text-red-600" x-text="(form.return_price || 0).toFixed(3) + ' DT'"></div>
+                        <div x-show="form.return_price == 0" class="text-xs text-yellow-600 font-medium mt-1">
+                            ✓ Retour gratuit
+                        </div>
                     </div>
                 </div>
                 
@@ -461,7 +480,7 @@ function createClientApp() {
         canSubmit() {
             return this.canProceedStep1() && 
                    this.form.delivery_price > 0 && 
-                   this.form.return_price > 0;
+                   this.form.return_price >= 0;  // CORRIGÉ: Permet maintenant 0 pour le retour
         },
 
         async saveDraft() {
@@ -492,7 +511,11 @@ function createClientApp() {
                 const result = await response.json();
 
                 if (response.ok) {
-                    showToast(`Client ${this.form.name} créé avec succès !`, 'success');
+                    let successMessage = `Client ${this.form.name} créé avec succès !`;
+                    if (this.form.return_price == 0) {
+                        successMessage += ' (Retour gratuit configuré)';
+                    }
+                    showToast(successMessage, 'success');
                     
                     // Redirect after short delay
                     setTimeout(() => {

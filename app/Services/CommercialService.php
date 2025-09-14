@@ -26,7 +26,7 @@ class CommercialService
     }
 
     /**
-     * Créer un compte client complet
+     * Créer un compte client complet - VERSION CORRIGÉE
      */
     public function createClientAccount(array $data, User $commercial)
     {
@@ -55,13 +55,20 @@ class CommercialService
                 'internal_notes' => $data['internal_notes'] ?? null,
             ]);
 
-            // Créer le wallet
-            UserWallet::create([
-                'user_id' => $client->id,
-                'balance' => 0,
-                'pending_amount' => 0,
-                'frozen_amount' => 0,
-            ]);
+            // CORRIGÉ : Utiliser ensureWallet() au lieu de create() direct
+            $wallet = $client->ensureWallet();
+            
+            // Si ensureWallet() échoue, essayer firstOrCreate comme fallback
+            if (!$wallet) {
+                $wallet = UserWallet::firstOrCreate(
+                    ['user_id' => $client->id],
+                    [
+                        'balance' => 0.000,
+                        'pending_amount' => 0.000,
+                        'frozen_amount' => 0.000,
+                    ]
+                );
+            }
 
             // Log de l'action si le service existe
             if ($this->actionLogService) {
@@ -73,7 +80,8 @@ class CommercialService
                     $data,
                     [
                         'created_by' => $commercial->name,
-                        'account_status' => 'PENDING'
+                        'account_status' => 'PENDING',
+                        'wallet_created' => $wallet ? 'SUCCESS' : 'FAILED'
                     ]
                 );
             }
@@ -114,23 +122,18 @@ class CommercialService
     }
 
     /**
-     * Ajouter des fonds au wallet - VERSION SIMPLE
+     * Ajouter des fonds au wallet - VERSION CORRIGÉE
      */
     public function addFundsToWallet(User $client, float $amount, string $description, User $commercial)
     {
         return DB::transaction(function () use ($client, $amount, $description, $commercial) {
-            // S'assurer que le client a un wallet
-            if (!$client->wallet) {
-                UserWallet::create([
-                    'user_id' => $client->id,
-                    'balance' => 0,
-                    'pending_amount' => 0,
-                    'frozen_amount' => 0,
-                ]);
-                $client->load('wallet');
+            // CORRIGÉ : Utiliser ensureWallet() au lieu de create() direct
+            $wallet = $client->ensureWallet();
+            
+            if (!$wallet) {
+                throw new \Exception('Impossible de créer ou récupérer le wallet du client.');
             }
 
-            $wallet = $client->wallet;
             $oldBalance = $wallet->balance;
             $newBalance = $oldBalance + $amount;
 
@@ -183,16 +186,17 @@ class CommercialService
     }
 
     /**
-     * Déduire des fonds du wallet - VERSION SIMPLE
+     * Déduire des fonds du wallet - VERSION CORRIGÉE
      */
     public function deductFundsFromWallet(User $client, float $amount, string $description, User $commercial)
     {
         return DB::transaction(function () use ($client, $amount, $description, $commercial) {
-            if (!$client->wallet) {
+            // CORRIGÉ : Utiliser ensureWallet() pour s'assurer que le wallet existe
+            $wallet = $client->ensureWallet();
+            
+            if (!$wallet) {
                 throw new \Exception('Le client n\'a pas de wallet.');
             }
-
-            $wallet = $client->wallet;
 
             if ($wallet->balance < $amount) {
                 throw new \Exception('Solde insuffisant.');
@@ -480,6 +484,52 @@ class CommercialService
         return [
             'is_valid' => empty($errors),
             'errors' => $errors
+        ];
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Créer un wallet de manière sécurisée
+     */
+    public function ensureClientWallet(User $client)
+    {
+        if ($client->role !== 'CLIENT') {
+            throw new \Exception('Cette méthode est réservée aux clients.');
+        }
+
+        return $client->ensureWallet();
+    }
+
+    /**
+     * NOUVELLE MÉTHODE - Vérifier l'intégrité des wallets d'un client
+     */
+    public function checkClientWalletIntegrity(User $client)
+    {
+        $wallet = $client->wallet;
+        
+        if (!$wallet) {
+            return [
+                'status' => 'missing',
+                'message' => 'Wallet manquant',
+                'action_needed' => 'create_wallet'
+            ];
+        }
+
+        $validation = $this->validateWallet($wallet);
+        
+        if (!$validation['is_valid']) {
+            return [
+                'status' => 'invalid',
+                'message' => 'Wallet invalide: ' . implode(', ', $validation['errors']),
+                'errors' => $validation['errors'],
+                'action_needed' => 'fix_wallet'
+            ];
+        }
+
+        return [
+            'status' => 'valid',
+            'message' => 'Wallet valide',
+            'balance' => $wallet->balance,
+            'action_needed' => 'none'
         ];
     }
 }
