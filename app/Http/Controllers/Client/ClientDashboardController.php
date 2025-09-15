@@ -11,6 +11,7 @@ use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema; // AJOUTÉ
 use Illuminate\Validation\Rule;
 
 class ClientDashboardController extends Controller
@@ -19,12 +20,6 @@ class ClientDashboardController extends Controller
 
     public function __construct(FinancialTransactionService $financialService)
     {
-        // CORRECTION: Les middlewares sont maintenant gérés dans les routes (Laravel 11+)
-        // Suppression des lignes suivantes qui causaient l'erreur :
-        // $this->middleware('auth');
-        // $this->middleware('verified');
-        // $this->middleware('role:CLIENT');
-        
         $this->financialService = $financialService;
     }
 
@@ -35,40 +30,33 @@ class ClientDashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Vérification du rôle manuellement si le middleware n'existe pas
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
         
         $user->load(['wallet', 'clientProfile']);
 
-        // S'assurer que le wallet existe
         if (!$user->wallet) {
             $user->ensureWallet();
-            $user->load('wallet'); // Recharger la relation
+            $user->load('wallet');
         }
 
-        // Statistiques générales
         $stats = $this->getDashboardStats();
         
-        // Colis récents (5 derniers)
         $recentPackages = Package::where('sender_id', $user->id)
             ->with(['delegationFrom', 'delegationTo'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // Notifications non lues
         $notifications = $user->notifications()
             ->where('read', false)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // Transactions récentes du wallet
-        $recentTransactions = $user->financialTransactions()
+        $recentTransactions = $user->transactions()
             ->where('status', 'COMPLETED')
-            ->with('package')
             ->orderBy('completed_at', 'desc')
             ->limit(5)
             ->get();
@@ -89,7 +77,6 @@ class ClientDashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Vérification du rôle
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
@@ -97,12 +84,11 @@ class ClientDashboardController extends Controller
         $query = Package::where('sender_id', $user->id)
             ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
 
-        // Filtrage par statut
         if ($request->filled('status')) {
             if ($request->status === 'in_progress') {
-                $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'DELIVERED']);
+                $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
             } elseif ($request->status === 'delivered') {
-                $query->where('status', 'PAID');
+                $query->whereIn('status', ['DELIVERED', 'PAID']);
             } elseif ($request->status === 'returned') {
                 $query->where('status', 'RETURNED');
             } else {
@@ -110,12 +96,10 @@ class ClientDashboardController extends Controller
             }
         }
 
-        // Recherche par code
         if ($request->filled('search')) {
             $query->where('package_code', 'LIKE', '%' . $request->search . '%');
         }
 
-        // Filtrage par période
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -133,7 +117,6 @@ class ClientDashboardController extends Controller
      */
     public function packageShow(Package $package)
     {
-        // Vérification que le colis appartient au client
         if ($package->sender_id !== Auth::id()) {
             abort(403, 'Accès non autorisé à ce colis.');
         }
@@ -142,56 +125,106 @@ class ClientDashboardController extends Controller
             'delegationFrom', 
             'delegationTo', 
             'assignedDeliverer',
-            'statusHistory.changedByUser',
-            'complaints.assignedCommercial',
-            'codModifications.modifiedByCommercial'
+            'statusHistory.changedBy',
+            'complaints.assignedCommercial'
         ]);
+
+        // Charger les modifications COD seulement si la relation existe
+        if (method_exists($package, 'codModifications')) {
+            $package->load('codModifications.modifiedByCommercial');
+        }
 
         return view('client.packages.show', compact('package'));
     }
 
     /**
-     * Formulaire de création de colis
+     * Formulaire de création de colis - VERSION SIMPLIFIÉE
      */
-    public function createPackage()
+    public function createPackage(Request $request)
     {
         $user = Auth::user();
         
-        // Vérification du rôle
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
         
         $user->load(['wallet', 'clientProfile']);
 
-        // Vérification que le compte est actif
         if (!$user->isActive() || !$user->clientProfile) {
             return redirect()->route('client.dashboard')
                 ->with('error', 'Votre compte doit être validé avant de créer des colis.');
         }
 
-        // S'assurer que le wallet existe
         if (!$user->wallet) {
             $user->ensureWallet();
             $user->load('wallet');
         }
 
-        $delegations = Delegation::active()->orderBy('name')->get();
+        $delegations = Delegation::where('active', true)->orderBy('name')->get();
+        
+        // Vérifier si les nouvelles fonctionnalités sont disponibles
+        $hasAdvancedFeatures = Schema::hasTable('saved_addresses');
+        
+        if ($hasAdvancedFeatures) {
+            // Utiliser la version avancée si les tables existent
+            $supplierAddresses = $user->savedAddresses()
+                                     ->suppliers()
+                                     ->with('delegation')
+                                     ->recentlyUsed()
+                                     ->get();
+                                     
+            $clientAddresses = $user->savedAddresses()
+                                   ->clients()
+                                   ->with('delegation')
+                                   ->recentlyUsed()
+                                   ->get();
 
-        return view('client.packages.create', compact('user', 'delegations'));
+            $lastSupplierData = session('last_supplier_data', []);
+            $lastClientData = session('last_client_data', []);
+            $prefillSupplier = $request->get('continue') === 'true' && !empty($lastSupplierData);
+
+            return view('client.packages.create-advanced', compact(
+                'user', 
+                'delegations', 
+                'supplierAddresses',
+                'clientAddresses',
+                'lastSupplierData',
+                'lastClientData',
+                'prefillSupplier'
+            ));
+        } else {
+            // Utiliser la version basique
+            return view('client.packages.create', compact('user', 'delegations'));
+        }
     }
 
     /**
-     * Enregistrement d'un nouveau colis
+     * Enregistrement d'un nouveau colis - VERSION ADAPTATIVE
      */
     public function storePackage(Request $request)
     {
         $user = Auth::user();
         
-        // Vérification du rôle
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
+
+        // Vérifier si c'est le format avancé ou basique
+        $isAdvancedFormat = $request->has('supplier_name');
+
+        if ($isAdvancedFormat) {
+            return $this->storeAdvancedPackage($request);
+        } else {
+            return $this->storeBasicPackage($request);
+        }
+    }
+
+    /**
+     * Création de colis format basique (ancien)
+     */
+    private function storeBasicPackage(Request $request)
+    {
+        $user = Auth::user();
 
         $validated = $request->validate([
             'delegation_from' => 'required|exists:delegations,id',
@@ -207,7 +240,6 @@ class ClientDashboardController extends Controller
         try {
             DB::beginTransaction();
 
-            // S'assurer que le wallet et le profil client existent
             $user->ensureWallet();
             $user->load(['wallet', 'clientProfile']);
 
@@ -215,12 +247,10 @@ class ClientDashboardController extends Controller
                 throw new \Exception("Profil client non trouvé.");
             }
 
-            // Récupération des tarifs client
             $clientProfile = $user->clientProfile;
             $deliveryFee = $clientProfile->offer_delivery_price;
             $returnFee = $clientProfile->offer_return_price;
 
-            // Création du colis
             $package = new Package([
                 'sender_id' => $user->id,
                 'sender_data' => [
@@ -243,10 +273,8 @@ class ClientDashboardController extends Controller
                 'status' => 'CREATED'
             ]);
 
-            // Calcul du montant à déduire du wallet
-            $escrowAmount = $package->calculateEscrowAmount();
+            $escrowAmount = $this->calculateEscrowAmount($package, $validated['cod_amount'], $deliveryFee, $returnFee);
             
-            // Vérification du solde
             if (!$user->wallet->hasSufficientBalance($escrowAmount)) {
                 throw new \Exception("Solde insuffisant. Montant requis: {$escrowAmount} DT");
             }
@@ -254,7 +282,6 @@ class ClientDashboardController extends Controller
             $package->amount_in_escrow = $escrowAmount;
             $package->save();
 
-            // Déduction du wallet
             $this->financialService->processTransaction([
                 'user_id' => $user->id,
                 'type' => 'PACKAGE_CREATION_DEBIT',
@@ -267,7 +294,6 @@ class ClientDashboardController extends Controller
                 ]
             ]);
 
-            // Changement de statut vers AVAILABLE
             $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
 
             DB::commit();
@@ -285,213 +311,197 @@ class ClientDashboardController extends Controller
     }
 
     /**
-     * Wallet et historique financier
+     * Création de colis format avancé (nouveau)
      */
-    public function wallet(Request $request)
+    private function storeAdvancedPackage(Request $request)
     {
         $user = Auth::user();
-        
-        // Vérification du rôle
-        if ($user->role !== 'CLIENT') {
-            abort(403, 'Accès non autorisé.');
-        }
-        
-        $user->ensureWallet();
-        $user->load('wallet');
 
-        // Statistiques du wallet
-        $walletStats = $user->wallet->getStats();
+        $validated = $request->validate([
+            // Données fournisseur/pickup
+            'supplier_name' => 'required|string|max:255',
+            'supplier_phone' => 'required|string|max:20',
+            'pickup_delegation_id' => 'required|exists:delegations,id',
+            'pickup_address' => 'required|string|max:500',
+            'pickup_notes' => 'nullable|string|max:1000',
+            'save_supplier_address' => 'boolean',
+            'supplier_address_label' => 'nullable|string|max:100',
+            
+            // Données destinataire
+            'delegation_to' => 'required|exists:delegations,id|different:pickup_delegation_id',
+            'recipient_name' => 'required|string|max:255',
+            'recipient_phone' => 'required|string|max:20',
+            'recipient_address' => 'required|string|max:500',
+            'save_client_address' => 'boolean',
+            'client_address_label' => 'nullable|string|max:100',
+            
+            // Détails du colis
+            'content_description' => 'required|string|max:255',
+            'cod_amount' => 'required|numeric|min:0|max:9999.999',
+            'package_weight' => 'nullable|numeric|min:0|max:999.999',
+            'package_value' => 'nullable|numeric|min:0|max:99999.999',
+            'package_length' => 'nullable|numeric|min:0|max:999',
+            'package_width' => 'nullable|numeric|min:0|max:999',
+            'package_height' => 'nullable|numeric|min:0|max:999',
+            'is_fragile' => 'boolean',
+            'requires_signature' => 'boolean',
+            'special_instructions' => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
+            
+            // Actions
+            'create_another' => 'boolean'
+        ]);
 
-        // Transactions avec pagination
-        $transactions = $user->financialTransactions()
-            ->where('status', 'COMPLETED')
-            ->with('package')
-            ->orderBy('completed_at', 'desc');
+        try {
+            DB::beginTransaction();
 
-        // Filtrage par type
-        if ($request->filled('type')) {
-            if ($request->type === 'credit') {
-                $transactions->where('amount', '>', 0);
-            } elseif ($request->type === 'debit') {
-                $transactions->where('amount', '<', 0);
+            $user->ensureWallet();
+            $user->load(['wallet', 'clientProfile']);
+
+            if (!$user->clientProfile) {
+                throw new \Exception("Profil client non trouvé.");
             }
-        }
 
-        // Filtrage par période
-        if ($request->filled('month')) {
-            $month = \Carbon\Carbon::parse($request->month);
-            $transactions->whereMonth('completed_at', $month->month)
-                        ->whereYear('completed_at', $month->year);
-        }
+            $clientProfile = $user->clientProfile;
+            $deliveryFee = $clientProfile->offer_delivery_price;
+            $returnFee = $clientProfile->offer_return_price;
 
-        $transactions = $transactions->paginate(20);
+            // Préparer les données du package
+            $packageData = [
+                'sender_id' => $user->id,
+                'sender_data' => [
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'address' => $user->address
+                ],
+                'delegation_from' => $validated['pickup_delegation_id'], // Pour compatibilité
+                'recipient_data' => [
+                    'name' => $validated['recipient_name'],
+                    'phone' => $validated['recipient_phone'],
+                    'address' => $validated['recipient_address']
+                ],
+                'delegation_to' => $validated['delegation_to'],
+                'content_description' => $validated['content_description'],
+                'notes' => $validated['notes'],
+                'cod_amount' => $validated['cod_amount'],
+                'delivery_fee' => $deliveryFee,
+                'return_fee' => $returnFee,
+                'status' => 'CREATED'
+            ];
 
-        return view('client.wallet.index', compact('user', 'walletStats', 'transactions'));
-    }
+            // Ajouter les données avancées si les colonnes existent
+            if (Schema::hasColumn('packages', 'supplier_data')) {
+                $packageData['supplier_data'] = [
+                    'name' => $validated['supplier_name'],
+                    'phone' => $validated['supplier_phone'],
+                ];
+                $packageData['pickup_delegation_id'] = $validated['pickup_delegation_id'];
+                $packageData['pickup_address'] = $validated['pickup_address'];
+                $packageData['pickup_phone'] = $validated['supplier_phone'];
+                $packageData['pickup_notes'] = $validated['pickup_notes'];
+                
+                if ($validated['package_weight']) {
+                    $packageData['package_weight'] = $validated['package_weight'];
+                }
+                
+                if ($validated['package_value']) {
+                    $packageData['package_value'] = $validated['package_value'];
+                }
+                
+                if ($validated['package_length'] || $validated['package_width'] || $validated['package_height']) {
+                    $packageData['package_dimensions'] = [
+                        'length' => $validated['package_length'] ?? 0,
+                        'width' => $validated['package_width'] ?? 0,
+                        'height' => $validated['package_height'] ?? 0,
+                        'unit' => 'cm'
+                    ];
+                }
+                
+                $packageData['is_fragile'] = $validated['is_fragile'] ?? false;
+                $packageData['requires_signature'] = $validated['requires_signature'] ?? false;
+                $packageData['special_instructions'] = $validated['special_instructions'];
+            }
 
-    /**
-     * Demande de retrait du wallet
-     */
-    public function createWithdrawal()
-    {
-        $user = Auth::user();
-        
-        // Vérification du rôle
-        if ($user->role !== 'CLIENT') {
-            abort(403, 'Accès non autorisé.');
-        }
-        
-        $user->ensureWallet();
-        $user->load('wallet');
+            $package = new Package($packageData);
 
-        return view('client.wallet.withdrawal', compact('user'));
-    }
+            $escrowAmount = $this->calculateEscrowAmount($package, $validated['cod_amount'], $deliveryFee, $returnFee);
+            
+            if (!$user->wallet->hasSufficientBalance($escrowAmount)) {
+                throw new \Exception("Solde insuffisant. Montant requis: {$escrowAmount} DT");
+            }
 
-    /**
-     * Traitement de la demande de retrait
-     */
-    public function storeWithdrawal(Request $request)
-    {
-        $user = Auth::user();
-        
-        // Vérification du rôle
-        if ($user->role !== 'CLIENT') {
-            abort(403, 'Accès non autorisé.');
-        }
-        
-        $user->ensureWallet();
+            $package->amount_in_escrow = $escrowAmount;
+            $package->save();
 
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:1|max:' . $user->wallet_balance,
-            'method' => ['required', Rule::in(['BANK_TRANSFER', 'CASH_DELIVERY'])],
-            'bank_iban' => 'required_if:method,BANK_TRANSFER|string|max:34',
-            'bank_name' => 'required_if:method,BANK_TRANSFER|string|max:100',
-            'bank_beneficiary' => 'required_if:method,BANK_TRANSFER|string|max:100'
-        ]);
-
-        try {
-            $withdrawal = WithdrawalRequest::create([
-                'client_id' => $user->id,
-                'amount' => $validated['amount'],
-                'method' => $validated['method'],
-                'bank_details' => $validated['method'] === 'BANK_TRANSFER' ? [
-                    'iban' => $validated['bank_iban'],
-                    'bank_name' => $validated['bank_name'],
-                    'beneficiary' => $validated['bank_beneficiary']
-                ] : null,
-                'status' => 'PENDING'
-            ]);
-
-            return redirect()->route('client.withdrawals')
-                ->with('success', "Demande de retrait #{$withdrawal->request_code} créée avec succès!");
-
-        } catch (\Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', "Erreur lors de la création: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Liste des demandes de retrait
-     */
-    public function withdrawals()
-    {
-        $user = Auth::user();
-        
-        // Vérification du rôle
-        if ($user->role !== 'CLIENT') {
-            abort(403, 'Accès non autorisé.');
-        }
-        
-        $withdrawals = $user->withdrawalRequests()
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return view('client.wallet.withdrawals', compact('withdrawals'));
-    }
-
-    /**
-     * Réclamations du client
-     */
-    public function complaints(Request $request)
-    {
-        $user = Auth::user();
-        
-        // Vérification du rôle
-        if ($user->role !== 'CLIENT') {
-            abort(403, 'Accès non autorisé.');
-        }
-        
-        $query = $user->complaints()->with(['package', 'assignedCommercial']);
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $complaints = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return view('client.complaints.index', compact('complaints'));
-    }
-
-    /**
-     * Créer une réclamation
-     */
-    public function createComplaint(Package $package)
-    {
-        // Vérification que le colis appartient au client
-        if ($package->sender_id !== Auth::id()) {
-            abort(403, 'Accès non autorisé à ce colis.');
-        }
-
-        if (!$package->canBeComplained()) {
-            return redirect()->back()
-                ->with('error', 'Ce colis ne peut plus faire l\'objet d\'une réclamation.');
-        }
-
-        return view('client.complaints.create', compact('package'));
-    }
-
-    /**
-     * Enregistrer une réclamation
-     */
-    public function storeComplaint(Package $package, Request $request)
-    {
-        if ($package->sender_id !== Auth::id()) {
-            abort(403, 'Accès non autorisé à ce colis.');
-        }
-
-        $validated = $request->validate([
-            'type' => ['required', Rule::in([
-                'CHANGE_COD', 'DELIVERY_DELAY', 'REQUEST_RETURN',
-                'RETURN_DELAY', 'RESCHEDULE_TODAY', 'FOURTH_ATTEMPT', 'CUSTOM'
-            ])],
-            'description' => 'required|string|max:1000',
-            'new_cod_amount' => 'required_if:type,CHANGE_COD|numeric|min:0|max:9999.999'
-        ]);
-
-        try {
-            $complaint = Complaint::create([
+            $this->financialService->processTransaction([
+                'user_id' => $user->id,
+                'type' => 'PACKAGE_CREATION_DEBIT',
+                'amount' => -$escrowAmount,
                 'package_id' => $package->id,
-                'client_id' => Auth::id(),
-                'type' => $validated['type'],
-                'description' => $validated['description'],
-                'additional_data' => $validated['type'] === 'CHANGE_COD' ? [
-                    'current_cod' => $package->cod_amount,
-                    'requested_cod' => $validated['new_cod_amount']
-                ] : [],
-                'status' => 'PENDING',
-                'priority' => $validated['type'] === 'CHANGE_COD' ? 'HIGH' : 'NORMAL'
+                'description' => "Création colis #{$package->package_code}",
+                'metadata' => [
+                    'package_code' => $package->package_code,
+                    'escrow_type' => $validated['cod_amount'] >= $deliveryFee ? 'return_fee' : 'delivery_fee'
+                ]
             ]);
 
-            return redirect()->route('client.complaints')
-                ->with('success', "Réclamation #{$complaint->complaint_code} créée avec succès!");
+            $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
+
+            // Sauvegarder les adresses si demandé et si la fonctionnalité est disponible
+            if (Schema::hasTable('saved_addresses')) {
+                if ($validated['save_supplier_address'] ?? false) {
+                    $this->saveAddress($user, 'SUPPLIER', [
+                        'name' => $validated['supplier_name'],
+                        'phone' => $validated['supplier_phone'],
+                        'address' => $validated['pickup_address'],
+                        'delegation_id' => $validated['pickup_delegation_id'],
+                        'label' => $validated['supplier_address_label']
+                    ]);
+                }
+
+                if ($validated['save_client_address'] ?? false) {
+                    $this->saveAddress($user, 'CLIENT', [
+                        'name' => $validated['recipient_name'],
+                        'phone' => $validated['recipient_phone'],
+                        'address' => $validated['recipient_address'],
+                        'delegation_id' => $validated['delegation_to'],
+                        'label' => $validated['client_address_label']
+                    ]);
+                }
+            }
+
+            // Sauvegarder les données en session pour la création en série
+            session([
+                'last_supplier_data' => [
+                    'name' => $validated['supplier_name'],
+                    'phone' => $validated['supplier_phone'],
+                    'pickup_delegation_id' => $validated['pickup_delegation_id'],
+                    'pickup_address' => $validated['pickup_address'],
+                    'pickup_notes' => $validated['pickup_notes']
+                ],
+                'last_client_data' => [
+                    'delegation_to' => $validated['delegation_to'],
+                    'recipient_name' => $validated['recipient_name'],
+                    'recipient_phone' => $validated['recipient_phone'],
+                    'recipient_address' => $validated['recipient_address']
+                ]
+            ]);
+
+            DB::commit();
+
+            $successMessage = "Colis #{$package->package_code} créé avec succès!";
+
+            if ($validated['create_another'] ?? false) {
+                return redirect()->route('client.packages.create', ['continue' => 'true'])
+                    ->with('success', $successMessage . ' Vous pouvez créer un autre colis.');
+            } else {
+                return redirect()->route('client.packages.show', $package)
+                    ->with('success', $successMessage);
+            }
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return back()
                 ->withInput()
                 ->with('error', "Erreur lors de la création: " . $e->getMessage());
@@ -499,56 +509,102 @@ class ClientDashboardController extends Controller
     }
 
     /**
-     * API - Statistiques dashboard
+     * Interface d'import CSV (si disponible)
      */
-    public function apiStats()
-    {
-        return response()->json($this->getDashboardStats());
-    }
-
-    /**
-     * API - Solde wallet
-     */
-    public function apiWalletBalance()
+    public function importCsvForm()
     {
         $user = Auth::user();
-        $user->ensureWallet();
         
-        return response()->json([
-            'balance' => (float) $user->wallet_balance,
-            'pending' => (float) $user->wallet_pending,
-            'available' => (float) $user->wallet->available_balance
+        if ($user->role !== 'CLIENT') {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        if (!Schema::hasTable('import_batches')) {
+            return redirect()->route('client.packages.create')
+                ->with('info', 'La fonctionnalité d\'import CSV n\'est pas encore disponible.');
+        }
+
+        $recentImports = ImportBatch::where('user_id', $user->id)
+                                  ->orderBy('created_at', 'desc')
+                                  ->limit(10)
+                                  ->get();
+
+        return view('client.packages.import', compact('recentImports'));
+    }
+
+    // ... (autres méthodes du contrôleur)
+
+    /**
+     * Méthodes privées
+     */
+    private function calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee)
+    {
+        if ($codAmount >= $deliveryFee) {
+            return $returnFee;
+        } else {
+            return $deliveryFee;
+        }
+    }
+
+    private function saveAddress($user, $type, $data)
+    {
+        if (!class_exists(\App\Models\SavedAddress::class)) {
+            return null;
+        }
+
+        return \App\Models\SavedAddress::create([
+            'user_id' => $user->id,
+            'type' => $type,
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'address' => $data['address'],
+            'delegation_id' => $data['delegation_id'],
+            'label' => $data['label'] ?? null,
         ]);
     }
 
-    // ==================== MÉTHODES PRIVÉES ====================
-
-    /**
-     * Calcule les statistiques du dashboard
-     */
     private function getDashboardStats(): array
     {
         $user = Auth::user();
         
-        // S'assurer que le wallet existe
         $user->ensureWallet();
         $user->load('wallet');
         
-        $packages = $user->sentPackages();
+        $packages = $user->packages();
         
         return [
             'wallet_balance' => (float) ($user->wallet->balance ?? 0),
             'wallet_pending' => (float) ($user->wallet->pending_amount ?? 0),
             'total_packages' => $packages->count(),
-            'in_progress_packages' => $packages->inProgress()->count(),
-            'delivered_packages' => $packages->delivered()->count(),
-            'returned_packages' => $packages->returned()->count(),
+            'in_progress_packages' => $packages->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned_packages' => $packages->where('status', 'RETURNED')->count(),
             'pending_complaints' => $user->complaints()->where('status', 'PENDING')->count(),
             'pending_withdrawals' => $user->withdrawalRequests()->where('status', 'PENDING')->count(),
-            'unread_notifications' => $user->unread_notifications_count ?? 0,
+            'unread_notifications' => $user->notifications()->where('read', false)->count(),
             'monthly_packages' => $packages->whereMonth('created_at', now()->month)->count(),
-            'monthly_delivered' => $packages->delivered()
+            'monthly_delivered' => $packages->whereIn('status', ['DELIVERED', 'PAID'])
                                            ->whereMonth('updated_at', now()->month)->count()
         ];
+    }
+
+    // API - Statistiques dashboard
+    public function apiStats()
+    {
+        return response()->json($this->getDashboardStats());
+    }
+
+    // API - Solde wallet
+    public function apiWalletBalance()
+    {
+        $user = Auth::user();
+        $user->ensureWallet();
+        $user->load('wallet');
+        
+        return response()->json([
+            'balance' => (float) $user->wallet->balance,
+            'pending' => (float) $user->wallet->pending_amount,
+            'available' => (float) ($user->wallet->balance - ($user->wallet->frozen_amount ?? 0))
+        ]);
     }
 }

@@ -15,18 +15,36 @@ class Package extends Model
         'recipient_data', 'delegation_to', 'content_description', 'notes',
         'cod_amount', 'delivery_fee', 'return_fee', 'status',
         'assigned_deliverer_id', 'assigned_at', 'delivery_attempts',
-        'cod_modifiable_by_commercial', 'amount_in_escrow'
+        'cod_modifiable_by_commercial', 'amount_in_escrow',
+        'supplier_data',           // JSON des données fournisseur
+        'pickup_delegation_id',    // Délégation de pickup
+        'pickup_address',          // Adresse complète de pickup
+        'pickup_phone',            // Téléphone de contact pickup
+        'pickup_notes',            // Notes spéciales pour le pickup
+        'package_weight',          // Poids du colis (optionnel)
+        'package_dimensions',      // Dimensions JSON (optionnel)
+        'package_value',           // Valeur déclarée (optionnel)
+        'special_instructions',    // Instructions spéciales
+        'is_fragile',             // Colis fragile
+        'requires_signature',     // Signature requise
+        'import_batch_id',        // ID du lot d'import (pour CSV)
     ];
 
     protected $casts = [
         'sender_data' => 'array',
         'recipient_data' => 'array',
+        'supplier_data' => 'array',
+        'package_dimensions' => 'array',
         'cod_amount' => 'decimal:3',
         'delivery_fee' => 'decimal:3',
         'return_fee' => 'decimal:3',
         'amount_in_escrow' => 'decimal:3',
+        'package_weight' => 'decimal:3',
+        'package_value' => 'decimal:3',
         'assigned_at' => 'datetime',
         'cod_modifiable_by_commercial' => 'boolean',
+        'is_fragile' => 'boolean',
+        'requires_signature' => 'boolean',
     ];
 
     // Relations
@@ -65,6 +83,16 @@ class Package extends Model
         return $this->hasMany(CodModification::class)->orderBy('created_at', 'desc');
     }
 
+    public function pickupDelegation()
+    {
+        return $this->belongsTo(Delegation::class, 'pickup_delegation_id');
+    }
+
+    public function importBatch()
+    {
+        return $this->belongsTo(ImportBatch::class, 'import_batch_id');
+    }
+
     // Scopes
     public function scopeByStatus($query, $status)
     {
@@ -88,7 +116,6 @@ class Package extends Model
         });
     }
 
-    // SCOPES MANQUANTS AJOUTÉS
     public function scopeInProgress($query)
     {
         return $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
@@ -141,6 +168,85 @@ class Package extends Model
             return 'N/A';
         }
         return ($data['name'] ?? 'N/A') . ' - ' . ($data['phone'] ?? 'N/A') . ' - ' . ($data['address'] ?? 'N/A');
+    }
+
+    public function getFormattedSupplierAttribute()
+    {
+        $data = $this->supplier_data;
+        if (!$data || !is_array($data)) {
+            return 'N/A';
+        }
+        return ($data['name'] ?? 'N/A') . ' - ' . ($data['phone'] ?? 'N/A');
+    }
+
+    public function getPickupLocationAttribute()
+    {
+        if ($this->pickupDelegation) {
+            return $this->pickupDelegation->name . ' - ' . ($this->pickup_address ?? 'Adresse non spécifiée');
+        }
+        return $this->pickup_address ?? 'Adresse de pickup non spécifiée';
+    }
+
+    public function getFormattedWeightAttribute()
+    {
+        if (!$this->package_weight) return null;
+        return number_format($this->package_weight, 3) . ' kg';
+    }
+
+    public function getFormattedValueAttribute()
+    {
+        if (!$this->package_value) return null;
+        return number_format($this->package_value, 3) . ' DT';
+    }
+
+    public function getFormattedDimensionsAttribute()
+    {
+        if (!$this->package_dimensions || !is_array($this->package_dimensions)) {
+            return null;
+        }
+        
+        $dims = $this->package_dimensions;
+        if (isset($dims['length'], $dims['width'], $dims['height'])) {
+            return $dims['length'] . ' x ' . $dims['width'] . ' x ' . $dims['height'] . ' cm';
+        }
+        
+        return null;
+    }
+
+    public function hasSpecialRequirements()
+    {
+        return $this->is_fragile || 
+               $this->requires_signature || 
+               !empty($this->special_instructions) ||
+               !empty($this->pickup_notes);
+    }
+
+    public function getSpecialRequirementsListAttribute()
+    {
+        $requirements = [];
+        
+        if ($this->is_fragile) {
+            $requirements[] = 'Fragile';
+        }
+        
+        if ($this->requires_signature) {
+            $requirements[] = 'Signature requise';
+        }
+        
+        if (!empty($this->special_instructions)) {
+            $requirements[] = 'Instructions spéciales';
+        }
+        
+        if (!empty($this->pickup_notes)) {
+            $requirements[] = 'Notes pickup';
+        }
+        
+        return $requirements;
+    }
+
+    public function isFromImport()
+    {
+        return !is_null($this->import_batch_id);
     }
 
     // Méthodes de gestion des statuts

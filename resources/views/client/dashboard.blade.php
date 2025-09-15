@@ -1,330 +1,496 @@
-@extends('layouts.client')
-
-@section('title', 'Dashboard Client')
-
-@section('header')
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-purple-900">
-                Bonjour, {{ auth()->user()->name }} 👋
-            </h1>
-            <p class="mt-1 text-sm text-purple-600">
-                Voici un aperçu de votre activité et de vos colis
-            </p>
-        </div>
-        
-        <div class="flex items-center space-x-3">
-            <a href="{{ route('client.packages.create') }}" 
-               class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 focus:bg-purple-700 active:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Nouveau Colis
-            </a>
-        </div>
-    </div>
-@endsection
-
-@section('content')
-    <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Solde Wallet -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 card-hover">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="h-12 w-12 rounded-xl bg-purple-gradient flex items-center justify-center shadow-md">
-                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-4 flex-1">
-                    <p class="text-sm font-medium text-gray-500">Solde Wallet</p>
-                    <p class="text-2xl font-bold text-purple-900">{{ number_format($stats['wallet_balance'], 3) }} DT</p>
-                    @if($stats['wallet_pending'] > 0)
-                        <p class="text-xs text-orange-600">{{ number_format($stats['wallet_pending'], 3) }} DT en attente</p>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Colis en cours -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 card-hover">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center shadow-md">
-                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-4 flex-1">
-                    <p class="text-sm font-medium text-gray-500">Colis en cours</p>
-                    <p class="text-2xl font-bold text-orange-900">{{ $stats['in_progress_packages'] }}</p>
-                    <p class="text-xs text-gray-600">{{ $stats['monthly_packages'] }} ce mois</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Colis livrés -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 card-hover">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="h-12 w-12 rounded-xl bg-green-500 flex items-center justify-center shadow-md">
-                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-4 flex-1">
-                    <p class="text-sm font-medium text-gray-500">Colis livrés</p>
-                    <p class="text-2xl font-bold text-green-900">{{ $stats['delivered_packages'] }}</p>
-                    <p class="text-xs text-gray-600">{{ $stats['monthly_delivered'] }} ce mois</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Réclamations -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 card-hover">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center shadow-md">
-                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-4 flex-1">
-                    <p class="text-sm font-medium text-gray-500">Réclamations</p>
-                    <p class="text-2xl font-bold text-red-900">{{ $stats['pending_complaints'] }}</p>
-                    <p class="text-xs text-gray-600">En attente de traitement</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Colis récents -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100">
-                <div class="px-6 py-4 border-b border-purple-100">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-purple-900">Colis récents</h3>
-                        <a href="{{ route('client.packages.index') }}" 
-                           class="text-sm font-medium text-purple-600 hover:text-purple-700">
-                            Voir tout →
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="divide-y divide-purple-100">
-                    @forelse($recentPackages as $package)
-                        <div class="px-6 py-4 hover:bg-purple-50 transition-colors duration-200">
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center">
-                                        <p class="text-sm font-medium text-purple-900">
-                                            {{ $package->package_code }}
-                                        </p>
-                                        @if(isset($package->status))
-                                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                @if($package->status === 'CREATED') bg-blue-100 text-blue-800
-                                                @elseif($package->status === 'AVAILABLE') bg-yellow-100 text-yellow-800
-                                                @elseif($package->status === 'ACCEPTED') bg-purple-100 text-purple-800
-                                                @elseif($package->status === 'PICKED_UP') bg-orange-100 text-orange-800
-                                                @elseif($package->status === 'DELIVERED') bg-green-100 text-green-800
-                                                @elseif($package->status === 'PAID') bg-green-100 text-green-800
-                                                @elseif($package->status === 'RETURNED') bg-red-100 text-red-800
-                                                @else bg-gray-100 text-gray-800
-                                                @endif">
-                                                {{ $package->status }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        {{ $package->recipient_data['name'] ?? 'N/A' }} • {{ $package->delegationTo->name ?? 'N/A' }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        {{ $package->created_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                                
-                                <div class="text-right">
-                                    <p class="text-sm font-medium text-purple-900">
-                                        {{ number_format($package->cod_amount, 3) }} DT
-                                    </p>
-                                    <a href="{{ route('client.packages.show', $package) }}" 
-                                       class="text-xs text-purple-600 hover:text-purple-700">
-                                        Voir détails
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="px-6 py-12 text-center">
-                            <svg class="h-12 w-12 text-gray-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5" />
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500">Aucun colis récent</p>
-                            <a href="{{ route('client.packages.create') }}" 
-                               class="mt-4 inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-lg text-xs font-medium text-white hover:bg-purple-700">
-                                Créer votre premier colis
-                            </a>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@yield('title', 'Al-Amena Delivery') - Espace Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': {
+                            50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE', 300: '#93C5FD',
+                            400: '#60A5FA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
+                            800: '#1E40AF', 900: '#1E3A8A'
+                        },
+                        'emerald': {
+                            50: '#ECFDF5', 100: '#D1FAE5', 200: '#A7F3D0', 300: '#6EE7B7',
+                            400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857',
+                            800: '#065F46', 900: '#064E3B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    @stack('styles')
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-emerald-50 min-h-screen" x-data="clientApp()">
+    <div class="flex h-screen">
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="w-64 bg-white shadow-xl border-r border-blue-200" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-300"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full">
             
-            <!-- Wallet Summary -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Wallet</h3>
-                
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Solde disponible</span>
-                        <span class="font-semibold text-purple-900">{{ number_format($user->wallet_balance ?? 0, 3) }} DT</span>
+            <!-- Logo & Brand -->
+            <div class="p-6 border-b border-blue-200 bg-gradient-to-r from-blue-600 to-emerald-600">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
                     </div>
-                    
-                    @if(($user->wallet_pending ?? 0) > 0)
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">En attente</span>
-                            <span class="font-medium text-orange-600">{{ number_format($user->wallet_pending, 3) }} DT</span>
-                        </div>
-                    @endif
-                    
-                    <div class="pt-4 border-t border-purple-100">
-                        <div class="grid grid-cols-2 gap-3">
-                            <a href="{{ route('client.wallet.index') }}" 
-                               class="inline-flex justify-center items-center px-3 py-2 bg-purple-100 border border-transparent rounded-lg text-xs font-medium text-purple-700 hover:bg-purple-200">
-                                Historique
-                            </a>
-                            <a href="{{ route('client.wallet.withdrawal') }}" 
-                               class="inline-flex justify-center items-center px-3 py-2 bg-purple-600 border border-transparent rounded-lg text-xs font-medium text-white hover:bg-purple-700">
-                                Retrait
-                            </a>
-                        </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">Al-Amena</h1>
+                        <p class="text-xs text-blue-200">Espace Client</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Actions rapides</h3>
+            <!-- Navigation -->
+            <nav class="p-4 space-y-2 flex-1 overflow-y-auto">
+                <a href="{{ route('client.dashboard') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.dashboard') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                    </svg>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+
+                <a href="{{ route('client.packages.index') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.packages.*') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <span class="font-medium">Mes Colis</span>
+                    <div class="ml-auto flex space-x-1">
+                        <span x-show="stats.in_progress_packages > 0" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.in_progress_packages"></span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.packages.create') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.packages.create') ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    <span class="font-medium">Nouveau Colis</span>
+                </a>
+
+                <a href="{{ route('client.wallet.index') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.wallet.*') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    <span class="font-medium">Mon Portefeuille</span>
+                    <div class="ml-auto">
+                        <span class="text-xs font-semibold text-emerald-600" x-text="formatCurrency(stats.wallet_balance)"></span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.withdrawals') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.withdrawals') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                    <span class="font-medium">Mes Retraits</span>
+                    <div class="ml-auto" x-show="stats.pending_withdrawals > 0">
+                        <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_withdrawals"></span>
+                    </div>
+                </a>
+
+                <a href="{{ route('client.complaints.index') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.complaints.*') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <span class="font-medium">Réclamations</span>
+                    <div class="ml-auto" x-show="stats.pending_complaints > 0">
+                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_complaints"></span>
+                    </div>
+                </a>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 my-4"></div>
+
+                <a href="{{ route('client.notifications.index') }}" 
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('client.notifications.*') ? 'bg-blue-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
+                    </svg>
+                    <span class="font-medium">Notifications</span>
+                    <div class="ml-auto" x-show="notifications.unread_count > 0">
+                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-bounce" x-text="notifications.unread_count"></span>
+                    </div>
+                </a>
+            </nav>
+
+            <!-- User Info -->
+            <div class="p-4 border-t border-blue-200 bg-gray-50">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-xs text-gray-500">Client</p>
+                    </div>
+                </div>
                 
-                <div class="space-y-3">
-                    <a href="{{ route('client.packages.create') }}" 
-                       class="flex items-center p-3 rounded-xl hover:bg-purple-50 transition-colors duration-200 group">
-                        <div class="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200">
-                            <svg class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                        </div>
-                        <span class="ml-3 text-sm font-medium text-gray-900">Créer un colis</span>
-                    </a>
+                <div class="space-y-2">
+                    <button @click="showUserMenu = !showUserMenu" 
+                            class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-white rounded-lg transition-colors">
+                        <span>Mon Compte</span>
+                        <svg class="w-4 h-4 transition-transform" :class="showUserMenu ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
                     
-                    <a href="{{ route('client.packages.index', ['status' => 'in_progress']) }}" 
-                       class="flex items-center p-3 rounded-xl hover:bg-purple-50 transition-colors duration-200 group">
-                        <div class="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center group-hover:bg-orange-200">
-                            <svg class="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0V8.25a1.5 1.5 0 013 0v10.5zM12 7.5V21M15.75 18.75a1.5 1.5 0 01-3 0V8.25a1.5 1.5 0 013 0v10.5z" />
-                            </svg>
-                        </div>
-                        <span class="ml-3 text-sm font-medium text-gray-900">Suivre mes colis</span>
-                    </a>
+                    <div x-show="showUserMenu" x-transition class="space-y-1 pl-3">
+                        <a href="#" class="block px-3 py-1 text-xs text-gray-600 hover:text-blue-600">Profil</a>
+                        <a href="#" class="block px-3 py-1 text-xs text-gray-600 hover:text-blue-600">Paramètres</a>
+                    </div>
                     
-                    @if($stats['pending_complaints'] > 0)
-                        <a href="{{ route('client.complaints.index') }}" 
-                           class="flex items-center p-3 rounded-xl hover:bg-purple-50 transition-colors duration-200 group">
-                            <div class="h-8 w-8 rounded-lg bg-red-100 flex items-center justify-center group-hover:bg-red-200">
-                                <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    <form method="POST" action="{{ route('logout') }}" class="w-full">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Se déconnecter
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile sidebar overlay -->
+        <div x-show="sidebarOpen" @click="sidebarOpen = false" 
+             class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <!-- Mobile menu button -->
+                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-600 hover:text-blue-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+                        
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">@yield('page-title', 'Dashboard')</h1>
+                            <p class="text-sm text-gray-600">@yield('page-description', 'Gestion de vos envois Al-Amena Delivery')</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Quick Stats -->
+                        <div class="hidden lg:flex items-center space-x-6 text-sm">
+                            <div class="flex items-center space-x-2" x-show="stats.wallet_balance > 0">
+                                <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                                <span class="text-emerald-600 font-medium" x-text="formatCurrency(stats.wallet_balance)"></span>
+                            </div>
+                            <div class="text-gray-500" x-show="stats.in_progress_packages > 0">
+                                <span x-text="stats.in_progress_packages"></span> colis en cours
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" 
+                                    class="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
                                 </svg>
+                                <span x-show="notifications.unread_count > 0" 
+                                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                                      x-text="notifications.unread_count"></span>
+                            </button>
+                            
+                            <div x-show="open" @click.away="open = false" x-transition
+                                 class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50">
+                                <div class="p-4 border-b">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                        <button @click="markAllAsRead()" class="text-sm text-blue-600 hover:text-blue-800">
+                                            Tout marquer lu
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="max-h-96 overflow-y-auto" x-html="notificationsList">
+                                    <p class="p-4 text-gray-500 text-center">Chargement...</p>
+                                </div>
                             </div>
-                            <div class="ml-3 flex-1">
-                                <span class="text-sm font-medium text-gray-900">Mes réclamations</span>
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    {{ $stats['pending_complaints'] }}
-                                </span>
-                            </div>
-                        </a>
-                    @endif
-                </div>
-            </div>
+                        </div>
 
-            <!-- Transactions récentes -->
-            @if($recentTransactions->isNotEmpty())
-                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                    <h3 class="text-lg font-semibold text-purple-900 mb-4">Transactions récentes</h3>
-                    
-                    <div class="space-y-3">
-                        @foreach($recentTransactions->take(3) as $transaction)
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100">
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">{{ $transaction->description ?? 'Transaction' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $transaction->completed_at ? $transaction->completed_at->format('d/m/Y H:i') : 'N/A' }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-sm font-medium {{ $transaction->amount >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ $transaction->amount >= 0 ? '+' : '' }}{{ number_format($transaction->amount, 3) }} DT
-                                    </span>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    
-                    <div class="mt-4 pt-4 border-t border-purple-100">
-                        <a href="{{ route('client.wallet.index') }}" 
-                           class="text-sm font-medium text-purple-600 hover:text-purple-700">
-                            Voir toutes les transactions →
-                        </a>
+                        <!-- Quick Actions -->
+                        @yield('header-actions')
                     </div>
                 </div>
-            @endif
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 overflow-auto">
+                <div class="p-6">
+                    @yield('content')
+                </div>
+            </main>
         </div>
     </div>
 
-    <!-- Alertes et notifications -->
-    @if(auth()->user()->account_status !== 'ACTIVE')
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-x-full opacity-0"
+             x-transition:enter-end="translate-x-0 opacity-100"
+             x-transition:leave="transform transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0 opacity-100"
+             x-transition:leave-end="translate-x-full opacity-0"
+             class="fixed top-4 right-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm">
+            <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ session('success') }}</span>
+                <button @click="show = false" class="ml-auto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-800">
-                        <strong>Compte en attente de validation.</strong>
-                        Votre compte est en cours de vérification par notre équipe. Vous pourrez créer des colis une fois la validation terminée.
-                    </p>
-                </div>
+                </button>
             </div>
         </div>
     @endif
-@endsection
 
-@push('scripts')
-<script>
-    // Actualisation automatique des stats
-    setInterval(() => {
-        fetch('/client/api/dashboard-stats', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    @if(session('error') || $errors->any())
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)"
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-x-full opacity-0"
+             x-transition:enter-end="translate-x-0 opacity-100"
+             x-transition:leave="transform transition ease-in duration-200"
+             x-transition:leave-start="translate-x-0 opacity-100"
+             x-transition:leave-end="translate-x-full opacity-0"
+             class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm">
+            <div class="flex items-start space-x-2">
+                <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="flex-1">
+                    @if(session('error'))
+                        <span>{{ session('error') }}</span>
+                    @endif
+                    @if($errors->any())
+                        @foreach($errors->all() as $error)
+                            <div>{{ $error }}</div>
+                        @endforeach
+                    @endif
+                </div>
+                <button @click="show = false" class="ml-2 flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modals & Components -->
+    @stack('modals')
+
+    <!-- Scripts -->
+    <script>
+        function clientApp() {
+            return {
+                sidebarOpen: false,
+                showUserMenu: false,
+                stats: {
+                    wallet_balance: 0,
+                    wallet_pending: 0,
+                    total_packages: 0,
+                    in_progress_packages: 0,
+                    delivered_packages: 0,
+                    returned_packages: 0,
+                    pending_complaints: 0,
+                    pending_withdrawals: 0,
+                    unread_notifications: 0,
+                    monthly_packages: 0,
+                    monthly_delivered: 0
+                },
+                notifications: {
+                    unread_count: 0
+                },
+                notificationsList: '<p class="p-4 text-gray-500 text-center">Chargement...</p>',
+
+                init() {
+                    this.loadStats();
+                    this.loadNotifications();
+                    
+                    // Auto-refresh every 60 seconds
+                    setInterval(() => {
+                        this.loadStats();
+                        this.loadNotifications();
+                    }, 60000);
+
+                    // Handle responsive sidebar
+                    this.handleResize();
+                    window.addEventListener('resize', () => this.handleResize());
+                },
+
+                handleResize() {
+                    if (window.innerWidth >= 1024) {
+                        this.sidebarOpen = false;
+                    }
+                },
+
+                async loadStats() {
+                    try {
+                        const response = await fetch('/client/api/dashboard-stats');
+                        if (response.ok) {
+                            this.stats = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement stats:', error);
+                    }
+                },
+
+                async loadNotifications() {
+                    try {
+                        const response = await fetch('/client/api/notifications/unread-count');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.notifications.unread_count = data.count;
+                        }
+
+                        // Charger la liste des notifications récentes
+                        const recentResponse = await fetch('/client/api/notifications/recent');
+                        if (recentResponse.ok) {
+                            const data = await recentResponse.json();
+                            this.updateNotificationsList(data.notifications);
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement notifications:', error);
+                    }
+                },
+
+                updateNotificationsList(notifications) {
+                    if (notifications.length === 0) {
+                        this.notificationsList = '<p class="p-4 text-gray-500 text-center">Aucune notification</p>';
+                        return;
+                    }
+
+                    this.notificationsList = notifications.map(notification => `
+                        <div class="p-4 border-b hover:bg-gray-50 ${notification.read ? 'opacity-75' : ''}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="font-medium text-sm text-gray-900">${notification.title}</p>
+                                    <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                                    <p class="text-xs text-gray-500 mt-2">${this.formatDate(notification.created_at)}</p>
+                                </div>
+                                <div class="ml-2 flex flex-col items-end space-y-1">
+                                    <span class="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                        ${notification.type}
+                                    </span>
+                                    ${!notification.read ? `
+                                        <button onclick="markNotificationRead(${notification.id})" 
+                                                class="text-xs text-blue-600 hover:text-blue-800">
+                                            Marquer lu
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                async markAllAsRead() {
+                    try {
+                        const response = await fetch('/client/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            this.loadNotifications();
+                        }
+                    } catch (error) {
+                        console.error('Erreur marquage notifications:', error);
+                    }
+                },
+
+                formatCurrency(amount) {
+                    return new Intl.NumberFormat('fr-TN', { 
+                        style: 'currency', 
+                        currency: 'TND',
+                        minimumFractionDigits: 3
+                    }).format(amount || 0);
+                },
+
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Mise à jour des éléments de stats si nécessaire
-            console.log('Stats updated:', data);
-        })
-        .catch(error => console.log('Erreur stats:', error));
-    }, 60000); // Toutes les minutes
-</script>
-@endpush
+        }
+
+        // Global functions
+        async function markNotificationRead(notificationId) {
+            try {
+                const response = await fetch(`/client/notifications/${notificationId}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                if (response.ok) {
+                    // Trigger notification reload from Alpine component
+                    document.querySelector('[x-data*="clientApp"]').__x.$data.loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur marquage notification:', error);
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            toast.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+
+    @stack('scripts')
+</body>
+</html>

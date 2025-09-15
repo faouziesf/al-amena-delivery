@@ -1,395 +1,473 @@
 @extends('layouts.client')
 
 @section('title', 'Colis ' . $package->package_code)
+@section('page-title', 'Colis ' . $package->package_code)
+@section('page-description', 'Détails et suivi de votre envoi')
 
-@section('header')
-    <div class="flex items-center justify-between">
-        <div>
-            <div class="flex items-center space-x-3">
-                <h1 class="text-2xl font-bold text-purple-900">{{ $package->package_code }}</h1>
-                <x-client.package-status-badge :status="$package->status" size="md" />
-            </div>
-            <p class="mt-1 text-sm text-purple-600">
-                Créé le {{ $package->created_at->format('d/m/Y à H:i') }}
-            </p>
-        </div>
-        
-        <div class="flex items-center space-x-3">
-            @if($package->canBeComplained())
-                <a href="{{ route('client.complaints.create', $package) }}" 
-                   class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700 transition ease-in-out duration-150">
-                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    Faire une réclamation
-                </a>
-            @endif
-            
-            <a href="{{ route('client.packages') }}" 
-               class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-xl font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 transition ease-in-out duration-150">
-                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                </svg>
-                Retour à la liste
-            </a>
-        </div>
-    </div>
+@section('header-actions')
+<div class="flex items-center space-x-3">
+    <a href="{{ route('client.packages.index') }}" 
+       class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Retour à la liste
+    </a>
+    
+    @if(in_array($package->status, ['DELIVERED', 'PICKED_UP', 'ACCEPTED', 'REFUSED']))
+    <a href="{{ route('client.complaints.create', $package) }}" 
+       class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        Créer une Réclamation
+    </a>
+    @endif
+
+    <button @click="window.print()" 
+            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        Imprimer
+    </button>
+</div>
 @endsection
 
 @section('content')
+<div x-data="packageDetailsData()" class="space-y-6">
+
+    <!-- En-tête avec Statut -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-emerald-600 p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold mb-2">{{ $package->package_code }}</h1>
+                    <p class="text-blue-100">Créé le {{ $package->created_at->format('d/m/Y à H:i') }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+                        {{ $package->status === 'DELIVERED' || $package->status === 'PAID' ? 'bg-green-500 bg-opacity-20 text-green-100' : 
+                           ($package->status === 'RETURNED' ? 'bg-red-500 bg-opacity-20 text-red-100' : 
+                           'bg-orange-500 bg-opacity-20 text-orange-100') }}">
+                        @switch($package->status)
+                            @case('CREATED') Créé @break
+                            @case('AVAILABLE') Disponible @break
+                            @case('ACCEPTED') Accepté @break
+                            @case('PICKED_UP') Collecté @break
+                            @case('DELIVERED') Livré @break
+                            @case('PAID') Payé @break
+                            @case('RETURNED') Retourné @break
+                            @case('REFUSED') Refusé @break
+                            @default {{ $package->status }}
+                        @endswitch
+                    </div>
+                    <p class="text-2xl font-bold mt-2">{{ number_format($package->cod_amount, 3) }} DT</p>
+                    <p class="text-xs text-blue-100">Montant COD</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Principal -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Contenu principal -->
+        <!-- Colonne Principale -->
         <div class="lg:col-span-2 space-y-6">
             
-            <!-- Informations générales -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Informations Générales</h3>
+            <!-- Informations Itinéraire -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Itinéraire</h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Code du colis</dt>
-                        <dd class="mt-1 text-lg font-semibold text-purple-900">{{ $package->package_code }}</dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Statut actuel</dt>
-                        <dd class="mt-1">
-                            <x-client.package-status-badge :status="$package->status" size="md" />
-                        </dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Montant COD</dt>
-                        <dd class="mt-1 text-lg font-semibold text-green-600">{{ number_format($package->cod_amount, 3) }} DT</dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Tentatives de livraison</dt>
-                        <dd class="mt-1">
-                            <span class="text-lg font-semibold {{ $package->delivery_attempts > 0 ? 'text-orange-600' : 'text-gray-900' }}">
-                                {{ $package->delivery_attempts }}/3
-                            </span>
-                        </dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Contenu</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $package->content_description }}</dd>
-                    </div>
-                    
-                    @if($package->notes)
-                        <div class="md:col-span-2">
-                            <dt class="text-sm font-medium text-gray-500">Commentaires</dt>
-                            <dd class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{{ $package->notes }}</dd>
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                            <div class="ml-4">
+                                <p class="font-medium text-gray-900">{{ $package->delegationFrom->name }}</p>
+                                <p class="text-sm text-gray-500">Délégation d'origine</p>
+                                @if($package->delegationFrom->zone)
+                                    <p class="text-xs text-gray-400">Zone: {{ $package->delegationFrom->zone }}</p>
+                                @endif
+                            </div>
                         </div>
-                    @endif
+                    </div>
+                    
+                    <div class="flex-shrink-0 mx-4">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div class="flex items-center justify-end">
+                            <div class="mr-4 text-right">
+                                <p class="font-medium text-gray-900">{{ $package->delegationTo->name }}</p>
+                                <p class="text-sm text-gray-500">Délégation de destination</p>
+                                @if($package->delegationTo->zone)
+                                    <p class="text-xs text-gray-400">Zone: {{ $package->delegationTo->zone }}</p>
+                                @endif
+                            </div>
+                            <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Expéditeur et Destinataire -->
+            <!-- Informations Expéditeur et Destinataire -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
                 <!-- Expéditeur -->
-                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                            </svg>
-                        </div>
-                        <h4 class="ml-3 font-semibold text-purple-900">Expéditeur</h4>
-                    </div>
-                    
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Expéditeur</h3>
                     <div class="space-y-3">
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $package->sender_data['name'] }}</dd>
+                            <p class="text-sm text-gray-500">Nom</p>
+                            <p class="font-medium text-gray-900">{{ $package->sender_data['name'] ?? 'N/A' }}</p>
                         </div>
-                        
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $package->sender_data['phone'] }}</dd>
+                            <p class="text-sm text-gray-500">Téléphone</p>
+                            <p class="font-medium text-gray-900">{{ $package->sender_data['phone'] ?? 'N/A' }}</p>
                         </div>
-                        
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Délégation</dt>
-                            <dd class="mt-1 text-sm font-medium text-purple-600">{{ $package->delegationFrom->name }}</dd>
-                        </div>
-                        
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Adresse</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $package->sender_data['address'] }}</dd>
+                            <p class="text-sm text-gray-500">Adresse</p>
+                            <p class="font-medium text-gray-900">{{ $package->sender_data['address'] ?? 'N/A' }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Destinataire -->
-                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                    <div class="flex items-center mb-4">
-                        <div class="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                            </svg>
-                        </div>
-                        <h4 class="ml-3 font-semibold text-purple-900">Destinataire</h4>
-                    </div>
-                    
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Destinataire</h3>
                     <div class="space-y-3">
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $package->recipient_data['name'] }}</dd>
+                            <p class="text-sm text-gray-500">Nom</p>
+                            <p class="font-medium text-gray-900">{{ $package->recipient_data['name'] ?? 'N/A' }}</p>
                         </div>
-                        
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $package->recipient_data['phone'] }}</dd>
+                            <p class="text-sm text-gray-500">Téléphone</p>
+                            <p class="font-medium text-gray-900">{{ $package->recipient_data['phone'] ?? 'N/A' }}</p>
                         </div>
-                        
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Délégation</dt>
-                            <dd class="mt-1 text-sm font-medium text-green-600">{{ $package->delegationTo->name }}</dd>
-                        </div>
-                        
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Adresse</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $package->recipient_data['address'] }}</dd>
+                            <p class="text-sm text-gray-500">Adresse</p>
+                            <p class="font-medium text-gray-900">{{ $package->recipient_data['address'] ?? 'N/A' }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Historique des statuts -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Historique du Colis</h3>
+            <!-- Détails du Colis -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Détails du Colis</h3>
                 
-                @if($package->statusHistory->count() > 0)
-                    <div class="flow-root">
-                        <ul role="list" class="-mb-8">
-                            @foreach($package->statusHistory as $index => $history)
-                                <li>
-                                    <div class="relative pb-8">
-                                        @if(!$loop->last)
-                                            <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-purple-200" aria-hidden="true"></span>
-                                        @endif
-                                        
-                                        <div class="relative flex space-x-3">
-                                            <div>
-                                                <span class="h-8 w-8 rounded-full {{ $history->new_status === 'PAID' ? 'bg-green-500' : ($history->new_status === 'RETURNED' ? 'bg-red-500' : 'bg-purple-500') }} flex items-center justify-center ring-8 ring-white">
-                                                    @if($history->new_status === 'PAID')
-                                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    @elseif($history->new_status === 'RETURNED')
-                                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                                                        </svg>
-                                                    @else
-                                                        <svg class="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 6 6" aria-hidden="true">
-                                                            <circle cx="3" cy="3" r="3" />
-                                                        </svg>
-                                                    @endif
-                                                </span>
-                                            </div>
-                                            
-                                            <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                                <div>
-                                                    <p class="text-sm text-gray-900">
-                                                        Statut changé vers 
-                                                        <x-client.package-status-badge :status="$history->new_status" size="xs" class="ml-1" />
-                                                    </p>
-                                                    
-                                                    @if($history->notes)
-                                                        <p class="mt-1 text-sm text-gray-500">{{ $history->notes }}</p>
-                                                    @endif
-                                                    
-                                                    @if($history->changedByUser && $history->changedByUser->id !== auth()->id())
-                                                        <p class="mt-1 text-xs text-gray-400">
-                                                            Par {{ $history->changedByUser->name }} ({{ ucfirst(strtolower($history->changed_by_role)) }})
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                                
-                                                <div class="whitespace-nowrap text-right text-sm text-gray-500">
-                                                    <time datetime="{{ $history->created_at->toISOString() }}">
-                                                        {{ $history->created_at->format('d/m/Y H:i') }}
-                                                    </time>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Description du contenu</p>
+                            <p class="font-medium text-gray-900">{{ $package->content_description }}</p>
+                        </div>
+                        
+                        @if($package->notes)
+                        <div>
+                            <p class="text-sm text-gray-500">Notes spéciales</p>
+                            <p class="font-medium text-gray-900">{{ $package->notes }}</p>
+                        </div>
+                        @endif
                     </div>
-                @else
-                    <div class="text-center py-6">
-                        <svg class="h-12 w-12 text-gray-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-500">Aucun historique disponible</p>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Réclamations associées -->
-            @if($package->complaints->count() > 0)
-                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                    <h3 class="text-lg font-semibold text-purple-900 mb-4">Réclamations</h3>
                     
                     <div class="space-y-4">
-                        @foreach($package->complaints as $complaint)
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-gray-900">{{ $complaint->complaint_code }}</span>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ $complaint->status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $complaint->status === 'RESOLVED' ? 'bg-green-100 text-green-800' : '' }}
-                                        {{ $complaint->status === 'REJECTED' ? 'bg-red-100 text-red-800' : '' }}">
-                                        {{ ucfirst(strtolower($complaint->status)) }}
-                                    </span>
-                                </div>
-                                
-                                <p class="text-sm text-gray-600 mb-2">{{ $complaint->description }}</p>
-                                
-                                <div class="flex items-center justify-between text-xs text-gray-500">
-                                    <span>{{ $complaint->created_at->format('d/m/Y H:i') }}</span>
-                                    @if($complaint->assignedCommercial)
-                                        <span>Assigné à {{ $complaint->assignedCommercial->name }}</span>
-                                    @endif
-                                </div>
-                                
-                                @if($complaint->resolution_notes)
-                                    <div class="mt-3 p-3 bg-green-50 rounded-lg">
-                                        <p class="text-sm text-green-800"><strong>Résolution:</strong> {{ $complaint->resolution_notes }}</p>
-                                        @if($complaint->resolved_at)
-                                            <p class="text-xs text-green-600 mt-1">Résolu le {{ $complaint->resolved_at->format('d/m/Y H:i') }}</p>
-                                        @endif
-                                    </div>
-                                @endif
+                        <div>
+                            <p class="text-sm text-gray-500">Montant COD</p>
+                            <p class="text-xl font-bold text-emerald-600">{{ number_format($package->cod_amount, 3) }} DT</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-500">Frais de livraison</p>
+                                <p class="font-medium">{{ number_format($package->delivery_fee, 3) }} DT</p>
                             </div>
-                        @endforeach
+                            <div>
+                                <p class="text-gray-500">Frais de retour</p>
+                                <p class="font-medium">{{ number_format($package->return_fee, 3) }} DT</p>
+                            </div>
+                        </div>
+                        
+                        @if($package->amount_in_escrow > 0)
+                        <div>
+                            <p class="text-sm text-gray-500">Montant en escrow</p>
+                            <p class="font-medium text-blue-600">{{ number_format($package->amount_in_escrow, 3) }} DT</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
+            </div>
+
+            <!-- Livreur Assigné -->
+            @if($package->assignedDeliverer)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Livreur Assigné</h3>
+                
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ substr($package->assignedDeliverer->name, 0, 2) }}
+                    </div>
+                    <div class="ml-4">
+                        <p class="font-medium text-gray-900">{{ $package->assignedDeliverer->name }}</p>
+                        <p class="text-sm text-gray-500">{{ $package->assignedDeliverer->phone ?? 'Téléphone non disponible' }}</p>
+                        @if($package->assigned_at)
+                            <p class="text-xs text-gray-400">Assigné le {{ $package->assigned_at->format('d/m/Y à H:i') }}</p>
+                        @endif
+                    </div>
+                </div>
+                
+                @if($package->delivery_attempts > 0)
+                <div class="mt-4 p-3 bg-orange-50 rounded-lg">
+                    <p class="text-sm text-orange-800">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ $package->delivery_attempts }} tentative(s) de livraison
+                    </p>
+                </div>
+                @endif
+            </div>
             @endif
+
+            <!-- Réclamations -->
+            @if($package->complaints->count() > 0)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Réclamations</h3>
+                
+                <div class="space-y-4">
+                    @foreach($package->complaints as $complaint)
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {{ $complaint->status === 'RESOLVED' ? 'bg-green-100 text-green-800' : 
+                                       ($complaint->status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800') }}">
+                                    {{ $complaint->getStatusDisplayAttribute() }}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900">{{ $complaint->getTypeDisplayAttribute() }}</span>
+                            </div>
+                            <span class="text-xs text-gray-500">{{ $complaint->created_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">{{ $complaint->description }}</p>
+                        
+                        @if($complaint->resolution_notes)
+                        <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-xs text-gray-500 mb-1">Résolution:</p>
+                            <p class="text-sm text-gray-700">{{ $complaint->resolution_notes }}</p>
+                        </div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Modifications COD -->
+            @if($package->codModifications->count() > 0)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifications COD</h3>
+                
+                <div class="space-y-3">
+                    @foreach($package->codModifications as $modification)
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-blue-900">
+                                {{ number_format($modification->old_amount, 3) }} DT → {{ number_format($modification->new_amount, 3) }} DT
+                            </p>
+                            <p class="text-xs text-blue-700">{{ $modification->reason }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-blue-600">{{ $modification->created_at->format('d/m/Y H:i') }}</p>
+                            @if($modification->modifiedByCommercial)
+                                <p class="text-xs text-blue-500">Par: {{ $modification->modifiedByCommercial->name }}</p>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
         </div>
 
         <!-- Sidebar -->
         <div class="space-y-6">
             
-            <!-- Informations financières -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Informations Financières</h3>
+            <!-- Suivi en Temps Réel -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Suivi en Temps Réel</h3>
                 
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Montant COD</span>
-                        <span class="font-semibold text-gray-900">{{ number_format($package->cod_amount, 3) }} DT</span>
-                    </div>
-                    
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Frais livraison</span>
-                        <span class="font-medium text-gray-700">{{ number_format($package->delivery_fee, 3) }} DT</span>
-                    </div>
-                    
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Frais retour</span>
-                        <span class="font-medium text-gray-700">{{ number_format($package->return_fee, 3) }} DT</span>
-                    </div>
-                    
-                    <hr class="border-purple-100">
-                    
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Montant en escrow</span>
-                        <span class="font-semibold text-red-600">{{ number_format($package->amount_in_escrow, 3) }} DT</span>
-                    </div>
-                    
                     @php
-                        $deliveryCredit = $package->calculateDeliveryCredit();
+                        $statuses = [
+                            'CREATED' => ['Créé', 'Colis créé dans le système'],
+                            'AVAILABLE' => ['Disponible', 'Prêt pour collecte'],
+                            'ACCEPTED' => ['Accepté', 'Pris en charge par le livreur'],
+                            'PICKED_UP' => ['Collecté', 'En cours de livraison'],
+                            'DELIVERED' => ['Livré', 'Remis au destinataire'],
+                            'PAID' => ['Payé', 'Transaction finalisée'],
+                            'RETURNED' => ['Retourné', 'Retourné à l\'expéditeur']
+                        ];
+                        
+                        $currentStatus = $package->status;
+                        $statusKeys = array_keys($statuses);
+                        $currentIndex = array_search($currentStatus, $statusKeys);
                     @endphp
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Si livré, vous recevez</span>
-                        <span class="font-semibold text-green-600">{{ number_format($deliveryCredit, 3) }} DT</span>
+                    
+                    @foreach($statuses as $status => $details)
+                        @php
+                            $statusIndex = array_search($status, $statusKeys);
+                            $isCompleted = $statusIndex <= $currentIndex;
+                            $isCurrent = $status === $currentStatus;
+                        @endphp
+                        
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                @if($isCompleted)
+                                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                @elseif($isCurrent)
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                                        <div class="w-3 h-3 bg-white rounded-full"></div>
+                                    </div>
+                                @else
+                                    <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                                @endif
+                            </div>
+                            
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium {{ $isCurrent ? 'text-blue-600' : ($isCompleted ? 'text-emerald-600' : 'text-gray-500') }}">
+                                    {{ $details[0] }}
+                                </p>
+                                <p class="text-xs text-gray-500">{{ $details[1] }}</p>
+                            </div>
+                        </div>
+                        
+                        @if(!$loop->last && $status !== 'RETURNED')
+                            <div class="ml-4 w-px h-4 bg-gray-200"></div>
+                        @endif
+                    @endforeach
+                </div>
+                
+                <!-- Actions Rapides -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Actions Rapides</h4>
+                    <div class="space-y-2">
+                        <button @click="refreshStatus()" 
+                                class="w-full flex items-center justify-center px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Actualiser le statut
+                        </button>
+                        
+                        @if(in_array($package->status, ['DELIVERED', 'PICKED_UP', 'ACCEPTED', 'REFUSED']))
+                        <a href="{{ route('client.complaints.create', $package) }}" 
+                           class="w-full flex items-center justify-center px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 text-sm font-medium rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                            Créer une réclamation
+                        </a>
+                        @endif
                     </div>
                 </div>
             </div>
 
-            <!-- Livreur assigné -->
-            @if($package->assignedDeliverer)
-                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                    <h3 class="text-lg font-semibold text-purple-900 mb-4">Livreur Assigné</h3>
-                    
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                            <span class="text-sm font-semibold text-purple-600">
-                                {{ substr($package->assignedDeliverer->name, 0, 2) }}
-                            </span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900">{{ $package->assignedDeliverer->name }}</p>
-                            <p class="text-xs text-gray-500">{{ $package->assignedDeliverer->phone }}</p>
-                            @if($package->assigned_at)
-                                <p class="text-xs text-purple-600">Assigné le {{ $package->assigned_at->format('d/m/Y H:i') }}</p>
+            <!-- Historique Détaillé -->
+            @if($package->statusHistory->count() > 0)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Historique Détaillé</h3>
+                
+                <div class="space-y-4">
+                    @foreach($package->statusHistory->take(10) as $history)
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ $history->getPreviousStatusDisplayAttribute() }} → {{ $history->getNewStatusDisplayAttribute() }}
+                            </p>
+                            @if($history->notes)
+                                <p class="text-xs text-gray-600 mt-1">{{ $history->notes }}</p>
                             @endif
+                            <div class="flex items-center mt-1 text-xs text-gray-500">
+                                <span>{{ $history->created_at->format('d/m/Y H:i') }}</span>
+                                @if($history->changedByUser)
+                                    <span class="ml-2">• Par: {{ $history->changedByUser->name }}</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
+                    @endforeach
                 </div>
+                
+                @if($package->statusHistory->count() > 10)
+                <div class="mt-4 text-center">
+                    <button @click="showAllHistory = !showAllHistory" 
+                            class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        <span x-text="showAllHistory ? 'Voir moins' : 'Voir tout l\'historique'"></span>
+                    </button>
+                </div>
+                @endif
+            </div>
             @endif
 
-            <!-- Actions rapides -->
-            <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Actions</h3>
-                
-                <div class="space-y-3">
-                    @if($package->canBeComplained())
-                        <a href="{{ route('client.complaints.create', $package) }}" 
-                           class="w-full inline-flex justify-center items-center px-4 py-2 bg-orange-100 border border-orange-300 rounded-xl text-sm font-medium text-orange-700 hover:bg-orange-200 transition-colors">
-                            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                            </svg>
-                            Faire une réclamation
-                        </a>
-                    @endif
-                    
-                    <button onclick="window.print()" 
-                            class="w-full inline-flex justify-center items-center px-4 py-2 bg-purple-100 border border-purple-300 rounded-xl text-sm font-medium text-purple-700 hover:bg-purple-200 transition-colors">
-                        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.32 0H6.34m11.32 0l1.836-1.836a.75.75 0 011.061 1.061l-1.837 1.837" />
-                        </svg>
-                        Imprimer les détails
-                    </button>
-                    
-                    <a href="{{ route('client.packages') }}" 
-                       class="w-full inline-flex justify-center items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
-                        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0110.5 3h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-6a2.25 2.25 0 01-2.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
-                        </svg>
-                        Retour à la liste
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
-@endsection
+
+</div>
 
 @push('scripts')
 <script>
-    // Actualisation automatique du statut toutes les 30 secondes
-    setInterval(() => {
-        fetch('/client/packages/{{ $package->id }}/status', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+function packageDetailsData() {
+    return {
+        showAllHistory: false,
+        
+        async refreshStatus() {
+            try {
+                const response = await fetch(`/client/api/packages/{{ $package->id }}/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status !== '{{ $package->status }}') {
+                        showToast('Statut mis à jour! Rechargement de la page...', 'success');
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showToast('Le statut est à jour', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur refresh statut:', error);
+                showToast('Erreur lors de la mise à jour', 'error');
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status !== '{{ $package->status }}') {
-                // Recharger la page si le statut a changé
-                window.location.reload();
-            }
-        })
-        .catch(error => console.log('Erreur actualisation:', error));
-    }, 30000);
+        },
+        
+        init() {
+            // Auto-refresh every 2 minutes for packages in progress
+            @if(in_array($package->status, ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']))
+            setInterval(() => {
+                this.refreshStatus();
+            }, 120000);
+            @endif
+        }
+    }
+}
 </script>
 @endpush
+
+@push('styles')
+<style>
+@media print {
+    .no-print { display: none !important; }
+    .print-break { page-break-after: always; }
+    body { font-size: 12px; }
+}
+</style>
+@endpush
+@endsection

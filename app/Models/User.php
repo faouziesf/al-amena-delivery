@@ -140,6 +140,11 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function savedAddresses()
+    {
+        return $this->hasMany(SavedAddress::class);
+    }
+
     // ==================== SCOPES ====================
 
     public function scopeByRole($query, $role)
@@ -409,6 +414,42 @@ class User extends Authenticatable
         return $this->transactions()
                    ->where('created_at', '>=', now()->subDays($days))
                    ->exists();
+    }
+
+    public function getSupplierAddresses()
+    {
+        return $this->savedAddresses()
+                    ->where('type', 'SUPPLIER')
+                    ->with('delegation')
+                    ->recentlyUsed()
+                    ->get();
+    }
+
+    public function getClientAddresses()
+    {
+        return $this->savedAddresses()
+                    ->where('type', 'CLIENT')
+                    ->with('delegation')
+                    ->recentlyUsed()
+                    ->get();
+    }
+
+    public function getDefaultSupplierAddress()
+    {
+        return $this->savedAddresses()
+                    ->where('type', 'SUPPLIER')
+                    ->where('is_default', true)
+                    ->with('delegation')
+                    ->first();
+    }
+
+    public function getDefaultClientAddress()
+    {
+        return $this->savedAddresses()
+                    ->where('type', 'CLIENT')
+                    ->where('is_default', true)
+                    ->with('delegation')
+                    ->first();
     }
 
     // ==================== BUSINESS LOGIC METHODS ====================
