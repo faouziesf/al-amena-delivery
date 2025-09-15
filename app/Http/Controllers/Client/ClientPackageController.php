@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Delegation;
 use App\Models\SavedAddress;
+use App\Models\ImportBatch;
 use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ClientPackageController extends Controller
 {
@@ -292,11 +296,216 @@ class ClientPackageController extends Controller
     }
 
     /**
+     * Supprimer un colis (seulement si statut CREATED ou AVAILABLE)
+     */
+    public function destroy(Package $package)
+    {
+        if ($package->sender_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé à ce colis.');
+        }
+
+        // Vérifier que le colis peut être supprimé
+        if (!in_array($package->status, ['CREATED', 'AVAILABLE'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de supprimer ce colis. Statut actuel: ' . $package->status
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Rembourser l'escrow au client
+            if ($package->amount_in_escrow > 0) {
+                $this->financialService->processTransaction([
+                    'user_id' => $package->sender_id,
+                    'type' => 'PACKAGE_DELETION_CREDIT',
+                    'amount' => $package->amount_in_escrow,
+                    'package_id' => $package->id,
+                    'description' => "Remboursement suppression colis #{$package->package_code}",
+                    'metadata' => [
+                        'package_code' => $package->package_code,
+                        'original_escrow' => $package->amount_in_escrow
+                    ]
+                ]);
+            }
+
+            // Supprimer le colis et son historique
+            if (method_exists($package, 'statusHistory')) {
+                $package->statusHistory()->delete();
+            }
+            $packageCode = $package->package_code;
+            $package->delete();
+
+            DB::commit();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Colis #{$packageCode} supprimé avec succès."
+                ]);
+            }
+
+            return redirect()->route('client.packages.index')
+                ->with('success', "Colis #{$packageCode} supprimé avec succès.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Erreur lors de la suppression: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Suppression en masse de colis
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids' => 'required|array|min:1|max:50',
+            'package_ids.*' => 'exists:packages,id'
+        ]);
+
+        $user = Auth::user();
+        $packages = Package::whereIn('id', $validated['package_ids'])
+            ->where('sender_id', $user->id)
+            ->whereIn('status', ['CREATED', 'AVAILABLE'])
+            ->get();
+
+        if ($packages->count() === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucun colis éligible à la suppression trouvé.'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $deletedCount = 0;
+            $totalRefund = 0;
+
+            foreach ($packages as $package) {
+                // Rembourser l'escrow
+                if ($package->amount_in_escrow > 0) {
+                    $totalRefund += $package->amount_in_escrow;
+                    $this->financialService->processTransaction([
+                        'user_id' => $user->id,
+                        'type' => 'PACKAGE_DELETION_CREDIT',
+                        'amount' => $package->amount_in_escrow,
+                        'package_id' => $package->id,
+                        'description' => "Remboursement suppression groupée #{$package->package_code}",
+                        'metadata' => [
+                            'package_code' => $package->package_code,
+                            'bulk_deletion' => true,
+                            'original_escrow' => $package->amount_in_escrow
+                        ]
+                    ]);
+                }
+
+                // Supprimer l'historique et le colis
+                if (method_exists($package, 'statusHistory')) {
+                    $package->statusHistory()->delete();
+                }
+                $package->delete();
+                $deletedCount++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$deletedCount} colis supprimés avec succès. Remboursement: {$totalRefund} DT",
+                'deleted_count' => $deletedCount,
+                'total_refund' => $totalRefund
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression groupée: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Imprimer le bon de livraison d'un colis
+     */
+    public function printDeliveryNote(Package $package)
+    {
+        if ($package->sender_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé à ce colis.');
+        }
+
+        $package->load(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        return view('client.packages.delivery-note', compact('package'));
+    }
+
+    /**
+     * Imprimer plusieurs bons de livraison
+     */
+    public function printMultipleDeliveryNotes(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids' => 'required|array|min:1|max:50',
+            'package_ids.*' => 'exists:packages,id'
+        ]);
+
+        $packages = Package::whereIn('id', $validated['package_ids'])
+            ->where('sender_id', Auth::id())
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($packages->count() === 0) {
+            return back()->with('error', 'Aucun colis trouvé pour l\'impression.');
+        }
+
+        return view('client.packages.delivery-notes-bulk', compact('packages'));
+    }
+
+    /**
+     * Imprimer tous les bons d'un batch d'import
+     */
+    public function printBatchDeliveryNotes($batchId)
+    {
+        $user = Auth::user();
+        $batch = ImportBatch::where('user_id', $user->id)->findOrFail($batchId);
+        
+        $packages = Package::where('import_batch_id', $batch->id)
+            ->where('sender_id', $user->id)
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        if ($packages->count() === 0) {
+            return back()->with('error', 'Aucun colis trouvé dans ce batch.');
+        }
+
+        return view('client.packages.delivery-notes-bulk', compact('packages', 'batch'));
+    }
+
+    /**
      * Gestion des adresses sauvegardées
      */
     public function savedAddresses()
     {
         $user = Auth::user();
+        
+        if (!Schema::hasTable('saved_addresses')) {
+            return redirect()->route('client.packages.index')
+                ->with('error', 'Fonctionnalité non disponible.');
+        }
         
         $supplierAddresses = $user->savedAddresses()
                                  ->suppliers()
@@ -354,12 +563,162 @@ class ClientPackageController extends Controller
     // ==================== API ENDPOINTS ====================
 
     /**
-     * API - Statut d'un colis
+     * Colis en attente (statut AVAILABLE)
      */
-    public function apiStatus($packageId)
+    public function pending(Request $request)
     {
-        $package = auth()->user()->sentPackages()->findOrFail($packageId);
-        return response()->json(['status' => $package->status]);
+        $user = Auth::user();
+        
+        $query = Package::where('sender_id', $user->id)
+            ->where('status', 'AVAILABLE')
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        $this->applyFilters($query, $request);
+        $packages = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('client.packages.filtered', compact('packages'))
+            ->with('filter_type', 'pending')
+            ->with('page_title', 'Colis en Attente')
+            ->with('page_description', 'Colis disponibles pour collecte');
+    }
+
+    /**
+     * Colis en cours de livraison
+     */
+    public function inProgress(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = Package::where('sender_id', $user->id)
+            ->whereIn('status', ['ACCEPTED', 'PICKED_UP'])
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        $this->applyFilters($query, $request);
+        $packages = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('client.packages.filtered', compact('packages'))
+            ->with('filter_type', 'in_progress')
+            ->with('page_title', 'Colis en Cours')
+            ->with('page_description', 'Colis en cours de livraison');
+    }
+
+    /**
+     * Colis livrés
+     */
+    public function delivered(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = Package::where('sender_id', $user->id)
+            ->whereIn('status', ['DELIVERED', 'PAID'])
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        $this->applyFilters($query, $request);
+        $packages = $query->orderBy('updated_at', 'desc')->paginate(15);
+
+        return view('client.packages.filtered', compact('packages'))
+            ->with('filter_type', 'delivered')
+            ->with('page_title', 'Colis Livrés')
+            ->with('page_description', 'Colis livrés avec succès');
+    }
+
+    /**
+     * Colis retournés
+     */
+    public function returned(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = Package::where('sender_id', $user->id)
+            ->where('status', 'RETURNED')
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        $this->applyFilters($query, $request);
+        $packages = $query->orderBy('updated_at', 'desc')->paginate(15);
+
+        return view('client.packages.filtered', compact('packages'))
+            ->with('filter_type', 'returned')
+            ->with('page_title', 'Colis Retournés')
+            ->with('page_description', 'Colis retournés à l\'expéditeur');
+    }
+
+    /**
+     * Export des colis
+     */
+    public function export(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = Package::where('sender_id', $user->id)
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        $this->applyFilters($query, $request);
+        $packages = $query->orderBy('created_at', 'desc')->get();
+
+        $csvContent = "Code Colis;Date Création;Statut;Fournisseur;Délégation Pickup;Destinataire;Délégation Livraison;Contenu;Montant COD;Notes\n";
+        
+        foreach ($packages as $package) {
+            $csvContent .= sprintf(
+                "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                $package->package_code,
+                $package->created_at->format('d/m/Y H:i'),
+                $package->status,
+                $package->supplier_data['name'] ?? 'N/A',
+                $package->delegationFrom->name ?? 'N/A',
+                $package->recipient_data['name'] ?? 'N/A',
+                $package->delegationTo->name ?? 'N/A',
+                $package->content_description,
+                number_format($package->cod_amount, 3),
+                str_replace([';', "\n", "\r"], [',', ' ', ' '], $package->notes ?? '')
+            );
+        }
+
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="colis_export_' . date('Y-m-d_H-i') . '.csv"');
+    }
+
+    /**
+     * API - Résumé/statistiques des colis
+     */
+    public function apiSummary()
+    {
+        $user = auth()->user();
+        
+        $stats = [
+            'total_packages' => $user->sentPackages()->count(),
+            'pending_packages' => $user->sentPackages()->where('status', 'AVAILABLE')->count(),
+            'in_progress_packages' => $user->sentPackages()->whereIn('status', ['ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered_packages' => $user->sentPackages()->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned_packages' => $user->sentPackages()->where('status', 'RETURNED')->count(),
+            'created_packages' => $user->sentPackages()->where('status', 'CREATED')->count(),
+        ];
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Appliquer les filtres communs
+     */
+    private function applyFilters($query, $request)
+    {
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('package_code', 'LIKE', '%' . $search . '%')
+                  ->orWhereJsonContains('recipient_data->name', $search)
+                  ->orWhereJsonContains('supplier_data->name', $search)
+                  ->orWhere('content_description', 'LIKE', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
     }
 
     /**
@@ -422,6 +781,10 @@ class ClientPackageController extends Controller
             return response()->json([]);
         }
 
+        if (!Schema::hasTable('saved_addresses')) {
+            return response()->json([]);
+        }
+
         $suppliers = $user->savedAddresses()
                          ->suppliers()
                          ->where(function($query) use ($search) {
@@ -456,6 +819,10 @@ class ClientPackageController extends Controller
         $user = auth()->user();
         
         if (strlen($search) < 2) {
+            return response()->json([]);
+        }
+
+        if (!Schema::hasTable('saved_addresses')) {
             return response()->json([]);
         }
 
@@ -498,7 +865,7 @@ class ClientPackageController extends Controller
         }
 
         // Récupérer les descriptions les plus utilisées
-        $contents = $user->packages()
+        $contents = $user->sentPackages()
                         ->where('content_description', 'LIKE', "%{$search}%")
                         ->select('content_description')
                         ->groupBy('content_description')
@@ -728,7 +1095,7 @@ class ClientPackageController extends Controller
     {
         $today = now()->startOfDay();
         
-        $todayPackages = $user->packages()
+        $todayPackages = $user->sentPackages()
             ->where('created_at', '>=', $today)
             ->get();
         
@@ -774,7 +1141,8 @@ class ClientPackageController extends Controller
             ->first();
 
         if ($existingAddress) {
-            $existingAddress->markAsUsed();
+            $existingAddress->increment('use_count');
+            $existingAddress->update(['last_used_at' => now()]);
             return $existingAddress;
         }
 

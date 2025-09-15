@@ -12,15 +12,40 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'phone', 'address',
-        'account_status', 'verified_at', 'verified_by', 'created_by', 'last_login'
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'address',
+        'account_status',
+        'verified_at',
+        'verified_by',
+        'created_by',
+        'last_login',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'verified_at' => 'datetime',
@@ -30,554 +55,278 @@ class User extends Authenticatable
 
     // ==================== RELATIONS ====================
 
-    public function wallet()
-    {
-        return $this->hasOne(UserWallet::class);
-    }
-
-    public function clientProfile()
-    {
-        return $this->hasOne(ClientProfile::class);
-    }
-
-    public function transactions()
-    {
-        return $this->hasMany(FinancialTransaction::class, 'user_id', 'id')
-                   ->orderBy('created_at', 'desc');
-    }
-
-    public function recentTransactions($limit = 20)
-    {
-        return $this->hasMany(FinancialTransaction::class, 'user_id', 'id')
-                   ->orderBy('created_at', 'desc')
-                   ->limit($limit);
-    }
-
-    public function completedTransactions()
-    {
-        return $this->hasMany(FinancialTransaction::class, 'user_id', 'id')
-                   ->where('status', 'COMPLETED')
-                   ->orderBy('created_at', 'desc');
-    }
-
-    public function actionLogs()
-    {
-        return $this->hasMany(ActionLog::class);
-    }
-
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
-
-    public function packages()
+    /**
+     * Colis envoyés par ce client
+     */
+    public function sentPackages()
     {
         return $this->hasMany(Package::class, 'sender_id');
     }
 
-    public function complaints()
+    /**
+     * Alias pour sentPackages (pour compatibilité)
+     */
+    public function packages()
     {
-        return $this->hasMany(Complaint::class, 'client_id');
+        return $this->sentPackages();
     }
 
-    public function withdrawalRequests()
-    {
-        return $this->hasMany(WithdrawalRequest::class, 'client_id');
-    }
-
+    /**
+     * Colis assignés à ce livreur
+     */
     public function assignedPackages()
     {
         return $this->hasMany(Package::class, 'assigned_deliverer_id');
     }
 
-    public function delivererWalletEmptyings()
+    /**
+     * Relation avec le portefeuille
+     */
+    public function wallet()
     {
-        return $this->hasMany(DelivererWalletEmptying::class, 'deliverer_id');
+        return $this->hasOne(UserWallet::class);
     }
 
-    public function assignedWithdrawals()
+    /**
+     * Relation avec le profil client
+     */
+    public function clientProfile()
     {
-        return $this->hasMany(WithdrawalRequest::class, 'assigned_deliverer_id');
+        return $this->hasOne(ClientProfile::class);
     }
 
-    public function createdClients()
-    {
-        return $this->hasMany(User::class, 'created_by')->where('role', 'CLIENT');
-    }
-
-    public function validatedClients()
-    {
-        return $this->hasMany(User::class, 'verified_by')->where('role', 'CLIENT');
-    }
-
-    public function assignedComplaints()
-    {
-        return $this->hasMany(Complaint::class, 'assigned_commercial_id');
-    }
-
-    public function processedWithdrawals()
-    {
-        return $this->hasMany(WithdrawalRequest::class, 'processed_by_commercial_id');
-    }
-
-    public function walletEmptyings()
-    {
-        return $this->hasMany(DelivererWalletEmptying::class, 'commercial_id');
-    }
-
-    public function codModifications()
-    {
-        return $this->hasMany(CodModification::class, 'modified_by_commercial_id');
-    }
-
-    public function verifiedBy()
-    {
-        return $this->belongsTo(User::class, 'verified_by');
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
+    /**
+     * Adresses sauvegardées
+     */
     public function savedAddresses()
     {
         return $this->hasMany(SavedAddress::class);
     }
 
-    // ==================== SCOPES ====================
-
-    public function scopeByRole($query, $role)
+    /**
+     * Réclamations créées par ce client
+     */
+    public function complaints()
     {
-        return $query->where('role', $role);
+        return $this->hasMany(Complaint::class, 'client_id');
     }
 
+    /**
+     * Réclamations assignées à ce commercial
+     */
+    public function assignedComplaints()
+    {
+        return $this->hasMany(Complaint::class, 'assigned_commercial_id');
+    }
+
+    /**
+     * Demandes de retrait
+     */
+    public function withdrawalRequests()
+    {
+        return $this->hasMany(WithdrawalRequest::class, 'client_id');
+    }
+
+    /**
+     * Demandes de retrait traitées par ce commercial
+     */
+    public function processedWithdrawals()
+    {
+        return $this->hasMany(WithdrawalRequest::class, 'processed_by_commercial_id');
+    }
+
+    /**
+     * Notifications de l'utilisateur
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Lots d'import CSV
+     */
+    public function importBatches()
+    {
+        return $this->hasMany(ImportBatch::class);
+    }
+
+    /**
+     * Relation avec les transactions financières
+     */
+    public function transactions()
+    {
+        return $this->hasMany(FinancialTransaction::class);
+    }
+
+    /**
+     * Utilisateur qui a vérifié ce compte
+     */
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /**
+     * Utilisateur qui a créé ce compte
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Comptes vérifiés par cet utilisateur
+     */
+    public function verifiedUsers()
+    {
+        return $this->hasMany(User::class, 'verified_by');
+    }
+
+    /**
+     * Comptes créés par cet utilisateur
+     */
+    public function createdUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
+    }
+
+    /**
+     * Modifications COD effectuées par ce commercial
+     */
+    public function codModifications()
+    {
+        return $this->hasMany(CodModification::class, 'modified_by_commercial_id');
+    }
+
+    /**
+     * Vidanges de portefeuille (pour les livreurs)
+     */
+    public function walletEmptyings()
+    {
+        return $this->hasMany(DelivererWalletEmptying::class, 'deliverer_id');
+    }
+
+    /**
+     * Vidanges traitées par ce commercial
+     */
+    public function processedWalletEmptyings()
+    {
+        return $this->hasMany(DelivererWalletEmptying::class, 'commercial_id');
+    }
+
+    // ==================== SCOPES ====================
+
+    /**
+     * Scope pour les utilisateurs actifs
+     */
     public function scopeActive($query)
     {
         return $query->where('account_status', 'ACTIVE');
     }
 
+    /**
+     * Scope pour les utilisateurs en attente
+     */
     public function scopePending($query)
     {
         return $query->where('account_status', 'PENDING');
     }
 
+    /**
+     * Scope pour les utilisateurs suspendus
+     */
     public function scopeSuspended($query)
     {
         return $query->where('account_status', 'SUSPENDED');
     }
 
+    /**
+     * Scope par rôle
+     */
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    /**
+     * Scope pour les clients
+     */
     public function scopeClients($query)
     {
         return $query->where('role', 'CLIENT');
     }
 
+    /**
+     * Scope pour les livreurs
+     */
     public function scopeDeliverers($query)
     {
         return $query->where('role', 'DELIVERER');
     }
 
+    /**
+     * Scope pour les commerciaux
+     */
     public function scopeCommercials($query)
     {
         return $query->where('role', 'COMMERCIAL');
     }
 
-    public function scopeRecentlyCreated($query, $days = 7)
+    /**
+     * Scope pour les superviseurs
+     */
+    public function scopeSupervisors($query)
     {
-        return $query->where('created_at', '>=', now()->subDays($days));
-    }
-
-    public function scopeWithWallet($query)
-    {
-        return $query->whereHas('wallet');
-    }
-
-    public function scopeWithProfile($query)
-    {
-        return $query->whereHas('clientProfile');
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    public function isClient()
-    {
-        return $this->role === 'CLIENT';
-    }
-
-    public function isDeliverer()
-    {
-        return $this->role === 'DELIVERER';
-    }
-
-    public function isCommercial()
-    {
-        return $this->role === 'COMMERCIAL';
-    }
-
-    public function isSupervisor()
-    {
-        return $this->role === 'SUPERVISOR';
-    }
-
-    public function canManageClients()
-    {
-        return in_array($this->role, ['COMMERCIAL', 'SUPERVISOR']);
-    }
-
-    public function isActive()
-    {
-        return $this->account_status === 'ACTIVE';
-    }
-
-    public function isPending()
-    {
-        return $this->account_status === 'PENDING';
-    }
-
-    public function isSuspended()
-    {
-        return $this->account_status === 'SUSPENDED';
-    }
-
-    public function hasValidatedAccount()
-    {
-        return $this->verified_at !== null;
-    }
-
-    public function getWalletBalance()
-    {
-        if (!$this->wallet) {
-            return 0;
-        }
-        return $this->wallet->balance;
-    }
-
-    public function getPendingAmount()
-    {
-        if (!$this->wallet) {
-            return 0;
-        }
-        return $this->wallet->pending_amount;
-    }
-
-    public function hasSufficientBalance($amount)
-    {
-        return $this->getWalletBalance() >= $amount;
-    }
-
-    public function getFormattedWalletBalance()
-    {
-        return number_format($this->getWalletBalance(), 3) . ' DT';
-    }
-
-    public function getTotalPackagesCount()
-    {
-        if (!$this->isClient()) {
-            return 0;
-        }
-        return $this->packages()->count();
-    }
-
-    public function getDeliveredPackagesCount()
-    {
-        if (!$this->isClient()) {
-            return 0;
-        }
-        return $this->packages()->delivered()->count();
-    }
-
-    public function getInProgressPackagesCount()
-    {
-        if (!$this->isClient()) {
-            return 0;
-        }
-        return $this->packages()->inProgress()->count();
-    }
-
-    public function getPendingComplaintsCount()
-    {
-        if (!$this->isClient()) {
-            return 0;
-        }
-        return $this->complaints()->where('status', 'PENDING')->count();
-    }
-
-    public function getSuccessDeliveryRate()
-    {
-        $total = $this->getTotalPackagesCount();
-        if ($total === 0) {
-            return 0;
-        }
-        return round(($this->getDeliveredPackagesCount() / $total) * 100, 1);
-    }
-
-    public function getAssignedPackagesCount()
-    {
-        if (!$this->isDeliverer()) {
-            return 0;
-        }
-        return $this->assignedPackages()->count();
-    }
-
-    public function getCompletedDeliveriesCount()
-    {
-        if (!$this->isDeliverer()) {
-            return 0;
-        }
-        return $this->assignedPackages()->whereIn('status', ['DELIVERED', 'RETURNED'])->count();
-    }
-
-    public function getDeliverySuccessRate()
-    {
-        $total = $this->getAssignedPackagesCount();
-        if ($total === 0) {
-            return 0;
-        }
-        $delivered = $this->assignedPackages()->where('status', 'DELIVERED')->count();
-        return round(($delivered / $total) * 100, 1);
-    }
-
-    public function getCreatedClientsCount()
-    {
-        if (!$this->canManageClients()) {
-            return 0;
-        }
-        return $this->createdClients()->count();
-    }
-
-    public function getActiveClientsCount()
-    {
-        if (!$this->canManageClients()) {
-            return 0;
-        }
-        return $this->createdClients()->active()->count();
-    }
-
-    public function getAssignedComplaintsCount()
-    {
-        if (!$this->canManageClients()) {
-            return 0;
-        }
-        return $this->assignedComplaints()->whereIn('status', ['PENDING', 'IN_PROGRESS'])->count();
-    }
-
-    public function getValidatedClientsThisMonth()
-    {
-        if (!$this->canManageClients()) {
-            return 0;
-        }
-        return $this->validatedClients()
-                   ->whereMonth('verified_at', now()->month)
-                   ->whereYear('verified_at', now()->year)
-                   ->count();
-    }
-
-    public function getTotalTransactionsCount()
-    {
-        return $this->transactions()->count();
-    }
-
-    public function getCompletedTransactionsCount()
-    {
-        return $this->transactions()->where('status', 'COMPLETED')->count();
-    }
-
-    public function getCreditTransactionsSum($days = null)
-    {
-        $query = $this->transactions()->where('type', 'CREDIT')->where('status', 'COMPLETED');
-        
-        if ($days) {
-            $query->where('created_at', '>=', now()->subDays($days));
-        }
-        
-        return $query->sum('amount');
-    }
-
-    public function getDebitTransactionsSum($days = null)
-    {
-        $query = $this->transactions()->where('type', 'DEBIT')->where('status', 'COMPLETED');
-        
-        if ($days) {
-            $query->where('created_at', '>=', now()->subDays($days));
-        }
-        
-        return abs($query->sum('amount'));
-    }
-
-    public function getLastTransaction()
-    {
-        return $this->transactions()->first();
-    }
-
-    public function hasRecentTransactions($days = 30)
-    {
-        return $this->transactions()
-                   ->where('created_at', '>=', now()->subDays($days))
-                   ->exists();
-    }
-
-    public function getSupplierAddresses()
-    {
-        return $this->savedAddresses()
-                    ->where('type', 'SUPPLIER')
-                    ->with('delegation')
-                    ->recentlyUsed()
-                    ->get();
-    }
-
-    public function getClientAddresses()
-    {
-        return $this->savedAddresses()
-                    ->where('type', 'CLIENT')
-                    ->with('delegation')
-                    ->recentlyUsed()
-                    ->get();
-    }
-
-    public function getDefaultSupplierAddress()
-    {
-        return $this->savedAddresses()
-                    ->where('type', 'SUPPLIER')
-                    ->where('is_default', true)
-                    ->with('delegation')
-                    ->first();
-    }
-
-    public function getDefaultClientAddress()
-    {
-        return $this->savedAddresses()
-                    ->where('type', 'CLIENT')
-                    ->where('is_default', true)
-                    ->with('delegation')
-                    ->first();
-    }
-
-    // ==================== BUSINESS LOGIC METHODS ====================
-
-    public function canValidateClients()
-    {
-        return $this->canManageClients() && $this->isActive();
-    }
-
-    public function canManageWallets()
-    {
-        return $this->canManageClients() && $this->isActive();
-    }
-
-    public function canCreatePackages()
-    {
-        return $this->isClient() && $this->isActive();
-    }
-
-    public function canReceivePackages()
-    {
-        return $this->isDeliverer() && $this->isActive();
-    }
-
-    public function hasCompletedProfile()
-    {
-        if (!$this->isClient()) {
-            return true;
-        }
-        
-        if (!$this->clientProfile) {
-            return false;
-        }
-        
-        return $this->clientProfile->hasCompletedProfile();
-    }
-
-    public function needsWalletSetup()
-    {
-        return in_array($this->role, ['CLIENT', 'DELIVERER']) && !$this->wallet;
+        return $query->where('role', 'SUPERVISOR');
     }
 
     /**
-     * Méthode sécurisée pour créer ou récupérer un wallet
-     * CORRIGÉE pour éviter les doublons
+     * Scope pour les utilisateurs vérifiés
      */
-    public function ensureWallet()
+    public function scopeVerified($query)
     {
-        if (!in_array($this->role, ['CLIENT', 'DELIVERER'])) {
-            return null;
-        }
-
-        if ($this->wallet) {
-            return $this->wallet;
-        }
-
-        // Utiliser firstOrCreate pour éviter les doublons
-        $wallet = UserWallet::firstOrCreate(
-            ['user_id' => $this->id],
-            [
-                'balance' => 0.000,
-                'pending_amount' => 0.000,
-                'frozen_amount' => 0.000,
-            ]
-        );
-
-        // Recharger la relation si elle n'était pas chargée
-        if (!$this->relationLoaded('wallet')) {
-            $this->load('wallet');
-        }
-
-        return $wallet;
+        return $query->whereNotNull('verified_at');
     }
 
     /**
-     * @deprecated Utiliser ensureWallet() à la place
+     * Scope pour la recherche
      */
-    public function createWalletIfNotExists()
+    public function scopeSearch($query, $search)
     {
-        return $this->ensureWallet();
+        return $query->where(function($q) use ($search) {
+            $q->where('name', 'LIKE', "%{$search}%")
+              ->orWhere('email', 'LIKE', "%{$search}%")
+              ->orWhere('phone', 'LIKE', "%{$search}%");
+        });
     }
 
-    // ==================== FORMATTING METHODS ====================
+    // ==================== ACCESSORS ====================
 
-    public function getDisplayNameAttribute()
-    {
-        return $this->name . ' (' . $this->email . ')';
-    }
-
-    public function getShortNameAttribute()
-    {
-        $parts = explode(' ', $this->name);
-        if (count($parts) >= 2) {
-            return $parts[0] . ' ' . substr($parts[1], 0, 1) . '.';
-        }
-        return $this->name;
-    }
-
+    /**
+     * Obtenir les initiales du nom
+     */
     public function getInitialsAttribute()
     {
-        $parts = explode(' ', $this->name);
+        $names = explode(' ', $this->name);
         $initials = '';
-        foreach ($parts as $part) {
-            $initials .= strtoupper(substr($part, 0, 1));
+        foreach ($names as $name) {
+            $initials .= strtoupper(substr($name, 0, 1));
         }
-        return substr($initials, 0, 2);
+        return substr($initials, 0, 2); // Limiter à 2 caractères
     }
 
-    public function getAccountStatusDisplayAttribute()
+    /**
+     * Obtenir le nom formaté avec le rôle
+     */
+    public function getDisplayNameAttribute()
     {
-        return match($this->account_status) {
-            'ACTIVE' => 'Actif',
-            'PENDING' => 'En attente',
-            'SUSPENDED' => 'Suspendu',
-            default => $this->account_status
-        };
+        return $this->name . ' (' . $this->getRoleDisplayAttribute() . ')';
     }
 
-    public function getAccountStatusColorAttribute()
-    {
-        return match($this->account_status) {
-            'ACTIVE' => 'text-green-600 bg-green-100',
-            'PENDING' => 'text-orange-600 bg-orange-100',
-            'SUSPENDED' => 'text-red-600 bg-red-100',
-            default => 'text-gray-600 bg-gray-100'
-        };
-    }
-
+    /**
+     * Affichage du rôle en français
+     */
     public function getRoleDisplayAttribute()
     {
         return match($this->role) {
@@ -589,129 +338,412 @@ class User extends Authenticatable
         };
     }
 
-    // ==================== VALIDATION METHODS ====================
-
-    public function canBeValidated()
+    /**
+     * Affichage du statut en français
+     */
+    public function getStatusDisplayAttribute()
     {
-        return $this->isClient() && $this->isPending();
+        return match($this->account_status) {
+            'PENDING' => 'En attente',
+            'ACTIVE' => 'Actif',
+            'SUSPENDED' => 'Suspendu',
+            default => $this->account_status
+        };
     }
 
-    public function canBeSuspended()
+    /**
+     * Couleur du statut pour l'affichage
+     */
+    public function getStatusColorAttribute()
     {
-        return $this->isActive();
+        return match($this->account_status) {
+            'PENDING' => 'text-yellow-600 bg-yellow-100',
+            'ACTIVE' => 'text-green-600 bg-green-100',
+            'SUSPENDED' => 'text-red-600 bg-red-100',
+            default => 'text-gray-600 bg-gray-100'
+        };
     }
 
-    public function canBeReactivated()
+    // ==================== MÉTHODES DE VÉRIFICATION ====================
+
+    /**
+     * Vérifier si le compte est actif
+     */
+    public function isActive()
     {
-        return $this->isSuspended();
+        return $this->account_status === 'ACTIVE';
     }
 
-    public function hasValidEmail()
+    /**
+     * Vérifier si le compte est en attente
+     */
+    public function isPending()
     {
-        return filter_var($this->email, FILTER_VALIDATE_EMAIL) !== false;
+        return $this->account_status === 'PENDING';
     }
 
-    public function hasValidPhone()
+    /**
+     * Vérifier si le compte est suspendu
+     */
+    public function isSuspended()
     {
-        return preg_match('/^[0-9+\-\s\(\)]{8,15}$/', $this->phone);
+        return $this->account_status === 'SUSPENDED';
     }
 
-    // ==================== ACTIVITY TRACKING ====================
+    /**
+     * Vérifier si c'est un client
+     */
+    public function isClient()
+    {
+        return $this->role === 'CLIENT';
+    }
 
-    public function updateLastLogin()
+    /**
+     * Vérifier si c'est un livreur
+     */
+    public function isDeliverer()
+    {
+        return $this->role === 'DELIVERER';
+    }
+
+    /**
+     * Vérifier si c'est un commercial
+     */
+    public function isCommercial()
+    {
+        return $this->role === 'COMMERCIAL';
+    }
+
+    /**
+     * Vérifier si c'est un superviseur
+     */
+    public function isSupervisor()
+    {
+        return $this->role === 'SUPERVISOR';
+    }
+
+    /**
+     * Vérifier si l'utilisateur est staff (commercial ou superviseur)
+     */
+    public function isStaff()
+    {
+        return in_array($this->role, ['COMMERCIAL', 'SUPERVISOR']);
+    }
+
+    /**
+     * Vérifier si le compte est vérifié
+     */
+    public function isVerified()
+    {
+        return !is_null($this->verified_at);
+    }
+
+    // ==================== MÉTHODES DE GESTION ====================
+
+    /**
+     * Assurer qu'un portefeuille existe pour cet utilisateur
+     */
+    public function ensureWallet()
+    {
+        if (!$this->wallet) {
+            $this->wallet()->create([
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000
+            ]);
+            $this->load('wallet');
+        }
+        return $this->wallet;
+    }
+
+    /**
+     * Activer le compte
+     */
+    public function activate($verifiedBy = null)
+    {
+        $this->update([
+            'account_status' => 'ACTIVE',
+            'verified_at' => now(),
+            'verified_by' => $verifiedBy
+        ]);
+
+        // Créer le portefeuille si c'est un client ou livreur
+        if (in_array($this->role, ['CLIENT', 'DELIVERER'])) {
+            $this->ensureWallet();
+        }
+
+        return $this;
+    }
+
+    /**
+     * Suspendre le compte
+     */
+    public function suspend()
+    {
+        $this->update(['account_status' => 'SUSPENDED']);
+        return $this;
+    }
+
+    /**
+     * Marquer la dernière connexion
+     */
+    public function markLastLogin()
     {
         $this->update(['last_login' => now()]);
         return $this;
     }
 
-    public function getLastLoginFormatted()
+    // ==================== STATISTIQUES ====================
+
+    /**
+     * Obtenir les statistiques du client
+     */
+    public function getClientStats($period = null)
     {
-        if (!$this->last_login) {
-            return 'Jamais connecté';
+        if (!$this->isClient()) {
+            return null;
+        }
+
+        $packagesQuery = $this->sentPackages();
+        
+        if ($period) {
+            $packagesQuery->where('created_at', '>=', now()->sub($period));
+        }
+
+        $packages = $packagesQuery->get();
+        
+        return [
+            'total_packages' => $packages->count(),
+            'in_progress_packages' => $packages->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned_packages' => $packages->where('status', 'RETURNED')->count(),
+            'total_cod_amount' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->sum('cod_amount'),
+            'pending_complaints' => $this->complaints()->where('status', 'PENDING')->count(),
+            'pending_withdrawals' => $this->withdrawalRequests()->where('status', 'PENDING')->count(),
+            'wallet_balance' => $this->wallet ? $this->wallet->balance : 0,
+            'wallet_pending' => $this->wallet ? $this->wallet->pending_amount : 0,
+        ];
+    }
+
+    /**
+     * Obtenir les statistiques du livreur
+     */
+    public function getDelivererStats($period = null)
+    {
+        if (!$this->isDeliverer()) {
+            return null;
+        }
+
+        $packagesQuery = $this->assignedPackages();
+        
+        if ($period) {
+            $packagesQuery->where('assigned_at', '>=', now()->sub($period));
+        }
+
+        $packages = $packagesQuery->get();
+        
+        return [
+            'total_assigned' => $packages->count(),
+            'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned_packages' => $packages->where('status', 'RETURNED')->count(),
+            'refused_packages' => $packages->where('status', 'REFUSED')->count(),
+            'pending_packages' => $packages->whereIn('status', ['ACCEPTED', 'PICKED_UP'])->count(),
+            'total_earnings' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->sum('delivery_fee'),
+            'wallet_balance' => $this->wallet ? $this->wallet->balance : 0,
+        ];
+    }
+
+    /**
+     * Packages créés aujourd'hui
+     */
+    public function todayPackages()
+    {
+        return $this->sentPackages()->whereDate('created_at', today());
+    }
+
+    /**
+     * Revenus du jour (COD des colis livrés aujourd'hui)
+     */
+    public function todayRevenue()
+    {
+        return $this->sentPackages()
+                    ->whereDate('updated_at', today())
+                    ->whereIn('status', ['DELIVERED', 'PAID'])
+                    ->sum('cod_amount');
+    }
+
+    /**
+     * Packages livrés ce mois
+     */
+    public function thisMonthDelivered()
+    {
+        return $this->sentPackages()
+                    ->whereMonth('updated_at', now()->month)
+                    ->whereYear('updated_at', now()->year)
+                    ->whereIn('status', ['DELIVERED', 'PAID'])
+                    ->count();
+    }
+
+    /**
+     * Revenus du mois
+     */
+    public function thisMonthRevenue()
+    {
+        return $this->sentPackages()
+                    ->whereMonth('updated_at', now()->month)
+                    ->whereYear('updated_at', now()->year)
+                    ->whereIn('status', ['DELIVERED', 'PAID'])
+                    ->sum('cod_amount');
+    }
+
+    // ==================== MÉTHODES POUR LES ADRESSES ====================
+
+    /**
+     * Obtenir les adresses fournisseurs sauvegardées
+     */
+    public function getSupplierAddresses($limit = null)
+    {
+        $query = $this->savedAddresses()
+                      ->suppliers()
+                      ->with('delegation')
+                      ->orderBy('last_used_at', 'desc')
+                      ->orderBy('use_count', 'desc');
+        
+        if ($limit) {
+            $query->limit($limit);
         }
         
-        return $this->last_login->diffForHumans();
+        return $query->get();
     }
 
-    public function isRecentlyActive($days = 7)
+    /**
+     * Obtenir les adresses clients sauvegardées
+     */
+    public function getClientAddresses($limit = null)
     {
-        if (!$this->last_login) {
-            return false;
+        $query = $this->savedAddresses()
+                      ->clients()
+                      ->with('delegation')
+                      ->orderBy('last_used_at', 'desc')
+                      ->orderBy('use_count', 'desc');
+        
+        if ($limit) {
+            $query->limit($limit);
         }
         
-        return $this->last_login >= now()->subDays($days);
+        return $query->get();
     }
 
-    // ==================== SEARCH METHODS ====================
+    // ==================== MÉTHODES POUR LES NOTIFICATIONS ====================
 
-    public function scopeSearch($query, $search)
+    /**
+     * Notifications non lues
+     */
+    public function unreadNotifications()
     {
-        return $query->where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('phone', 'like', "%{$search}%");
-        });
+        return $this->notifications()->where('read', false);
     }
 
-    public function scopeByAccountStatus($query, $status)
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    public function markAllNotificationsAsRead()
     {
-        return $query->where('account_status', $status);
+        $this->notifications()->where('read', false)->update([
+            'read' => true,
+            'read_at' => now()
+        ]);
+        
+        return $this;
     }
 
-    public function scopeCreatedByCommercial($query, $commercialId)
+    // ==================== MÉTHODES UTILITAIRES ====================
+
+    /**
+     * Obtenir le portefeuille avec création automatique si nécessaire
+     */
+    public function getWalletAttribute()
     {
-        return $query->where('created_by', $commercialId);
+        // Charger la relation si elle n'est pas déjà chargée
+        if (!$this->relationLoaded('wallet')) {
+            $this->load('wallet');
+        }
+        
+        // Si pas de portefeuille et que c'est un client/livreur, le créer
+        if (!$this->getRelationValue('wallet') && in_array($this->role, ['CLIENT', 'DELIVERER'])) {
+            $this->ensureWallet();
+        }
+        
+        return $this->getRelationValue('wallet');
     }
 
-    public function scopeValidatedByCommercial($query, $commercialId)
+    /**
+     * Vérifier si l'utilisateur peut créer des colis
+     */
+    public function canCreatePackages()
     {
-        return $query->where('verified_by', $commercialId);
+        return $this->isClient() && 
+               $this->isActive() && 
+               $this->clientProfile && 
+               $this->wallet && 
+               $this->wallet->balance > 0;
     }
 
-    // ==================== BOOT METHOD - CORRIGÉ ====================
+    /**
+     * Vérifier si l'utilisateur peut effectuer des livraisons
+     */
+    public function canDeliverPackages()
+    {
+        return $this->isDeliverer() && $this->isActive();
+    }
 
+    /**
+     * Formater le numéro de téléphone
+     */
+    public function getFormattedPhoneAttribute()
+    {
+        if (!$this->phone) {
+            return null;
+        }
+        
+        // Format tunisien basique
+        $phone = preg_replace('/[^\d]/', '', $this->phone);
+        
+        if (strlen($phone) === 8) {
+            return substr($phone, 0, 2) . ' ' . substr($phone, 2, 3) . ' ' . substr($phone, 5);
+        }
+        
+        return $this->phone;
+    }
+
+    // ==================== BOOT METHOD ====================
+
+    /**
+     * Boot method pour les événements du modèle
+     */
     protected static function boot()
     {
         parent::boot();
 
-        // CORRIGÉ : Utiliser firstOrCreate au lieu de create pour éviter les doublons
+        // Créer automatiquement un portefeuille pour les clients et livreurs
         static::created(function ($user) {
             if (in_array($user->role, ['CLIENT', 'DELIVERER'])) {
-                try {
-                    UserWallet::firstOrCreate(
-                        ['user_id' => $user->id],
-                        [
-                            'balance' => 0.000,
-                            'pending_amount' => 0.000,
-                            'frozen_amount' => 0.000,
-                        ]
-                    );
-                } catch (\Exception $e) {
-                    \Log::error('Erreur création wallet pour user ' . $user->id . ': ' . $e->getMessage());
-                }
+                $user->ensureWallet();
             }
         });
 
-        static::updating(function ($user) {
-            if (auth()->check() && auth()->id() === $user->id && !$user->isDirty('last_login')) {
-                $user->last_login = now();
+        // Nettoyer les relations lors de la suppression
+        static::deleting(function ($user) {
+            // Supprimer le portefeuille
+            if ($user->wallet) {
+                $user->wallet->delete();
             }
-        });
-
-        static::updated(function ($user) {
-            if ($user->isDirty('account_status') && app()->bound(\App\Services\ActionLogService::class)) {
-                app(\App\Services\ActionLogService::class)->log(
-                    'USER_STATUS_CHANGED',
-                    'User',
-                    $user->id,
-                    $user->getOriginal('account_status'),
-                    $user->account_status,
-                    [
-                        'user_name' => $user->name,
-                        'user_role' => $user->role
-                    ]
-                );
-            }
+            
+            // Supprimer les adresses sauvegardées
+            $user->savedAddresses()->delete();
+            
+            // Supprimer les notifications
+            $user->notifications()->delete();
         });
     }
 }
