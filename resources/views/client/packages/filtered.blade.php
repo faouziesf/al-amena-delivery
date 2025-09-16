@@ -1,8 +1,7 @@
-@extends('client.packages.packages-layout')
+@extends('layouts.client')
 
 @section('page-title', $page_title)
 @section('page-description', $page_description)
-@section('breadcrumb', $page_title)
 
 @section('header-actions')
 <div class="flex items-center space-x-3">
@@ -33,6 +32,16 @@
                 Exporter CSV
             </a>
         @endif
+        
+        @if(in_array($filter_type, ['pending', 'in_progress', 'delivered']))
+            <button onclick="printSelected()" 
+                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Imprimer Sélection
+            </button>
+        @endif
     @endif
     
     <!-- Actions communes -->
@@ -46,87 +55,139 @@
 </div>
 @endsection
 
-@section('packages-content')
-<div x-data="packagesFilter()">
+@section('content')
+<div class="p-6" x-data="packagesFilter()">
+    
+    <!-- Filtres et Recherche -->
+    <div class="bg-white rounded-lg shadow-sm border mb-6 p-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Recherche -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
+                <input type="text" name="search" value="{{ request('search') }}" 
+                       placeholder="Code colis, destinataire..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Date début -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+                <input type="date" name="date_from" value="{{ request('date_from') }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Date fin -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+                <input type="date" name="date_to" value="{{ request('date_to') }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Bouton de recherche -->
+            <div class="flex items-end">
+                <button type="submit" 
+                        class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
+                    🔍 Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
     
     <!-- Statistiques rapides pour ce filtre -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="bg-white rounded-lg shadow-sm border p-6">
             <div class="flex items-center">
-                <div class="p-2 rounded-lg 
+                <div class="p-3 rounded-lg 
                     {{ $filter_type === 'pending' ? 'bg-orange-100' : '' }}
                     {{ $filter_type === 'in_progress' ? 'bg-indigo-100' : '' }}
                     {{ $filter_type === 'delivered' ? 'bg-green-100' : '' }}
                     {{ $filter_type === 'returned' ? 'bg-red-100' : '' }}">
                     @if($filter_type === 'pending')
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     @elseif($filter_type === 'in_progress')
-                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                     @elseif($filter_type === 'delivered')
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     @else
-                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
                         </svg>
                     @endif
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">{{ $page_title }}</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $packages->total() }}</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ $packages->total() }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Stats additionnelles selon le type -->
         @if($filter_type === 'delivered')
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="bg-white rounded-lg shadow-sm border p-6">
             <div class="flex items-center">
-                <div class="p-2 bg-emerald-100 rounded-lg">
-                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-3 bg-emerald-100 rounded-lg">
+                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Revenus Total</p>
-                    <p class="text-2xl font-bold text-emerald-600">{{ number_format($packages->sum('cod_amount'), 3) }} DT</p>
+                    <p class="text-3xl font-bold text-emerald-600">{{ number_format($packages->sum('cod_amount'), 3) }} DT</p>
                 </div>
             </div>
         </div>
         @endif
 
         @if($filter_type === 'pending')
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="bg-white rounded-lg shadow-sm border p-6">
             <div class="flex items-center">
-                <div class="p-2 bg-yellow-100 rounded-lg">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">En Attente Pickup</p>
-                    <p class="text-2xl font-bold text-yellow-600">{{ $packages->where('status', 'AVAILABLE')->count() }}</p>
+                    <p class="text-sm font-medium text-gray-600">Attendent Pickup</p>
+                    <p class="text-3xl font-bold text-yellow-600">{{ $packages->where('status', 'AVAILABLE')->count() }}</p>
                 </div>
             </div>
         </div>
         @endif
 
-        <!-- Placeholder pour autres stats -->
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <!-- Stats temporelles -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
             <div class="flex items-center">
-                <div class="p-2 bg-gray-100 rounded-lg">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Ce Mois</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $packages->where('created_at', '>=', now()->startOfMonth())->count() }}</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ $packages->where('created_at', '>=', now()->startOfMonth())->count() }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Montant moyen -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">COD Moyen</p>
+                    <p class="text-2xl font-bold text-purple-600">
+                        {{ $packages->count() > 0 ? number_format($packages->avg('cod_amount'), 3) : '0' }} DT
+                    </p>
                 </div>
             </div>
         </div>
@@ -146,7 +207,6 @@
         </div>
         
         <div class="flex items-center space-x-3">
-            @if($filter_type === 'pending' || $filter_type === 'in_progress')
             <!-- Impression groupée -->
             <button @click="printSelected()" 
                     class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
@@ -155,7 +215,6 @@
                 </svg>
                 Imprimer bons
             </button>
-            @endif
             
             @if($filter_type === 'pending')
             <!-- Suppression groupée -->
@@ -174,7 +233,7 @@
     @if($packages->count() > 0)
     <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
         <!-- En-tête du tableau -->
-        <div class="bg-gray-50 px-6 py-3 border-b flex items-center justify-between">
+        <div class="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
             @if($filter_type === 'pending')
             <div class="flex items-center space-x-4">
                 <label class="flex items-center">
@@ -186,28 +245,33 @@
             </div>
             @endif
             
-            <div class="text-sm text-gray-500">
-                {{ $packages->total() }} colis - {{ $page_title }}
+            <div class="text-sm text-gray-500 flex items-center space-x-4">
+                <span>{{ $packages->total() }} colis - {{ $page_title }}</span>
+                @if($filter_type === 'delivered')
+                    <span class="text-emerald-600 font-medium">
+                        Total COD: {{ number_format($packages->sum('cod_amount'), 3) }} DT
+                    </span>
+                @endif
             </div>
         </div>
 
         <!-- Corps du tableau -->
         <div class="divide-y divide-gray-200">
             @foreach($packages as $package)
-            <div class="p-4 hover:bg-gray-50 transition-colors">
+            <div class="p-6 hover:bg-gray-50 transition-colors">
                 <div class="flex items-center space-x-4">
                     <!-- Checkbox (seulement pour les colis en attente) -->
                     @if($filter_type === 'pending')
                     <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}"
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                           class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     @endif
                     
                     <!-- Informations principales -->
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-6 items-center">
                         <!-- Code et Date -->
                         <div>
-                            <p class="font-bold text-gray-900">{{ $package->package_code }}</p>
-                            <p class="text-xs text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</p>
+                            <p class="font-bold text-lg text-gray-900">{{ $package->package_code }}</p>
+                            <p class="text-sm text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</p>
                             @if($package->isFromImport())
                                 <span class="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full mt-1">
                                     Import CSV
@@ -219,28 +283,31 @@
                         <div>
                             @if($package->supplier_data && is_array($package->supplier_data))
                                 <p class="text-sm font-medium text-gray-900">{{ $package->supplier_data['name'] ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-500">{{ $package->supplier_data['phone'] ?? 'N/A' }}</p>
+                                <p class="text-sm text-gray-500">{{ $package->supplier_data['phone'] ?? 'N/A' }}</p>
+                            @else
+                                <p class="text-sm font-medium text-gray-900">{{ $package->sender_data['name'] ?? 'N/A' }}</p>
+                                <p class="text-sm text-gray-500">{{ $package->sender_data['phone'] ?? 'N/A' }}</p>
                             @endif
-                            <p class="text-xs text-blue-600">{{ $package->delegationFrom->name ?? 'N/A' }}</p>
+                            <p class="text-sm text-blue-600 font-medium">{{ $package->delegationFrom->name ?? 'N/A' }}</p>
                         </div>
 
                         <!-- Destinataire -->
                         <div>
                             <p class="text-sm font-medium text-gray-900">{{ $package->recipient_data['name'] ?? 'N/A' }}</p>
-                            <p class="text-xs text-gray-500">{{ $package->recipient_data['phone'] ?? 'N/A' }}</p>
-                            <p class="text-xs text-emerald-600">{{ $package->delegationTo->name ?? 'N/A' }}</p>
+                            <p class="text-sm text-gray-500">{{ $package->recipient_data['phone'] ?? 'N/A' }}</p>
+                            <p class="text-sm text-emerald-600 font-medium">{{ $package->delegationTo->name ?? 'N/A' }}</p>
                         </div>
 
                         <!-- Contenu -->
                         <div>
-                            <p class="text-sm text-gray-900">{{ $package->content_description }}</p>
+                            <p class="text-sm text-gray-900 font-medium">{{ $package->content_description }}</p>
                             @if($package->hasSpecialRequirements())
-                                <div class="flex items-center mt-1">
+                                <div class="flex items-center mt-2 space-x-2">
                                     @if($package->is_fragile)
-                                        <span class="text-xs text-orange-600 mr-2">🔸 Fragile</span>
+                                        <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">🔸 Fragile</span>
                                     @endif
                                     @if($package->requires_signature)
-                                        <span class="text-xs text-orange-600">✍️ Signature</span>
+                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">✍️ Signature</span>
                                     @endif
                                 </div>
                             @endif
@@ -248,8 +315,8 @@
 
                         <!-- COD et Statut -->
                         <div class="text-center">
-                            <p class="text-lg font-bold text-emerald-600">{{ number_format($package->cod_amount, 3) }} DT</p>
-                            <span class="inline-block px-2 py-1 text-xs font-medium rounded-full
+                            <p class="text-xl font-bold text-emerald-600">{{ number_format($package->cod_amount, 3) }} DT</p>
+                            <span class="inline-block px-3 py-1 text-sm font-medium rounded-full mt-2
                                 {{ $package->status === 'CREATED' ? 'bg-gray-100 text-gray-800' : '' }}
                                 {{ $package->status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' : '' }}
                                 {{ $package->status === 'ACCEPTED' ? 'bg-purple-100 text-purple-800' : '' }}
@@ -263,38 +330,41 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-col space-y-2">
                             <!-- Voir détails -->
                             <a href="{{ route('client.packages.show', $package) }}" 
-                               class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                Voir
+                               class="text-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                Voir Détails
                             </a>
 
                             <!-- Imprimer bon -->
                             <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                               class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
-                                Bon
+                               class="text-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                Imprimer Bon
                             </a>
 
-                            <!-- Dupliquer -->
-                            <form method="POST" action="{{ route('client.packages.duplicate', $package) }}" class="inline">
-                                @csrf
-                                <button type="submit" class="text-orange-600 hover:text-orange-800 text-sm font-medium">
-                                    Dupliquer
-                                </button>
-                            </form>
+                            <!-- Actions secondaires -->
+                            <div class="flex space-x-2">
+                                <!-- Dupliquer -->
+                                <form method="POST" action="{{ route('client.packages.duplicate', $package) }}" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full text-orange-600 hover:text-orange-800 text-sm font-medium">
+                                        Dupliquer
+                                    </button>
+                                </form>
 
-                            <!-- Supprimer (si possible) -->
-                            @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
-                            <form method="POST" action="{{ route('client.packages.destroy', $package) }}" class="inline"
-                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium">
-                                    Supprimer
-                                </button>
-                            </form>
-                            @endif
+                                <!-- Supprimer (si possible) -->
+                                @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                                <form method="POST" action="{{ route('client.packages.destroy', $package) }}" class="flex-1"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="w-full text-red-600 hover:text-red-800 text-sm font-medium">
+                                        Supprimer
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -333,13 +403,13 @@
         <div class="flex items-center justify-center space-x-4">
             @if(request()->hasAny(['search', 'date_from', 'date_to']))
                 <a href="{{ request()->url() }}" 
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-md text-sm font-medium">
+                   class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors">
                     Effacer les filtres
                 </a>
             @endif
             
             <a href="{{ route('client.packages.create') }}" 
-               class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium">
+               class="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -438,6 +508,17 @@ function packagesFilter() {
             }
         }
     }
+}
+
+// Fonction globale pour l'impression
+function printSelected() {
+    const app = document.querySelector('[x-data*="packagesFilter"]').__x.$data;
+    app.printSelected();
+}
+
+function deleteSelected() {
+    const app = document.querySelector('[x-data*="packagesFilter"]').__x.$data;
+    app.deleteSelected();
 }
 </script>
 @endpush

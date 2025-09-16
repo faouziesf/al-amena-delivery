@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Client Routes - Version Complète et Optimisée
+| Client Routes - Version Complète et Optimisée avec Interface Onglets
 |--------------------------------------------------------------------------
 |
 | Routes dédiées aux clients avec middleware CheckRole pour sécuriser l'accès
-| Inclut toutes les nouvelles fonctionnalités : import CSV, impression, suppression
+| Nouvelles fonctionnalités : interface onglets, codes QR/barres, validation délégations
 |
 */
 
@@ -23,30 +23,34 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     // ==================== DASHBOARD ====================
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
 
-    // ==================== GESTION DES COLIS ====================
+    // ==================== GESTION DES COLIS - INTERFACE ONGLETS ====================
     Route::prefix('packages')->name('packages.')->group(function () {
-        // Routes principales
+        // Interface principale avec onglets
         Route::get('/', [ClientPackageController::class, 'index'])->name('index');
+        
+        // Vues filtrées par statut (nécessaires pour la navigation)
+        Route::get('/pending', [ClientPackageController::class, 'pending'])->name('pending');
+        Route::get('/in-progress', [ClientPackageController::class, 'inProgress'])->name('in-progress');
+        Route::get('/delivered', [ClientPackageController::class, 'delivered'])->name('delivered');
+        Route::get('/returned', [ClientPackageController::class, 'returned'])->name('returned');
+        
+        // Création et gestion de base
         Route::get('/create', [ClientPackageController::class, 'create'])->name('create');
         Route::post('/', [ClientPackageController::class, 'store'])->name('store');
         Route::get('/{package}', [ClientPackageController::class, 'show'])->name('show');
         Route::delete('/{package}', [ClientPackageController::class, 'destroy'])->name('destroy');
         
-        // ==================== FILTRES PAR STATUT ====================
-        Route::get('/pending', [ClientPackageController::class, 'pending'])->name('pending');
-        Route::get('/in-progress', [ClientPackageController::class, 'inProgress'])->name('in-progress');
-        Route::get('/delivered', [ClientPackageController::class, 'delivered'])->name('delivered');
-        Route::get('/returned', [ClientPackageController::class, 'returned'])->name('returned');
-        Route::get('/export', [ClientPackageController::class, 'export'])->name('export');
-        
-        // Actions rapides (noms courts pour compatibilité)
+        // Actions rapides
         Route::post('/duplicate/{package}', [ClientPackageController::class, 'duplicate'])->name('duplicate');
         Route::post('/bulk-delete', [ClientPackageController::class, 'bulkDestroy'])->name('bulk.destroy');
         
-        // Impression (noms courts pour compatibilité)
+        // Impression avec codes QR/barres améliorés
         Route::get('/{package}/print', [ClientPackageController::class, 'printDeliveryNote'])->name('print');
         Route::post('/print/multiple', [ClientPackageController::class, 'printMultipleDeliveryNotes'])->name('print.multiple');
         Route::get('/print/batch/{batch}', [ClientPackageController::class, 'printBatchDeliveryNotes'])->name('print.batch');
+        
+        // Export
+        Route::get('/export', [ClientPackageController::class, 'export'])->name('export');
         
         // ==================== IMPORT CSV ====================
         Route::prefix('import')->name('import.')->group(function () {
@@ -54,6 +58,11 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::post('/csv', [ClientPackageImportController::class, 'processImportCsv'])->name('process');
             Route::get('/template', [ClientPackageImportController::class, 'downloadTemplate'])->name('template');
             Route::get('/{batch}/status', [ClientPackageImportController::class, 'showImportStatus'])->name('status');
+            
+            // API pour suivi import
+            Route::get('/{batch}/progress', [ClientPackageImportController::class, 'apiImportProgress'])->name('progress');
+            Route::get('/{batch}/errors', [ClientPackageImportController::class, 'apiImportErrors'])->name('errors');
+            Route::post('/validate-csv', [ClientPackageImportController::class, 'apiValidateCsv'])->name('validate');
         });
     });
 
@@ -208,6 +217,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             // Données pour formulaires
             Route::get('/last-supplier-data', [ClientPackageController::class, 'apiLastSupplierData'])->name('last.supplier');
             Route::get('/session-data', [ClientPackageController::class, 'apiSessionData'])->name('session.data');
+            Route::get('/today-stats', [ClientPackageController::class, 'apiTodayStats'])->name('today.stats');
         });
         
         // ==================== Saved Addresses APIs ====================
@@ -225,13 +235,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::get('/clients', [ClientPackageController::class, 'apiClientAutocomplete'])->name('clients');
             Route::get('/content', [ClientPackageController::class, 'apiContentAutocomplete'])->name('content');
             Route::get('/delegations', [ClientPackageController::class, 'apiDelegationAutocomplete'])->name('delegations');
-        });
-        
-        // ==================== Import APIs ====================
-        Route::prefix('import')->name('import.')->group(function () {
-            Route::get('/{batch}/progress', [ClientPackageImportController::class, 'apiImportProgress'])->name('progress');
-            Route::get('/{batch}/errors', [ClientPackageImportController::class, 'apiImportErrors'])->name('errors');
-            Route::post('/validate-csv', [ClientPackageImportController::class, 'apiValidateCsv'])->name('validate');
         });
         
         // ==================== Complaint APIs ====================
@@ -310,27 +313,29 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
 
 /*
 |--------------------------------------------------------------------------
-| Routes Publiques pour Tracking
+| Routes Publiques pour Tracking avec QR Code
 |--------------------------------------------------------------------------
 */
 
-// Tracking public (sans authentification)
+// Tracking public (sans authentification) - Amélioré pour QR codes
 Route::prefix('track')->name('public.track.')->group(function () {
     Route::get('/{package_code}', [ClientPackageController::class, 'publicTracking'])->name('package');
     Route::post('/check', [ClientPackageController::class, 'publicTrackingCheck'])->name('check');
+    Route::get('/qr/{package_code}', [ClientPackageController::class, 'qrTracking'])->name('qr');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Middleware et Restrictions
+| Rate Limiting et Sécurité
 |--------------------------------------------------------------------------
 |
 | Toutes ces routes utilisent le middleware 'check.role:CLIENT' pour s'assurer
 | que seuls les clients authentifiés et actifs peuvent y accéder.
 |
-| Rate limiting appliqué automatiquement sur les APIs pour éviter les abus :
+| Rate limiting appliqué automatiquement :
 | - 60 requêtes par minute pour les endpoints normaux
 | - 10 requêtes par minute pour les actions sensibles (création, suppression)
 | - 120 requêtes par minute pour l'autocomplétion et recherche
+| - Validation renforcée pour empêcher pickup_delegation = delegation_to
 |
 */

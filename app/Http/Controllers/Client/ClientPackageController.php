@@ -27,7 +27,7 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Liste des colis du client
+     * Interface principale avec onglets
      */
     public function index(Request $request)
     {
@@ -36,61 +36,66 @@ class ClientPackageController extends Controller
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
+
+        // Déterminer l'onglet actif
+        $activeTab = $request->get('tab', 'all');
         
-        $query = Package::where('sender_id', $user->id)
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
-
-        // Filtres
-        if ($request->filled('status')) {
-            if ($request->status === 'in_progress') {
-                $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
-            } elseif ($request->status === 'delivered') {
-                $query->whereIn('status', ['DELIVERED', 'PAID']);
-            } elseif ($request->status === 'returned') {
-                $query->where('status', 'RETURNED');
-            } else {
-                $query->where('status', $request->status);
-            }
-        }
-
-        if ($request->filled('search')) {
-            $query->where('package_code', 'LIKE', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $packages = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return view('client.packages.index', compact('packages'));
+        // Récupérer les statistiques
+        $stats = $this->getPackageStats($user);
+        
+        // Récupérer les colis selon l'onglet - TOUJOURS avec pagination
+        $packages = $this->getPackagesByTab($user, $activeTab, $request);
+        
+        return view('client.packages.index', compact('packages', 'activeTab', 'stats'));
     }
 
     /**
-     * Détails d'un colis
+     * Récupérer les statistiques des colis
      */
-    public function show(Package $package)
+    private function getPackageStats($user)
     {
-        if ($package->sender_id !== Auth::id()) {
-            abort(403, 'Accès non autorisé à ce colis.');
+        return [
+            'total' => $user->sentPackages()->count(),
+            'pending' => $user->sentPackages()->where('status', 'AVAILABLE')->count(),
+            'in_progress' => $user->sentPackages()->whereIn('status', ['CREATED', 'ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered' => $user->sentPackages()->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned' => $user->sentPackages()->where('status', 'RETURNED')->count(),
+        ];
+    }
+
+    /**
+     * Récupérer les colis par onglet - TOUJOURS avec pagination
+     */
+    private function getPackagesByTab($user, $tab, $request)
+    {
+        $query = Package::where('sender_id', $user->id)
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+
+        // Filtrer par onglet
+        switch ($tab) {
+            case 'pending':
+                $query->where('status', 'AVAILABLE');
+                break;
+            case 'in_progress':
+                $query->whereIn('status', ['CREATED', 'ACCEPTED', 'PICKED_UP']);
+                break;
+            case 'delivered':
+                $query->whereIn('status', ['DELIVERED', 'PAID']);
+                break;
+            case 'returned':
+                $query->where('status', 'RETURNED');
+                break;
+            case 'all':
+            default:
+                // Tous les colis - aucun filtre de statut
+                break;
         }
 
-        $package->load([
-            'delegationFrom', 
-            'delegationTo', 
-            'assignedDeliverer',
-            'statusHistory.changedBy',
-            'complaints.assignedCommercial'
-        ]);
+        // Appliquer les filtres de recherche
+        $this->applyFilters($query, $request);
 
-        if (method_exists($package, 'codModifications')) {
-            $package->load('codModifications.modifiedByCommercial');
-        }
-
-        return view('client.packages.show', compact('package'));
+        // TOUJOURS retourner un objet paginé
+        return $query->orderBy('created_at', 'desc')->paginate(15);
     }
 
     /**
@@ -107,7 +112,7 @@ class ClientPackageController extends Controller
         $user->load(['wallet', 'clientProfile']);
 
         if (!$user->isActive() || !$user->clientProfile) {
-            return redirect()->route('client.dashboard')
+            return redirect()->route('client.packages.index')
                 ->with('error', 'Votre compte doit être validé avant de créer des colis.');
         }
 
@@ -165,7 +170,7 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Enregistrement d'un nouveau colis - VERSION OPTIMISÉE
+     * Enregistrement d'un nouveau colis - VERSION OPTIMISÉE AVEC VALIDATION CORRIGÉE
      */
     public function store(Request $request)
     {
@@ -186,7 +191,7 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Création de colis format basique
+     * Création de colis format basique AVEC VALIDATION CORRIGÉE
      */
     private function storeBasicPackage(Request $request)
     {
@@ -194,13 +199,19 @@ class ClientPackageController extends Controller
 
         $validated = $request->validate([
             'delegation_from' => 'required|exists:delegations,id',
-            'delegation_to' => 'required|exists:delegations,id|different:delegation_from',
+            'delegation_to' => [
+                'required',
+                'exists:delegations,id',
+                'different:delegation_from'  // CORRECTION: Empêcher même délégation pickup/livraison
+            ],
             'recipient_name' => 'required|string|max:255',
             'recipient_phone' => 'required|string|max:20',
             'recipient_address' => 'required|string|max:500',
             'content_description' => 'required|string|max:255',
             'cod_amount' => 'required|numeric|min:0|max:9999.999',
             'notes' => 'nullable|string|max:1000'
+        ], [
+            'delegation_to.different' => 'La délégation de livraison doit être différente de la délégation de pickup.'
         ]);
 
         try {
@@ -210,7 +221,7 @@ class ClientPackageController extends Controller
             
             DB::commit();
 
-            return redirect()->route('client.packages.show', $package)
+            return redirect()->route('client.packages.index')
                 ->with('success', "Colis #{$package->package_code} créé avec succès!");
 
         } catch (\Exception $e) {
@@ -223,7 +234,7 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Création de colis format avancé - VERSION OPTIMISÉE
+     * Création de colis format avancé - VERSION OPTIMISÉE AVEC VALIDATION CORRIGÉE
      */
     private function storeAdvancedPackage(Request $request, $continueCreating = false)
     {
@@ -237,7 +248,11 @@ class ClientPackageController extends Controller
             'save_supplier_address' => 'nullable|boolean',
             'supplier_address_label' => 'nullable|string|max:100',
             
-            'delegation_to' => 'required|exists:delegations,id|different:pickup_delegation_id',
+            'delegation_to' => [
+                'required',
+                'exists:delegations,id',
+                'different:pickup_delegation_id'  // CORRECTION: Empêcher même délégation pickup/livraison
+            ],
             'recipient_name' => 'required|string|max:255',
             'recipient_phone' => 'required|string|max:20',
             'recipient_address' => 'required|string|max:500',
@@ -257,6 +272,8 @@ class ClientPackageController extends Controller
             'notes' => 'nullable|string|max:1000',
             
             'continue_creating' => 'nullable|boolean'
+        ], [
+            'delegation_to.different' => 'La délégation de livraison doit être différente de la délégation de pickup.'
         ]);
 
         try {
@@ -282,7 +299,7 @@ class ClientPackageController extends Controller
                 return redirect()->route('client.packages.create')
                     ->with('success', $successMessage . ' Prêt pour le prochain colis.');
             } else {
-                return redirect()->route('client.packages.show', $package)
+                return redirect()->route('client.packages.index')
                     ->with('success', $successMessage);
             }
 
@@ -293,6 +310,30 @@ class ClientPackageController extends Controller
                 ->withInput()
                 ->with('error', "Erreur lors de la création: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Détails d'un colis
+     */
+    public function show(Package $package)
+    {
+        if ($package->sender_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé à ce colis.');
+        }
+
+        $package->load([
+            'delegationFrom', 
+            'delegationTo', 
+            'assignedDeliverer',
+            'statusHistory.changedBy',
+            'complaints.assignedCommercial'
+        ]);
+
+        if (method_exists($package, 'codModifications')) {
+            $package->load('codModifications.modifiedByCommercial');
+        }
+
+        return view('client.packages.show', compact('package'));
     }
 
     /**
@@ -438,7 +479,7 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Imprimer le bon de livraison d'un colis
+     * Imprimer le bon de livraison d'un colis - AVEC CODES QR ET BARRES CORRIGÉS
      */
     public function printDeliveryNote(Package $package)
     {
@@ -472,54 +513,6 @@ class ClientPackageController extends Controller
         }
 
         return view('client.packages.delivery-notes-bulk', compact('packages'));
-    }
-
-    /**
-     * Imprimer tous les bons d'un batch d'import
-     */
-    public function printBatchDeliveryNotes($batchId)
-    {
-        $user = Auth::user();
-        $batch = ImportBatch::where('user_id', $user->id)->findOrFail($batchId);
-        
-        $packages = Package::where('import_batch_id', $batch->id)
-            ->where('sender_id', $user->id)
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer'])
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        if ($packages->count() === 0) {
-            return back()->with('error', 'Aucun colis trouvé dans ce batch.');
-        }
-
-        return view('client.packages.delivery-notes-bulk', compact('packages', 'batch'));
-    }
-
-    /**
-     * Gestion des adresses sauvegardées
-     */
-    public function savedAddresses()
-    {
-        $user = Auth::user();
-        
-        if (!Schema::hasTable('saved_addresses')) {
-            return redirect()->route('client.packages.index')
-                ->with('error', 'Fonctionnalité non disponible.');
-        }
-        
-        $supplierAddresses = $user->savedAddresses()
-                                 ->suppliers()
-                                 ->with('delegation')
-                                 ->orderBy('last_used_at', 'desc')
-                                 ->paginate(10, ['*'], 'suppliers');
-                                 
-        $clientAddresses = $user->savedAddresses()
-                               ->clients()
-                               ->with('delegation')
-                               ->orderBy('last_used_at', 'desc')
-                               ->paginate(10, ['*'], 'clients');
-
-        return view('client.saved-addresses.index', compact('supplierAddresses', 'clientAddresses'));
     }
 
     /**
@@ -560,88 +553,6 @@ class ClientPackageController extends Controller
             ->with('info', "Données du colis #{$package->package_code} pré-remplies pour duplication.");
     }
 
-    // ==================== API ENDPOINTS ====================
-
-    /**
-     * Colis en attente (statut AVAILABLE)
-     */
-    public function pending(Request $request)
-    {
-        $user = Auth::user();
-        
-        $query = Package::where('sender_id', $user->id)
-            ->where('status', 'AVAILABLE')
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
-
-        $this->applyFilters($query, $request);
-        $packages = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return view('client.packages.filtered', compact('packages'))
-            ->with('filter_type', 'pending')
-            ->with('page_title', 'Colis en Attente')
-            ->with('page_description', 'Colis disponibles pour collecte');
-    }
-
-    /**
-     * Colis en cours de livraison
-     */
-    public function inProgress(Request $request)
-    {
-        $user = Auth::user();
-        
-        $query = Package::where('sender_id', $user->id)
-            ->whereIn('status', ['ACCEPTED', 'PICKED_UP'])
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
-
-        $this->applyFilters($query, $request);
-        $packages = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return view('client.packages.filtered', compact('packages'))
-            ->with('filter_type', 'in_progress')
-            ->with('page_title', 'Colis en Cours')
-            ->with('page_description', 'Colis en cours de livraison');
-    }
-
-    /**
-     * Colis livrés
-     */
-    public function delivered(Request $request)
-    {
-        $user = Auth::user();
-        
-        $query = Package::where('sender_id', $user->id)
-            ->whereIn('status', ['DELIVERED', 'PAID'])
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
-
-        $this->applyFilters($query, $request);
-        $packages = $query->orderBy('updated_at', 'desc')->paginate(15);
-
-        return view('client.packages.filtered', compact('packages'))
-            ->with('filter_type', 'delivered')
-            ->with('page_title', 'Colis Livrés')
-            ->with('page_description', 'Colis livrés avec succès');
-    }
-
-    /**
-     * Colis retournés
-     */
-    public function returned(Request $request)
-    {
-        $user = Auth::user();
-        
-        $query = Package::where('sender_id', $user->id)
-            ->where('status', 'RETURNED')
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
-
-        $this->applyFilters($query, $request);
-        $packages = $query->orderBy('updated_at', 'desc')->paginate(15);
-
-        return view('client.packages.filtered', compact('packages'))
-            ->with('filter_type', 'returned')
-            ->with('page_title', 'Colis Retournés')
-            ->with('page_description', 'Colis retournés à l\'expéditeur');
-    }
-
     /**
      * Export des colis
      */
@@ -679,6 +590,30 @@ class ClientPackageController extends Controller
     }
 
     /**
+     * Tracking public d'un colis
+     */
+    public function publicTracking($package_code)
+    {
+        $package = Package::where('package_code', $package_code)
+            ->with(['delegationFrom', 'delegationTo', 'statusHistory.changedBy'])
+            ->firstOrFail();
+
+        return view('public.tracking', compact('package'));
+    }
+
+    /**
+     * Tracking via QR code (version mobile optimisée)
+     */
+    public function qrTracking($package_code)
+    {
+        $package = Package::where('package_code', $package_code)
+            ->with(['delegationFrom', 'delegationTo', 'statusHistory.changedBy'])
+            ->firstOrFail();
+
+        return view('public.tracking-mobile', compact('package'));
+    }
+
+    /**
      * API - Résumé/statistiques des colis
      */
     public function apiSummary()
@@ -698,236 +633,35 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Appliquer les filtres communs
+     * Colis en attente (statut AVAILABLE) - Redirection vers index avec onglet
      */
-    private function applyFilters($query, $request)
+    public function pending(Request $request)
     {
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('package_code', 'LIKE', '%' . $search . '%')
-                  ->orWhereJsonContains('recipient_data->name', $search)
-                  ->orWhereJsonContains('supplier_data->name', $search)
-                  ->orWhere('content_description', 'LIKE', '%' . $search . '%');
-            });
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        return redirect()->route('client.packages.index', ['tab' => 'pending'] + $request->query());
     }
 
     /**
-     * API - Dernières données fournisseur
+     * Colis en cours (ACCEPTED, PICKED_UP) - Redirection vers index avec onglet
      */
-    public function apiLastSupplierData()
+    public function inProgress(Request $request)
     {
-        $lastSupplierData = session('last_supplier_data', []);
-        return response()->json($lastSupplierData);
+        return redirect()->route('client.packages.index', ['tab' => 'in_progress'] + $request->query());
     }
 
     /**
-     * API - Statistiques du jour
+     * Colis livrés (DELIVERED, PAID) - Redirection vers index avec onglet
      */
-    public function apiTodayStats()
+    public function delivered(Request $request)
     {
-        $user = auth()->user();
-        $stats = $this->getTodayStats($user);
-        return response()->json($stats);
+        return redirect()->route('client.packages.index', ['tab' => 'delivered'] + $request->query());
     }
 
     /**
-     * API - Adresses sauvegardées
+     * Colis retournés (RETURNED) - Redirection vers index avec onglet
      */
-    public function apiSavedAddresses($type = null)
+    public function returned(Request $request)
     {
-        $user = auth()->user();
-        
-        if (!Schema::hasTable('saved_addresses')) {
-            return response()->json([]);
-        }
-
-        $cacheKey = "api_saved_addresses_{$user->id}_" . ($type ?: 'all');
-        
-        $addresses = Cache::remember($cacheKey, 300, function() use ($user, $type) {
-            $query = $user->savedAddresses()->with('delegation');
-            
-            if ($type) {
-                $query->where('type', strtoupper($type));
-            }
-            
-            return $query->orderBy('last_used_at', 'desc')
-                          ->orderBy('use_count', 'desc')
-                          ->limit(20)
-                          ->get();
-        });
-
-        return response()->json($addresses);
-    }
-
-    /**
-     * API - Auto-complétion fournisseurs
-     */
-    public function apiSupplierAutocomplete(Request $request)
-    {
-        $search = $request->get('q', '');
-        $user = auth()->user();
-        
-        if (strlen($search) < 2) {
-            return response()->json([]);
-        }
-
-        if (!Schema::hasTable('saved_addresses')) {
-            return response()->json([]);
-        }
-
-        $suppliers = $user->savedAddresses()
-                         ->suppliers()
-                         ->where(function($query) use ($search) {
-                             $query->where('name', 'LIKE', "%{$search}%")
-                                   ->orWhere('label', 'LIKE', "%{$search}%");
-                         })
-                         ->with('delegation')
-                         ->orderBy('use_count', 'desc')
-                         ->limit(10)
-                         ->get();
-
-        return response()->json($suppliers->map(function($supplier) {
-            return [
-                'id' => $supplier->id,
-                'name' => $supplier->name,
-                'phone' => $supplier->phone,
-                'address' => $supplier->address,
-                'delegation_id' => $supplier->delegation_id,
-                'delegation_name' => $supplier->delegation->name,
-                'label' => $supplier->label,
-                'display' => $supplier->display_name . ' - ' . $supplier->delegation->name
-            ];
-        }));
-    }
-
-    /**
-     * API - Auto-complétion clients
-     */
-    public function apiClientAutocomplete(Request $request)
-    {
-        $search = $request->get('q', '');
-        $user = auth()->user();
-        
-        if (strlen($search) < 2) {
-            return response()->json([]);
-        }
-
-        if (!Schema::hasTable('saved_addresses')) {
-            return response()->json([]);
-        }
-
-        $clients = $user->savedAddresses()
-                       ->clients()
-                       ->where(function($query) use ($search) {
-                           $query->where('name', 'LIKE', "%{$search}%")
-                                 ->orWhere('phone', 'LIKE', "%{$search}%")
-                                 ->orWhere('label', 'LIKE', "%{$search}%");
-                       })
-                       ->with('delegation')
-                       ->orderBy('use_count', 'desc')
-                       ->limit(10)
-                       ->get();
-
-        return response()->json($clients->map(function($client) {
-            return [
-                'id' => $client->id,
-                'name' => $client->name,
-                'phone' => $client->phone,
-                'address' => $client->address,
-                'delegation_id' => $client->delegation_id,
-                'delegation_name' => $client->delegation->name,
-                'label' => $client->label,
-                'display' => $client->display_name . ' - ' . $client->delegation->name
-            ];
-        }));
-    }
-
-    /**
-     * API - Auto-complétion contenu
-     */
-    public function apiContentAutocomplete(Request $request)
-    {
-        $search = $request->get('q', '');
-        $user = auth()->user();
-        
-        if (strlen($search) < 2) {
-            return response()->json([]);
-        }
-
-        // Récupérer les descriptions les plus utilisées
-        $contents = $user->sentPackages()
-                        ->where('content_description', 'LIKE', "%{$search}%")
-                        ->select('content_description')
-                        ->groupBy('content_description')
-                        ->orderByRaw('COUNT(*) DESC')
-                        ->limit(10)
-                        ->pluck('content_description');
-
-        return response()->json($contents);
-    }
-
-    /**
-     * API - Création rapide de colis
-     */
-    public function apiQuickCreate(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'supplier_name' => 'required|string|max:255',
-                'supplier_phone' => 'required|string|max:20',
-                'pickup_delegation_id' => 'required|exists:delegations,id',
-                'pickup_address' => 'required|string|max:500',
-                'recipient_name' => 'required|string|max:255',
-                'recipient_phone' => 'required|string|max:20',
-                'recipient_address' => 'required|string|max:500',
-                'delegation_to' => 'required|exists:delegations,id|different:pickup_delegation_id',
-                'content_description' => 'required|string|max:255',
-                'cod_amount' => 'required|numeric|min:0|max:9999.999'
-            ]);
-
-            DB::beginTransaction();
-            
-            $package = $this->createPackageFromData(auth()->user(), $validated, 'api');
-            
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'package_id' => $package->id,
-                'package_code' => $package->package_code,
-                'message' => "Colis #{$package->package_code} créé avec succès!"
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * API - Données de session
-     */
-    public function apiSessionData()
-    {
-        return response()->json([
-            'supplier_data' => session('last_supplier_data', []),
-            'client_data' => session('last_client_data', []),
-            'package_data' => session('last_package_data', [])
-        ]);
+        return redirect()->route('client.packages.index', ['tab' => 'returned'] + $request->query());
     }
 
     // ==================== MÉTHODES PRIVÉES ====================
@@ -1120,6 +854,30 @@ class ClientPackageController extends Controller
             return $returnFee;
         } else {
             return $deliveryFee;
+        }
+    }
+
+    /**
+     * Appliquer les filtres communs
+     */
+    private function applyFilters($query, $request)
+    {
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('package_code', 'LIKE', '%' . $search . '%')
+                  ->orWhereJsonContains('recipient_data->name', $search)
+                  ->orWhereJsonContains('supplier_data->name', $search)
+                  ->orWhere('content_description', 'LIKE', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
     }
 
