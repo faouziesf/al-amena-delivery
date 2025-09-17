@@ -206,6 +206,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::get('/balance', [ClientWalletController::class, 'apiBalance'])->name('balance');
             Route::get('/transactions', [ClientWalletController::class, 'apiTransactions'])->name('transactions');
             Route::get('/summary', [ClientWalletController::class, 'apiSummary'])->name('summary');
+            Route::get('/check-balance', [ClientWalletController::class, 'apiCheckBalance'])->name('check.balance');
         });
         
         // ==================== Package APIs ====================
@@ -317,7 +318,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
 |--------------------------------------------------------------------------
 */
 
-// Tracking public (sans authentification) - Amélioré pour QR codes
 Route::prefix('track')->name('public.track.')->group(function () {
     Route::get('/{package_code}', [ClientPackageController::class, 'publicTracking'])->name('package');
     Route::post('/check', [ClientPackageController::class, 'publicTrackingCheck'])->name('check');

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bon de Livraison - {{ $package->package_code }}</title>
     <!-- Bibliothèques pour codes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
     <style>
         * {
@@ -16,30 +16,33 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 13px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.3;
             color: #333;
             background: white;
         }
         
-        /* Format A4 */
+        /* Format A5 Horizontal (210mm x 148mm) */
         .delivery-note {
             width: 210mm;
-            min-height: 297mm;
+            height: 148mm;
             margin: 0 auto;
-            padding: 15mm;
+            padding: 10mm;
             background: white;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
         
-        /* En-tête avec logo et informations */
+        /* En-tête compacte */
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #2563eb;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #2563eb;
+            height: 60px;
         }
         
         .logo-section {
@@ -47,23 +50,23 @@
         }
         
         .company-name {
-            font-size: 28px;
+            font-size: 18px;
             font-weight: bold;
             color: #2563eb;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
         }
         
         .company-subtitle {
             color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 8px;
+            font-size: 9px;
+            margin-bottom: 3px;
         }
         
         .company-contact {
-            font-size: 11px;
+            font-size: 8px;
             color: #6b7280;
-            line-height: 1.5;
+            line-height: 1.2;
         }
         
         .document-info {
@@ -72,40 +75,41 @@
         }
         
         .document-title {
-            font-size: 22px;
+            font-size: 14px;
             font-weight: bold;
             color: #1f2937;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .package-code {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #2563eb;
             background: #eff6ff;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
             display: inline-block;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             border: 2px solid #2563eb;
         }
         
         .date-info {
             color: #6b7280;
-            font-size: 11px;
-            margin-bottom: 10px;
+            font-size: 8px;
+            margin-bottom: 4px;
         }
 
-        /* Section codes - OPTIMISÉE ET COMPACTE */
+        /* Section codes compacte */
         .codes-section {
             background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            height: 50px;
         }
 
         .barcode-container {
@@ -114,10 +118,10 @@
         }
 
         .barcode-title {
-            font-size: 12px;
+            font-size: 8px;
             font-weight: bold;
             color: #374151;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
 
@@ -127,68 +131,81 @@
         }
 
         .barcode-number {
-            font-size: 14px;
+            font-size: 9px;
             font-weight: bold;
             color: #1f2937;
-            margin-top: 5px;
-            letter-spacing: 1px;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
         }
 
-        /* QR Code - COMPACT */
         .qr-container {
             flex: 1;
             text-align: center;
-            padding-left: 20px;
+            padding-left: 10px;
         }
 
         .qr-title {
-            font-size: 10px;
+            font-size: 7px;
             font-weight: bold;
             color: #374151;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
 
         #qrcode {
             margin: 0 auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 3px;
         }
 
         .tracking-info {
-            font-size: 9px;
+            font-size: 6px;
             color: #6b7280;
-            margin-top: 5px;
-            max-width: 120px;
+            margin-top: 2px;
+            max-width: 80px;
             word-break: break-all;
         }
+
+        .qr-fallback {
+            font-size: 7px;
+            color: #ef4444;
+            margin-top: 2px;
+        }
         
-        /* Grille principale */
+        /* Contenu principal - Layout horizontal optimisé */
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 25px;
+            grid-template-columns: 1fr 1fr 140px; /* Pickup | Delivery | Amount */
+            gap: 8px;
+            margin-bottom: 8px;
+            flex: 1;
         }
         
         .section {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
             overflow: hidden;
             background: white;
+            display: flex;
+            flex-direction: column;
         }
         
         .section-header {
             background: #f9fafb;
-            padding: 12px 15px;
+            padding: 6px 8px;
             font-weight: bold;
             color: #374151;
-            border-bottom: 2px solid #e5e7eb;
-            font-size: 13px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
         }
         
         .section-content {
-            padding: 15px;
+            padding: 8px;
+            flex: 1;
+            font-size: 9px;
         }
         
         .pickup-section .section-header {
@@ -204,104 +221,125 @@
         }
         
         .info-row {
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             display: flex;
             align-items: flex-start;
+            font-size: 8px;
         }
         
         .info-label {
             font-weight: bold;
             color: #6b7280;
-            min-width: 85px;
-            margin-right: 12px;
-            font-size: 11px;
+            min-width: 50px;
+            margin-right: 6px;
+            font-size: 7px;
             text-transform: uppercase;
         }
         
         .info-value {
             flex: 1;
             color: #1f2937;
-            font-size: 13px;
+            font-size: 8px;
             font-weight: 500;
+            line-height: 1.2;
         }
         
-        /* Section détails du colis */
-        .package-details {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .package-info .section-header {
-            background: #f0f9ff;
-            color: #0c4a6e;
-            border-bottom-color: #0284c7;
-        }
-        
-        /* Section montant COD - OPTIMISÉE */
+        /* Section montant COD compacte */
         .amount-section {
             background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-            border: 3px solid #f59e0b;
-            border-radius: 12px;
-            padding: 20px;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 8px;
             text-align: center;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .amount-section::before {
             content: '💰';
             position: absolute;
-            top: -12px;
+            top: -8px;
             left: 50%;
             transform: translateX(-50%);
             background: #f59e0b;
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 10px;
         }
         
         .amount-label {
-            font-size: 11px;
+            font-size: 8px;
             color: #92400e;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         
         .amount-value {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: bold;
             color: #92400e;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         
         .amount-currency {
-            font-size: 12px;
+            font-size: 8px;
             color: #92400e;
             font-weight: bold;
         }
+
+        /* Section détails du colis compacte */
+        .package-details {
+            background: #f0f9ff;
+            border: 1px solid #0284c7;
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 8px;
+            font-size: 8px;
+        }
+
+        .package-details-title {
+            font-weight: bold;
+            color: #0c4a6e;
+            margin-bottom: 4px;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        .package-details-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .detail-item {
+            flex: 1;
+            min-width: 80px;
+        }
         
-        /* Instructions spéciales */
+        /* Instructions spéciales compactes */
         .special-instructions {
             background: #fef2f2;
-            border-left: 4px solid #ef4444;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+            padding: 6px;
+            margin-bottom: 6px;
+            font-size: 8px;
         }
         
         .instructions-title {
             font-weight: bold;
             color: #dc2626;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 3px;
+            font-size: 8px;
             text-transform: uppercase;
             display: flex;
             align-items: center;
@@ -309,111 +347,116 @@
         
         .instructions-title::before {
             content: '⚠️';
-            margin-right: 6px;
-            font-size: 14px;
+            margin-right: 4px;
+            font-size: 10px;
         }
         
         .instructions-content {
             color: #7f1d1d;
-            line-height: 1.5;
-            font-size: 12px;
+            line-height: 1.3;
+            font-size: 7px;
         }
         
-        /* Notes générales */
+        /* Notes générales compactes */
         .notes-section {
             background: #f0fdf4;
-            border: 2px solid #bbf7d0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 25px;
+            border: 1px solid #bbf7d0;
+            border-radius: 4px;
+            padding: 6px;
+            margin-bottom: 8px;
+            font-size: 8px;
         }
         
         .notes-title {
             font-weight: bold;
             color: #166534;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 3px;
+            font-size: 8px;
             display: flex;
             align-items: center;
         }
         
         .notes-title::before {
             content: '📝';
-            margin-right: 6px;
+            margin-right: 4px;
         }
         
         .notes-content {
             color: #166534;
             font-style: italic;
-            line-height: 1.5;
-            font-size: 12px;
+            line-height: 1.3;
+            font-size: 7px;
         }
         
-        /* Signatures */
+        /* Signatures compactes */
         .signatures {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e5e7eb;
+            gap: 8px;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
         }
         
         .signature-box {
             text-align: center;
-            min-height: 80px;
+            min-height: 40px;
             border: 1px dashed #9ca3af;
-            border-radius: 6px;
-            padding: 12px;
+            border-radius: 4px;
+            padding: 4px;
             background: #fafafa;
+            display: flex;
+            flex-direction: column;
         }
         
         .signature-label {
             font-weight: bold;
             color: #374151;
-            margin-bottom: 12px;
-            font-size: 11px;
+            margin-bottom: 4px;
+            font-size: 7px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         
         .signature-line {
-            border-bottom: 2px solid #6b7280;
-            height: 50px;
-            margin-bottom: 8px;
+            border-bottom: 1px solid #6b7280;
+            flex: 1;
+            margin-bottom: 2px;
         }
         
         .signature-date {
-            font-size: 9px;
+            font-size: 6px;
             color: #9ca3af;
         }
         
-        /* Pied de page */
+        /* Pied de page compact */
         .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 2px solid #e5e7eb;
+            margin-top: auto;
+            padding-top: 4px;
+            border-top: 1px solid #e5e7eb;
             text-align: center;
             color: #6b7280;
-            font-size: 10px;
-            line-height: 1.5;
+            font-size: 6px;
+            line-height: 1.3;
+            flex-shrink: 0;
         }
         
         .footer-logo {
             font-weight: bold;
             color: #2563eb;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
         
         /* Badges de statut */
         .status-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 15px;
-            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         
         .status-created { background: #f3f4f6; color: #374151; }
@@ -424,21 +467,29 @@
         .status-paid { background: #d1fae5; color: #065f46; }
         .status-returned { background: #fed7aa; color: #c2410c; }
         
-        /* Impression */
+        /* Impression A5 Landscape */
         @media print {
+            @page {
+                size: A5 landscape;
+                margin: 0;
+            }
+            
             body { 
                 margin: 0; 
                 background: white !important;
             }
+            
             .delivery-note { 
                 margin: 0; 
-                padding: 15mm;
+                padding: 10mm;
                 width: 210mm;
-                min-height: 297mm;
+                height: 148mm;
             }
+            
             .no-print { 
                 display: none !important; 
             }
+            
             .section {
                 break-inside: avoid;
             }
@@ -472,38 +523,32 @@
         @media (max-width: 768px) {
             .delivery-note {
                 width: 100%;
-                padding: 10mm;
+                height: auto;
+                min-height: 400px;
+                padding: 8px;
             }
             
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .package-details {
-                grid-template-columns: 1fr;
-            }
-            
-            .signatures {
-                grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 8px;
             }
             
             .codes-section {
                 flex-direction: column;
-                text-align: center;
+                height: auto;
+                padding: 10px;
             }
             
             .qr-container {
                 padding-left: 0;
-                padding-top: 15px;
+                padding-top: 8px;
             }
         }
     </style>
 </head>
 <body>
     <button onclick="window.print()" class="print-button no-print">
-        🖨️ Imprimer
+        🖨️ Imprimer A5
     </button>
     
     <div class="delivery-note">
@@ -513,9 +558,7 @@
                 <div class="company-name">AL-AMENA DELIVERY</div>
                 <div class="company-subtitle">Service de livraison rapide et sécurisé</div>
                 <div class="company-contact">
-                    📧 contact@al-amena.tn<br>
-                    📞 +216 XX XXX XXX<br>
-                    📍 Adresse de l'entreprise, Ville, Tunisie
+                    📧 contact@al-amena.tn • 📞 +216 XX XXX XXX
                 </div>
             </div>
             
@@ -523,7 +566,7 @@
                 <div class="document-title">BON DE LIVRAISON</div>
                 <div class="package-code">{{ $package->package_code }}</div>
                 <div class="date-info">
-                    Créé le {{ $package->created_at->format('d/m/Y à H:i') }}<br>
+                    {{ $package->created_at->format('d/m/Y H:i') }}
                     <span class="status-badge status-{{ strtolower($package->status) }}">
                         {{ $package->status }}
                     </span>
@@ -531,7 +574,7 @@
             </div>
         </div>
 
-        <!-- Section Codes - OPTIMISÉE -->
+        <!-- Section Codes -->
         <div class="codes-section">
             <div class="barcode-container">
                 <div class="barcode-title">Code de Suivi</div>
@@ -540,7 +583,7 @@
             </div>
             
             <div class="qr-container">
-                <div class="qr-title">Suivi Rapide</div>
+                <div class="qr-title">Suivi QR</div>
                 <div id="qrcode"></div>
                 <div class="tracking-info">{{ url('/track/' . $package->package_code) }}</div>
             </div>
@@ -550,7 +593,7 @@
         <div class="main-content">
             <!-- Section Pickup -->
             <div class="section pickup-section">
-                <div class="section-header">📦 Informations de Collecte</div>
+                <div class="section-header">📦 Collecte</div>
                 <div class="section-content">
                     @if($package->supplier_data && is_array($package->supplier_data))
                     <div class="info-row">
@@ -580,14 +623,7 @@
                     @if($package->pickup_address)
                     <div class="info-row">
                         <span class="info-label">Adresse:</span>
-                        <span class="info-value">{{ $package->pickup_address }}</span>
-                    </div>
-                    @endif
-                    
-                    @if($package->pickup_phone && $package->pickup_phone !== ($package->supplier_data['phone'] ?? ''))
-                    <div class="info-row">
-                        <span class="info-label">Contact:</span>
-                        <span class="info-value">{{ $package->pickup_phone }}</span>
+                        <span class="info-value">{{ Str::limit($package->pickup_address, 40) }}</span>
                     </div>
                     @endif
                 </div>
@@ -595,7 +631,7 @@
 
             <!-- Section Livraison -->
             <div class="section delivery-section">
-                <div class="section-header">🎯 Informations de Livraison</div>
+                <div class="section-header">🎯 Livraison</div>
                 <div class="section-content">
                     <div class="info-row">
                         <span class="info-label">Destinataire:</span>
@@ -611,55 +647,36 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Adresse:</span>
-                        <span class="info-value">{{ $package->recipient_data['address'] ?? 'N/A' }}</span>
+                        <span class="info-value">{{ Str::limit($package->recipient_data['address'] ?? 'N/A', 40) }}</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Section Montant -->
+            <div class="amount-section">
+                <div class="amount-label">À Encaisser</div>
+                <div class="amount-value">{{ number_format($package->cod_amount, 3) }}</div>
+                <div class="amount-currency">DT</div>
             </div>
         </div>
 
         <!-- Détails du colis -->
         <div class="package-details">
-            <div class="section">
-                <div class="section-header">📋 Détails du Colis</div>
-                <div class="section-content">
-                    <div class="info-row">
-                        <span class="info-label">Contenu:</span>
-                        <span class="info-value">{{ $package->content_description }}</span>
-                    </div>
-                    
-                    @if($package->package_weight)
-                    <div class="info-row">
-                        <span class="info-label">Poids:</span>
-                        <span class="info-value">{{ number_format($package->package_weight, 3) }} kg</span>
-                    </div>
-                    @endif
-                    
-                    @if($package->package_value)
-                    <div class="info-row">
-                        <span class="info-label">Valeur:</span>
-                        <span class="info-value">{{ number_format($package->package_value, 3) }} DT</span>
-                    </div>
-                    @endif
-                    
-                    @if($package->package_dimensions)
-                    <div class="info-row">
-                        <span class="info-label">Dimensions:</span>
-                        <span class="info-value">
-                            {{ $package->package_dimensions['length'] ?? 0 }} x 
-                            {{ $package->package_dimensions['width'] ?? 0 }} x 
-                            {{ $package->package_dimensions['height'] ?? 0 }} cm
-                        </span>
-                    </div>
-                    @endif
-
-                    <!-- FRAIS DE LIVRAISON SUPPRIMÉS COMME DEMANDÉ -->
+            <div class="package-details-title">📋 Détails du Colis</div>
+            <div class="package-details-content">
+                <div class="detail-item">
+                    <strong>Contenu:</strong> {{ Str::limit($package->content_description, 30) }}
                 </div>
-            </div>
-
-            <div class="amount-section">
-                <div class="amount-label">Montant à Encaisser</div>
-                <div class="amount-value">{{ number_format($package->cod_amount, 3) }}</div>
-                <div class="amount-currency">DINARS TUNISIENS</div>
+                @if($package->package_weight)
+                <div class="detail-item">
+                    <strong>Poids:</strong> {{ number_format($package->package_weight, 2) }}kg
+                </div>
+                @endif
+                @if($package->package_value)
+                <div class="detail-item">
+                    <strong>Valeur:</strong> {{ number_format($package->package_value, 0) }}DT
+                </div>
+                @endif
             </div>
         </div>
 
@@ -668,21 +685,10 @@
         <div class="special-instructions">
             <div class="instructions-title">Instructions Spéciales</div>
             <div class="instructions-content">
-                @if($package->is_fragile)
-                    <strong>🔸 FRAGILE :</strong> Manipuler avec précaution<br>
-                @endif
-                
-                @if($package->requires_signature)
-                    <strong>✍️ SIGNATURE REQUISE :</strong> Signature obligatoire du destinataire<br>
-                @endif
-                
-                @if($package->special_instructions)
-                    <strong>Instructions :</strong> {{ $package->special_instructions }}<br>
-                @endif
-                
-                @if($package->pickup_notes)
-                    <strong>Notes pickup :</strong> {{ $package->pickup_notes }}
-                @endif
+                @if($package->is_fragile) FRAGILE • @endif
+                @if($package->requires_signature) SIGNATURE REQUISE • @endif
+                @if($package->special_instructions) {{ Str::limit($package->special_instructions, 60) }} @endif
+                @if($package->pickup_notes) • {{ Str::limit($package->pickup_notes, 60) }} @endif
             </div>
         </div>
         @endif
@@ -690,77 +696,149 @@
         <!-- Notes générales -->
         @if($package->notes)
         <div class="notes-section">
-            <div class="notes-title">Notes Générales</div>
-            <div class="notes-content">{{ $package->notes }}</div>
+            <div class="notes-title">Notes</div>
+            <div class="notes-content">{{ Str::limit($package->notes, 80) }}</div>
         </div>
         @endif
 
         <!-- Signatures -->
         <div class="signatures">
             <div class="signature-box">
-                <div class="signature-label">Signature Expéditeur</div>
+                <div class="signature-label">Expéditeur</div>
                 <div class="signature-line"></div>
-                <div class="signature-date">Date: ___/___/______</div>
+                <div class="signature-date">Date: ___/___</div>
             </div>
             
             <div class="signature-box">
-                <div class="signature-label">Signature Livreur</div>
+                <div class="signature-label">Livreur</div>
                 <div class="signature-line"></div>
-                <div class="signature-date">Date: ___/___/______</div>
+                <div class="signature-date">Date: ___/___</div>
             </div>
             
             <div class="signature-box">
-                <div class="signature-label">Signature Destinataire</div>
+                <div class="signature-label">Destinataire</div>
                 <div class="signature-line"></div>
-                <div class="signature-date">Date: ___/___/______</div>
+                <div class="signature-date">Date: ___/___</div>
             </div>
         </div>
 
         <!-- Pied de page -->
         <div class="footer">
             <div class="footer-logo">AL-AMENA DELIVERY</div>
-            <p>Service de livraison professionnel - Pour toute réclamation, contactez notre service client</p>
-            <p>Document généré le {{ now()->format('d/m/Y à H:i:s') }} - Référence: {{ $package->id }}</p>
+            <p>Service de livraison professionnel • Généré le {{ now()->format('d/m/Y H:i') }}</p>
         </div>
     </div>
 
     <script>
+        // Fonction pour générer le QR Code manuellement
+        function generateQRCodeManually(text, size = 6) {
+            try {
+                const qr = qrcode(0, 'L');
+                qr.addData(text);
+                qr.make();
+                
+                const cellSize = 2; // Taille réduite pour A5
+                const margin = 4;
+                const moduleCount = qr.getModuleCount();
+                const canvasSize = (moduleCount * cellSize) + (margin * 2);
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+                const ctx = canvas.getContext('2d');
+                
+                // Fond blanc
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvasSize, canvasSize);
+                
+                // Modules noirs
+                ctx.fillStyle = '#000000';
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        if (qr.isDark(row, col)) {
+                            ctx.fillRect(
+                                (col * cellSize) + margin,
+                                (row * cellSize) + margin,
+                                cellSize,
+                                cellSize
+                            );
+                        }
+                    }
+                }
+                
+                return canvas;
+            } catch (error) {
+                console.error('Erreur génération QR manuel:', error);
+                return null;
+            }
+        }
+
         // Générer les codes au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Génération des codes A5...');
+            
             try {
-                // Code-barres optimisé
-                JsBarcode("#barcode", "{{ $package->package_code }}", {
-                    format: "CODE128",
-                    width: 2,
-                    height: 50,
-                    displayValue: false,
-                    background: "transparent",
-                    lineColor: "#000000",
-                    margin: 5
-                });
-                
-                // QR Code compact
-                QRCode.toCanvas(document.getElementById('qrcode'), "{{ url('/track/' . $package->package_code) }}", {
-                    width: 60,
-                    height: 60,
-                    margin: 1,
-                    color: {
-                        dark: '#000000',
-                        light: '#ffffff'
-                    }
-                }, function (error) {
-                    if (error) {
-                        console.error('Erreur QR Code:', error);
-                        // Masquer le QR code en cas d'erreur
-                        document.getElementById('qrcode').style.display = 'none';
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Erreur génération codes:', error);
-                // En cas d'erreur, masquer les sections concernées
-                if (error.message.includes('barcode')) {
+                // Code-barres optimisé pour A5
+                if (typeof JsBarcode !== 'undefined') {
+                    JsBarcode("#barcode", "{{ $package->package_code }}", {
+                        format: "CODE128",
+                        width: 1.5,
+                        height: 25,
+                        displayValue: false,
+                        background: "transparent",
+                        lineColor: "#000000",
+                        margin: 2
+                    });
+                    console.log('Code-barres généré avec succès');
+                } else {
+                    console.error('JsBarcode non disponible');
                     document.querySelector('.barcode-container').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Erreur code-barres:', error);
+                document.querySelector('.barcode-container').style.display = 'none';
+            }
+            
+            // QR Code compact pour A5
+            const qrContainer = document.getElementById('qrcode');
+            const trackingUrl = "{{ url('/track/' . $package->package_code) }}";
+            
+            if (qrContainer) {
+                try {
+                    if (typeof qrcode !== 'undefined') {
+                        console.log('Génération QR code...');
+                        const canvas = generateQRCodeManually(trackingUrl);
+                        if (canvas) {
+                            canvas.style.width = '35px';
+                            canvas.style.height = '35px';
+                            canvas.style.imageRendering = 'pixelated';
+                            qrContainer.appendChild(canvas);
+                            console.log('QR Code généré avec succès');
+                        } else {
+                            throw new Error('Impossible de générer le QR code manuellement');
+                        }
+                    } else {
+                        throw new Error('Bibliothèque qrcode-generator non disponible');
+                    }
+                } catch (error) {
+                    console.error('Erreur QR Code:', error);
+                    qrContainer.innerHTML = `
+                        <div style="
+                            width: 35px; 
+                            height: 35px; 
+                            border: 1px dashed #ccc; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            font-size: 6px; 
+                            text-align: center;
+                            background: #f9f9f9;
+                            color: #666;
+                            margin: 0 auto;
+                        ">
+                            QR<br>Erreur
+                        </div>
+                    `;
                 }
             }
         });
@@ -768,7 +846,7 @@
         // Auto-print si paramètre d'URL
         if (window.location.search.includes('auto_print=1')) {
             window.addEventListener('load', function() {
-                setTimeout(() => window.print(), 1000);
+                setTimeout(() => window.print(), 1500);
             });
         }
     </script>
