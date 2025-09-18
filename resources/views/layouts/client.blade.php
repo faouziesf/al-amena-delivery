@@ -24,10 +24,10 @@
     </script>
     @stack('styles')
 </head>
-<body class="bg-gradient-to-br from-purple-50 to-indigo-50 min-h-screen" x-data="clientApp()">
+<body class="bg-gradient-to-br from-purple-50 to-indigo-50 min-h-screen overflow-x-hidden" x-data="clientApp()">
     
     <!-- Top Navigation Bar -->
-    <nav class="bg-white shadow-sm border-b border-purple-100 sticky top-0 z-40">
+    <nav class="bg-white shadow-sm border-b border-purple-100 fixed top-0 left-0 right-0 z-50">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo & Brand -->
@@ -40,34 +40,34 @@
                     </button>
                     
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-4 h-4 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
                         </div>
                         <div class="hidden sm:block">
-                            <h1 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Al-Amena</h1>
+                            <h1 class="text-lg lg:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Al-Amena</h1>
                             <p class="text-xs text-gray-500">Espace Client</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right side - User info and actions -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 lg:space-x-4">
                     <!-- Notifications -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" 
                                 class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
                             </svg>
                             <span x-show="notifications.unread_count > 0" 
-                                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 lg:w-5 lg:h-5 flex items-center justify-center animate-pulse"
                                   x-text="notifications.unread_count"></span>
                         </button>
                         
                         <div x-show="open" @click.away="open = false" x-transition
-                             class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border z-50">
+                             class="absolute right-0 mt-2 w-72 lg:w-80 bg-white rounded-xl shadow-xl border z-50">
                             <div class="p-4 border-b">
                                 <div class="flex items-center justify-between">
                                     <h3 class="font-semibold text-gray-900">Notifications</h3>
@@ -76,7 +76,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="max-h-96 overflow-y-auto" x-html="notificationsList">
+                            <div class="max-h-80 lg:max-h-96 overflow-y-auto" x-html="notificationsList">
                                 <p class="p-4 text-gray-500 text-center">Chargement...</p>
                             </div>
                         </div>
@@ -85,12 +85,12 @@
                     <!-- User Profile Dropdown -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" 
-                                class="flex items-center space-x-3 p-2 rounded-xl hover:bg-purple-50 transition-colors">
-                            <div class="w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                                <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                                class="flex items-center space-x-2 lg:space-x-3 p-1 lg:p-2 rounded-xl hover:bg-purple-50 transition-colors">
+                            <div class="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                <span class="text-white font-bold text-xs lg:text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
                             </div>
                             <div class="hidden md:block text-left">
-                                <p class="text-sm font-medium text-gray-900 truncate max-w-32">{{ auth()->user()->name }}</p>
+                                <p class="text-sm font-medium text-gray-900 truncate max-w-24 lg:max-w-32">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500">Client</p>
                             </div>
                             <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,15 +99,15 @@
                         </button>
                         
                         <div x-show="open" @click.away="open = false" x-transition
-                             class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border z-50">
+                             class="absolute right-0 mt-2 w-56 lg:w-64 bg-white rounded-xl shadow-xl border z-50">
                             <div class="p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                                        <span class="text-white font-bold">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                                    <div class="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm lg:text-base">{{ substr(auth()->user()->name, 0, 2) }}</span>
                                     </div>
                                     <div>
-                                        <p class="font-semibold text-gray-900">{{ auth()->user()->name }}</p>
-                                        <p class="text-sm text-gray-600">{{ auth()->user()->email }}</p>
+                                        <p class="font-semibold text-gray-900 text-sm lg:text-base">{{ auth()->user()->name }}</p>
+                                        <p class="text-xs lg:text-sm text-gray-600">{{ auth()->user()->email }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -146,14 +146,14 @@
         </div>
     </nav>
 
-    <!-- Main Layout -->
-    <div class="flex">
-        <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-xl border-r border-purple-100 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 mt-16 lg:mt-0" 
+    <!-- Main Layout with fixed sidebar -->
+    <div class="flex pt-16">
+        <!-- Fixed Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-xl border-r border-purple-100 transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-16" 
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
             
             <!-- Navigation Menu -->
-            <nav class="p-4 space-y-2 h-full overflow-y-auto">
+            <nav class="p-4 space-y-2 h-full overflow-y-auto pb-20">
                 <a href="{{ route('client.dashboard') }}" 
                    class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.dashboard') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,7 +235,7 @@
              x-transition:leave-end="opacity-0"></div>
 
         <!-- Main Content Area -->
-        <div class="flex-1 lg:ml-0">
+        <div class="flex-1 lg:ml-64">
             <!-- Page Content -->
             <main class="min-h-screen">
                 @yield('content')
@@ -252,13 +252,13 @@
              x-transition:leave="transform transition ease-in duration-200"
              x-transition:leave-start="translate-x-0 opacity-100"
              x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed top-20 right-4 bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 max-w-sm">
+             class="fixed top-20 right-4 bg-emerald-500 text-white px-4 lg:px-6 py-3 rounded-xl shadow-lg z-50 max-w-xs lg:max-w-sm">
             <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span>{{ session('success') }}</span>
-                <button @click="show = false" class="ml-auto">
+                <span class="text-sm lg:text-base">{{ session('success') }}</span>
+                <button @click="show = false" class="ml-auto flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -275,12 +275,12 @@
              x-transition:leave="transform transition ease-in duration-200"
              x-transition:leave-start="translate-x-0 opacity-100"
              x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed top-20 right-4 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 max-w-sm">
+             class="fixed top-20 right-4 bg-red-500 text-white px-4 lg:px-6 py-3 rounded-xl shadow-lg z-50 max-w-xs lg:max-w-sm">
             <div class="flex items-start space-x-2">
                 <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <div class="flex-1">
+                <div class="flex-1 text-sm lg:text-base">
                     @if(session('error'))
                         <span>{{ session('error') }}</span>
                     @endif

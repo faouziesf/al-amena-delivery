@@ -136,6 +136,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Demandes de rechargement du client
+     */
+    public function topupRequests()
+    {
+        return $this->hasMany(TopupRequest::class, 'client_id');
+    }
+
+    /**
+     * Demandes de rechargement traitées par ce commercial/livreur
+     */
+    public function processedTopupRequests()
+    {
+        return $this->hasMany(TopupRequest::class, 'processed_by_id');
+    }
+
+    /**
      * Notifications de l'utilisateur
      */
     public function notifications()
@@ -554,6 +570,66 @@ class User extends Authenticatable
     }
 
     /**
+     * Obtenir les statistiques des demandes de rechargement
+     */
+    public function getTopupRequestsStats($period = null)
+    {
+        if (!$this->isClient()) {
+            return null;
+        }
+
+        $query = $this->topupRequests();
+        
+        if ($period) {
+            $query->where('created_at', '>=', now()->sub($period));
+        }
+
+        $requests = $query->get();
+        
+        return [
+            'total_requests' => $requests->count(),
+            'pending_requests' => $requests->where('status', 'PENDING')->count(),
+            'validated_requests' => $requests->where('status', 'VALIDATED')->count(),
+            'rejected_requests' => $requests->where('status', 'REJECTED')->count(),
+            'cancelled_requests' => $requests->where('status', 'CANCELLED')->count(),
+            'total_amount_requested' => $requests->sum('amount'),
+            'total_amount_validated' => $requests->where('status', 'VALIDATED')->sum('amount'),
+            'total_amount_pending' => $requests->where('status', 'PENDING')->sum('amount'),
+            'bank_transfers' => $requests->whereIn('method', ['BANK_TRANSFER', 'BANK_DEPOSIT'])->count(),
+            'cash_payments' => $requests->where('method', 'CASH')->count(),
+        ];
+    }
+
+    /**
+     * Demandes de rechargement récentes
+     */
+    public function recentTopupRequests($limit = 5)
+    {
+        return $this->topupRequests()
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->get();
+    }
+
+    /**
+     * Vérifier si l'utilisateur a des demandes en attente
+     */
+    public function hasPendingTopupRequests()
+    {
+        return $this->topupRequests()->pending()->exists();
+    }
+
+    /**
+     * Dernière demande de rechargement
+     */
+    public function lastTopupRequest()
+    {
+        return $this->topupRequests()
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+    }
+
+    /**
      * Packages créés aujourd'hui
      */
     public function todayPackages()
@@ -698,6 +774,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Vérifier si l'utilisateur peut traiter des demandes de rechargement bancaires
+     */
+    public function canProcessBankTopupRequests()
+    {
+        return $this->isCommercial() && $this->isActive();
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut traiter des demandes de rechargement espèces
+     */
+    public function canProcessCashTopupRequests()
+    {
+        return $this->isDeliverer() && $this->isActive();
+    }
+
+    /**
      * Formater le numéro de téléphone
      */
     public function getFormattedPhoneAttribute()
@@ -714,6 +806,23 @@ class User extends Authenticatable
         }
         
         return $this->phone;
+    }
+
+    /**
+     * Obtenir le résumé de l'activité récente
+     */
+    public function getRecentActivitySummary($days = 7)
+    {
+        $since = now()->subDays($days);
+        
+        return [
+            'packages_created' => $this->sentPackages()->where('created_at', '>=', $since)->count(),
+            'packages_delivered' => $this->isDeliverer() ? $this->assignedPackages()->whereIn('status', ['DELIVERED', 'PAID'])->where('updated_at', '>=', $since)->count() : 0,
+            'transactions_count' => $this->transactions()->where('created_at', '>=', $since)->count(),
+            'topup_requests' => $this->topupRequests()->where('created_at', '>=', $since)->count(),
+            'complaints_created' => $this->complaints()->where('created_at', '>=', $since)->count(),
+            'period_days' => $days
+        ];
     }
 
     // ==================== BOOT METHOD ====================
@@ -744,6 +853,13 @@ class User extends Authenticatable
             
             // Supprimer les notifications
             $user->notifications()->delete();
+            
+            // Marquer les demandes de rechargement comme annulées
+            $user->topupRequests()->where('status', 'PENDING')->update([
+                'status' => 'CANCELLED',
+                'processed_at' => now(),
+                'rejection_reason' => 'Compte utilisateur supprimé'
+            ]);
         });
     }
 }

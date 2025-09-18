@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', 'Recharger mon portefeuille')
+@section('title', 'Demande de rechargement')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
@@ -22,9 +22,9 @@
             <!-- Titre principal -->
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
-                    💳 Recharger mon portefeuille
+                    💳 Demande de rechargement
                 </h1>
-                <p class="text-gray-600 text-lg">Ajoutez des fonds à votre portefeuille pour créer de nouveaux colis</p>
+                <p class="text-gray-600 text-lg">Faites une demande de rechargement qui sera validée par notre équipe</p>
             </div>
 
             <!-- Alertes -->
@@ -87,9 +87,9 @@
                 </div>
             </div>
 
-            <!-- Formulaire de rechargement -->
+            <!-- Formulaire de demande -->
             <form action="{{ route('client.wallet.process.topup') }}" method="POST" 
-                  id="topupForm" class="space-y-8">
+                  id="topupForm" class="space-y-8" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Montant à recharger -->
@@ -114,7 +114,7 @@
                                        name="amount" 
                                        step="0.001" 
                                        min="10" 
-                                       max="1000" 
+                                       max="10000" 
                                        value="{{ old('amount') }}"
                                        class="block w-full pl-4 pr-16 py-4 text-lg rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50"
                                        placeholder="0.000" required>
@@ -124,7 +124,7 @@
                             </div>
                             <p class="mt-2 text-sm text-gray-500">
                                 Minimum: <span class="font-semibold text-emerald-600">10.000 DT</span> • 
-                                Maximum: <span class="font-semibold text-emerald-600">1000.000 DT</span>
+                                Maximum: <span class="font-semibold text-emerald-600">10,000.000 DT</span>
                             </p>
                         </div>
 
@@ -173,15 +173,15 @@
                     </div>
                     
                     <div class="space-y-4">
-                        <!-- Carte bancaire -->
+                        <!-- Virement bancaire -->
                         <div class="relative">
                             <input type="radio" 
-                                   name="payment_method" 
-                                   value="CARD" 
-                                   id="card_payment"
+                                   name="method" 
+                                   value="BANK_TRANSFER" 
+                                   id="bank_transfer"
                                    class="sr-only peer" 
-                                   {{ old('payment_method', 'CARD') === 'CARD' ? 'checked' : '' }}>
-                            <label for="card_payment" 
+                                   {{ old('method', 'BANK_TRANSFER') === 'BANK_TRANSFER' ? 'checked' : '' }}>
+                            <label for="bank_transfer" 
                                    class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 peer-checked:border-blue-500 peer-checked:bg-gradient-to-br peer-checked:from-blue-50 peer-checked:to-indigo-50 transition-all duration-300">
                                 <div class="flex-shrink-0 mr-4">
                                     <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-500 relative">
@@ -193,53 +193,39 @@
                                         <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
-                                        <span class="font-semibold text-gray-900">Carte bancaire</span>
-                                        <span class="ml-3 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">Recommandé</span>
-                                        <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">Instantané</span>
+                                        <span class="font-semibold text-gray-900">Virement bancaire</span>
+                                        <span class="ml-3 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">24-48h</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
-                                        Paiement sécurisé par notre partenaire de confiance
+                                        Effectuez un virement depuis votre compte bancaire
                                     </p>
                                     <div class="flex flex-wrap items-center gap-4 text-sm">
                                         <span class="flex items-center text-green-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            Instantané
+                                            Sécurisé
                                         </span>
                                         <span class="flex items-center text-blue-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5 2a9 9 0 10-9 9m-9-9a9 9 0 019 9 9 9 0 01-9-9"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                             </svg>
-                                            Sécurisé SSL
+                                            Identifiant requis
                                         </span>
-                                        <span class="flex items-center text-purple-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            Visa, MasterCard
-                                        </span>
-                                    </div>
-                                    
-                                    <!-- Logos des cartes acceptées -->
-                                    <div class="mt-3 flex items-center space-x-2">
-                                        <div class="bg-white rounded border px-2 py-1 text-xs font-bold text-blue-600">VISA</div>
-                                        <div class="bg-white rounded border px-2 py-1 text-xs font-bold text-orange-600">MC</div>
-                                        <div class="bg-white rounded border px-2 py-1 text-xs font-bold text-green-600">🔒 SSL</div>
                                     </div>
                                 </div>
                             </label>
                         </div>
 
-                        <!-- Virement bancaire -->
+                        <!-- Versement bancaire -->
                         <div class="relative">
                             <input type="radio" 
-                                   name="payment_method" 
-                                   value="BANK_TRANSFER" 
-                                   id="bank_transfer"
+                                   name="method" 
+                                   value="BANK_DEPOSIT" 
+                                   id="bank_deposit"
                                    class="sr-only peer"
-                                   {{ old('payment_method') === 'BANK_TRANSFER' ? 'checked' : '' }}>
-                            <label for="bank_transfer" 
+                                   {{ old('method') === 'BANK_DEPOSIT' ? 'checked' : '' }}>
+                            <label for="bank_deposit" 
                                    class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-green-50 hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-gradient-to-br peer-checked:from-green-50 peer-checked:to-emerald-50 transition-all duration-300">
                                 <div class="flex-shrink-0 mr-4">
                                     <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 relative">
@@ -251,161 +237,218 @@
                                         <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                                         </svg>
-                                        <span class="font-semibold text-gray-900">Virement bancaire</span>
+                                        <span class="font-semibold text-gray-900">Versement bancaire</span>
+                                        <span class="ml-3 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">24-48h</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
-                                        Virement direct depuis votre compte bancaire
+                                        Déposez de l'argent directement en agence bancaire
                                     </p>
                                     <div class="flex flex-wrap items-center gap-4 text-sm">
-                                        <span class="flex items-center text-amber-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            24-48h ouvrables
-                                        </span>
                                         <span class="flex items-center text-green-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            Frais: Gratuit
+                                            En espèces
                                         </span>
                                         <span class="flex items-center text-blue-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            RIB fourni après validation
-                        </span>
+                                            </svg>
+                                            Identifiant requis
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Paiement espèces -->
+                        <div class="relative">
+                            <input type="radio" 
+                                   name="method" 
+                                   value="CASH" 
+                                   id="cash_payment"
+                                   class="sr-only peer"
+                                   {{ old('method') === 'CASH' ? 'checked' : '' }}>
+                            <label for="cash_payment" 
+                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-pink-50 transition-all duration-300">
+                                <div class="flex-shrink-0 mr-4">
+                                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-purple-500 peer-checked:bg-purple-500 relative">
+                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block"></div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                        <span class="font-semibold text-gray-900">Paiement espèces</span>
+                                        <span class="ml-3 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">Variable</span>
+                                    </div>
+                                    <p class="text-gray-600 mb-3">
+                                        Remise d'espèces à notre livreur lors de sa visite
+                                    </p>
+                                    <div class="flex flex-wrap items-center gap-4 text-sm">
+                                        <span class="flex items-center text-green-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                            </svg>
+                                            Pratique
+                                        </span>
+                                        <span class="flex items-center text-amber-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            Selon disponibilité
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
-            </label>
-        </div>
-    </div>
-</div>
 
-<!-- Informations importantes -->
-<div class="bg-gradient-to-br from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-xl p-6 mb-8">
-    <div class="flex">
-        <div class="flex-shrink-0">
-            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-        </div>
-        <div class="ml-4">
-            <h4 class="text-lg font-semibold text-amber-800 mb-3">💡 Informations importantes</h4>
-            <ul class="text-amber-700 space-y-2">
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    <span>Les paiements par carte sont traités instantanément et les fonds sont immédiatement disponibles</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span>Les virements bancaires nécessitent une validation manuelle (24-48h ouvrables)</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span>Aucun frais supplémentaire n'est appliqué, quel que soit le montant ou la méthode</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5 2a9 9 0 10-9 9m-9-9a9 9 0 019 9 9 9 0 01-9-9"/>
-                    </svg>
-                    <span>Toutes les transactions sont sécurisées et protégées par cryptage SSL</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
-                    </svg>
-                    <span>Vous recevrez une confirmation par email dès que votre rechargement sera validé</span>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- Boutons d'action -->
-<div class="flex flex-col sm:flex-row gap-4 pt-6">
-    <button type="submit" 
-            id="submitBtn"
-            class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl hover:from-emerald-600 hover:to-teal-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-        <span class="flex items-center justify-center">
-            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            Procéder au rechargement
-        </span>
-    </button>
-    
-    <a href="{{ route('client.wallet.index') }}" 
-       class="flex-none sm:w-auto bg-white text-purple-600 border-2 border-purple-200 px-8 py-4 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold text-lg text-center shadow-md hover:shadow-lg transform hover:scale-105">
-        Annuler
-    </a>
-</div>
-</form>
-
-<!-- Historique des rechargements récents -->
-@php
-    $recentTopups = $user->transactions()
-        ->where('type', 'CREDIT')
-        ->where('description', 'like', '%Rechargement%')
-        ->orderBy('created_at', 'desc')
-        ->limit(5)
-        ->get();
-@endphp
-
-@if($recentTopups->count() > 0)
-    <div class="mt-12 bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
-        <div class="flex items-center mb-6">
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800">Rechargements récents</h3>
-        </div>
-        
-        <div class="space-y-3">
-            @foreach($recentTopups as $topup)
-                <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full flex items-center justify-center mr-3">
-                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                <!-- Informations supplémentaires (conditionnelles) -->
+                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6" id="additional-info">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900">
-                                {{ $topup->created_at->format('d/m/Y à H:i') }}
+                        <h3 class="text-xl font-semibold text-gray-800">Informations complémentaires</h3>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Identifiant bancaire (pour virement/versement) -->
+                        <div id="bank-transfer-fields" style="display: none;">
+                            <label for="bank_transfer_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Identifiant de virement/versement *
+                            </label>
+                            <div class="relative">
+                                <input type="text" 
+                                       id="bank_transfer_id" 
+                                       name="bank_transfer_id" 
+                                       value="{{ old('bank_transfer_id') }}"
+                                       class="block w-full pl-4 pr-12 py-3 rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50"
+                                       placeholder="Ex: TX123456789, REF2024001, etc.">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <div id="uniqueness-indicator" class="hidden">
+                                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Cet identifiant permet de vérifier l'unicité de votre paiement
                             </p>
-                            <p class="text-sm text-gray-600">{{ $topup->description }}</p>
+                            <div id="uniqueness-message" class="mt-2 text-sm hidden"></div>
+                        </div>
+
+                        <!-- Upload du justificatif -->
+                        <div>
+                            <label for="proof_document" class="block text-sm font-medium text-gray-700 mb-2">
+                                Justificatif de paiement (facultatif)
+                            </label>
+                            <div class="relative">
+                                <input type="file" 
+                                       id="proof_document" 
+                                       name="proof_document" 
+                                       accept=".jpg,.jpeg,.png,.pdf"
+                                       class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Formats acceptés: JPG, PNG, PDF (max 5 MB)
+                            </p>
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                Notes supplémentaires (facultatif)
+                            </label>
+                            <textarea id="notes" 
+                                      name="notes" 
+                                      rows="3"
+                                      class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 resize-none"
+                                      placeholder="Ajoutez des informations supplémentaires si nécessaire...">{{ old('notes') }}</textarea>
+                            <p class="mt-2 text-sm text-gray-500">Maximum 500 caractères</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-lg font-bold text-emerald-600">
-                            +{{ number_format($topup->amount, 3) }} DT
-                        </p>
-                        <p class="text-xs {{ $topup->status === 'COMPLETED' ? 'text-green-600' : 'text-amber-600' }}">
-                            {{ $topup->status_display }}
-                        </p>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                    <button type="submit" 
+                            id="submitBtn"
+                            class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl hover:from-emerald-600 hover:to-teal-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Soumettre la demande
+                        </span>
+                    </button>
+                    
+                    <a href="{{ route('client.wallet.index') }}" 
+                       class="flex-none sm:w-auto bg-white text-purple-600 border-2 border-purple-200 px-8 py-4 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold text-lg text-center shadow-md hover:shadow-lg transform hover:scale-105">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+
+            <!-- Demandes récentes -->
+            @if($recentRequests && $recentRequests->count() > 0)
+                <div class="mt-12 bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Demandes récentes</h3>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        @foreach($recentRequests as $request)
+                            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">
+                                            {{ $request->request_code }}
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            {{ $request->method_display }} • {{ $request->created_at->format('d/m/Y à H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-bold text-blue-600">
+                                        {{ $request->formatted_amount }}
+                                    </p>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $request->status_color }}">
+                                        {{ $request->status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="{{ route('client.wallet.index') }}" 
+                           class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                            Voir mon portefeuille →
+                        </a>
                     </div>
                 </div>
-            @endforeach
-        </div>
-        
-        <div class="mt-4 text-center">
-            <a href="{{ route('client.wallet.transactions') }}" 
-               class="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                Voir tous mes rechargements →
-            </a>
+            @endif
         </div>
     </div>
-@endif
-</div>
 </div>
 
 @push('scripts')
@@ -414,13 +457,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('topupForm');
     const amountInput = document.getElementById('amount');
     const submitBtn = document.getElementById('submitBtn');
+    const methodRadios = document.querySelectorAll('input[name="method"]');
+    const bankTransferFields = document.getElementById('bank-transfer-fields');
+    const bankTransferIdInput = document.getElementById('bank_transfer_id');
+    const uniquenessIndicator = document.getElementById('uniqueness-indicator');
+    const uniquenessMessage = document.getElementById('uniqueness-message');
     const feePreview = document.getElementById('feePreview');
     const previewAmount = document.getElementById('previewAmount');
     const totalAmount = document.getElementById('totalAmount');
     const newBalancePreview = document.getElementById('newBalancePreview');
     const newBalanceAmount = document.getElementById('newBalanceAmount');
     const currentBalanceElement = document.getElementById('currentBalance');
-    const methodRadios = document.querySelectorAll('input[name="payment_method"]');
     
     const currentBalance = {{ $user->wallet->balance }};
     
@@ -438,7 +485,21 @@ document.addEventListener('DOMContentLoaded', function() {
             amountInput.style.borderColor = '';
         }, 300);
     };
-    
+
+    // Gestion de l'affichage conditionnel des champs
+    function toggleFields() {
+        const selectedMethod = document.querySelector('input[name="method"]:checked')?.value;
+        
+        if (selectedMethod === 'BANK_TRANSFER' || selectedMethod === 'BANK_DEPOSIT') {
+            bankTransferFields.style.display = 'block';
+            bankTransferIdInput.required = true;
+        } else {
+            bankTransferFields.style.display = 'none';
+            bankTransferIdInput.required = false;
+            bankTransferIdInput.value = '';
+        }
+    }
+
     // Mise à jour des aperçus
     function updatePreviews() {
         const amount = parseFloat(amountInput.value) || 0;
@@ -468,11 +529,12 @@ document.addEventListener('DOMContentLoaded', function() {
             newBalancePreview.classList.add('hidden');
         }
     }
-    
-    // Validation du formulaire avec feedback visuel
+
+    // Validation du formulaire
     function validateForm() {
         const amount = parseFloat(amountInput.value) || 0;
-        const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+        const selectedMethod = document.querySelector('input[name="method"]:checked')?.value;
+        const bankTransferId = bankTransferIdInput.value.trim();
         
         let isValid = true;
         let errorMessage = '';
@@ -486,9 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
             errorMessage = 'Le montant minimum est de 10 DT';
             amountInput.classList.add('border-red-500', 'bg-red-50');
-        } else if (amount > 1000) {
+        } else if (amount > 10000) {
             isValid = false;
-            errorMessage = 'Le montant maximum est de 1000 DT';
+            errorMessage = 'Le montant maximum est de 10 000 DT';
             amountInput.classList.add('border-red-500', 'bg-red-50');
         } else {
             amountInput.classList.remove('border-red-500', 'bg-red-50');
@@ -501,32 +563,34 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = errorMessage || 'Veuillez sélectionner une méthode de paiement';
         }
         
+        // Validation de l'identifiant bancaire
+        if ((selectedMethod === 'BANK_TRANSFER' || selectedMethod === 'BANK_DEPOSIT') && !bankTransferId) {
+            isValid = false;
+            errorMessage = errorMessage || 'L\'identifiant de virement/versement est requis';
+        }
+        
+        // Vérifier l'unicité si l'identifiant est présent
+        if (bankTransferId && bankTransferIdInput.classList.contains('border-red-500')) {
+            isValid = false;
+            errorMessage = errorMessage || 'L\'identifiant de virement/versement n\'est pas unique';
+        }
+        
         // Mise à jour du bouton
         if (isValid) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            submitBtn.classList.add('hover:scale-105');
             submitBtn.innerHTML = `
                 <span class="flex items-center justify-center">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    Procéder au rechargement
+                    Soumettre la demande
                 </span>
             `;
         } else {
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            submitBtn.classList.remove('hover:scale-105');
             submitBtn.title = errorMessage;
-            submitBtn.innerHTML = `
-                <span class="flex items-center justify-center">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    ${errorMessage}
-                </span>
-            `;
         }
         
         return isValid;
@@ -540,14 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     methodRadios.forEach(radio => {
         radio.addEventListener('change', function() {
+            toggleFields();
             validateForm();
-            
-            // Animation pour la méthode sélectionnée
-            const label = this.nextElementSibling;
-            label.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-                label.style.transform = 'scale(1)';
-            }, 200);
         });
     });
     
@@ -556,249 +614,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const value = parseFloat(this.value);
         if (!isNaN(value) && value > 0) {
             this.value = value.toFixed(3);
-            this.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-                this.style.transform = 'scale(1)';
-            }, 200);
         }
         updatePreviews();
     });
     
-    // Prévention de la soumission multiple avec feedback
+    // Prévention de la soumission multiple
     form.addEventListener('submit', function(e) {
         if (!validateForm()) {
             e.preventDefault();
             return false;
         }
         
-        const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
-        
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-75');
-        
-        if (selectedMethod === 'CARD') {
-            submitBtn.innerHTML = `
-                <span class="flex items-center justify-center">
-                    <svg class="animate-spin w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Redirection vers le paiement...
-                </span>
-            `;
-        } else {
-            submitBtn.innerHTML = `
-                <span class="flex items-center justify-center">
-                    <svg class="animate-spin w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Génération du RIB...
-                </span>
-            `;
-        }
-        
-        // Permettre la soumission après un délai en cas d'erreur
-        setTimeout(function() {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-75');
-            validateForm();
-        }, 10000);
+        submitBtn.innerHTML = `
+            <span class="flex items-center justify-center">
+                <svg class="animate-spin w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Traitement en cours...
+            </span>
+        `;
     });
     
     // Initialisation
+    toggleFields();
     validateForm();
     updatePreviews();
-    
-    // Animation d'entrée des sections
-    const sections = document.querySelectorAll('.bg-white');
-    sections.forEach((section, index) => {
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            section.style.transition = 'all 0.5s ease';
-            section.style.opacity = '1';
-            section.style.transform = 'translateY(0)';
-        }, index * 150);
-    });
-
-    // Animation du solde actuel
-    let balanceAnimationFrame = 0;
-    function animateBalance() {
-        balanceAnimationFrame++;
-        if (balanceAnimationFrame % 60 === 0) { // Toutes les secondes à 60fps
-            currentBalanceElement.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-                currentBalanceElement.style.transform = 'scale(1)';
-            }, 200);
-        }
-        requestAnimationFrame(animateBalance);
-    }
-    // animateBalance(); // Décommenter si vous voulez l'animation permanente
-});
-
-// Animation au scroll
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('animate-fade-in');
-        }
-    });
-}, observerOptions);
-
-// Appliquer l'observer aux éléments
-document.addEventListener('DOMContentLoaded', function() {
-    const elementsToObserve = document.querySelectorAll('.bg-white, .bg-gradient-to-br');
-    elementsToObserve.forEach(el => {
-        observer.observe(el);
-    });
 });
 </script>
-@endpush
-
-@push('styles')
-<style>
-/* Amélioration des radio buttons */
-input[type="radio"]:checked ~ label {
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-/* Animation pour les labels des radio */
-input[type="radio"] ~ label {
-    transition: all 0.3s ease;
-}
-
-input[type="radio"]:checked ~ label {
-    transform: scale(1.02);
-}
-
-/* Animation fade-in */
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.6s ease-out;
-}
-
-/* États de validation visuels */
-.field-valid {
-    border-color: #10b981 !important;
-    background-color: #f0fdf4 !important;
-}
-
-.field-invalid {
-    border-color: #ef4444 !important;
-    background-color: #fef2f2 !important;
-}
-
-/* Animation pour les montants rapides */
-.quick-amount-btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.quick-amount-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-}
-
-/* Animation de pulsation pour les éléments importants */
-.pulse-highlight {
-    animation: pulseHighlight 2s infinite;
-}
-
-@keyframes pulseHighlight {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-    }
-    50% {
-        transform: scale(1.02);
-        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-    }
-}
-
-/* Amélioration des gradients */
-.bg-gradient-to-br {
-    background-attachment: fixed;
-}
-
-/* Responsive improvements */
-@media (max-width: 640px) {
-    .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-    
-    .text-4xl {
-        font-size: 2.5rem;
-        line-height: 1.1;
-    }
-    
-    .grid-cols-4 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-/* Loading states */
-.loading {
-    position: relative;
-    overflow: hidden;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-    animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-/* Améliorations des cartes */
-.payment-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.payment-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* Animation pour les badges */
-.badge {
-    animation: slideIn 0.5s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-</style>
 @endpush
 @endsection

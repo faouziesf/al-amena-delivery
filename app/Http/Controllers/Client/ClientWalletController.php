@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\WithdrawalRequest;
 use App\Models\FinancialTransaction;
+use App\Models\TopupRequest;
 use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -19,6 +21,18 @@ class ClientWalletController extends Controller
     public function __construct(FinancialTransactionService $financialService)
     {
         $this->financialService = $financialService;
+        $this->configureProofStorage();
+    }
+
+    /**
+     * Configurer le disque de stockage pour les justificatifs
+     */
+    private function configureProofStorage()
+    {
+        // S'assurer que le répertoire de stockage existe
+        if (!Storage::disk('private')->exists('topup_proofs')) {
+            Storage::disk('private')->makeDirectory('topup_proofs');
+        }
     }
 
     /**
@@ -406,7 +420,7 @@ class ClientWalletController extends Controller
     }
 
     /**
-     * Formulaire de rechargement (si applicable)
+     * Formulaire de demande de rechargement
      */
     public function showTopupForm()
     {
@@ -418,11 +432,25 @@ class ClientWalletController extends Controller
 
         $user->ensureWallet();
 
-        return view('client.wallet.topup', compact('user'));
+        // Récupérer les demandes récentes (seulement si la table existe)
+        $recentRequests = collect();
+        try {
+            if (class_exists('App\Models\TopupRequest')) {
+                $recentRequests = $user->topupRequests()
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Si la table n'existe pas encore, on continue avec une collection vide
+            $recentRequests = collect();
+        }
+
+        return view('client.wallet.topup', compact('user', 'recentRequests'));
     }
 
     /**
-     * Traitement du rechargement
+     * Traitement de la demande de rechargement
      */
     public function processTopup(Request $request)
     {
@@ -433,34 +461,243 @@ class ClientWalletController extends Controller
         }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:10|max:1000',
-            'payment_method' => 'required|in:CARD,BANK_TRANSFER',
+            'amount' => 'required|numeric|min:10|max:10000',
+            'method' => 'required|in:BANK_TRANSFER,BANK_DEPOSIT,CASH',
+            'bank_transfer_id' => 'required_if:method,BANK_TRANSFER,BANK_DEPOSIT|nullable|string|max:100',
+            'proof_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
+            'notes' => 'nullable|string|max:500',
+        ], [
+            'amount.min' => 'Le montant minimum est de 10 DT.',
+            'amount.max' => 'Le montant maximum est de 10 000 DT.',
+            'bank_transfer_id.required_if' => 'L\'identifiant de virement/versement est requis.',
+            'proof_document.max' => 'Le fichier ne doit pas dépasser 5 MB.',
+            'proof_document.mimes' => 'Le fichier doit être une image (JPG, PNG) ou un PDF.',
         ]);
 
-        // Ici, intégrer avec un service de paiement
-        // Pour l'instant, simuler un paiement réussi
+        // Vérifier l'unicité de l'identifiant bancaire si fourni (seulement si TopupRequest existe)
+        if (!empty($validated['bank_transfer_id']) && class_exists('App\Models\TopupRequest')) {
+            if (!TopupRequest::isBankTransferIdUnique($validated['bank_transfer_id'])) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['bank_transfer_id' => 'Cet identifiant de virement/versement a déjà été utilisé.']);
+            }
+        }
 
         try {
+            DB::beginTransaction();
+
+            // Traitement du fichier justificatif
+            $proofPath = null;
+            if ($request->hasFile('proof_document')) {
+                $file = $request->file('proof_document');
+                $filename = 'topup_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $proofPath = $file->storeAs('topup_proofs', $filename, 'private');
+            }
+
+            // Créer la demande de rechargement (seulement si TopupRequest existe)
+            $topupRequest = null;
+            if (class_exists('App\Models\TopupRequest')) {
+                $topupRequest = TopupRequest::create([
+                    'client_id' => $user->id,
+                    'amount' => $validated['amount'],
+                    'method' => $validated['method'],
+                    'bank_transfer_id' => $validated['bank_transfer_id'] ?? null,
+                    'proof_document' => $proofPath,
+                    'notes' => $validated['notes'] ?? null,
+                    'metadata' => [
+                        'created_from' => 'web',
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'created_at_formatted' => now()->format('d/m/Y H:i:s')
+                    ]
+                ]);
+            }
+
+            // Créer une transaction en attente
             $this->financialService->processTransaction([
                 'user_id' => $user->id,
-                'type' => 'CREDIT',
-                'amount' => $validated['amount'],
-                'description' => 'Rechargement portefeuille - ' . $validated['payment_method'],
+                'type' => 'TOPUP_REQUEST',
+                'amount' => 0, // Pas de changement du solde pour l'instant
+                'description' => "Demande de rechargement" . ($topupRequest ? " #{$topupRequest->request_code}" : '') . " - " . $validated['method'],
+                'status' => 'PENDING',
                 'metadata' => [
-                    'payment_method' => $validated['payment_method'],
-                    'topup' => true
+                    'topup_request_id' => $topupRequest ? $topupRequest->id : null,
+                    'method' => $validated['method'],
+                    'bank_transfer_id' => $validated['bank_transfer_id'] ?? null
                 ]
             ]);
 
-            return redirect()->route('client.wallet.index')
-                ->with('success', "Rechargement de {$validated['amount']} DT effectué avec succès!");
+            DB::commit();
+
+            $redirectRoute = class_exists('App\Models\TopupRequest') ? 'client.wallet.topup.requests' : 'client.wallet.index';
+            $successMessage = "Demande de rechargement" . ($topupRequest ? " #{$topupRequest->request_code}" : '') . " créée avec succès!";
+
+            return redirect()->route($redirectRoute)->with('success', $successMessage);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return back()
                 ->withInput()
-                ->with('error', 'Erreur lors du rechargement: ' . $e->getMessage());
+                ->with('error', 'Erreur lors de la création: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Liste des demandes de rechargement du client
+     */
+    public function topupRequests(Request $request)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'CLIENT') {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        if (!class_exists('App\Models\TopupRequest')) {
+            return redirect()->route('client.wallet.index')
+                ->with('error', 'Fonctionnalité non disponible.');
+        }
+
+        $query = $user->topupRequests()->with(['processedBy']);
+
+        // Filtres
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('method')) {
+            $query->where('method', $request->method);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')
+                         ->paginate(15)
+                         ->withQueryString();
+
+        // Statistiques
+        $stats = [
+            'total' => $user->topupRequests()->count(),
+            'pending' => $user->topupRequests()->pending()->count(),
+            'validated' => $user->topupRequests()->validated()->count(),
+            'rejected' => $user->topupRequests()->rejected()->count(),
+            'total_amount_pending' => $user->topupRequests()->pending()->sum('amount'),
+        ];
+
+        return view('client.wallet.topup-requests', compact('requests', 'stats'));
+    }
+
+    /**
+     * Afficher une demande de rechargement spécifique
+     */
+    public function showTopupRequest(TopupRequest $topupRequest)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'CLIENT' || $topupRequest->client_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $topupRequest->load(['processedBy']);
+
+        return view('client.wallet.topup-request-show', compact('topupRequest'));
+    }
+
+    /**
+     * Annuler une demande de rechargement
+     */
+    public function cancelTopupRequest(TopupRequest $topupRequest)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'CLIENT' || $topupRequest->client_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        if (!$topupRequest->canBeCancelled()) {
+            return back()->with('error', 'Cette demande ne peut plus être annulée.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $topupRequest->cancel('Annulé par le client');
+
+            // Mettre à jour la transaction associée
+            FinancialTransaction::where('metadata->topup_request_id', $topupRequest->id)
+                ->update([
+                    'status' => 'CANCELLED',
+                    'description' => "Demande de rechargement #{$topupRequest->request_code} - ANNULÉE"
+                ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Demande de rechargement annulée avec succès.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return back()->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Télécharger le justificatif d'une demande
+     */
+    public function downloadTopupProof(TopupRequest $topupRequest)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'CLIENT' || $topupRequest->client_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        if (!$topupRequest->proof_document || !Storage::disk('private')->exists($topupRequest->proof_document)) {
+            abort(404, 'Justificatif non trouvé.');
+        }
+
+        $originalExtension = pathinfo($topupRequest->proof_document, PATHINFO_EXTENSION);
+        $filename = 'justificatif_' . $topupRequest->request_code . '.' . $originalExtension;
+
+        return Storage::disk('private')->download($topupRequest->proof_document, $filename);
+    }
+
+    /**
+     * Afficher les détails d'une transaction spécifique
+     */
+    public function showTransaction(FinancialTransaction $transaction)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'CLIENT' || $transaction->user_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $transaction->load(['package']);
+
+        // Obtenir les transactions liées (même package ou même référence)
+        $relatedTransactions = collect();
+        
+        if ($transaction->package_id) {
+            $relatedTransactions = FinancialTransaction::where('package_id', $transaction->package_id)
+                ->where('user_id', $user->id)
+                ->where('id', '!=', $transaction->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+        }
+
+        return view('client.wallet.transaction-details', compact('transaction', 'relatedTransactions'));
+    }
+
+    // ==================== API METHODS ====================
 
     /**
      * API - Solde du portefeuille
@@ -562,6 +799,30 @@ class ClientWalletController extends Controller
     }
 
     /**
+     * API - Vérifier l'unicité d'un identifiant bancaire
+     */
+    public function apiCheckBankTransferId(Request $request)
+    {
+        $bankTransferId = $request->get('bank_transfer_id');
+        $excludeId = $request->get('exclude_id');
+        
+        if (!$bankTransferId) {
+            return response()->json(['unique' => true]);
+        }
+
+        if (!class_exists('App\Models\TopupRequest')) {
+            return response()->json(['unique' => true, 'message' => 'Fonctionnalité non disponible']);
+        }
+
+        $isUnique = TopupRequest::isBankTransferIdUnique($bankTransferId, $excludeId);
+        
+        return response()->json([
+            'unique' => $isUnique,
+            'message' => $isUnique ? 'Identifiant disponible' : 'Cet identifiant a déjà été utilisé'
+        ]);
+    }
+
+    /**
      * Webhook - Paiement reçu
      */
     public function webhookPaymentReceived(Request $request)
@@ -581,33 +842,5 @@ class ClientWalletController extends Controller
         // À implémenter selon le service bancaire utilisé
         
         return response()->json(['status' => 'received']);
-    }
-
-    /**
-     * Afficher les détails d'une transaction spécifique
-     */
-    public function showTransaction(FinancialTransaction $transaction)
-    {
-        $user = Auth::user();
-        
-        if ($user->role !== 'CLIENT' || $transaction->user_id !== $user->id) {
-            abort(403, 'Accès non autorisé.');
-        }
-
-        $transaction->load(['package']);
-
-        // Obtenir les transactions liées (même package ou même référence)
-        $relatedTransactions = collect();
-        
-        if ($transaction->package_id) {
-            $relatedTransactions = FinancialTransaction::where('package_id', $transaction->package_id)
-                ->where('user_id', $user->id)
-                ->where('id', '!=', $transaction->id)
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get();
-        }
-
-        return view('client.wallet.transaction-details', compact('transaction', 'relatedTransactions'));
     }
 }

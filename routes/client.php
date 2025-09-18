@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Client Routes - Version Complète et Optimisée
+| Client Routes - UNIQUEMENT pour les clients (PROPRE)
 |--------------------------------------------------------------------------
 */
 
@@ -49,25 +49,37 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         });
     });
 
-    // ==================== GESTION PORTEFEUILLE ====================
+    // ==================== GESTION PORTEFEUILLE CLIENT ====================
     Route::prefix('wallet')->name('wallet.')->group(function () {
         Route::get('/', [ClientWalletController::class, 'index'])->name('index');
         Route::get('/transactions', [ClientWalletController::class, 'transactions'])->name('transactions');
         Route::get('/transaction/{transaction}', [ClientWalletController::class, 'showTransaction'])->name('transaction.show');
+        Route::get('/statement', [ClientWalletController::class, 'downloadStatement'])->name('statement');
+        Route::get('/export', [ClientWalletController::class, 'exportTransactions'])->name('export');
+        
+        // DEMANDES DE RECHARGEMENT CLIENT
+        Route::get('/topup', [ClientWalletController::class, 'showTopupForm'])->name('topup');
+        Route::post('/topup', [ClientWalletController::class, 'processTopup'])->name('process.topup');
+        
+        // Gestion des demandes de rechargement
+        Route::prefix('topup')->name('topup.')->group(function () {
+            Route::get('/requests', [ClientWalletController::class, 'topupRequests'])->name('requests');
+            Route::get('/request/{topupRequest}', [ClientWalletController::class, 'showTopupRequest'])->name('request.show');
+            Route::post('/request/{topupRequest}/cancel', [ClientWalletController::class, 'cancelTopupRequest'])->name('request.cancel');
+            Route::get('/request/{topupRequest}/download-proof', [ClientWalletController::class, 'downloadTopupProof'])->name('request.download.proof');
+        });
+
+        // DEMANDES DE RETRAIT CLIENT
         Route::get('/withdrawal', [ClientWalletController::class, 'createWithdrawal'])->name('withdrawal');
         Route::post('/withdrawal', [ClientWalletController::class, 'storeWithdrawal'])->name('store.withdrawal');
         Route::get('/withdrawal/{withdrawal}', [ClientWalletController::class, 'showWithdrawal'])->name('withdrawal.show');
         Route::post('/withdrawal/{withdrawal}/cancel', [ClientWalletController::class, 'cancelWithdrawal'])->name('withdrawal.cancel');
-        Route::get('/topup', [ClientWalletController::class, 'showTopupForm'])->name('topup');
-        Route::post('/topup', [ClientWalletController::class, 'processTopup'])->name('process.topup');
-        Route::get('/statement', [ClientWalletController::class, 'downloadStatement'])->name('statement');
-        Route::get('/export', [ClientWalletController::class, 'exportTransactions'])->name('export');
     });
 
-    // ==================== DEMANDES DE RETRAIT (Liste uniquement) ====================
+    // LISTE DES DEMANDES DE RETRAIT CLIENT
     Route::get('/withdrawals', [ClientWalletController::class, 'withdrawals'])->name('withdrawals');
 
-    // ==================== RÉCLAMATIONS ====================
+    // ==================== RÉCLAMATIONS CLIENT ====================
     Route::prefix('complaints')->name('complaints.')->group(function () {
         Route::get('/', [ClientComplaintController::class, 'index'])->name('index');
         Route::get('/create/{package}', [ClientComplaintController::class, 'create'])->name('create');
@@ -83,7 +95,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/{complaint}/mark-resolved', [ClientComplaintController::class, 'markResolved'])->name('mark.resolved');
     });
 
-    // ==================== NOTIFICATIONS ====================
+    // ==================== NOTIFICATIONS CLIENT ====================
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [ClientNotificationController::class, 'index'])->name('index');
         Route::post('/{notification}/mark-read', [ClientNotificationController::class, 'markAsRead'])->name('mark.read');
@@ -95,7 +107,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/preferences', [ClientNotificationController::class, 'updatePreferences'])->name('preferences');
     });
 
-    // ==================== API ENDPOINTS ====================
+    // ==================== API ENDPOINTS CLIENT SEULEMENT ====================
     Route::prefix('api')->name('api.')->group(function () {
         // Dashboard APIs
         Route::prefix('dashboard')->name('dashboard.')->group(function () {
@@ -105,15 +117,24 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::get('/recent-activity', [ClientDashboardController::class, 'apiRecentActivity'])->name('recent.activity');
         });
         
-        // Wallet APIs
+        // Wallet APIs Client
         Route::prefix('wallet')->name('wallet.')->group(function () {
             Route::get('/balance', [ClientWalletController::class, 'apiBalance'])->name('balance');
             Route::get('/transactions', [ClientWalletController::class, 'apiTransactions'])->name('transactions');
             Route::get('/summary', [ClientWalletController::class, 'apiSummary'])->name('summary');
             Route::get('/check-balance', [ClientWalletController::class, 'apiCheckBalance'])->name('check.balance');
         });
+
+        // APIs pour les demandes de rechargement CLIENT
+        Route::prefix('topup')->name('topup.')->group(function () {
+            Route::post('/check-bank-transfer-id', [ClientWalletController::class, 'apiCheckBankTransferId'])->name('check.bank.transfer.id');
+            Route::get('/recent-requests', [ClientWalletController::class, 'apiRecentTopupRequests'])->name('recent.requests');
+            Route::get('/stats', [ClientWalletController::class, 'apiTopupStats'])->name('stats');
+            Route::get('/request/{topupRequest}/status', [ClientWalletController::class, 'apiTopupRequestStatus'])->name('request.status');
+            Route::post('/create', [ClientWalletController::class, 'apiCreateTopupRequest'])->name('create');
+        });
         
-        // Package APIs
+        // Package APIs Client
         Route::prefix('packages')->name('packages.')->group(function () {
             Route::get('/{package}/status', [ClientPackageController::class, 'apiStatus'])->name('status');
             Route::get('/summary', [ClientPackageController::class, 'apiSummary'])->name('summary');
@@ -122,7 +143,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::get('/today-stats', [ClientPackageController::class, 'apiTodayStats'])->name('today.stats');
         });
         
-        // Notification APIs
+        // Notification APIs Client
         Route::prefix('notifications')->name('notifications.')->group(function () {
             Route::get('/unread-count', [ClientNotificationController::class, 'apiUnreadCount'])->name('unread.count');
             Route::get('/recent', [ClientNotificationController::class, 'apiRecent'])->name('recent');
@@ -131,7 +152,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         });
     });
 
-    // ==================== WEBHOOKS ====================
+    // ==================== WEBHOOKS CLIENT SEULEMENT ====================
     Route::prefix('webhooks')->name('webhooks.')->group(function () {
         Route::post('/package-status-changed', [ClientPackageController::class, 'webhookPackageStatusChanged'])->name('package.status.changed');
         Route::post('/payment-received', [ClientWalletController::class, 'webhookPaymentReceived'])->name('payment.received');
@@ -141,7 +162,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
 
 /*
 |--------------------------------------------------------------------------
-| Routes Publiques pour Tracking
+| Routes Publiques pour Tracking SEULEMENT
 |--------------------------------------------------------------------------
 */
 Route::prefix('track')->name('public.track.')->group(function () {

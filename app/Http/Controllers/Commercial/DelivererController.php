@@ -339,26 +339,7 @@ class DelivererController extends Controller
             return response()->json([]);
         }
 
-        $deliverers = User::where('role', 'DELIVERER')
-                         ->where('account_status', 'ACTIVE')
-                         ->where(function ($query) use ($search) {
-                             $query->where('name', 'like', "%{$search}%")
-                                   ->orWhere('phone', 'like', "%{$search}%");
-                         })
-                         ->with('wallet')
-                         ->limit(10)
-                         ->get()
-                         ->map(function ($deliverer) {
-                             return [
-                                 'id' => $deliverer->id,
-                                 'name' => $deliverer->name,
-                                 'phone' => $deliverer->phone,
-                                 'wallet_balance' => number_format($deliverer->wallet->balance ?? 0, 3),
-                                 'display_name' => "{$deliverer->name} ({$deliverer->wallet->balance ?? 0} DT)",
-                             ];
-                         });
-
-        return response()->json($deliverers);
+        
     }
 
     public function apiHighBalanceDeliverers()

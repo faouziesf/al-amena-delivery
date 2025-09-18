@@ -4,99 +4,99 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="container mx-auto px-3 sm:px-4 lg:px-6 py-4 lg:py-6">
         <!-- Header Section -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
-            <div class="mb-4 lg:mb-0">
-                <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+        <div class="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0 mb-6 lg:mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                     💰 Mon Portefeuille
                 </h1>
-                <p class="text-gray-600">Gérez votre solde et vos transactions en toute simplicité</p>
+                <p class="text-gray-600 text-sm lg:text-base">Gérez votre solde et vos transactions en toute simplicité</p>
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('client.wallet.topup') }}" 
-                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex flex-wrap gap-2 lg:gap-3">
+                <a href="{{ url('client/wallet/topup/requests') }}" 
+                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    Recharger
+                    <span class="hidden sm:inline">Demande de</span> Recharge
                 </a>
                 <a href="{{ route('client.wallet.withdrawal') }}" 
-                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
                     Retirer
                 </a>
                 <a href="{{ route('client.wallet.statement') }}" 
-                   class="bg-white text-purple-600 border-2 border-purple-200 px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-white text-purple-600 border-2 border-purple-200 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"/>
                     </svg>
-                    Relevé PDF
+                    <span class="hidden sm:inline">Relevé</span> PDF
                 </a>
             </div>
         </div>
 
         <!-- Alerts -->
         @if(session('success'))
-            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-4 lg:px-6 py-3 lg:py-4 rounded-xl mb-4 lg:mb-6 shadow-sm">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    {{ session('success') }}
+                    <span class="text-sm lg:text-base">{{ session('success') }}</span>
                 </div>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+            <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-4 lg:px-6 py-3 lg:py-4 rounded-xl mb-4 lg:mb-6 shadow-sm">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    {{ session('error') }}
+                    <span class="text-sm lg:text-base">{{ session('error') }}</span>
                 </div>
             </div>
         @endif
 
         <!-- Main Balance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
             <!-- Solde disponible -->
-            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-100 text-sm font-medium">Solde disponible</p>
-                        <p class="text-3xl font-bold mt-2" id="available-balance">
+                        <p class="text-purple-100 text-xs lg:text-sm font-medium">Solde disponible</p>
+                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2" id="available-balance">
                             {{ number_format($user->wallet->balance - ($user->wallet->frozen_amount ?? 0), 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                         </svg>
                     </div>
                 </div>
-                <div class="mt-4 flex items-center">
-                    <div class="bg-white/20 rounded-full w-2 h-2 animate-pulse"></div>
+                <div class="mt-3 lg:mt-4 flex items-center">
+                    <div class="bg-white/20 rounded-full w-1.5 h-1.5 lg:w-2 lg:h-2 animate-pulse"></div>
                     <span class="text-purple-100 text-xs ml-2">Mise à jour en temps réel</span>
                 </div>
             </div>
 
             <!-- Montant en attente -->
-            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">En attente</p>
-                        <p class="text-3xl font-bold mt-2">
+                        <p class="text-orange-100 text-xs lg:text-sm font-medium">En attente</p>
+                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
                             {{ number_format($user->wallet->pending_amount ?? 0, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
@@ -104,16 +104,16 @@
             </div>
 
             <!-- Montant gelé -->
-            <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-red-100 text-sm font-medium">Gelé (retraits)</p>
-                        <p class="text-3xl font-bold mt-2">
+                        <p class="text-red-100 text-xs lg:text-sm font-medium">Gelé (retraits)</p>
+                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
                             {{ number_format($user->wallet->frozen_amount ?? 0, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
                     </div>
@@ -121,16 +121,16 @@
             </div>
 
             <!-- Solde total -->
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-emerald-100 text-sm font-medium">Solde total</p>
-                        <p class="text-3xl font-bold mt-2">
+                        <p class="text-emerald-100 text-xs lg:text-sm font-medium">Solde total</p>
+                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
                             {{ number_format($user->wallet->balance, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
@@ -139,52 +139,52 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
+            <div class="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">💳 Total crédité</h3>
-                        <p class="text-3xl font-bold text-emerald-600">
+                        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-2">💳 Total crédité</h3>
+                        <p class="text-xl lg:text-3xl font-bold text-emerald-600">
                             {{ number_format($stats['total_credited'], 3) }} DT
                         </p>
-                        <p class="text-sm text-gray-500 mt-1">Revenus accumulés</p>
+                        <p class="text-xs lg:text-sm text-gray-500 mt-1">Revenus accumulés</p>
                     </div>
-                    <div class="bg-emerald-100 rounded-full p-4">
-                        <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-emerald-100 rounded-full p-3 lg:p-4">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+            <div class="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">💸 Total débité</h3>
-                        <p class="text-3xl font-bold text-red-600">
+                        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-2">💸 Total débité</h3>
+                        <p class="text-xl lg:text-3xl font-bold text-red-600">
                             {{ number_format($stats['total_debited'], 3) }} DT
                         </p>
-                        <p class="text-sm text-gray-500 mt-1">Frais et retraits</p>
+                        <p class="text-xs lg:text-sm text-gray-500 mt-1">Frais et retraits</p>
                     </div>
-                    <div class="bg-red-100 rounded-full p-4">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-red-100 rounded-full p-3 lg:p-4">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+            <div class="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 Solde net</h3>
-                        <p class="text-3xl font-bold {{ ($stats['total_credited'] - $stats['total_debited']) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-2">📊 Solde net</h3>
+                        <p class="text-xl lg:text-3xl font-bold {{ ($stats['total_credited'] - $stats['total_debited']) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
                             {{ number_format($stats['total_credited'] - $stats['total_debited'], 3) }} DT
                         </p>
-                        <p class="text-sm text-gray-500 mt-1">Résultat global</p>
+                        <p class="text-xs lg:text-sm text-gray-500 mt-1">Résultat global</p>
                     </div>
-                    <div class="bg-purple-100 rounded-full p-4">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-purple-100 rounded-full p-3 lg:p-4">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
@@ -193,76 +193,76 @@
         </div>
 
         <!-- Quick Actions Grid -->
-        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6 mb-8">
-            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                <span class="mr-3">⚡</span> Actions rapides
+        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 lg:p-6 mb-6 lg:mb-8">
+            <h3 class="text-lg lg:text-xl font-semibold text-gray-800 mb-4 lg:mb-6 flex items-center">
+                <span class="mr-2 lg:mr-3">⚡</span> Actions rapides
             </h3>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                 <!-- Nouveau retrait -->
                 <a href="{{ route('client.wallet.withdrawal') }}" 
-                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl hover:from-purple-100 hover:to-indigo-100 hover:border-purple-300 transition-all duration-300 transform hover:scale-105">
-                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="group flex flex-col items-center p-4 lg:p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl hover:from-purple-100 hover:to-indigo-100 hover:border-purple-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full p-3 lg:p-4 mb-2 lg:mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
                     </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Demander un retrait</h4>
-                    <p class="text-sm text-gray-600 text-center">Virement ou espèces</p>
+                    <h4 class="font-semibold text-gray-800 mb-1 lg:mb-2 text-sm lg:text-base text-center">Demander un retrait</h4>
+                    <p class="text-xs lg:text-sm text-gray-600 text-center">Virement ou espèces</p>
                 </a>
 
                 <!-- Mes demandes -->
                 <a href="{{ route('client.withdrawals') }}" 
-                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-300 transition-all duration-300 transform hover:scale-105">
-                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="group flex flex-col items-center p-4 lg:p-6 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full p-3 lg:p-4 mb-2 lg:mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Mes demandes</h4>
-                    <p class="text-sm text-gray-600 text-center">Suivi des retraits</p>
+                    <h4 class="font-semibold text-gray-800 mb-1 lg:mb-2 text-sm lg:text-base text-center">Mes demandes</h4>
+                    <p class="text-xs lg:text-sm text-gray-600 text-center">Suivi des retraits</p>
                 </a>
 
-                <!-- Recharger -->
-                <a href="{{ route('client.wallet.topup') }}" 
-                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl hover:from-amber-100 hover:to-orange-100 hover:border-amber-300 transition-all duration-300 transform hover:scale-105">
-                    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Demande de recharge -->
+                <a href="{{ url('client/wallet/topup/requests') }}" 
+                   class="group flex flex-col items-center p-4 lg:p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl hover:from-amber-100 hover:to-orange-100 hover:border-amber-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-full p-3 lg:p-4 mb-2 lg:mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                     </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Recharger</h4>
-                    <p class="text-sm text-gray-600 text-center">Ajouter des fonds</p>
+                    <h4 class="font-semibold text-gray-800 mb-1 lg:mb-2 text-sm lg:text-base text-center">Demande de recharge</h4>
+                    <p class="text-xs lg:text-sm text-gray-600 text-center">Ajouter des fonds</p>
                 </a>
 
                 <!-- Relevé PDF -->
                 <a href="{{ route('client.wallet.statement') }}" 
-                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-300 transform hover:scale-105">
-                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="group flex flex-col items-center p-4 lg:p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full p-3 lg:p-4 mb-2 lg:mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"/>
                         </svg>
                     </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Télécharger relevé</h4>
-                    <p class="text-sm text-gray-600 text-center">Export PDF</p>
+                    <h4 class="font-semibold text-gray-800 mb-1 lg:mb-2 text-sm lg:text-base text-center">Télécharger relevé</h4>
+                    <p class="text-xs lg:text-sm text-gray-600 text-center">Export PDF</p>
                 </a>
             </div>
         </div>
 
         <!-- Recent Transactions -->
         <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-            <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <h3 class="text-xl font-semibold text-gray-800 flex items-center mb-4 sm:mb-0">
-                        <span class="mr-3">📋</span> Transactions récentes
+            <div class="px-4 lg:px-6 py-4 lg:py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+                    <h3 class="text-lg lg:text-xl font-semibold text-gray-800 flex items-center">
+                        <span class="mr-2 lg:mr-3">📋</span> Transactions récentes
                     </h3>
-                    <div class="flex flex-wrap gap-3">
+                    <div class="flex flex-wrap gap-2 lg:gap-3">
                         <a href="{{ route('client.wallet.transactions') }}" 
-                           class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                           class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 lg:px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
                             Voir tout →
                         </a>
                         <a href="{{ route('client.wallet.export') }}" 
-                           class="bg-white text-purple-600 border border-purple-200 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                           class="bg-white text-purple-600 border border-purple-200 px-3 lg:px-4 py-2 rounded-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
                             📊 Exporter
                         </a>
                     </div>
@@ -271,20 +271,20 @@
             
             <div class="divide-y divide-gray-100">
                 @forelse($transactions->take(10) as $transaction)
-                    <div class="p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300">
+                    <div class="p-4 lg:p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center flex-1">
                                 <!-- Transaction Icon -->
-                                <div class="flex-shrink-0 mr-4">
+                                <div class="flex-shrink-0 mr-3 lg:mr-4">
                                     @if($transaction->amount > 0)
-                                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                                             </svg>
                                         </div>
                                     @else
-                                        <div class="w-12 h-12 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                                             </svg>
                                         </div>
@@ -292,32 +292,32 @@
                                 </div>
                                 
                                 <!-- Transaction Details -->
-                                <div class="flex-1">
-                                    <div class="flex items-center flex-wrap gap-2 mb-2">
-                                        <h4 class="font-semibold text-gray-900">{{ $transaction->description }}</h4>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $transaction->status_color }}">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center flex-wrap gap-2 mb-1 lg:mb-2">
+                                        <h4 class="font-semibold text-gray-900 text-sm lg:text-base truncate">{{ $transaction->description }}</h4>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $transaction->status_color }}">
                                             {{ $transaction->status_display }}
                                         </span>
                                     </div>
                                     
-                                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                    <div class="flex flex-wrap items-center gap-2 lg:gap-4 text-xs lg:text-sm text-gray-500">
                                         <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 lg:w-4 lg:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             {{ $transaction->created_at->format('d/m/Y H:i') }}
                                         </span>
                                         
                                         @if($transaction->package_id)
-                                            <span class="flex items-center">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <span class="hidden lg:flex items-center">
+                                                <svg class="w-3 h-3 lg:w-4 lg:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                                 </svg>
                                                 {{ $transaction->package->package_code ?? '#'.$transaction->package_id }}
                                             </span>
                                         @endif
                                         
-                                        <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                        <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded hidden lg:inline">
                                             ID: {{ $transaction->transaction_id }}
                                         </span>
                                     </div>
@@ -325,35 +325,35 @@
                             </div>
                             
                             <!-- Amount and Action -->
-                            <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2 lg:gap-4 ml-2">
                                 <div class="text-right">
-                                    <p class="text-lg font-bold {{ $transaction->amount > 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                                    <p class="text-base lg:text-lg font-bold {{ $transaction->amount > 0 ? 'text-emerald-600' : 'text-red-600' }}">
                                         {{ $transaction->formatted_amount }}
                                     </p>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="text-xs lg:text-sm text-gray-500">
                                         {{ $transaction->created_at->diffForHumans() }}
                                     </p>
                                 </div>
                                 
                                 <a href="{{ route('client.wallet.transaction.show', $transaction) }}" 
-                                   class="bg-purple-100 text-purple-600 px-3 py-2 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
-                                    Voir →
+                                   class="bg-purple-100 text-purple-600 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg hover:bg-purple-200 transition-colors text-xs lg:text-sm font-medium">
+                                    →
                                 </a>
                             </div>
                         </div>
                     </div>
                 @empty
-                    <div class="p-12 text-center">
-                        <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-8 lg:p-12 text-center">
+                        <div class="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 lg:w-8 lg:h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune transaction</h3>
-                        <p class="text-gray-600 mb-6">Vous n'avez pas encore de transactions dans votre portefeuille.</p>
-                        <a href="{{ route('client.wallet.topup') }}" 
-                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <h3 class="text-base lg:text-lg font-semibold text-gray-900 mb-2">Aucune transaction</h3>
+                        <p class="text-gray-600 mb-4 lg:mb-6 text-sm lg:text-base">Vous n'avez pas encore de transactions dans votre portefeuille.</p>
+                        <a href="{{ url('client/wallet/topup/requests') }}" 
+                           class="inline-flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 text-sm lg:text-base">
+                            <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
                             Première recharge
@@ -363,10 +363,10 @@
             </div>
 
             @if($transactions->count() > 10)
-                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
+                <div class="px-4 lg:px-6 py-3 lg:py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
                     <div class="flex justify-center">
                         <a href="{{ route('client.wallet.transactions') }}" 
-                           class="bg-white text-purple-600 px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-md font-medium">
+                           class="bg-white text-purple-600 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-md font-medium text-sm lg:text-base">
                             Voir les {{ $transactions->count() - 10 }} autres transactions →
                         </a>
                     </div>
@@ -509,12 +509,27 @@ document.addEventListener('DOMContentLoaded', function() {
 /* Responsive improvements */
 @media (max-width: 640px) {
     .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
     }
     
-    .grid-cols-4 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Mobile optimizations */
+    .grid-cols-2 {
+        gap: 0.75rem;
+    }
+    
+    .text-xl {
+        font-size: 1.125rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-cols-2 > * {
+        min-width: 0;
+    }
+    
+    .truncate {
+        max-width: 120px;
     }
 }
 
@@ -538,6 +553,17 @@ document.addEventListener('DOMContentLoaded', function() {
 @keyframes loading {
     0% { left: -100%; }
     100% { left: 100%; }
+}
+
+/* Touch improvements */
+@media (hover: none) and (pointer: coarse) {
+    .hover\:scale-105:hover {
+        transform: none;
+    }
+    
+    .hover\:shadow-xl:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
 }
 </style>
 @endpush
