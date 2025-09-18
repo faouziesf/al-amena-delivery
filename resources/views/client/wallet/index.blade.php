@@ -3,278 +3,384 @@
 @section('title', 'Mon Portefeuille')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <!-- Header avec titre et actions -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">💰 Mon Portefeuille</h1>
-            <p class="text-gray-600">Gérez votre solde et vos transactions</p>
-        </div>
-        <div class="flex space-x-3 mt-4 md:mt-0">
-            <a href="{{ route('client.wallet.withdrawal') }}" 
-               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                📤 Demander un retrait
-            </a>
-            <a href="{{ route('client.wallet.statement') }}" 
-               class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
-                📄 Relevé
-            </a>
-        </div>
-    </div>
-
-    <!-- Alertes -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <!-- Cartes de statistiques du wallet -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Solde disponible -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Solde disponible</p>
-                    <p class="text-2xl font-bold text-green-600">
-                        {{ number_format($user->wallet->balance - ($user->wallet->frozen_amount ?? 0), 3) }} DT
-                    </p>
-                </div>
-                <div class="bg-green-100 rounded-full p-3">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                    </svg>
-                </div>
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Header Section -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+            <div class="mb-4 lg:mb-0">
+                <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                    💰 Mon Portefeuille
+                </h1>
+                <p class="text-gray-600">Gérez votre solde et vos transactions en toute simplicité</p>
             </div>
-        </div>
-
-        <!-- Montant en attente -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">En attente</p>
-                    <p class="text-2xl font-bold text-orange-600">
-                        {{ number_format($user->wallet->pending_amount ?? 0, 3) }} DT
-                    </p>
-                </div>
-                <div class="bg-orange-100 rounded-full p-3">
-                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('client.wallet.topup') }}" 
+                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Montant gelé -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Gelé (retraits)</p>
-                    <p class="text-2xl font-bold text-red-600">
-                        {{ number_format($user->wallet->frozen_amount ?? 0, 3) }} DT
-                    </p>
-                </div>
-                <div class="bg-red-100 rounded-full p-3">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    Recharger
+                </a>
+                <a href="{{ route('client.wallet.withdrawal') }}" 
+                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Solde total -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Solde total</p>
-                    <p class="text-2xl font-bold text-blue-600">
-                        {{ number_format($user->wallet->balance, 3) }} DT
-                    </p>
-                </div>
-                <div class="bg-blue-100 rounded-full p-3">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    Retirer
+                </a>
+                <a href="{{ route('client.wallet.statement') }}" 
+                   class="bg-white text-purple-600 border-2 border-purple-200 px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"/>
                     </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistiques supplémentaires -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">💳 Total crédité</h3>
-            <p class="text-3xl font-bold text-green-600">
-                {{ number_format($stats['total_credited'], 3) }} DT
-            </p>
-            <p class="text-sm text-gray-600 mt-1">Revenus accumulés</p>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">💸 Total débité</h3>
-            <p class="text-3xl font-bold text-red-600">
-                {{ number_format($stats['total_debited'], 3) }} DT
-            </p>
-            <p class="text-sm text-gray-600 mt-1">Frais et retraits</p>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Solde net</h3>
-            <p class="text-3xl font-bold {{ ($stats['total_credited'] - $stats['total_debited']) >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                {{ number_format($stats['total_credited'] - $stats['total_debited'], 3) }} DT
-            </p>
-            <p class="text-sm text-gray-600 mt-1">Résultat global</p>
-        </div>
-    </div>
-
-    <!-- Actions rapides -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">⚡ Actions rapides</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="{{ route('client.wallet.withdrawal') }}" 
-               class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <div class="bg-blue-600 rounded-full p-2 mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-gray-900">Demander un retrait</p>
-                    <p class="text-sm text-gray-600">Virement ou espèces</p>
-                </div>
-            </a>
-
-            <a href="{{ route('client.withdrawals') }}" 
-               class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                <div class="bg-green-600 rounded-full p-2 mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-gray-900">Mes demandes</p>
-                    <p class="text-sm text-gray-600">Suivi des retraits</p>
-                </div>
-            </a>
-
-            <a href="{{ route('client.wallet.statement') }}" 
-               class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-                <div class="bg-purple-600 rounded-full p-2 mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-gray-900">Télécharger relevé</p>
-                    <p class="text-sm text-gray-600">Export PDF</p>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Historique des transactions récentes -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">📋 Transactions récentes</h3>
-                <a href="{{ route('client.wallet.transactions') }}" 
-                   class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    Voir tout →
+                    Relevé PDF
                 </a>
             </div>
         </div>
-        
-        <div class="divide-y divide-gray-200">
-            @forelse($transactions->take(10) as $transaction)
-                <div class="p-6 hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                @if($transaction->amount > 0)
-                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                        </svg>
-                                    </div>
-                                @else
-                                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                                        </svg>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-900">
-                                    {{ $transaction->description }}
-                                </p>
-                                <div class="flex items-center mt-1">
-                                    <span class="text-xs px-2 py-1 rounded {{ $transaction->status_color }}">
-                                        {{ $transaction->status_display }}
-                                    </span>
-                                    @if($transaction->package_id)
-                                        <span class="text-xs text-gray-500 ml-2">
-                                            Colis: {{ $transaction->package->package_code ?? '#'.$transaction->package_id }}
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-semibold {{ $transaction->amount > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                {{ $transaction->formatted_amount }}
-                            </p>
-                            <p class="text-xs text-gray-500">
-                                {{ $transaction->created_at->format('d/m/Y H:i') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="p-8 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-600">Aucune transaction pour le moment</p>
-                </div>
-            @endforelse
-        </div>
 
-        @if($transactions->count() > 10)
-            <div class="px-6 py-4 bg-gray-50 rounded-b-xl">
-                <a href="{{ route('client.wallet.transactions') }}" 
-                   class="block text-center text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    Voir les {{ $transactions->count() - 10 }} autres transactions →
-                </a>
+        <!-- Alerts -->
+        @if(session('success'))
+            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {{ session('success') }}
+                </div>
             </div>
         @endif
+
+        @if(session('error'))
+            <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
+
+        <!-- Main Balance Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Solde disponible -->
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Solde disponible</p>
+                        <p class="text-3xl font-bold mt-2" id="available-balance">
+                            {{ number_format($user->wallet->balance - ($user->wallet->frozen_amount ?? 0), 3) }} DT
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <div class="bg-white/20 rounded-full w-2 h-2 animate-pulse"></div>
+                    <span class="text-purple-100 text-xs ml-2">Mise à jour en temps réel</span>
+                </div>
+            </div>
+
+            <!-- Montant en attente -->
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-100 text-sm font-medium">En attente</p>
+                        <p class="text-3xl font-bold mt-2">
+                            {{ number_format($user->wallet->pending_amount ?? 0, 3) }} DT
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Montant gelé -->
+            <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-red-100 text-sm font-medium">Gelé (retraits)</p>
+                        <p class="text-3xl font-bold mt-2">
+                            {{ number_format($user->wallet->frozen_amount ?? 0, 3) }} DT
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solde total -->
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-emerald-100 text-sm font-medium">Solde total</p>
+                        <p class="text-3xl font-bold mt-2">
+                            {{ number_format($user->wallet->balance, 3) }} DT
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">💳 Total crédité</h3>
+                        <p class="text-3xl font-bold text-emerald-600">
+                            {{ number_format($stats['total_credited'], 3) }} DT
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Revenus accumulés</p>
+                    </div>
+                    <div class="bg-emerald-100 rounded-full p-4">
+                        <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">💸 Total débité</h3>
+                        <p class="text-3xl font-bold text-red-600">
+                            {{ number_format($stats['total_debited'], 3) }} DT
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Frais et retraits</p>
+                    </div>
+                    <div class="bg-red-100 rounded-full p-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 Solde net</h3>
+                        <p class="text-3xl font-bold {{ ($stats['total_credited'] - $stats['total_debited']) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                            {{ number_format($stats['total_credited'] - $stats['total_debited'], 3) }} DT
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Résultat global</p>
+                    </div>
+                    <div class="bg-purple-100 rounded-full p-4">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <span class="mr-3">⚡</span> Actions rapides
+            </h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Nouveau retrait -->
+                <a href="{{ route('client.wallet.withdrawal') }}" 
+                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl hover:from-purple-100 hover:to-indigo-100 hover:border-purple-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">Demander un retrait</h4>
+                    <p class="text-sm text-gray-600 text-center">Virement ou espèces</p>
+                </a>
+
+                <!-- Mes demandes -->
+                <a href="{{ route('client.withdrawals') }}" 
+                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">Mes demandes</h4>
+                    <p class="text-sm text-gray-600 text-center">Suivi des retraits</p>
+                </a>
+
+                <!-- Recharger -->
+                <a href="{{ route('client.wallet.topup') }}" 
+                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl hover:from-amber-100 hover:to-orange-100 hover:border-amber-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">Recharger</h4>
+                    <p class="text-sm text-gray-600 text-center">Ajouter des fonds</p>
+                </a>
+
+                <!-- Relevé PDF -->
+                <a href="{{ route('client.wallet.statement') }}" 
+                   class="group flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-300 transform hover:scale-105">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full p-4 mb-4 group-hover:shadow-lg transition-all duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">Télécharger relevé</h4>
+                    <p class="text-sm text-gray-600 text-center">Export PDF</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <h3 class="text-xl font-semibold text-gray-800 flex items-center mb-4 sm:mb-0">
+                        <span class="mr-3">📋</span> Transactions récentes
+                    </h3>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ route('client.wallet.transactions') }}" 
+                           class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                            Voir tout →
+                        </a>
+                        <a href="{{ route('client.wallet.export') }}" 
+                           class="bg-white text-purple-600 border border-purple-200 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                            📊 Exporter
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divide-y divide-gray-100">
+                @forelse($transactions->take(10) as $transaction)
+                    <div class="p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center flex-1">
+                                <!-- Transaction Icon -->
+                                <div class="flex-shrink-0 mr-4">
+                                    @if($transaction->amount > 0)
+                                        <div class="w-12 h-12 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                                            </svg>
+                                        </div>
+                                    @else
+                                        <div class="w-12 h-12 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                
+                                <!-- Transaction Details -->
+                                <div class="flex-1">
+                                    <div class="flex items-center flex-wrap gap-2 mb-2">
+                                        <h4 class="font-semibold text-gray-900">{{ $transaction->description }}</h4>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $transaction->status_color }}">
+                                            {{ $transaction->status_display }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                        <span class="flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                        </span>
+                                        
+                                        @if($transaction->package_id)
+                                            <span class="flex items-center">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                </svg>
+                                                {{ $transaction->package->package_code ?? '#'.$transaction->package_id }}
+                                            </span>
+                                        @endif
+                                        
+                                        <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                            ID: {{ $transaction->transaction_id }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Amount and Action -->
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <p class="text-lg font-bold {{ $transaction->amount > 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                                        {{ $transaction->formatted_amount }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ $transaction->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                                
+                                <a href="{{ route('client.wallet.transaction.show', $transaction) }}" 
+                                   class="bg-purple-100 text-purple-600 px-3 py-2 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
+                                    Voir →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-12 text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune transaction</h3>
+                        <p class="text-gray-600 mb-6">Vous n'avez pas encore de transactions dans votre portefeuille.</p>
+                        <a href="{{ route('client.wallet.topup') }}" 
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Première recharge
+                        </a>
+                    </div>
+                @endforelse
+            </div>
+
+            @if($transactions->count() > 10)
+                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
+                    <div class="flex justify-center">
+                        <a href="{{ route('client.wallet.transactions') }}" 
+                           class="bg-white text-purple-600 px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-md font-medium">
+                            Voir les {{ $transactions->count() - 10 }} autres transactions →
+                        </a>
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-// Actualisation automatique du solde toutes les 30 secondes
-setInterval(function() {
-    fetch('/client/api/wallet/balance')
-        .then(response => response.json())
-        .then(data => {
-            if (data.balance !== undefined) {
-                // Mettre à jour l'affichage du solde
-                console.log('Solde mis à jour:', data.balance);
-            }
-        })
-        .catch(error => console.error('Erreur actualisation solde:', error));
-}, 30000);
-
-// Animation des cartes au chargement
 document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('[class*="rounded-xl"]');
+    // Animation d'entrée des cartes
+    const cards = document.querySelectorAll('[class*="transform hover:scale-105"]');
     cards.forEach((card, index) => {
         card.style.opacity = '0';
         card.style.transform = 'translateY(20px)';
@@ -284,7 +390,155 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.transform = 'translateY(0)';
         }, index * 100);
     });
+
+    // Actualisation automatique du solde toutes les 30 secondes
+    setInterval(function() {
+        fetch('/client/api/wallet/balance')
+            .then(response => response.json())
+            .then(data => {
+                if (data.available !== undefined) {
+                    const balanceElement = document.getElementById('available-balance');
+                    if (balanceElement) {
+                        const currentBalance = parseFloat(balanceElement.textContent.replace(/[^\d.,]/g, '').replace(',', '.'));
+                        const newBalance = data.available;
+                        
+                        if (currentBalance !== newBalance) {
+                            balanceElement.style.transition = 'all 0.3s ease';
+                            balanceElement.style.transform = 'scale(1.1)';
+                            balanceElement.textContent = new Intl.NumberFormat('fr-TN', {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3
+                            }).format(newBalance) + ' DT';
+                            
+                            setTimeout(() => {
+                                balanceElement.style.transform = 'scale(1)';
+                            }, 300);
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Erreur actualisation solde:', error));
+    }, 30000);
+
+    // Smooth scroll pour les liens internes
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Effet de survol amélioré pour les boutons
+    const buttons = document.querySelectorAll('.transform.hover\\:scale-105');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 10px 25px rgba(139, 92, 246, 0.3)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.boxShadow = '';
+        });
+    });
+});
+
+// Animation au scroll
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Appliquer l'observer aux éléments
+document.addEventListener('DOMContentLoaded', function() {
+    const elementsToObserve = document.querySelectorAll('.bg-white, .bg-gradient-to-br');
+    elementsToObserve.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'all 0.6s ease';
+        observer.observe(el);
+    });
 });
 </script>
+@endpush
+
+@push('styles')
+<style>
+.purple-25 {
+    background-color: rgba(139, 92, 246, 0.025);
+}
+
+.hover\:from-purple-25:hover {
+    background-image: linear-gradient(to right, rgba(139, 92, 246, 0.025), rgba(99, 102, 241, 0.025));
+}
+
+/* Animations personnalisées */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-up {
+    animation: slideInUp 0.6s ease-out;
+}
+
+/* Amélioration des gradients */
+.bg-gradient-to-br {
+    background-attachment: fixed;
+}
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Loading states */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+</style>
 @endpush
 @endsection

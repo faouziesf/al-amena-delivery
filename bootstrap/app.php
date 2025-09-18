@@ -10,9 +10,10 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withCommands([
-        \App\Console\Kernel::class,
-    ])
+    // SUPPRIMEZ cette section complètement :
+    // ->withCommands([
+    //     \App\Console\Kernel::class,
+    // ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
