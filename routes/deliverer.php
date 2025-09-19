@@ -25,7 +25,7 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         // Détails d'un colis
         Route::get('/{package}', [DelivererPackageController::class, 'show'])->name('show');
         
-        // ACTIONS CRITIQUES
+        // ACTIONS CRITIQUES SCANNER - NOUVELLES/AMÉLIORÉES
         Route::post('/{package}/accept', [DelivererPackageController::class, 'acceptPickup'])->name('accept');
         Route::post('/{package}/pickup', [DelivererPackageController::class, 'markPickedUp'])->name('pickup');
         Route::post('/{package}/deliver', [DelivererPackageController::class, 'deliverPackage'])->name('deliver');
@@ -33,27 +33,29 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::post('/{package}/return', [DelivererPackageController::class, 'returnToSender'])->name('return');
         Route::post('/{package}/attempt', [DelivererPackageController::class, 'recordAttempt'])->name('attempt');
         
-        // SCAN QR/CODES-BARRES
+        // SCAN QR/CODES-BARRES - AMÉLIORÉ ET ROBUSTE
         Route::post('/scan', [DelivererPackageController::class, 'scanPackage'])->name('scan');
-        Route::get('/search-advanced', [DelivererPackageController::class, 'searchAdvanced'])->name('search.advanced');
         Route::post('/scan-batch', [DelivererPackageController::class, 'scanBatch'])->name('scan.batch');
+        Route::get('/search-advanced', [DelivererPackageController::class, 'searchAdvanced'])->name('search.advanced');
         
-        // Actions groupées
+        // Actions groupées - NOUVELLES
         Route::post('/bulk-accept', [DelivererPackageController::class, 'bulkAccept'])->name('bulk.accept');
         Route::post('/bulk-pickup', [DelivererPackageController::class, 'bulkPickup'])->name('bulk.pickup');
         Route::post('/bulk-deliver', [DelivererPackageController::class, 'bulkDeliver'])->name('bulk.deliver');
         Route::post('/bulk-return', [DelivererPackageController::class, 'bulkReturn'])->name('bulk.return');
         
-        // Documents
+        // Documents et preuves
         Route::get('/run-sheet', [DelivererPackageController::class, 'generateRunSheet'])->name('run.sheet');
         Route::get('/{package}/delivery-receipt', [DelivererPackageController::class, 'deliveryReceipt'])->name('delivery.receipt');
+        Route::get('/{package}/pickup-photo', [DelivererPackageController::class, 'showPickupPhoto'])->name('pickup.photo');
+        Route::get('/{package}/delivery-photo', [DelivererPackageController::class, 'showDeliveryPhoto'])->name('delivery.photo');
     });
 
     // ==================== LISTES SPÉCIFIQUES (5 LISTES) ====================
     // LISTE 1: Pickups Disponibles
     Route::get('/pickups/available', [DelivererPackageController::class, 'availablePickups'])->name('pickups.available');
     
-    // LISTE 2: Mes Pickups (acceptés)
+    // LISTE 2: Mes Pickups (acceptés) - AMÉLIORÉE
     Route::get('/pickups/mine', [DelivererPackageController::class, 'myPickups'])->name('pickups.mine');
     
     // LISTE 3: Livraisons (à livrer + 4ème tentatives)
@@ -87,7 +89,7 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::get('/{emptying}', [DelivererWalletController::class, 'showEmptying'])->name('show');
     });
 
-    // ==================== RUN SHEETS (Feuilles de Route) - CORRECTION ERREUR ====================
+    // ==================== RUN SHEETS (Feuilles de Route) ====================
     Route::prefix('runsheets')->name('runsheets.')->group(function () {
         Route::get('/', [DelivererRunSheetController::class, 'index'])->name('index');
         Route::post('/generate', [DelivererRunSheetController::class, 'generate'])->name('generate');
@@ -132,57 +134,174 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::post('/report-issue', [DelivererEmergencyController::class, 'reportIssue'])->name('report-issue');
     });
 
-    // ==================== API ENDPOINTS LIVREUR ====================
+    // ==================== API ENDPOINTS LIVREUR - AMÉLIORÉES ====================
     Route::prefix('api')->name('api.')->group(function () {
         
-        // Dashboard APIs
+        // Dashboard APIs - AMÉLIORÉES
         Route::get('/dashboard-stats', [DelivererPackageController::class, 'apiDashboardStats'])->name('dashboard.stats');
         
-        // Package APIs
+        // Package APIs - NOUVELLES/AMÉLIORÉES  
         Route::get('/available-count', function() {
-            return response()->json(['count' => \App\Models\Package::where('status', 'AVAILABLE')->count()]);
+            try {
+                $count = \App\Models\Package::where('status', 'AVAILABLE')->count();
+                return response()->json(['success' => true, 'count' => $count]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'count' => 0]);
+            }
         })->name('packages.available.count');
         
         Route::get('/my-pickups-count', function() {
-            return response()->json(['count' => \App\Models\Package::where('assigned_deliverer_id', auth()->id())->where('status', 'ACCEPTED')->count()]);
+            try {
+                $count = \App\Models\Package::where('assigned_deliverer_id', auth()->id())
+                    ->where('status', 'ACCEPTED')->count();
+                return response()->json(['success' => true, 'count' => $count]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'count' => 0]);
+            }
         })->name('packages.my-pickups.count');
         
         Route::get('/deliveries-count', function() {
-            return response()->json(['count' => \App\Models\Package::where('assigned_deliverer_id', auth()->id())->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])->count()]);
+            try {
+                $count = \App\Models\Package::where('assigned_deliverer_id', auth()->id())
+                    ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])->count();
+                return response()->json(['success' => true, 'count' => $count]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'count' => 0]);
+            }
         })->name('packages.deliveries.count');
         
         Route::get('/returns-count', function() {
-            return response()->json(['count' => \App\Models\Package::where('assigned_deliverer_id', auth()->id())->where('status', 'VERIFIED')->count()]);
+            try {
+                $count = \App\Models\Package::where('assigned_deliverer_id', auth()->id())
+                    ->where('status', 'VERIFIED')->count();
+                return response()->json(['success' => true, 'count' => $count]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'count' => 0]);
+            }
         })->name('packages.returns.count');
         
         Route::get('/payments-count', [DelivererPaymentController::class, 'apiPaymentsCount'])->name('payments.count');
         
-        // Wallet APIs
+        // Wallet APIs - AMÉLIORÉES
         Route::get('/wallet/balance', [DelivererPackageController::class, 'apiWalletBalance'])->name('wallet.balance');
         Route::get('/wallet/recent-transactions', [DelivererWalletController::class, 'apiRecentTransactions'])->name('wallet.transactions');
         Route::get('/wallet/earnings-chart', [DelivererWalletController::class, 'apiEarningsChart'])->name('wallet.earnings');
         
-        // Délégations pour le scanner
+        // Délégations pour le scanner - NOUVEAU
         Route::get('/delegations', [DelivererPackageController::class, 'apiDelegations'])->name('delegations');
         
-        // Notifications
-        Route::get('/notifications/unread-count', function() {
+        // Scanner APIs - NOUVEAUX
+        Route::post('/scan/validate-code', function(\Illuminate\Http\Request $request) {
+            $code = strtoupper(trim($request->input('code', '')));
+            $isValid = preg_match('/^PKG_[A-Z0-9]{8,}_\d{8}$/', $code) || 
+                      preg_match('/^[A-Z0-9]{8,}$/', $code) || 
+                      preg_match('/^[0-9]{8,}$/', $code);
+            
             return response()->json([
-                'count' => auth()->user()->notifications()->where('read', false)->count()
+                'valid' => $isValid,
+                'formatted' => $code
             ]);
+        })->name('scan.validate');
+        
+        Route::get('/scan/recent-codes', function() {
+            // Récupérer les codes récents depuis localStorage côté client
+            // Cette route pourrait servir pour la synchronisation
+            return response()->json(['codes' => []]);
+        })->name('scan.recent');
+        
+        // Notifications - EXISTANTES
+        Route::get('/notifications/unread-count', function() {
+            try {
+                $count = auth()->user()->notifications()->where('read', false)->count();
+                return response()->json(['success' => true, 'count' => $count]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'count' => 0]);
+            }
         })->name('notifications.unread.count');
         
         Route::get('/notifications/recent', function() {
-            $notifications = auth()->user()->notifications()
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-            return response()->json(['notifications' => $notifications]);
+            try {
+                $notifications = auth()->user()->notifications()
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->get();
+                return response()->json(['success' => true, 'notifications' => $notifications]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'notifications' => []]);
+            }
         })->name('notifications.recent');
         
-        // Location tracking
+        // Location tracking - EXISTANTES
         Route::post('/location/update', [DelivererLocationController::class, 'updateLocation'])->name('location.update');
         Route::get('/location/current', [DelivererLocationController::class, 'currentLocation'])->name('location.current');
         Route::get('/location/history', [DelivererLocationController::class, 'locationHistory'])->name('location.history');
+        
+        // Health Check - NOUVEAU
+        Route::get('/health', function() {
+            return response()->json([
+                'status' => 'OK',
+                'timestamp' => now()->toISOString(),
+                'user_id' => auth()->id(),
+                'features' => [
+                    'scanner' => true,
+                    'camera' => true,
+                    'batch_processing' => true,
+                    'photos' => true,
+                    'offline_sync' => true
+                ]
+            ]);
+        })->name('health');
     });
+    
+    // ==================== ROUTES DE DÉVELOPPEMENT (à supprimer en prod) ====================
+    Route::prefix('dev')->name('dev.')->middleware(['app.debug'])->group(function () {
+        // Test scanner
+        Route::get('/test-scanner', function() {
+            return view('deliverer.dev.test-scanner');
+        })->name('test.scanner');
+        
+        // Test génération de codes
+        Route::get('/generate-test-codes', function() {
+            $codes = [];
+            for ($i = 0; $i < 10; $i++) {
+                $codes[] = 'PKG_' . strtoupper(\Illuminate\Support\Str::random(8)) . '_' . date('Ymd');
+            }
+            return response()->json(['codes' => $codes]);
+        })->name('generate.codes');
+        
+        // Reset localStorage (pour tests)
+        Route::post('/reset-local-storage', function() {
+            return response()->json(['message' => 'localStorage reset signal sent']);
+        })->name('reset.storage');
+    });
+});
+
+// ==================== ROUTES PUBLIQUES LIÉES AU SCANNER ====================
+// (Si nécessaire pour tracking ou webhooks)
+
+Route::prefix('deliverer-public')->name('deliverer.public.')->group(function () {
+    // Tracking public de colis (sans auth)
+    Route::get('/track/{code}', function($code) {
+        $package = \App\Models\Package::where('package_code', $code)
+            ->select(['package_code', 'status', 'delivered_at', 'delegation_to'])
+            ->first();
+        
+        if (!$package) {
+            return response()->json(['error' => 'Package not found'], 404);
+        }
+        
+        return response()->json([
+            'code' => $package->package_code,
+            'status' => $package->status,
+            'delivered_at' => $package->delivered_at,
+            'destination' => $package->delegationTo->name ?? null
+        ]);
+    })->name('track');
+    
+    // Webhook pour notifications push (si implémenté)
+    Route::post('/webhook/scanner-notification', function(\Illuminate\Http\Request $request) {
+        // Traiter les notifications push pour le scanner
+        \Log::info('Scanner webhook received', $request->all());
+        return response()->json(['status' => 'received']);
+    })->name('webhook.scanner');
 });

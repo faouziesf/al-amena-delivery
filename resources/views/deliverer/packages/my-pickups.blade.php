@@ -160,7 +160,7 @@
                         </button>
 
                         <!-- Scanner -->
-                        <button @click="scanPackage(package.package_code)" 
+                        <button @click="scanSpecificPackage(package.package_code)" 
                                 class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-200 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
@@ -189,8 +189,13 @@
                 </div>
                 <div class="flex items-center space-x-2">
                     <button @click="bulkPickup()" 
-                            class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-emerald-600 transition-colors">
-                        Collecter Tous
+                            :disabled="processing"
+                            class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50">
+                        <span x-show="!processing">Collecter Tous</span>
+                        <span x-show="processing" class="flex items-center">
+                            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Collecte...
+                        </span>
                     </button>
                     <button @click="selectedPackages = []" 
                             class="bg-gray-300 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-400 transition-colors">
@@ -235,7 +240,7 @@
         
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-gray-900">Confirmer la Collecte</h3>
-            <button @click="showPickupModal = false" 
+            <button @click="closePickupModal()" 
                     class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -247,7 +252,7 @@
             <!-- Colis info -->
             <div class="bg-purple-50 p-4 rounded-xl mb-4">
                 <p class="font-semibold text-purple-900" x-text="selectedPickupPackage?.package_code"></p>
-                <p class="text-sm text-purple-700" x-text="selectedPickupPackage?.sender_data?.name"></p>
+                <p class="text-sm text-purple-700" x-text="selectedPickupPackage?.sender_data?.name || selectedPickupPackage?.sender?.name"></p>
             </div>
 
             <!-- Notes -->
@@ -255,14 +260,14 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Notes de collecte (optionnel)</label>
                 <textarea x-model="pickupForm.notes" rows="3" 
                           placeholder="État du colis, conditions particulières..."
-                          class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+                          class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
             </div>
 
             <!-- Photo -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Photo de collecte (optionnel)</label>
-                <input type="file" @change="handlePhotoUpload" accept="image/*" capture="environment"
-                       class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500">
+                <input type="file" x-ref="photoInput" @change="handlePhotoUpload" accept="image/*" capture="environment"
+                       class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
                 <p class="text-xs text-gray-500 mt-1">Recommandé pour preuve de collecte</p>
             </div>
 
@@ -277,12 +282,93 @@
                         Collecte...
                     </span>
                 </button>
-                <button type="button" @click="showPickupModal = false" 
+                <button type="button" @click="closePickupModal()" 
                         class="bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
                     Annuler
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Scan par Lot -->
+<div x-show="showBatchModal" x-transition 
+     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div x-show="showBatchModal" 
+         x-transition:enter="transform transition ease-out duration-300"
+         x-transition:enter-start="scale-95 opacity-0"
+         x-transition:enter-end="scale-100 opacity-100"
+         x-transition:leave="transform transition ease-in duration-200"
+         x-transition:leave-start="scale-100 opacity-100"
+         x-transition:leave-end="scale-95 opacity-0"
+         class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-96 overflow-y-auto">
+        
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900">Scan par Lot</h3>
+            <button @click="closeBatchModal()" 
+                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <p class="text-sm text-gray-600">
+                Collecte automatique de plusieurs colis en une fois. Scannez ou saisissez les codes un par un.
+            </p>
+
+            <!-- Zone de saisie -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Code colis</label>
+                <div class="flex space-x-2">
+                    <input type="text" x-model="batchCode" @keydown.enter="addToBatch()"
+                           placeholder="PKG_12345678_20251219"
+                           class="flex-1 border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm uppercase">
+                    <button @click="addToBatch()" :disabled="!batchCode.trim()"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
+                        Ajouter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Liste des codes ajoutés -->
+            <div x-show="batchCodes.length > 0" class="max-h-40 overflow-y-auto">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Codes ajoutés (<span x-text="batchCodes.length"></span>)
+                </label>
+                <div class="space-y-2">
+                    <template x-for="(code, index) in batchCodes" :key="index">
+                        <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                            <span class="font-mono text-sm" x-text="code"></span>
+                            <button @click="removeFromBatch(index)" 
+                                    class="text-red-500 hover:text-red-700 p-1 rounded">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-3">
+                <button @click="processBatch()" 
+                        :disabled="batchCodes.length === 0 || processingBatch"
+                        class="flex-1 bg-emerald-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-emerald-600 transition-colors disabled:opacity-50">
+                    <span x-show="!processingBatch">Collecter Tous</span>
+                    <span x-show="processingBatch" class="flex items-center justify-center">
+                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Traitement...
+                    </span>
+                </button>
+                <button @click="closeBatchModal()" 
+                        class="bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                    Annuler
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -297,7 +383,7 @@ function myPickupsApp() {
         sortBy: 'date',
         totalCod: 0,
         
-        // Modal collecte
+        // Modal collecte - AJOUTÉ
         showPickupModal: false,
         selectedPickupPackage: null,
         processingPickup: false,
@@ -305,6 +391,12 @@ function myPickupsApp() {
             notes: '',
             photo: null
         },
+
+        // Modal scan par lot - AJOUTÉ
+        showBatchModal: false,
+        batchCodes: [],
+        batchCode: '',
+        processingBatch: false,
 
         init() {
             this.applySorting();
@@ -339,9 +431,16 @@ function myPickupsApp() {
             this.totalCod = this.packages.reduce((sum, pkg) => sum + parseFloat(pkg.cod_amount || 0), 0);
         },
 
+        // ==================== COLLECTE INDIVIDUELLE ====================
+
         async markAsPickedUp(package) {
             this.selectedPickupPackage = package;
             this.showPickupModal = true;
+        },
+
+        closePickupModal() {
+            this.showPickupModal = false;
+            this.resetPickupForm();
         },
 
         async confirmPickup() {
@@ -371,8 +470,12 @@ function myPickupsApp() {
                     this.packages = this.packages.filter(p => p.id !== this.selectedPickupPackage.id);
                     this.applySorting();
                     this.calculateTotalCod();
-                    this.showPickupModal = false;
-                    this.resetPickupForm();
+                    this.closePickupModal();
+                    
+                    // Rediriger si fourni
+                    if (data.redirect) {
+                        setTimeout(() => window.location.href = data.redirect, 1500);
+                    }
                 } else {
                     this.showToast(data.message || 'Erreur lors de la collecte', 'error');
                 }
@@ -383,9 +486,28 @@ function myPickupsApp() {
             this.processingPickup = false;
         },
 
+        handlePhotoUpload(event) {
+            this.pickupForm.photo = event.target.files[0];
+        },
+
+        resetPickupForm() {
+            this.pickupForm = {
+                notes: '',
+                photo: null
+            };
+            this.selectedPickupPackage = null;
+            // Reset file input
+            if (this.$refs.photoInput) {
+                this.$refs.photoInput.value = '';
+            }
+        },
+
+        // ==================== COLLECTE GROUPÉE ====================
+
         async bulkPickup() {
             if (this.selectedPackages.length === 0) return;
             
+            this.processing = true;
             try {
                 const codes = this.selectedPackages.map(id => {
                     const pkg = this.packages.find(p => p.id === id);
@@ -408,8 +530,8 @@ function myPickupsApp() {
 
                 if (data.success) {
                     this.showToast(`${data.summary.success} colis collectés avec succès`, 'success');
-                    // Recharger la page
-                    location.reload();
+                    // Recharger la page pour actualiser
+                    setTimeout(() => location.reload(), 1500);
                 } else {
                     this.showToast(data.message || 'Erreur lors de la collecte groupée', 'error');
                 }
@@ -417,33 +539,100 @@ function myPickupsApp() {
                 console.error('Erreur collecte groupée:', error);
                 this.showToast('Erreur de connexion', 'error');
             }
+            this.processing = false;
+            this.selectedPackages = [];
         },
 
-        scanPackage(packageCode) {
-            // Ouvrir le scanner ou traiter directement
-            openScanner();
+        // ==================== SCAN PAR LOT ====================
+
+        openBatchScanModal() {
+            this.showBatchModal = true;
+            this.batchCodes = [];
+            this.batchCode = '';
+        },
+
+        closeBatchModal() {
+            this.showBatchModal = false;
+            this.batchCodes = [];
+            this.batchCode = '';
+        },
+
+        addToBatch() {
+            const code = this.batchCode.trim().toUpperCase();
+            if (code && !this.batchCodes.includes(code)) {
+                this.batchCodes.push(code);
+                this.batchCode = '';
+            }
+        },
+
+        removeFromBatch(index) {
+            this.batchCodes.splice(index, 1);
+        },
+
+        async processBatch() {
+            if (this.batchCodes.length === 0) return;
+            
+            this.processingBatch = true;
+            try {
+                const response = await fetch('/deliverer/packages/scan-batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        codes: this.batchCodes,
+                        action: 'pickup'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showToast(`${data.summary.success} colis traités avec succès`, 'success');
+                    this.closeBatchModal();
+                    // Recharger après un court délai
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    this.showToast(data.message || 'Erreur lors du traitement par lot', 'error');
+                    
+                    // Afficher les détails des échecs si disponibles
+                    if (data.results) {
+                        const failures = data.results.filter(r => !r.success);
+                        failures.forEach(f => {
+                            this.showToast(`${f.code}: ${f.message}`, 'error');
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur traitement par lot:', error);
+                this.showToast('Erreur de connexion', 'error');
+            }
+            this.processingBatch = false;
+        },
+
+        // ==================== AUTRES ACTIONS ====================
+
+        scanSpecificPackage(packageCode) {
+            // Déclencher le scanner global avec pré-remplissage du code
+            window.dispatchEvent(new CustomEvent('open-scanner', {
+                detail: { prefilledCode: packageCode }
+            }));
+        },
+
+        openScanner() {
+            window.dispatchEvent(new Event('open-scanner'));
         },
 
         viewDetails(package) {
-            // Rediriger vers la page de détails
             window.location.href = `/deliverer/packages/${package.id}`;
         },
 
-        handlePhotoUpload(event) {
-            this.pickupForm.photo = event.target.files[0];
-        },
-
-        resetPickupForm() {
-            this.pickupForm = {
-                notes: '',
-                photo: null
-            };
-            this.selectedPickupPackage = null;
-        },
+        // ==================== UTILITAIRES ====================
 
         startAutoRefresh() {
             setInterval(() => {
-                if (!this.loading && !this.processingPickup) {
+                if (!this.loading && !this.processingPickup && !this.showPickupModal) {
                     this.loadPackages();
                 }
             }, 120000); // Actualisation toutes les 2 minutes
