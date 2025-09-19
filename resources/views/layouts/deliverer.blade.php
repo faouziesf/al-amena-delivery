@@ -16,8 +16,17 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <!-- QR Scanner Library -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- QR Scanner Library - PRIORITÉ ABSOLUE -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- Fallback si CDN indisponible -->
+    <script>
+        if (typeof jsQR === 'undefined') {
+            console.warn('jsQR CDN failed, loading backup');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
+            document.head.appendChild(script);
+        }
+    </script>
     
     <script>
         tailwind.config = {
@@ -104,13 +113,13 @@
                             </div>
                             
                             <div class="p-2">
-                                <a href="#" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <a href="{{ route('deliverer.profile.show') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
                                     <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
                                     Mon Profil
                                 </a>
-                                <a href="#" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <a href="{{ route('deliverer.profile.statistics') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
                                     <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                                     </svg>
@@ -281,15 +290,9 @@
         </div>
     </div>
 
-    <!-- Scanner QR/Code-barres Component -->
+    <!-- Scanner QR/Code-barres Component FONCTIONNEL -->
     <div x-data="scannerApp()">
-        <!-- Scanner QR/Code-barres Modal Component (Le composant précédent) -->
-        <div x-show="scannerOpen" x-transition class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-            <div class="bg-white rounded-3xl p-6 m-4 w-full max-w-md max-h-screen overflow-y-auto">
-                <!-- Include the complete scanner component here -->
-                @include('components.qr-scanner')
-            </div>
-        </div>
+        @include('components.qr-scanner-working')
     </div>
 
     <!-- Flash Messages -->
@@ -384,11 +387,6 @@
                             this.loadWallet();
                         }
                     }, 30000);
-
-                    // Close extended menu when navigating
-                    this.$watch('$page.url', () => {
-                        this.showMore = false;
-                    });
                 },
 
                 async loadStats() {
@@ -427,14 +425,10 @@
 
                 openScanner() {
                     // Trigger the scanner in the scanner component
-                    const scannerComponent = document.querySelector('[x-data*="scannerApp"]');
-                    if (scannerComponent) {
-                        scannerComponent.__x.$data.scannerOpen = true;
-                    }
+                    window.dispatchEvent(new Event('open-scanner'));
                 },
 
                 async syncOfflineData() {
-                    // TODO: Implement offline data sync
                     console.log('Syncing offline data...');
                     this.showToast('Données synchronisées');
                 },
@@ -466,43 +460,28 @@
 
         // Global scanner functions
         function openScanner() {
-            const scannerComponent = document.querySelector('[x-data*="scannerApp"]');
-            if (scannerComponent) {
-                scannerComponent.__x.$data.scannerOpen = true;
-            }
+            window.dispatchEvent(new Event('open-scanner'));
         }
 
         // Global scanner component
         function scannerApp() {
             return {
                 scannerOpen: false,
-                scannerMode: 'camera', // camera, manual, search
+                scannerMode: 'manual', // Commencer par manuel pour fiabilité
                 
                 // Camera
                 cameraActive: false,
                 cameraScanning: false,
                 cameraError: null,
                 videoStream: null,
-                qrScanner: null,
                 availableCameras: [],
                 selectedCameraId: null,
+                scanningInterval: null,
                 
                 // Manual entry
                 manualCode: '',
                 processingCode: false,
                 recentScans: JSON.parse(localStorage.getItem('deliverer_recent_scans') || '[]'),
-                
-                // Advanced search
-                advancedSearch: {
-                    clientName: '',
-                    phone: '',
-                    address: '',
-                    delegation: '',
-                    status: ''
-                },
-                processingSearch: false,
-                searchResults: [],
-                delegations: [],
                 
                 // Results and history
                 scanResult: {},
@@ -510,30 +489,24 @@
                 scanHistory: JSON.parse(localStorage.getItem('deliverer_scan_history') || '[]'),
 
                 init() {
-                    // Load delegations for search
-                    this.loadDelegations();
-                    
-                    // Listen for scanner events
+                    // Écouter l'événement d'ouverture du scanner
+                    window.addEventListener('open-scanner', () => {
+                        this.scannerOpen = true;
+                    });
+
                     this.$watch('scannerOpen', (isOpen) => {
                         if (isOpen) {
                             this.manualCode = '';
-                            this.searchResults = [];
-                            if (this.scannerMode === 'camera') {
-                                setTimeout(() => this.startCamera(), 300);
-                            }
+                            // Focus automatique sur le champ manuel
+                            setTimeout(() => {
+                                const input = document.querySelector('input[x-model="manualCode"]');
+                                if (input) input.focus();
+                            }, 100);
                         } else {
                             this.stopCamera();
                         }
                     });
-
-                    // Listen for global scanner trigger
-                    window.addEventListener('open-scanner', () => {
-                        this.scannerOpen = true;
-                    });
-                },
-
-                // [Tous les autres méthodes du scanner...]
-                // (Pour la brièveté, je vais continuer avec les méthodes backend)
+                }
             }
         }
     </script>
