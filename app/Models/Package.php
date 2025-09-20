@@ -301,4 +301,55 @@ class Package extends Model
             }
         });
     }
+
+    /**
+     * Vérifier si peut être scanné par ce livreur
+     */
+    public function canBeScanBy(User $deliverer): bool
+    {
+        // Disponible pour tous
+        if ($this->status === 'AVAILABLE') {
+            return true;
+        }
+        
+        // Assigné à ce livreur
+        return $this->assigned_deliverer_id === $deliverer->id;
+    }
+
+    /**
+     * Obtenir l'action possible pour ce livreur
+     */
+    public function getActionFor(User $deliverer): ?string
+    {
+        if ($this->status === 'AVAILABLE') {
+            return 'accept';
+        }
+        
+        if ($this->assigned_deliverer_id === $deliverer->id) {
+            return match($this->status) {
+                'ACCEPTED' => 'pickup',
+                'PICKED_UP', 'UNAVAILABLE' => 'deliver', 
+                'VERIFIED' => 'return',
+                default => 'view'
+            };
+        }
+        
+        return null;
+    }
+
+    /**
+     * Messages de statut
+     */
+    public function getStatusMessageAttribute(): string
+    {
+        return match($this->status) {
+            'AVAILABLE' => '📦 Disponible',
+            'ACCEPTED' => '✅ Accepté',
+            'PICKED_UP' => '🚚 Collecté',
+            'DELIVERED' => '✅ Livré',
+            'VERIFIED' => '↩️ À retourner',
+            'RETURNED' => '↩️ Retourné',
+            default => $this->status
+        };
+    }
 }

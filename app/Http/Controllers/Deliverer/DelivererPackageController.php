@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Models\FinancialTransaction;
 use App\Models\PackageStatusHistory;
 use App\Models\ActionLog;
+use App\Http\Requests\Deliverer\ScanPackageRequest;
+use App\Services\PackageScannerService;
 use Carbon\Carbon;
 
 class DelivererPackageController
@@ -201,57 +203,26 @@ class DelivererPackageController
     }
 
     /**
-     * Scanner QR/Code et traiter selon le contexte - VERSION ULTRA OPTIMISÉE
+     * Scanner QR/Code - VERSION OPTIMISÉE
      */
-    public function scanPackage(Request $request)
+    public function scanPackage(ScanPackageRequest $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:255'
-        ]);
-
-        $code = trim($validated['code']);
-        
         try {
-            // Rechercher le package par code avec tous les formats possibles
-            $package = $this->findPackageByCode($code);
-            
-            if (!$package) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "❌ Aucun colis trouvé avec le code: {$code}",
-                    'code_scanned' => $code,
-                    'suggestions' => $this->getCodeSuggestions($code),
-                    'detected_format' => $this->detectCodeFormat($code)
-                ], 404);
-            }
-
-            // Log du scan avec format détecté
-            $this->logAction('PACKAGE_SCANNED', 'Package', $package->id, 
-                           null, $code, [
-                'deliverer_id' => Auth::id(),
-                'package_status' => $package->status,
-                'scan_context' => $this->determineScanContext($package),
-                'detected_format' => $this->detectCodeFormat($code),
-                'user_agent' => $request->userAgent()
-            ]);
-
-            // Déterminer l'action contextuelle selon le statut et l'assignation
-            $result = $this->determineScanAction($package);
+            $scannerService = app(PackageScannerService::class);
+            $result = $scannerService->scanCode($request->validated()['code']);
             
             return response()->json($result);
             
         } catch (\Exception $e) {
             Log::error('Erreur scan package', [
-                'code' => $code,
+                'code' => $request->code,
                 'deliverer_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du traitement du code scanné.',
-                'code_scanned' => $code
+                'message' => 'Erreur lors du traitement du code.'
             ], 500);
         }
     }
