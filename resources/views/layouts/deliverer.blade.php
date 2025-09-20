@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>@yield('title', 'Al-Amena Delivery') - Livreur</title>
     
     <!-- PWA Meta Tags -->
@@ -11,12 +11,84 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Al-Amena Delivery">
     
+    <!-- Permissions Meta Tags -->
+    <meta http-equiv="Feature-Policy" content="camera 'self'; microphone 'none'">
+    <meta name="permissions" content="camera=(), microphone=()">
+    
     <!-- CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <!-- jsQR Library UNIQUEMENT -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- jsQR Library avec fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" 
+            onerror="console.warn('jsQR failed to load from CDN')"></script>
+    
+    <!-- QuaggaJS pour codes-barres 1D avec fallback amélioré -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"
+            onerror="console.warn('QuaggaJS CDN principal failed, trying fallback...');
+                     const script = document.createElement('script');
+                     script.src = 'https://unpkg.com/quagga@0.12.1/dist/quagga.min.js';
+                     script.onerror = function() {
+                         console.error('QuaggaJS fallback also failed - codes-barres disabled');
+                         console.info('💡 Use manual mode for barcodes');
+                     };
+                     document.head.appendChild(script);"></script>
+    
+    <!-- Alternative CDN et vérifications -->
+    <script>
+        // Vérifier si les bibliothèques sont chargées
+        window.addEventListener('load', function() {
+            const libraries = {
+                jsQR: typeof jsQR !== 'undefined',
+                Quagga: typeof Quagga !== 'undefined'
+            };
+            
+            console.log('📚 Bibliothèques scanner:', libraries);
+            
+            if (!libraries.jsQR) {
+                console.warn('❌ jsQR manquant - QR codes non supportés');
+                // Fallback pour jsQR
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
+                script.onerror = () => console.error('❌ jsQR fallback failed');
+                document.head.appendChild(script);
+            }
+            
+            if (!libraries.Quagga) {
+                console.warn('❌ QuaggaJS manquant - codes-barres non supportés');
+                console.info('💡 Utilisez le mode manuel pour les codes-barres');
+                
+                // Tentative alternative QuaggaJS
+                setTimeout(() => {
+                    if (typeof Quagga === 'undefined') {
+                        console.log('🔄 Tentative CDN alternatif pour QuaggaJS...');
+                        const script = document.createElement('script');
+                        script.src = 'https://unpkg.com/@ericblade/quagga2@1.12.1/dist/quagga.min.js';
+                        script.onload = () => {
+                            console.log('✅ QuaggaJS alternatif chargé');
+                            window.Quagga = window.Quagga || window.QuaggaJS;
+                        };
+                        script.onerror = () => console.error('❌ Tous les CDN QuaggaJS ont échoué');
+                        document.head.appendChild(script);
+                    }
+                }, 2000);
+            }
+            
+            // Afficher statut final après 5 secondes
+            setTimeout(() => {
+                const finalStatus = {
+                    jsQR: typeof jsQR !== 'undefined',
+                    Quagga: typeof Quagga !== 'undefined'
+                };
+                console.log('📊 Status final scanners:', finalStatus);
+                
+                if (!finalStatus.Quagga) {
+                    console.info('💡 Codes-barres: utilisez le mode manuel');
+                    console.info('📱 QR codes: ' + (finalStatus.jsQR ? 'fonctionnels' : 'non disponibles'));
+                }
+            }, 5000);
+        });
+    </script>
     
     <script>
         tailwind.config = {
@@ -42,8 +114,23 @@
 </head>
 <body class="bg-gray-50 min-h-screen overflow-x-hidden" x-data="delivererApp()">
     
+    <!-- HTTPS Check for Mobile -->
+    <div x-data="{ 
+        showHttpsWarning: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && location.protocol !== 'https:',
+        dismissed: localStorage.getItem('https_warning_dismissed') === 'true' 
+    }" 
+    x-show="showHttpsWarning && !dismissed" 
+    class="fixed top-0 left-0 right-0 bg-amber-500 text-white px-4 py-2 text-center text-sm z-60">
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <span>⚠️ Pour utiliser la caméra, accédez via HTTPS</span>
+            <button @click="dismissed = true; localStorage.setItem('https_warning_dismissed', 'true')" 
+                    class="text-white hover:text-amber-200">✕</button>
+        </div>
+    </div>
+    
     <!-- Fixed Top Bar -->
-    <nav class="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
+    <nav class="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50" 
+         :class="{ 'mt-8': /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && location.protocol !== 'https:' && !localStorage.getItem('https_warning_dismissed') }">
         <div class="px-4 py-3">
             <div class="flex items-center justify-between">
                 <!-- Logo & Status -->
@@ -59,18 +146,24 @@
                             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" x-show="isOnline"></div>
                             <div class="w-2 h-2 bg-red-500 rounded-full" x-show="!isOnline"></div>
                             <span x-text="isOnline ? 'En ligne' : 'Hors ligne'" class="text-gray-600"></span>
+                            <span x-show="!isHttps && isMobile" class="text-amber-600 text-xs">📷❌</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right Actions -->
                 <div class="flex items-center space-x-2">
-                    <!-- Quick Scan Button -->
+                    <!-- Quick Scan Button avec indicateur HTTPS -->
                     <button @click="$dispatch('open-scanner')" 
-                            class="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors">
+                            class="relative p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
                         </svg>
+                        <!-- Indicateur caméra non disponible -->
+                        <div x-show="!isHttps && isMobile" 
+                             class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full text-white text-xs flex items-center justify-center">
+                            !
+                        </div>
                     </button>
 
                     <!-- Wallet Balance -->
@@ -97,6 +190,12 @@
                                         <p class="font-semibold text-gray-900">{{ auth()->user()->name }}</p>
                                         <p class="text-sm text-gray-600">Livreur</p>
                                         <p class="text-xs text-emerald-600" x-text="'Solde: ' + formatAmount(walletBalance)"></p>
+                                        <!-- Info environnement -->
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <span x-show="isMobile" class="text-xs bg-blue-100 text-blue-600 px-1 rounded">📱</span>
+                                            <span x-show="isHttps" class="text-xs bg-green-100 text-green-600 px-1 rounded">🔒</span>
+                                            <span x-show="!isHttps" class="text-xs bg-amber-100 text-amber-600 px-1 rounded">⚠️</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -156,13 +255,18 @@
                      x-show="stats.available_pickups > 0" x-text="stats.available_pickups"></div>
             </a>
 
-            <!-- Scanner QR (Centre) -->
+            <!-- Scanner QR (Centre) avec indicateur -->
             <button @click="$dispatch('open-scanner')" 
                     class="nav-tab flex flex-col items-center justify-center space-y-1 text-gray-500 hover:text-emerald-600 relative">
-                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full flex items-center justify-center">
+                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full flex items-center justify-center relative">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
                     </svg>
+                    <!-- Indicateur caméra limitée -->
+                    <div x-show="!isHttps && isMobile" 
+                         class="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full text-xs flex items-center justify-center">
+                        !
+                    </div>
                 </div>
                 <span class="text-xs font-medium">Scanner</span>
             </button>
@@ -238,12 +342,32 @@
                     </a>
 
                     <button @click="$dispatch('open-scanner')" 
-                            class="flex flex-col items-center p-4 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors">
+                            class="relative flex flex-col items-center p-4 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors">
                         <svg class="w-8 h-8 text-emerald-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
                         </svg>
                         <span class="text-sm font-medium text-emerald-700">Scanner QR</span>
+                        <!-- Note capacités -->
+                        <div class="text-xs text-emerald-600 mt-1 text-center">
+                            <div x-show="isHttps">📱 QR + 📊 Codes-barres</div>
+                            <div x-show="!isHttps && isMobile">Mode manuel uniquement</div>
+                        </div>
                     </button>
+                </div>
+
+                <!-- Info HTTPS pour mobile -->
+                <div x-show="!isHttps && isMobile" class="mt-4 p-3 bg-amber-50 rounded-xl">
+                    <div class="flex items-start space-x-2">
+                        <svg class="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800">Mode Caméra Limité</p>
+                            <p class="text-xs text-amber-700 mt-1">
+                                Sur mobile, la caméra nécessite HTTPS. Utilisez le mode manuel ou demandez à votre administrateur d'activer HTTPS.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -278,6 +402,8 @@
             return {
                 showMore: false,
                 isOnline: navigator.onLine,
+                isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                isHttps: location.protocol === 'https:',
                 walletBalance: 0.000,
                 stats: {
                     available_pickups: 0,
@@ -288,23 +414,37 @@
                 },
 
                 init() {
+                    console.log('DelivererApp Init - Mobile:', this.isMobile, 'HTTPS:', this.isHttps);
+                    
                     this.loadStats();
                     this.loadWallet();
                     
+                    // Écouter changements de connexion
                     window.addEventListener('online', () => {
                         this.isOnline = true;
+                        console.log('Connexion rétablie');
                     });
                     
                     window.addEventListener('offline', () => {
                         this.isOnline = false;
+                        console.log('Connexion perdue');
                     });
 
+                    // Actualisation périodique si en ligne
                     setInterval(() => {
                         if (this.isOnline) {
                             this.loadStats();
                             this.loadWallet();
                         }
                     }, 30000);
+
+                    // Alerter pour HTTPS mobile au premier lancement
+                    if (this.isMobile && !this.isHttps && !localStorage.getItem('https_warning_shown')) {
+                        setTimeout(() => {
+                            console.warn('Mobile sans HTTPS détecté - fonctionnalités caméra limitées');
+                            localStorage.setItem('https_warning_shown', 'true');
+                        }, 2000);
+                    }
                 },
 
                 async loadStats() {

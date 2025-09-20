@@ -201,35 +201,37 @@ class DelivererPackageController
     }
 
     /**
-     * Scanner QR/Code et traiter selon le contexte - VERSION AMÉLIORÉE
+     * Scanner QR/Code et traiter selon le contexte - VERSION ULTRA OPTIMISÉE
      */
     public function scanPackage(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:100'
+            'code' => 'required|string|max:255'
         ]);
 
         $code = trim($validated['code']);
         
         try {
-            // Rechercher le package par code avec différents formats
+            // Rechercher le package par code avec tous les formats possibles
             $package = $this->findPackageByCode($code);
             
             if (!$package) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Aucun colis trouvé avec le code: {$code}",
+                    'message' => "❌ Aucun colis trouvé avec le code: {$code}",
                     'code_scanned' => $code,
-                    'suggestions' => $this->getCodeSuggestions($code)
+                    'suggestions' => $this->getCodeSuggestions($code),
+                    'detected_format' => $this->detectCodeFormat($code)
                 ], 404);
             }
 
-            // Log du scan
+            // Log du scan avec format détecté
             $this->logAction('PACKAGE_SCANNED', 'Package', $package->id, 
                            null, $code, [
                 'deliverer_id' => Auth::id(),
                 'package_status' => $package->status,
                 'scan_context' => $this->determineScanContext($package),
+                'detected_format' => $this->detectCodeFormat($code),
                 'user_agent' => $request->userAgent()
             ]);
 
@@ -252,51 +254,6 @@ class DelivererPackageController
                 'code_scanned' => $code
             ], 500);
         }
-    }
-
-    /**
-     * Rechercher un package par différents formats de codes
-     */
-    private function findPackageByCode($code)
-    {
-        $code = strtoupper(trim($code));
-        
-        // 1. Recherche exacte
-        $package = Package::where('package_code', $code)->first();
-        if ($package) return $package;
-        
-        // 2. Recherche avec préfixe PKG_
-        if (!str_starts_with($code, 'PKG_')) {
-            $package = Package::where('package_code', 'PKG_' . $code)->first();
-            if ($package) return $package;
-        }
-        
-        // 3. Recherche sans préfixe
-        if (str_starts_with($code, 'PKG_')) {
-            $codeWithoutPrefix = substr($code, 4);
-            $package = Package::where('package_code', 'LIKE', '%' . $codeWithoutPrefix . '%')->first();
-            if ($package) return $package;
-        }
-        
-        // 4. Recherche partielle (last resort)
-        $package = Package::where('package_code', 'LIKE', '%' . $code . '%')
-                          ->orderBy('created_at', 'desc')
-                          ->first();
-        
-        return $package;
-    }
-
-    /**
-     * Suggestions de codes similaires
-     */
-    private function getCodeSuggestions($code)
-    {
-        $suggestions = Package::where('package_code', 'LIKE', '%' . substr($code, -6) . '%')
-                              ->limit(3)
-                              ->pluck('package_code')
-                              ->toArray();
-        
-        return $suggestions;
     }
 
     /**
@@ -822,74 +779,285 @@ class DelivererPackageController
         }
     }
 
-    // ==================== MÉTHODES PRIVÉES UTILITAIRES AMÉLIORÉES ====================
+    // ==================== MÉTHODES PRIVÉES UTILITAIRES ====================
 
     /**
-     * Déterminer l'action contextuelle pour un scan - VERSION AMÉLIORÉE
+     * Rechercher un package par TOUS les formats de codes possibles
+     */
+    private function findPackageByCode($code)
+    {
+        $code = trim($code);
+        
+        // 1. Extraire le package_code depuis URL de tracking (QR code)
+        if (preg_match('/\/track\/(.+)$/', $code, $matches)) {
+            $extractedCode = $matches[1];
+            $package = Package::where('package_code', $extractedCode)->first();
+            if ($package) {
+                Log::info("Code trouvé via URL tracking: {$extractedCode}");
+                return $package;
+            }
+        }
+        
+        // 2. Nettoyer et normaliser le code
+        $cleanCode = strtoupper(trim($code));
+        
+        // 3. Recherche exacte par package_code
+        $package = Package::where('package_code', $cleanCode)->first();
+        if ($package) {
+            Log::info("Code trouvé par recherche exacte: {$cleanCode}");
+            return $package;
+        }
+        
+        // 4. Recherche avec préfixe PKG_ ajouté
+        if (!str_starts_with($cleanCode, 'PKG_')) {
+            $withPrefix = 'PKG_' . $cleanCode;
+            $package = Package::where('package_code', $withPrefix)->first();
+            if ($package) {
+                Log::info("Code trouvé avec préfixe ajouté: {$withPrefix}");
+                return $package;
+            }
+        }
+        
+        // 5. Recherche sans préfixe PKG_
+        if (str_starts_with($cleanCode, 'PKG_')) {
+            $withoutPrefix = substr($cleanCode, 4);
+            $package = Package::where('package_code', 'LIKE', '%' . $withoutPrefix . '%')->first();
+            if ($package) {
+                Log::info("Code trouvé sans préfixe: {$withoutPrefix}");
+                return $package;
+            }
+        }
+        
+        // 6. Recherche partielle intelligente (derniers 8-12 caractères)
+        if (strlen($cleanCode) >= 8) {
+            $partialCode = substr($cleanCode, -min(12, strlen($cleanCode)));
+            $package = Package::where('package_code', 'LIKE', '%' . $partialCode)
+                              ->orderBy('created_at', 'desc')
+                              ->first();
+            if ($package) {
+                Log::info("Code trouvé par recherche partielle: {$partialCode}");
+                return $package;
+            }
+        }
+        
+        // 7. Recherche approximative si code ressemble à un format valide
+        if ($this->looksLikeValidCode($cleanCode)) {
+            $package = Package::where('package_code', 'LIKE', '%' . substr($cleanCode, 0, 8) . '%')
+                              ->orderBy('created_at', 'desc')
+                              ->first();
+            if ($package) {
+                Log::info("Code trouvé par recherche approximative");
+                return $package;
+            }
+        }
+        
+        Log::warning("Aucun package trouvé pour le code: {$code}");
+        return null;
+    }
+
+    /**
+     * Détecter le format du code scanné
+     */
+    private function detectCodeFormat($code)
+    {
+        // URL de tracking (QR code)
+        if (preg_match('/^https?:\/\/.*\/track\//', $code)) {
+            return 'QR_TRACKING_URL';
+        }
+        
+        // Package code complet
+        if (preg_match('/^PKG_[A-Z0-9]{8,}_\d{8}$/', $code)) {
+            return 'FULL_PACKAGE_CODE';
+        }
+        
+        // Code court (code-barres)
+        if (preg_match('/^[A-Z0-9]{8,16}$/', $code)) {
+            return 'SHORT_BARCODE';
+        }
+        
+        // Code numérique pur
+        if (preg_match('/^\d{8,}$/', $code)) {
+            return 'NUMERIC_CODE';
+        }
+        
+        // Autre format
+        return 'UNKNOWN_FORMAT';
+    }
+
+    /**
+     * Vérifier si un code ressemble à un format valide
+     */
+    private function looksLikeValidCode($code)
+    {
+        // Au moins 8 caractères alphanumériques
+        if (strlen($code) < 8) return false;
+        
+        // Contient seulement des lettres, chiffres et underscores
+        if (!preg_match('/^[A-Z0-9_]+$/', $code)) return false;
+        
+        // Format probable de package code
+        if (preg_match('/^PKG_|^[A-Z0-9]{8}|_\d{8}$/', $code)) return true;
+        
+        return false;
+    }
+
+    /**
+     * Suggestions de codes similaires améliorées
+     */
+    private function getCodeSuggestions($code)
+    {
+        $suggestions = [];
+        $cleanCode = strtoupper(trim($code));
+        
+        // Recherche par partie de code (derniers 6-8 caractères)
+        if (strlen($cleanCode) >= 6) {
+            $partial = substr($cleanCode, -8);
+            $similar = Package::where('package_code', 'LIKE', '%' . $partial . '%')
+                             ->limit(3)
+                             ->pluck('package_code')
+                             ->toArray();
+            $suggestions = array_merge($suggestions, $similar);
+        }
+        
+        // Recherche par date récente si format contient une date
+        if (preg_match('/(\d{8})/', $cleanCode, $matches)) {
+            $dateStr = $matches[1];
+            $recent = Package::where('package_code', 'LIKE', '%' . $dateStr . '%')
+                            ->orderBy('created_at', 'desc')
+                            ->limit(2)
+                            ->pluck('package_code')
+                            ->toArray();
+            $suggestions = array_merge($suggestions, $recent);
+        }
+        
+        return array_unique(array_slice($suggestions, 0, 5));
+    }
+
+    /**
+     * Déterminer l'action contextuelle pour un scan - VERSION ULTRA OPTIMISÉE
      */
     private function determineScanAction(Package $package)
     {
         $delivererId = Auth::id();
+        $statusMessages = $this->getStatusMessages();
         
         // Cas 1: Colis disponible (non assigné)
         if ($package->status === 'AVAILABLE') {
             return [
                 'success' => true,
-                'message' => "Colis #{$package->package_code} disponible pour acceptation",
+                'message' => "✅ Colis #{$package->package_code} disponible pour acceptation",
                 'action' => 'accept',
                 'redirect' => route('deliverer.packages.show', $package),
                 'package' => $this->formatPackageForScan($package),
-                'can_accept' => true
+                'can_accept' => true,
+                'instructions' => "Appuyez sur 'Accepter' pour prendre en charge ce colis"
             ];
         }
 
         // Cas 2: Colis assigné à ce livreur
         if ($package->assigned_deliverer_id === $delivererId) {
             switch ($package->status) {
+                case 'CREATED':
+                    return [
+                        'success' => true,
+                        'message' => "⏳ Colis #{$package->package_code} en attente de traitement",
+                        'action' => 'view',
+                        'redirect' => route('deliverer.packages.show', $package),
+                        'package' => $this->formatPackageForScan($package),
+                        'instructions' => "Ce colis est en cours de traitement"
+                    ];
+                    
                 case 'ACCEPTED':
                     return [
                         'success' => true,
-                        'message' => "Colis #{$package->package_code} prêt pour collecte",
+                        'message' => "📦 Colis #{$package->package_code} prêt pour collecte",
                         'action' => 'pickup',
                         'redirect' => route('deliverer.packages.show', $package),
-                        'package' => $this->formatPackageForScan($package)
+                        'package' => $this->formatPackageForScan($package),
+                        'instructions' => "Rendez-vous chez l'expéditeur pour collecter ce colis",
+                        'pickup_info' => $this->getPickupInfo($package)
                     ];
                     
                 case 'PICKED_UP':
-                case 'UNAVAILABLE':
-                    $urgentBadge = $package->delivery_attempts >= 3 ? ' ⚠️ URGENT' : '';
+                    $urgentBadge = $package->delivery_attempts >= 3 ? ' 🚨 URGENT' : '';
                     return [
                         'success' => true,
-                        'message' => "Colis #{$package->package_code} prêt pour livraison{$urgentBadge}",
+                        'message' => "🚚 Colis #{$package->package_code} prêt pour livraison{$urgentBadge}",
                         'action' => 'deliver',
                         'redirect' => route('deliverer.packages.show', $package),
                         'package' => $this->formatPackageForScan($package),
-                        'cod_warning' => 'COD EXACT requis: ' . number_format($package->cod_amount, 3) . ' DT',
-                        'is_urgent' => $package->delivery_attempts >= 3
+                        'cod_warning' => '💰 COD EXACT requis: ' . number_format($package->cod_amount, 3) . ' DT',
+                        'is_urgent' => $package->delivery_attempts >= 3,
+                        'instructions' => $package->delivery_attempts >= 3 ? 
+                            "⚠️ 3ème tentative - Livraison prioritaire!" : 
+                            "Livrer chez le destinataire et encaisser le COD",
+                        'delivery_info' => $this->getDeliveryInfo($package)
+                    ];
+                    
+                case 'UNAVAILABLE':
+                    $attemptInfo = "Tentative #{$package->delivery_attempts}/3";
+                    return [
+                        'success' => true,
+                        'message' => "🔄 Colis #{$package->package_code} - Nouvelle tentative ({$attemptInfo})",
+                        'action' => 'deliver',
+                        'redirect' => route('deliverer.packages.show', $package),
+                        'package' => $this->formatPackageForScan($package),
+                        'is_urgent' => $package->delivery_attempts >= 3,
+                        'cod_warning' => '💰 COD EXACT requis: ' . number_format($package->cod_amount, 3) . ' DT',
+                        'instructions' => $package->delivery_attempts >= 2 ? 
+                            "⚠️ Dernière tentative avant retour!" : 
+                            "Nouvelle tentative de livraison",
+                        'previous_attempt' => $this->getPreviousAttemptInfo($package)
                     ];
                     
                 case 'DELIVERED':
                     return [
                         'success' => true,
-                        'message' => "Colis #{$package->package_code} déjà livré le " . $package->delivered_at->format('d/m/Y'),
+                        'message' => "✅ Colis #{$package->package_code} déjà livré le " . $package->delivered_at?->format('d/m/Y à H:i'),
                         'action' => 'view',
                         'redirect' => route('deliverer.packages.show', $package),
-                        'package' => $this->formatPackageForScan($package)
+                        'package' => $this->formatPackageForScan($package),
+                        'delivery_details' => [
+                            'delivered_at' => $package->delivered_at?->format('d/m/Y H:i'),
+                            'cod_amount' => number_format($package->cod_amount, 3) . ' DT'
+                        ]
                     ];
                     
                 case 'VERIFIED':
                     return [
                         'success' => true,
-                        'message' => "Colis #{$package->package_code} à retourner à l'expéditeur",
+                        'message' => "↩️ Colis #{$package->package_code} à retourner à l'expéditeur",
                         'action' => 'return',
                         'redirect' => route('deliverer.packages.show', $package),
-                        'package' => $this->formatPackageForScan($package)
+                        'package' => $this->formatPackageForScan($package),
+                        'instructions' => "Retourner ce colis chez l'expéditeur après 3 tentatives échouées",
+                        'return_info' => $this->getReturnInfo($package)
                     ];
                     
                 case 'RETURNED':
                     return [
                         'success' => true,
-                        'message' => "Colis #{$package->package_code} déjà retourné le " . $package->returned_at->format('d/m/Y'),
+                        'message' => "↩️ Colis #{$package->package_code} déjà retourné le " . $package->returned_at?->format('d/m/Y à H:i'),
+                        'action' => 'view',
+                        'package' => $this->formatPackageForScan($package),
+                        'return_details' => [
+                            'returned_at' => $package->returned_at?->format('d/m/Y H:i'),
+                            'return_reason' => $package->return_reason
+                        ]
+                    ];
+                    
+                case 'PAID':
+                    return [
+                        'success' => true,
+                        'message' => "💰 Colis #{$package->package_code} livré et payé",
+                        'action' => 'view',
+                        'package' => $this->formatPackageForScan($package)
+                    ];
+                    
+                case 'CANCELLED':
+                    return [
+                        'success' => false,
+                        'message' => "❌ Colis #{$package->package_code} annulé",
                         'action' => 'view',
                         'package' => $this->formatPackageForScan($package)
                     ];
@@ -902,17 +1070,19 @@ class DelivererPackageController
             
             return [
                 'success' => false,
-                'message' => "Colis #{$package->package_code} assigné à {$otherDeliverer->name}",
-                'assigned_to' => $otherDeliverer->name,
-                'package' => $this->formatPackageForScan($package)
+                'message' => "🔒 Colis #{$package->package_code} assigné à un autre livreur",
+                'assigned_to' => $otherDeliverer->name ?? 'Livreur inconnu',
+                'package' => $this->formatPackageForScan($package),
+                'instructions' => "Ce colis ne vous est pas assigné"
             ];
         }
 
         // Cas 4: Statut non géré
         return [
             'success' => false,
-            'message' => "Colis #{$package->package_code} - Statut: {$package->status}",
-            'package' => $this->formatPackageForScan($package)
+            'message' => "❓ Colis #{$package->package_code} - Statut: {$package->status}",
+            'package' => $this->formatPackageForScan($package),
+            'instructions' => "Statut non reconnu, contactez votre superviseur"
         ];
     }
 
@@ -1002,7 +1172,91 @@ class DelivererPackageController
     }
 
     /**
-     * Formater les données package pour le scan
+     * Obtenir les informations de collecte
+     */
+    private function getPickupInfo(Package $package)
+    {
+        $senderData = $package->supplier_data ?? $package->sender_data;
+        
+        return [
+            'name' => $senderData['name'] ?? 'N/A',
+            'phone' => $senderData['phone'] ?? 'N/A',
+            'address' => $package->pickup_address ?? ($senderData['address'] ?? 'N/A'),
+            'delegation' => $package->delegationFrom->name ?? 'N/A',
+            'notes' => $package->pickup_notes
+        ];
+    }
+
+    /**
+     * Obtenir les informations de livraison
+     */
+    private function getDeliveryInfo(Package $package)
+    {
+        return [
+            'name' => $package->recipient_data['name'] ?? 'N/A',
+            'phone' => $package->recipient_data['phone'] ?? 'N/A',
+            'address' => $package->recipient_data['address'] ?? 'N/A',
+            'delegation' => $package->delegationTo->name ?? 'N/A',
+            'cod_amount' => number_format($package->cod_amount, 3) . ' DT',
+            'attempts' => $package->delivery_attempts,
+            'is_fragile' => $package->is_fragile,
+            'requires_signature' => $package->requires_signature,
+            'special_instructions' => $package->special_instructions
+        ];
+    }
+
+    /**
+     * Obtenir les informations de retour
+     */
+    private function getReturnInfo(Package $package)
+    {
+        $senderData = $package->supplier_data ?? $package->sender_data;
+        
+        return [
+            'name' => $senderData['name'] ?? 'N/A',
+            'phone' => $senderData['phone'] ?? 'N/A',
+            'address' => $package->pickup_address ?? ($senderData['address'] ?? 'N/A'),
+            'delegation' => $package->delegationFrom->name ?? 'N/A',
+            'attempts_made' => $package->delivery_attempts,
+            'unavailable_reason' => $package->unavailable_reason
+        ];
+    }
+
+    /**
+     * Obtenir les informations de la tentative précédente
+     */
+    private function getPreviousAttemptInfo(Package $package)
+    {
+        return [
+            'attempt_number' => $package->delivery_attempts,
+            'reason' => $package->unavailable_reason,
+            'notes' => $package->unavailable_notes,
+            'last_attempt' => $package->updated_at?->format('d/m/Y H:i')
+        ];
+    }
+
+    /**
+     * Messages de statut standardisés
+     */
+    private function getStatusMessages()
+    {
+        return [
+            'CREATED' => '⏳ En attente',
+            'AVAILABLE' => '📦 Disponible',
+            'ACCEPTED' => '✅ Accepté',
+            'PICKED_UP' => '🚚 Collecté',
+            'DELIVERED' => '✅ Livré',
+            'PAID' => '💰 Payé',
+            'REFUSED' => '❌ Refusé',
+            'RETURNED' => '↩️ Retourné',
+            'UNAVAILABLE' => '🔄 Indisponible',
+            'VERIFIED' => '✔️ Vérifié',
+            'CANCELLED' => '❌ Annulé'
+        ];
+    }
+
+    /**
+     * Formater les données package pour le scan avec infos complètes
      */
     private function formatPackageForScan(Package $package)
     {
@@ -1010,17 +1264,45 @@ class DelivererPackageController
             'id' => $package->id,
             'code' => $package->package_code,
             'status' => $package->status,
+            'status_label' => $this->getStatusMessages()[$package->status] ?? $package->status,
             'cod_amount' => $package->cod_amount,
+            'formatted_cod' => number_format($package->cod_amount, 3) . ' DT',
+            
+            // Informations expéditeur/fournisseur
+            'sender_name' => $package->sender->name ?? ($package->sender_data['name'] ?? 'N/A'),
+            'supplier_name' => $package->supplier_data['name'] ?? null,
+            
+            // Informations destinataire
             'recipient_name' => $package->recipient_data['name'] ?? 'N/A',
             'recipient_phone' => $package->recipient_data['phone'] ?? 'N/A',
             'recipient_address' => $package->recipient_data['address'] ?? 'N/A',
-            'sender_name' => $package->sender->name ?? $package->sender_data['name'] ?? 'N/A',
+            
+            // Délégations
             'delegation_from' => $package->delegationFrom->name ?? 'N/A',
             'delegation_to' => $package->delegationTo->name ?? 'N/A',
+            
+            // Détails du colis
+            'content_description' => $package->content_description,
+            'package_weight' => $package->package_weight,
+            'package_value' => $package->package_value,
+            'is_fragile' => $package->is_fragile,
+            'requires_signature' => $package->requires_signature,
+            'special_instructions' => $package->special_instructions,
+            
+            // Statut livraison
             'delivery_attempts' => $package->delivery_attempts ?? 0,
+            'is_urgent' => $package->delivery_attempts >= 3,
+            'unavailable_reason' => $package->unavailable_reason,
+            
+            // Dates
             'created_at' => $package->created_at->toISOString(),
-            'assigned_at' => $package->assigned_at ? $package->assigned_at->toISOString() : null,
-            'is_urgent' => $package->delivery_attempts >= 3
+            'assigned_at' => $package->assigned_at?->toISOString(),
+            'delivered_at' => $package->delivered_at?->toISOString(),
+            'returned_at' => $package->returned_at?->toISOString(),
+            
+            // URLs de tracking
+            'tracking_url' => url('/track/' . $package->package_code),
+            'public_tracking_url' => route('public.track.package', $package->package_code)
         ];
     }
 
