@@ -387,92 +387,180 @@ class DelivererPackageController
     }
 
     /**
-     * Marquer client non disponible - VERSION AMÉLIORÉE
+     * Marquer client non disponible - VERSION COMPLÈTE ET AMÉLIORÉE
      */
     public function markUnavailable(Package $package, Request $request)
     {
-        if (!$this->canPerformAction($package, 'attempt')) {
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        if (!$package->canBeScanBy(Auth::user()) || $package->getActionFor(Auth::user()) !== 'deliver') {
             return response()->json([
                 'success' => false,
-                'message' => 'Action non autorisée.'
+                'message' => 'Action non autorisée pour ce colis.'
             ], 403);
         }
 
+        // Validation des données
         $validated = $request->validate([
             'reason' => 'required|string|in:CLIENT_ABSENT,ADDRESS_NOT_FOUND,CLIENT_REFUSES,PHONE_OFF,OTHER',
-            'attempt_notes' => 'required|string|max:500',
-            'next_attempt_date' => 'nullable|date|after:now',
+            'attempt_notes' => 'required|string|min:10|max:500',
+            'next_attempt_date' => 'nullable|date|after:+1 hour|before:+7 days',
             'attempt_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120'
         ]);
 
         try {
             return DB::transaction(function () use ($package, $validated, $request) {
-                // Incrémenter compteur tentatives (max 1 par jour)
+                // Verrouillage pessimiste pour éviter les conditions de course
+                $package = Package::where('id', $package->id)
+                                 ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                                 ->where('assigned_deliverer_id', Auth::id())
+                                 ->lockForUpdate()
+                                 ->first();
+
+                if (!$package) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Colis introuvable ou déjà traité.'
+                    ], 404);
+                }
+
+                // Vérification limite tentatives par jour (max 1 tentative par jour)
                 $today = Carbon::now()->format('Y-m-d');
-                $lastAttemptDate = $package->updated_at->format('Y-m-d');
+                $lastAttemptDate = $package->updated_at ? $package->updated_at->format('Y-m-d') : null;
                 
-                if ($lastAttemptDate !== $today) {
+                $canIncrementAttempts = ($lastAttemptDate !== $today);
+                
+                // Incrémenter le compteur de tentatives si c'est un nouveau jour
+                if ($canIncrementAttempts) {
                     $package->increment('delivery_attempts');
                 }
 
+                // Récupérer le nouveau compteur
                 $attemptCount = $package->fresh()->delivery_attempts;
-                
+
+                // Préparer les données de mise à jour
                 $updateData = [
                     'unavailable_reason' => $validated['reason'],
                     'unavailable_notes' => $validated['attempt_notes'],
-                    'next_attempt_planned' => $validated['next_attempt_date'] ?? null
+                    'next_attempt_planned' => $validated['next_attempt_date'] ?? null,
+                    'last_attempt_date' => now()
                 ];
 
-                // Photo de tentative si fournie
+                // Gérer l'upload de photo de tentative
                 if ($request->hasFile('attempt_photo')) {
-                    $path = $request->file('attempt_photo')->store('attempts/' . $package->id, 'public');
-                    $updateData['attempt_photo'] = $path;
+                    try {
+                        $photo = $request->file('attempt_photo');
+                        $filename = 'attempt_' . $package->id . '_' . $attemptCount . '_' . time() . '.' . $photo->getClientOriginalExtension();
+                        $path = $photo->storeAs('attempts/' . $package->id, $filename, 'public');
+                        $updateData['attempt_photo'] = $path;
+                    } catch (\Exception $e) {
+                        Log::warning('Erreur upload photo tentative', [
+                            'package_id' => $package->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Continue sans la photo si upload échoue
+                    }
                 }
 
-                // Après 3 tentatives → VERIFIED (à retourner)
+                // Déterminer le nouveau statut selon le nombre de tentatives
                 if ($attemptCount >= 3) {
+                    // 3ème tentative = marquage pour retour
                     $updateData['status'] = 'VERIFIED';
-                    $updateData['verification_notes'] = "3 tentatives échouées - Prêt pour retour";
+                    $updateData['verification_notes'] = "3 tentatives de livraison échouées - Marqué pour retour à l'expéditeur";
+                    $updateData['verified_at'] = now();
                     
-                    $message = "3ème tentative échouée. Colis #{$package->package_code} marqué pour retour.";
-                    $this->updatePackageStatus($package, 'VERIFIED', $message);
+                    $statusMessage = "3ème tentative échouée - Motif: {$this->getReasonLabel($validated['reason'])}";
+                    $this->updatePackageStatus($package, 'VERIFIED', $statusMessage);
+                    
+                    $responseMessage = "3ème tentative enregistrée. Colis #{$package->package_code} marqué pour retour obligatoire.";
+                    
+                    // Notification pour le commercial
+                    $this->createNotificationForCommercial($package, 'PACKAGE_REQUIRES_RETURN', [
+                        'message' => "Le colis {$package->package_code} nécessite un retour après 3 tentatives",
+                        'package_id' => $package->id,
+                        'deliverer_name' => Auth::user()->name,
+                        'last_reason' => $this->getReasonLabel($validated['reason'])
+                    ]);
+                    
                 } else {
+                    // Tentative 1 ou 2 = statut UNAVAILABLE
                     $updateData['status'] = 'UNAVAILABLE';
                     
-                    $message = "Tentative #{$attemptCount} - {$this->getReasonLabel($validated['reason'])}";
-                    $this->updatePackageStatus($package, 'UNAVAILABLE', $message);
+                    $statusMessage = "Tentative #{$attemptCount} échouée - Motif: {$this->getReasonLabel($validated['reason'])}";
+                    $this->updatePackageStatus($package, 'UNAVAILABLE', $statusMessage);
+                    
+                    $responseMessage = "Tentative #{$attemptCount}/3 enregistrée. " . 
+                                     ($attemptCount == 2 ? "⚠️ Prochaine tentative sera la dernière!" : "Prochaine tentative possible.");
+                    
+                    // Programmer une notification de rappel si date fournie
+                    if ($validated['next_attempt_date']) {
+                        $this->scheduleAttemptReminder($package, $validated['next_attempt_date']);
+                    }
                 }
 
+                // Mettre à jour le colis
                 $package->update($updateData);
 
+                // Log détaillé de l'action
                 $this->logAction('DELIVERY_ATTEMPT_FAILED', 'Package', $package->id,
-                               null, null, [
+                               $package->getOriginal('status'), $updateData['status'], [
                     'attempt_count' => $attemptCount,
                     'reason' => $validated['reason'],
+                    'reason_label' => $this->getReasonLabel($validated['reason']),
                     'notes' => $validated['attempt_notes'],
                     'has_photo' => $request->hasFile('attempt_photo'),
-                    'next_attempt' => $validated['next_attempt_date'] ?? null
+                    'next_attempt' => $validated['next_attempt_date'] ?? null,
+                    'is_final_attempt' => $attemptCount >= 3,
+                    'deliverer_id' => Auth::id(),
+                    'package_code' => $package->package_code,
+                    'recipient_phone' => $package->recipient_data['phone'] ?? null,
+                    'delegation_to' => $package->delegationTo->name ?? null
+                ]);
+
+                // Mise à jour des métriques du livreur
+                $this->updateDelivererMetrics(Auth::id(), 'attempt_failed', [
+                    'attempt_count' => $attemptCount,
+                    'reason' => $validated['reason']
                 ]);
 
                 return response()->json([
                     'success' => true,
-                    'message' => $attemptCount >= 3 ? 
-                        "Colis marqué pour retour après 3 tentatives" : 
-                        "Tentative #{$attemptCount} enregistrée",
-                    'attempt_count' => $attemptCount,
-                    'status' => $package->fresh()->status,
-                    'is_final_attempt' => $attemptCount >= 3
+                    'message' => $responseMessage,
+                    'data' => [
+                        'attempt_count' => $attemptCount,
+                        'max_attempts' => 3,
+                        'status' => $package->fresh()->status,
+                        'status_message' => $package->status_message,
+                        'is_final_attempt' => $attemptCount >= 3,
+                        'next_action' => $attemptCount >= 3 ? 'return' : 'retry',
+                        'can_retry_today' => !$canIncrementAttempts,
+                        'next_attempt_date' => $validated['next_attempt_date'] ?? null,
+                        'reason_label' => $this->getReasonLabel($validated['reason'])
+                    ]
                 ]);
             });
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $e->errors()
+            ], 422);
+            
         } catch (\Exception $e) {
-            Log::error('Erreur tentative livraison', [
+            Log::error('Erreur critique lors tentative livraison', [
                 'package_id' => $package->id,
-                'error' => $e->getMessage()
+                'deliverer_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $validated ?? null
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'enregistrement de la tentative.'
+                'message' => 'Erreur technique lors de l\'enregistrement. Veuillez réessayer ou contacter le support.'
             ], 500);
         }
     }
@@ -748,6 +836,57 @@ class DelivererPackageController
                 'delegations' => []
             ]);
         }
+    }
+
+    /**
+     * Afficher les détails d'un colis
+     */
+    public function show(Package $package)
+    {
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            abort(403, 'Accès réservé aux livreurs.');
+        }
+
+        // Vérifier que le livreur peut voir ce colis
+        if ($package->status === 'AVAILABLE' || $package->assigned_deliverer_id === Auth::id()) {
+            // Le livreur peut voir les colis disponibles ou qui lui sont assignés
+        } else {
+            abort(403, 'Vous n\'avez pas accès à ce colis.');
+        }
+
+        // Charger toutes les relations nécessaires
+        $package->load([
+            'sender',
+            'delegationFrom', 
+            'delegationTo',
+            'assignedDeliverer',
+            'statusHistory' => function($query) {
+                $query->with('changedBy')->orderBy('created_at', 'desc')->limit(10);
+            },
+            'pickupDelegation'
+        ]);
+
+        // Déterminer les actions possibles
+        $availableActions = $this->getAvailableActions($package);
+        
+        // Récupérer l'historique des tentatives
+        $deliveryHistory = $this->getDeliveryHistory($package);
+        
+        // Calculer les statistiques
+        $stats = [
+            'is_urgent' => $package->delivery_attempts >= 3,
+            'days_since_created' => $package->created_at->diffInDays(now()),
+            'time_since_last_update' => $package->updated_at->diffForHumans(),
+            'can_be_modified' => $package->canBeModified(),
+            'estimated_delivery_time' => $this->estimateDeliveryTime($package)
+        ];
+
+        return view('deliverer.packages.show', compact(
+            'package', 
+            'availableActions', 
+            'deliveryHistory',
+            'stats'
+        ));
     }
 
     // ==================== MÉTHODES PRIVÉES UTILITAIRES ====================
@@ -1235,7 +1374,7 @@ class DelivererPackageController
             'id' => $package->id,
             'code' => $package->package_code,
             'status' => $package->status,
-            'status_label' => $this->getStatusMessages()[$package->status] ?? $package->status,
+            'status_label' => $package->status_message,
             'cod_amount' => $package->cod_amount,
             'formatted_cod' => number_format($package->cod_amount, 3) . ' DT',
             
@@ -1353,18 +1492,224 @@ class DelivererPackageController
     }
 
     /**
-     * Obtenir le label d'une raison d'indisponibilité
+     * Obtenir le label français d'une raison d'indisponibilité
      */
     private function getReasonLabel(string $reason): string
     {
         $labels = [
-            'CLIENT_ABSENT' => 'Client absent',
-            'ADDRESS_NOT_FOUND' => 'Adresse introuvable',
-            'CLIENT_REFUSES' => 'Client refuse',
-            'PHONE_OFF' => 'Téléphone éteint',
-            'OTHER' => 'Autre'
+            'CLIENT_ABSENT' => 'Client absent du domicile',
+            'ADDRESS_NOT_FOUND' => 'Adresse introuvable ou incorrecte',
+            'CLIENT_REFUSES' => 'Client refuse de recevoir le colis',
+            'PHONE_OFF' => 'Téléphone éteint ou injoignable',
+            'OTHER' => 'Autre motif'
         ];
 
         return $labels[$reason] ?? $reason;
+    }
+
+    /**
+     * Créer une notification pour le commercial
+     */
+    private function createNotificationForCommercial(Package $package, string $type, array $data)
+    {
+        try {
+            // Si le modèle Notification existe
+            if (class_exists(\App\Models\Notification::class)) {
+                // Trouver un commercial disponible (logique à adapter selon vos besoins)
+                $commercial = User::where('role', 'COMMERCIAL')
+                                 ->where('account_status', 'ACTIVE')
+                                 ->first();
+                
+                if ($commercial) {
+                    \App\Models\Notification::create([
+                        'user_id' => $commercial->id,
+                        'type' => $type,
+                        'title' => 'Colis nécessite attention',
+                        'message' => $data['message'],
+                        'data' => $data,
+                        'priority' => 'HIGH',
+                        'related_type' => 'Package',
+                        'related_id' => $package->id
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Erreur création notification commercial', [
+                'error' => $e->getMessage(),
+                'package_id' => $package->id
+            ]);
+        }
+    }
+
+    /**
+     * Programmer un rappel pour la prochaine tentative
+     */
+    private function scheduleAttemptReminder(Package $package, string $nextAttemptDate)
+    {
+        try {
+            // Si système de jobs/queues implémenté
+            if (class_exists(\App\Jobs\SendAttemptReminder::class)) {
+                $reminderTime = Carbon::parse($nextAttemptDate)->subHour(); // 1h avant
+                
+                \App\Jobs\SendAttemptReminder::dispatch($package, Auth::user())
+                    ->delay($reminderTime);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Erreur programmation rappel', [
+                'error' => $e->getMessage(),
+                'package_id' => $package->id,
+                'next_attempt' => $nextAttemptDate
+            ]);
+        }
+    }
+
+    /**
+     * Mettre à jour les métriques du livreur
+     */
+    private function updateDelivererMetrics(int $delivererId, string $action, array $data = [])
+    {
+        try {
+            // Si système de métriques implémenté
+            if (class_exists(\App\Models\DelivererMetrics::class)) {
+                \App\Models\DelivererMetrics::updateMetrics($delivererId, $action, $data);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Erreur mise à jour métriques', [
+                'error' => $e->getMessage(),
+                'deliverer_id' => $delivererId,
+                'action' => $action
+            ]);
+        }
+    }
+
+    /**
+     * Déterminer les actions disponibles pour ce package
+     */
+    private function getAvailableActions(Package $package)
+    {
+        $actions = [];
+        $delivererId = Auth::id();
+
+        switch ($package->status) {
+            case 'AVAILABLE':
+                $actions[] = [
+                    'key' => 'accept',
+                    'label' => 'Accepter ce pickup',
+                    'icon' => 'check-circle',
+                    'color' => 'emerald',
+                    'primary' => true
+                ];
+                break;
+
+            case 'ACCEPTED':
+                if ($package->assigned_deliverer_id === $delivererId) {
+                    $actions[] = [
+                        'key' => 'pickup',
+                        'label' => 'Marquer comme collecté',
+                        'icon' => 'truck',
+                        'color' => 'blue',
+                        'primary' => true
+                    ];
+                }
+                break;
+
+            case 'PICKED_UP':
+            case 'UNAVAILABLE':
+                if ($package->assigned_deliverer_id === $delivererId) {
+                    $actions[] = [
+                        'key' => 'deliver',
+                        'label' => 'Livrer le colis',
+                        'icon' => 'check',
+                        'color' => 'green',
+                        'primary' => true
+                    ];
+                    $actions[] = [
+                        'key' => 'unavailable',
+                        'label' => 'Marquer indisponible',
+                        'icon' => 'clock',
+                        'color' => 'orange',
+                        'primary' => false
+                    ];
+                }
+                break;
+
+            case 'VERIFIED':
+                if ($package->assigned_deliverer_id === $delivererId) {
+                    $actions[] = [
+                        'key' => 'return',
+                        'label' => 'Retourner à l\'expéditeur',
+                        'icon' => 'arrow-left',
+                        'color' => 'red',
+                        'primary' => true
+                    ];
+                }
+                break;
+        }
+
+        // Actions secondaires toujours disponibles
+        $actions[] = [
+            'key' => 'scan',
+            'label' => 'Scanner ce colis',
+            'icon' => 'qrcode',
+            'color' => 'purple',
+            'primary' => false
+        ];
+
+        if ($package->recipient_data && isset($package->recipient_data['address'])) {
+            $actions[] = [
+                'key' => 'navigate',
+                'label' => 'Navigation GPS',
+                'icon' => 'map',
+                'color' => 'indigo',
+                'primary' => false
+            ];
+        }
+
+        return $actions;
+    }
+
+    /**
+     * Récupérer l'historique des tentatives de livraison
+     */
+    private function getDeliveryHistory(Package $package)
+    {
+        if (!$package->statusHistory) {
+            return [];
+        }
+
+        return $package->statusHistory->map(function($history) {
+            return [
+                'status' => $history->new_status,
+                'date' => $history->created_at,
+                'user' => $history->changedBy->name ?? 'Système',
+                'notes' => $history->notes,
+                'formatted_date' => $history->created_at->format('d/m/Y H:i')
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Estimer le temps de livraison
+     */
+    private function estimateDeliveryTime(Package $package)
+    {
+        if ($package->status === 'DELIVERED') {
+            return 'Livré';
+        }
+
+        $baseTime = 24; // heures
+
+        // Ajuster selon les tentatives précédentes
+        if ($package->delivery_attempts > 0) {
+            $baseTime += ($package->delivery_attempts * 12);
+        }
+
+        // Ajuster selon la délégation
+        if ($package->delegationTo) {
+            // Logique personnalisée selon les zones
+            $baseTime += rand(0, 12);
+        }
+
+        return $baseTime . ' heures';
     }
 }

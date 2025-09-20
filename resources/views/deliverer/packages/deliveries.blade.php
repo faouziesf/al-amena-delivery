@@ -4,546 +4,611 @@
 
 @section('content')
 <div x-data="deliveriesApp()" x-init="init()">
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4">
+    
+    <!-- Header avec stats et actions -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4 sticky top-20 z-10">
         <div class="p-4">
+            <!-- En-tête principal -->
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">Mes Livraisons</h1>
-                    <p class="text-sm text-gray-600">
-                        <span x-text="packages.length"></span> colis à livrer 
-                        <span x-show="urgentCount > 0" class="text-red-600 font-medium">
-                            (dont <span x-text="urgentCount"></span> urgent(s))
-                        </span>
-                    </p>
+                    <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                        <svg class="w-6 h-6 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                        Livraisons
+                    </h1>
+                    <div class="flex items-center space-x-4 mt-1">
+                        <span class="text-sm text-gray-600" x-text="`${filteredPackages.length} livraison(s) à effectuer`"></span>
+                        <div class="flex items-center space-x-1" x-show="urgentCount > 0">
+                            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <span class="text-xs text-red-600" x-text="`${urgentCount} urgent(s) (3+ tentatives)`"></span>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Actions rapides -->
                 <div class="flex items-center space-x-2">
-                    <!-- Scanner -->
-                    <button @click="openScanner()" 
-                            class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <!-- Scanner QR -->
+                    <button @click="$dispatch('open-scanner')" 
+                            class="bg-gradient-to-r from-emerald-500 to-green-500 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
                         </svg>
                     </button>
                     
-                    <!-- Navigation -->
-                    <button @click="showMap = !showMap"
-                            class="bg-blue-500 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <!-- Actualiser -->
+                    <button @click="refreshData()" 
+                            :class="loading ? 'animate-spin' : ''"
+                            class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-200 transition-all">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Filtres mobile -->
+                    <button @click="showFilters = !showFilters" 
+                            class="bg-gray-100 text-gray-600 p-3 rounded-xl hover:bg-gray-200 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"/>
                         </svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Filtres et tri -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-x-auto">
-                    <button @click="filterBy = ''; applyFilters()" 
-                            :class="filterBy === '' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'"
-                            class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors">
-                        Tous
-                    </button>
-                    <button @click="filterBy = 'urgent'; applyFilters()" 
-                            :class="filterBy === 'urgent' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'"
-                            class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors">
-                        ⚠️ Urgents
-                    </button>
-                    <button @click="filterBy = 'high_cod'; applyFilters()" 
-                            :class="filterBy === 'high_cod' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
-                            class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors">
-                        💰 COD Élevé
-                    </button>
-                    <button @click="filterBy = 'nearby'; applyFilters()" 
-                            :class="filterBy === 'nearby' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
-                            class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors">
-                        📍 Proches
-                    </button>
-                </div>
+            <!-- Filtres rapides -->
+            <div x-show="!showFilters" class="flex items-center space-x-3 overflow-x-auto pb-2">
+                <button @click="activeFilter = ''; applyFilters()" 
+                        :class="activeFilter === '' ? 'bg-orange-100 text-orange-700 ring-2 ring-orange-300' : 'bg-gray-100 text-gray-600'"
+                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
+                    <span class="flex items-center">
+                        📦 Tous (<span x-text="packages.length"></span>)
+                    </span>
+                </button>
                 
-                <div class="text-sm text-gray-500">
-                    Total COD: <span class="font-bold text-orange-600" x-text="totalCod.toFixed(3) + ' DT'"></span>
+                <button @click="activeFilter = 'urgent'; applyFilters()" 
+                        :class="activeFilter === 'urgent' ? 'bg-red-100 text-red-700 ring-2 ring-red-300' : 'bg-gray-100 text-gray-600'"
+                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
+                    <span class="flex items-center">
+                        🚨 Urgents (<span x-text="urgentCount"></span>)
+                    </span>
+                </button>
+                
+                <button @click="activeFilter = 'high_cod'; applyFilters()" 
+                        :class="activeFilter === 'high_cod' ? 'bg-green-100 text-green-700 ring-2 ring-green-300' : 'bg-gray-100 text-gray-600'"
+                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
+                    <span class="flex items-center">
+                        💰 COD Élevé (<span x-text="highCodCount"></span>)
+                    </span>
+                </button>
+                
+                <button @click="activeFilter = 'same_delegation'; applyFilters()" 
+                        :class="activeFilter === 'same_delegation' ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-300' : 'bg-gray-100 text-gray-600'"
+                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
+                    📍 Même Zone
+                </button>
+                
+                <button @click="activeFilter = 'retry'; applyFilters()" 
+                        :class="activeFilter === 'retry' ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-300' : 'bg-gray-100 text-gray-600'"
+                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
+                    <span class="flex items-center">
+                        🔄 Nouvelles tentatives (<span x-text="retryCount"></span>)
+                    </span>
+                </button>
+            </div>
+
+            <!-- Statistiques rapides -->
+            <div class="mt-4 grid grid-cols-4 gap-2 text-xs">
+                <div class="text-center p-2 bg-orange-50 rounded-lg">
+                    <div class="font-bold text-orange-600" x-text="packages.length"></div>
+                    <div class="text-orange-500">Total</div>
+                </div>
+                <div class="text-center p-2 bg-red-50 rounded-lg">
+                    <div class="font-bold text-red-600" x-text="urgentCount"></div>
+                    <div class="text-red-500">Urgents</div>
+                </div>
+                <div class="text-center p-2 bg-green-50 rounded-lg">
+                    <div class="font-bold text-green-600" x-text="highCodCount"></div>
+                    <div class="text-green-500">COD +50</div>
+                </div>
+                <div class="text-center p-2 bg-blue-50 rounded-lg">
+                    <div class="font-bold text-blue-600" x-text="totalCod.toFixed(0)"></div>
+                    <div class="text-blue-500">COD Total</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Loading State -->
-    <div x-show="loading" class="text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-        <p class="mt-2 text-gray-600">Chargement...</p>
+    <div x-show="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+        <p class="mt-4 text-gray-600 font-medium">Chargement des livraisons...</p>
     </div>
 
-    <!-- Liste des livraisons -->
-    <div x-show="!loading" class="space-y-3 px-4">
+    <!-- Liste des colis -->
+    <div x-show="!loading" class="space-y-4 px-4 pb-6">
+        
+        <!-- Indicateur de tri -->
+        <div x-show="filteredPackages.length > 0" class="flex items-center justify-between text-sm text-gray-500 px-2">
+            <span>Triés par priorité (urgents en premier)</span>
+            <span x-text="`${filteredPackages.length} résultat(s)`"></span>
+        </div>
+        
         <template x-for="package in filteredPackages" :key="package.id">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all"
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200"
                  :class="getPackagePriorityClass(package)">
                 
-                <!-- Header avec priorité -->
+                <!-- Header avec statut et priorité -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-100"
                      :class="getHeaderBackgroundClass(package)">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Icône priorité -->
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                             :class="getIconBackgroundClass(package)">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                             </svg>
                         </div>
                         
                         <div>
                             <p class="font-bold text-gray-900" x-text="package.package_code"></p>
-                            <p class="text-xs text-gray-500">
-                                <span x-text="getPackageStatusText(package)"></span>
-                                <!-- Compteur de tentatives -->
-                                <span x-show="package.delivery_attempts > 0" 
-                                      class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                                    Tentative <span x-text="package.delivery_attempts + 1"></span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500" x-text="getStatusLabel(package.status)"></span>
+                                <!-- Badges priorité -->
+                                <span x-show="isUrgent(package)" 
+                                      class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
+                                    🚨 URGENT (3+ tentatives)
                                 </span>
-                            </p>
+                                <span x-show="isHighCod(package)" 
+                                      class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                                    💰 COD+
+                                </span>
+                                <span x-show="package.delivery_attempts > 0 && package.delivery_attempts < 3" 
+                                      class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
+                                    🔄 Tentative <span x-text="package.delivery_attempts + 1"></span>/3
+                                </span>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- COD et priorité -->
+                    <!-- COD Amount -->
                     <div class="text-right">
-                        <!-- Badge de priorité -->
-                        <div class="flex items-center space-x-2 mb-1">
-                            <span x-show="isUrgentPackage(package)" 
-                                  class="inline-block px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
-                                URGENT
-                            </span>
-                            <span x-show="is4thAttempt(package)" 
-                                  class="inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
-                                4ème TENTATIVE
-                            </span>
-                        </div>
-                        <!-- COD -->
-                        <p class="text-lg font-bold text-orange-600" x-text="formatAmount(package.cod_amount)"></p>
+                        <div class="text-2xl font-bold" :class="getCodColorClass(package.cod_amount)" 
+                             x-text="formatAmount(package.cod_amount)"></div>
+                        <span class="text-xs text-gray-500">COD à collecter</span>
                     </div>
                 </div>
 
-                <!-- Informations client -->
+                <!-- Détails du colis -->
                 <div class="p-4">
-                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border-l-4 border-green-400 mb-4">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="font-semibold text-green-800">🎯 Client à livrer</h4>
-                                    <span class="text-xs text-green-600" x-text="package.delegation_to?.name"></span>
+                    <!-- Informations destinataire -->
+                    <div class="mb-4">
+                        <div class="flex items-center mb-3">
+                            <div class="text-sm font-medium text-green-600">🎯 DESTINATAIRE</div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-3 rounded-xl border-l-4 border-green-400">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-900 text-sm" x-text="package.recipient_data?.name || 'N/A'"></p>
+                                    <p class="text-xs text-gray-600" x-text="package.recipient_data?.phone || 'N/A'"></p>
+                                    <p class="text-xs text-gray-700 mt-1" x-text="package.recipient_data?.address || 'N/A'"></p>
+                                    <p class="text-xs text-green-600 font-medium mt-1" x-text="package.delegation_to?.name || 'N/A'"></p>
+                                    
+                                    <!-- Historique tentatives -->
+                                    <div x-show="package.delivery_attempts > 0" class="mt-2 pt-2 border-t border-green-200">
+                                        <p class="text-xs font-medium text-green-700">📋 Historique:</p>
+                                        <p class="text-xs text-green-800">
+                                            <span x-text="package.delivery_attempts"></span> tentative(s) - 
+                                            <span x-show="package.unavailable_reason" x-text="getReasonLabel(package.unavailable_reason)"></span>
+                                        </p>
+                                        <p x-show="package.unavailable_notes" class="text-xs text-green-700 mt-1" x-text="package.unavailable_notes"></p>
+                                    </div>
                                 </div>
-                                <p class="font-bold text-gray-900 text-lg" x-text="package.recipient_data?.name"></p>
-                                <div class="flex items-center space-x-4 mt-2">
-                                    <a :href="'tel:' + (package.recipient_data?.phone || '')" 
-                                       class="flex items-center space-x-1 text-green-700 hover:text-green-800">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                        </svg>
-                                        <span x-text="package.recipient_data?.phone"></span>
-                                    </a>
-                                    <button @click="openMaps(package)" 
-                                            class="flex items-center space-x-1 text-blue-700 hover:text-blue-800">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                        </svg>
-                                        <span class="text-xs">Navigation</span>
-                                    </button>
+                                
+                                <!-- Distance estimation -->
+                                <div class="text-right ml-3">
+                                    <div class="text-xs text-gray-500">Distance</div>
+                                    <div class="text-sm font-medium text-blue-600">~3.2km</div>
                                 </div>
-                                <p class="text-sm text-gray-700 mt-2" x-text="package.recipient_data?.address"></p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Informations du colis -->
+                    <!-- Contenu et détails -->
                     <div class="bg-gray-50 p-3 rounded-xl mb-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">Contenu</span>
-                            <span class="text-xs text-gray-500">De: <span x-text="package.sender_data?.name || 'N/A'"></span></span>
-                        </div>
-                        <p class="text-sm text-gray-900" x-text="package.content_description"></p>
-                        
-                        <!-- Notes spéciales -->
-                        <div x-show="package.notes" class="mt-2 pt-2 border-t border-gray-200">
-                            <p class="text-xs text-gray-600">
-                                <span class="font-medium">📝 Notes:</span> 
-                                <span x-text="package.notes"></span>
-                            </p>
-                        </div>
-                        
-                        <!-- Instructions spéciales -->
-                        <div x-show="package.special_instructions" class="mt-2 pt-2 border-t border-gray-200">
-                            <p class="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-                                <span class="font-medium">⚠️ Instructions:</span> 
-                                <span x-text="package.special_instructions"></span>
-                            </p>
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-700">📋 Contenu</p>
+                                <p class="text-sm text-gray-900 mt-1" x-text="package.content_description || 'Non spécifié'"></p>
+                                
+                                <!-- Attributs spéciaux -->
+                                <div x-show="package.is_fragile || package.requires_signature" class="mt-2 pt-2 border-t border-gray-200">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span x-show="package.is_fragile" 
+                                              class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                                            🔴 Fragile
+                                        </span>
+                                        <span x-show="package.requires_signature" 
+                                              class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                                            ✏️ Signature
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Timing -->
+                            <div class="text-right ml-3">
+                                <div class="text-xs text-gray-500">Collecté</div>
+                                <div class="text-sm font-medium text-orange-600" x-text="formatTimeAgo(package.picked_up_at || package.updated_at)"></div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Actions principales -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- Livrer avec COD -->
-                        <button @click="startDelivery(package)" 
+                    <div class="flex items-center space-x-3">
+                        <!-- Livrer (Action principale) -->
+                        <button @click="deliverPackage(package)" 
                                 :disabled="processing === package.id"
-                                class="flex flex-col items-center justify-center p-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50">
-                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span x-show="processing !== package.id">Livrer</span>
-                            <span x-show="processing === package.id" class="flex items-center">
-                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                                Livraison...
+                                class="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white py-4 px-4 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="processing !== package.id" class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>LIVRER</span>
+                            </span>
+                            <span x-show="processing === package.id" class="flex items-center justify-center space-x-2">
+                                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Livraison...</span>
                             </span>
                         </button>
 
-                        <!-- Client non disponible -->
+                        <!-- Marquer indisponible -->
                         <button @click="markUnavailable(package)" 
                                 :disabled="processing === package.id"
-                                class="flex flex-col items-center justify-center p-4 bg-yellow-500 text-white rounded-xl font-semibold hover:bg-yellow-600 transition-all disabled:opacity-50">
-                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span>Non Dispo</span>
+                                class="bg-orange-500 text-white py-4 px-4 rounded-xl font-bold hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="processing !== package.id" class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>INDISPONIBLE</span>
+                            </span>
+                            <span x-show="processing === package.id" class="flex items-center justify-center space-x-2">
+                                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Traitement...</span>
+                            </span>
                         </button>
 
-                        <!-- Scanner ce colis -->
-                        <button @click="scanPackage(package.package_code)" 
-                                class="flex items-center justify-center p-3 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors">
-                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
-                            </svg>
-                            Scanner
-                        </button>
+                        <!-- Actions secondaires -->
+                        <div class="flex space-x-2">
+                            <!-- Scanner ce colis -->
+                            <button @click="scanSpecificPackage(package.package_code)" 
+                                    class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-200 transition-colors"
+                                    title="Scanner ce colis">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
+                                </svg>
+                            </button>
 
-                        <!-- Contact Commercial -->
-                        <button @click="contactCommercial(package)" 
-                                class="flex items-center justify-center p-3 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition-colors">
-                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                            Commercial
-                        </button>
+                            <!-- Voir détails -->
+                            <button @click="viewPackageDetails(package)" 
+                                    class="bg-gray-100 text-gray-600 p-3 rounded-xl hover:bg-gray-200 transition-colors"
+                                    title="Voir détails">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </button>
+
+                            <!-- Navigation GPS -->
+                            <button @click="openNavigation(package)" 
+                                    class="bg-green-100 text-green-600 p-3 rounded-xl hover:bg-green-200 transition-colors"
+                                    title="Navigation GPS">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </template>
 
-        <!-- Empty State -->
+        <!-- État vide -->
         <div x-show="filteredPackages.length === 0 && !loading" 
-             class="text-center py-12">
-            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+             class="text-center py-16">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                <span x-show="filterBy === ''">Aucune livraison en attente</span>
-                <span x-show="filterBy !== ''">Aucun résultat pour ce filtre</span>
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">
+                <span x-show="activeFilter === ''">Aucune livraison en attente</span>
+                <span x-show="activeFilter !== ''">Aucun résultat pour ce filtre</span>
             </h3>
-            <p class="text-gray-600 mb-6">
-                <span x-show="filterBy === ''">Toutes vos livraisons sont terminées !</span>
-                <span x-show="filterBy !== ''">Essayez un autre filtre ou réinitialisez la recherche.</span>
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                <span x-show="activeFilter === ''">Vous n'avez pas de colis à livrer pour le moment.</span>
+                <span x-show="activeFilter !== ''">Essayez d'ajuster vos filtres ou de rafraîchir la liste.</span>
             </p>
-            <button @click="filterBy = ''; applyFilters()" x-show="filterBy !== ''"
-                    class="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-colors">
-                Voir toutes les livraisons
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Livraison avec COD -->
-<div x-show="showDeliveryModal" x-transition 
-     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
-    <div x-show="showDeliveryModal" 
-         x-transition:enter="transform transition ease-out duration-300"
-         x-transition:enter-start="translate-y-full sm:scale-95 sm:translate-y-0"
-         x-transition:enter-end="translate-y-0 sm:scale-100"
-         x-transition:leave="transform transition ease-in duration-200"
-         x-transition:leave-start="translate-y-0 sm:scale-100"
-         x-transition:leave-end="translate-y-full sm:scale-95 sm:translate-y-0"
-         class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md max-h-96 overflow-y-auto">
-        
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-gray-900">Livraison avec COD</h3>
-            <button @click="showDeliveryModal = false" 
-                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-        <form @submit.prevent="confirmDelivery()">
-            <!-- Package info -->
-            <div class="bg-orange-50 p-4 rounded-xl mb-4">
-                <p class="font-bold text-orange-900" x-text="selectedPackage?.package_code"></p>
-                <p class="text-sm text-orange-700" x-text="selectedPackage?.recipient_data?.name"></p>
-                <p class="text-lg font-bold text-emerald-600 mt-2">
-                    COD à collecter: <span x-text="formatAmount(selectedPackage?.cod_amount)"></span>
-                </p>
-            </div>
-
-            <!-- COD EXACT requis -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Montant COD collecté (DT) <span class="text-red-500">*</span>
-                </label>
-                <input type="number" x-model="deliveryForm.cod_collected" step="0.001" min="0"
-                       :placeholder="selectedPackage?.cod_amount"
-                       class="w-full border border-gray-300 rounded-xl px-3 py-3 text-lg font-bold text-center focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                       required>
-                <div class="flex justify-center mt-2">
-                    <button type="button" @click="deliveryForm.cod_collected = selectedPackage?.cod_amount"
-                            class="text-sm bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-colors">
-                        Utiliser le montant exact: <span x-text="formatAmount(selectedPackage?.cod_amount)"></span>
+            
+            <div class="space-y-3">
+                <a href="{{ route('deliverer.pickups.mine') }}" 
+                   class="inline-block bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-colors">
+                    📦 Voir Mes Pickups
+                </a>
+                <div x-show="activeFilter !== ''">
+                    <button @click="clearFilters()" 
+                            class="text-orange-600 hover:text-orange-800 underline">
+                        Effacer les filtres
                     </button>
                 </div>
-                <p class="text-xs text-red-600 mt-1">⚠️ Le montant doit être EXACT. Contactez le commercial si problème.</p>
             </div>
+        </div>
+    </div>
 
-            <!-- Nom du récepteur -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Nom du récepteur <span class="text-red-500">*</span>
-                </label>
-                <input type="text" x-model="deliveryForm.recipient_name"
-                       :placeholder="selectedPackage?.recipient_data?.name"
-                       class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                       required>
-            </div>
-
-            <!-- Notes -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Notes de livraison (optionnel)</label>
-                <textarea x-model="deliveryForm.notes" rows="3" 
-                          placeholder="État du colis, conditions de livraison..."
-                          class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
-            </div>
-
-            <!-- Photo -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Photo de livraison (recommandé)</label>
-                <input type="file" @change="handleDeliveryPhoto" accept="image/*" capture="environment"
-                       class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500">
-                <p class="text-xs text-gray-500 mt-1">Preuve de livraison pour votre protection</p>
-            </div>
-
-            <!-- Warning COD -->
-            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-                <div class="flex items-start space-x-2">
-                    <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+    <!-- Modal Indisponible -->
+    <div x-show="showUnavailableModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
+        <div x-show="showUnavailableModal" 
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full sm:scale-95 sm:translate-y-0"
+             x-transition:enter-end="translate-y-0 sm:scale-100"
+             class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Client Indisponible</h3>
+                <button @click="showUnavailableModal = false" class="p-2 hover:bg-gray-100 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                    <div class="text-sm text-red-700">
-                        <p class="font-medium">Important :</p>
-                        <p>Vous devez collecter EXACTEMENT <span class="font-bold" x-text="formatAmount(selectedPackage?.cod_amount)"></span> en espèces.</p>
-                        <p>Si le client n'a pas le montant exact, contactez le commercial.</p>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitUnavailable()">
+                <!-- Current Attempt Info -->
+                <div class="mb-4 bg-orange-50 p-4 rounded-xl border border-orange-200" x-show="selectedPackage">
+                    <h4 class="font-semibold text-orange-800 mb-2">📊 Tentative # <span x-text="(selectedPackage?.delivery_attempts || 0) + 1"></span>/3</h4>
+                    <div x-show="(selectedPackage?.delivery_attempts || 0) >= 2">
+                        <p class="text-sm text-red-700 font-medium">⚠️ Dernière tentative avant retour obligatoire</p>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-sm text-orange-700">
+                            <strong>Colis:</strong> <span x-text="selectedPackage?.package_code"></span>
+                        </p>
+                        <p class="text-sm text-orange-700">
+                            <strong>COD:</strong> <span x-text="formatAmount(selectedPackage?.cod_amount)"></span>
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Actions -->
-            <div class="flex space-x-3">
-                <button type="submit" 
-                        :disabled="processingDelivery"
-                        class="flex-1 bg-emerald-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-emerald-600 transition-colors disabled:opacity-50">
-                    <span x-show="!processingDelivery">Confirmer Livraison</span>
-                    <span x-show="processingDelivery" class="flex items-center justify-center">
-                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Livraison...
-                    </span>
-                </button>
-                <button type="button" @click="showDeliveryModal = false" 
-                        class="bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
-                    Annuler
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+                <!-- Reason -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Raison d'indisponibilité *</label>
+                    <select x-model="unavailableForm.reason" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">Sélectionner une raison</option>
+                        <option value="CLIENT_ABSENT">Client absent</option>
+                        <option value="ADDRESS_NOT_FOUND">Adresse introuvable</option>
+                        <option value="CLIENT_REFUSES">Client refuse le colis</option>
+                        <option value="PHONE_OFF">Téléphone éteint/injoignable</option>
+                        <option value="OTHER">Autre</option>
+                    </select>
+                </div>
 
-<!-- Modal Client Non Disponible -->
-<div x-show="showUnavailableModal" x-transition 
-     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
-    <div x-show="showUnavailableModal" 
-         x-transition:enter="transform transition ease-out duration-300"
-         x-transition:enter-start="translate-y-full sm:scale-95 sm:translate-y-0"
-         x-transition:enter-end="translate-y-0 sm:scale-100"
-         x-transition:leave="transform transition ease-in duration-200"
-         x-transition:leave-start="translate-y-0 sm:scale-100"
-         x-transition:leave-end="translate-y-full sm:scale-95 sm:translate-y-0"
-         class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md">
-        
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-gray-900">Client Non Disponible</h3>
-            <button @click="showUnavailableModal = false" 
-                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+                <!-- Notes -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Détails de la tentative *</label>
+                    <textarea x-model="unavailableForm.notes" required
+                              placeholder="Décrivez ce qui s'est passé..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                              rows="3"></textarea>
+                </div>
+
+                <!-- Next Attempt Date -->
+                <div class="mb-4" x-show="(selectedPackage?.delivery_attempts || 0) < 2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prochaine tentative prévue</label>
+                    <input type="datetime-local" x-model="unavailableForm.nextAttempt"
+                           :min="new Date(Date.now() + 3600000).toISOString().slice(0, -1)"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Photo de preuve (optionnel)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <input type="file" @change="handleUnavailablePhoto($event)" 
+                               accept="image/*" capture="environment"
+                               class="hidden" x-ref="unavailablePhotoInput">
+                        
+                        <div x-show="!unavailableForm.photoPreview" @click="$refs.unavailablePhotoInput.click()" 
+                             class="text-center cursor-pointer hover:bg-gray-50 py-4 rounded">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <p class="text-sm text-gray-600">Photo de preuve (adresse, boîte aux lettres...)</p>
+                        </div>
+                        
+                        <div x-show="unavailableForm.photoPreview" class="relative">
+                            <img :src="unavailableForm.photoPreview" class="w-full h-48 object-cover rounded">
+                            <button type="button" @click="removeUnavailablePhoto()" 
+                                    class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex space-x-3">
+                    <button type="submit" :disabled="processing"
+                            class="flex-1 bg-orange-500 text-white py-4 px-4 rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
+                        <span x-show="!processing">⏰ Enregistrer Tentative</span>
+                        <span x-show="processing" class="flex items-center justify-center">
+                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Enregistrement...
+                        </span>
+                    </button>
+                    <button type="button" @click="showUnavailableModal = false" 
+                            class="bg-gray-200 text-gray-700 py-4 px-6 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <form @submit.prevent="confirmUnavailable()">
-            <!-- Package info -->
-            <div class="bg-yellow-50 p-4 rounded-xl mb-4">
-                <p class="font-bold text-yellow-900" x-text="selectedPackage?.package_code"></p>
-                <p class="text-sm text-yellow-700" x-text="selectedPackage?.recipient_data?.name"></p>
-                <p class="text-xs text-yellow-600 mt-1">
-                    Tentative <span x-text="(selectedPackage?.delivery_attempts || 0) + 1"></span>/3
-                </p>
-            </div>
-
-            <!-- Raison -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Raison <span class="text-red-500">*</span></label>
-                <select x-model="unavailableForm.reason" required 
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
-                    <option value="">Sélectionner une raison...</option>
-                    <option value="CLIENT_ABSENT">Client absent</option>
-                    <option value="ADDRESS_NOT_FOUND">Adresse introuvable</option>
-                    <option value="CLIENT_REFUSES">Client refuse la livraison</option>
-                    <option value="PHONE_OFF">Téléphone éteint</option>
-                    <option value="OTHER">Autre</option>
-                </select>
-            </div>
-
-            <!-- Notes -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Détails de la tentative <span class="text-red-500">*</span>
-                </label>
-                <textarea x-model="unavailableForm.notes" rows="3" required
-                          placeholder="Décrivez ce qui s'est passé lors de cette tentative..."
-                          class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"></textarea>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex space-x-3">
-                <button type="submit" 
-                        :disabled="processingUnavailable"
-                        class="flex-1 bg-yellow-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-yellow-600 transition-colors disabled:opacity-50">
-                    <span x-show="!processingUnavailable">Confirmer</span>
-                    <span x-show="processingUnavailable" class="flex items-center justify-center">
-                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Enregistrement...
-                    </span>
-                </button>
-                <button type="button" @click="showUnavailableModal = false" 
-                        class="bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
-                    Annuler
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
 <script>
 function deliveriesApp() {
     return {
+        // Données principales
         packages: @json($packages->items()),
         filteredPackages: [],
+        
+        // États
         loading: false,
         processing: null,
-        filterBy: '',
-        totalCod: 0,
-        urgentCount: 0,
         
-        // Modals
-        showDeliveryModal: false,
+        // Filtres
+        showFilters: false,
+        activeFilter: '',
+        
+        // Statistiques
+        urgentCount: 0,
+        highCodCount: 0,
+        retryCount: 0,
+        totalCod: 0,
+        
+        // Modal Unavailable
         showUnavailableModal: false,
         selectedPackage: null,
-        processingDelivery: false,
-        processingUnavailable: false,
-        
-        // Forms
-        deliveryForm: {
-            cod_collected: '',
-            recipient_name: '',
-            notes: '',
-            photo: null
-        },
         unavailableForm: {
             reason: '',
-            notes: ''
+            notes: '',
+            nextAttempt: '',
+            photo: null,
+            photoPreview: null
         },
 
         init() {
             this.applyFilters();
             this.calculateStats();
-            this.startAutoRefresh();
+            
+            console.log('Deliveries App initialisé:', {
+                packages: this.packages.length
+            });
         },
 
+        // ==================== FILTRES ====================
+        
         applyFilters() {
             let filtered = [...this.packages];
             
-            switch (this.filterBy) {
+            // Filtres rapides
+            switch (this.activeFilter) {
                 case 'urgent':
-                    filtered = filtered.filter(p => this.isUrgentPackage(p) || this.is4thAttempt(p));
+                    filtered = filtered.filter(pkg => this.isUrgent(pkg));
                     break;
                 case 'high_cod':
-                    filtered = filtered.filter(p => p.cod_amount >= 50);
+                    filtered = filtered.filter(pkg => parseFloat(pkg.cod_amount) >= 50);
                     break;
-                case 'nearby':
-                    // Implémentation future avec géolocalisation
+                case 'retry':
+                    filtered = filtered.filter(pkg => pkg.status === 'UNAVAILABLE');
+                    break;
+                case 'same_delegation':
+                    // Grouper par délégation la plus fréquente
+                    const delegationCounts = {};
+                    this.packages.forEach(pkg => {
+                        const delId = pkg.delegation_to?.id;
+                        if (delId) {
+                            delegationCounts[delId] = (delegationCounts[delId] || 0) + 1;
+                        }
+                    });
+                    const mostCommonDelegation = Object.keys(delegationCounts).reduce((a, b) => 
+                        delegationCounts[a] > delegationCounts[b] ? a : b, null);
+                    if (mostCommonDelegation) {
+                        filtered = filtered.filter(pkg => 
+                            pkg.delegation_to?.id == mostCommonDelegation
+                        );
+                    }
                     break;
             }
             
-            // Trier par priorité : urgents en premier
+            // Tri : urgents en premier, puis tentatives multiples, puis par date
             filtered.sort((a, b) => {
-                const aUrgent = this.isUrgentPackage(a) || this.is4thAttempt(a);
-                const bUrgent = this.isUrgentPackage(b) || this.is4thAttempt(b);
+                const aUrgent = this.isUrgent(a);
+                const bUrgent = this.isUrgent(b);
                 
+                // Urgents d'abord
                 if (aUrgent && !bUrgent) return -1;
                 if (!aUrgent && bUrgent) return 1;
                 
-                // Si même priorité, trier par COD décroissant
-                return b.cod_amount - a.cod_amount;
+                // Puis par nombre de tentatives (plus de tentatives = prioritaire)
+                const aTentatives = a.delivery_attempts || 0;
+                const bTentatives = b.delivery_attempts || 0;
+                if (aTentatives !== bTentatives) return bTentatives - aTentatives;
+                
+                // Enfin par ancienneté
+                return new Date(a.updated_at) - new Date(b.updated_at);
             });
             
             this.filteredPackages = filtered;
         },
 
+        clearFilters() {
+            this.activeFilter = '';
+            this.applyFilters();
+        },
+
+        // ==================== STATISTIQUES ====================
+        
         calculateStats() {
+            this.urgentCount = this.packages.filter(pkg => this.isUrgent(pkg)).length;
+            this.highCodCount = this.packages.filter(pkg => parseFloat(pkg.cod_amount) >= 50).length;
+            this.retryCount = this.packages.filter(pkg => pkg.status === 'UNAVAILABLE').length;
             this.totalCod = this.packages.reduce((sum, pkg) => sum + parseFloat(pkg.cod_amount || 0), 0);
-            this.urgentCount = this.packages.filter(p => this.isUrgentPackage(p) || this.is4thAttempt(p)).length;
         },
 
-        async startDelivery(package) {
+        isUrgent(package) {
+            return (package.delivery_attempts || 0) >= 3;
+        },
+
+        isHighCod(package) {
+            return parseFloat(package.cod_amount) >= 50;
+        },
+
+        // ==================== ACTIONS PRINCIPALES ====================
+        
+        deliverPackage(package) {
+            // Rediriger vers la page de détail pour la livraison complète
+            window.location.href = `/deliverer/packages/${package.id}`;
+        },
+
+        markUnavailable(package) {
             this.selectedPackage = package;
-            this.deliveryForm = {
-                cod_collected: package.cod_amount,
-                recipient_name: package.recipient_data?.name || '',
-                notes: '',
-                photo: null
-            };
-            this.showDeliveryModal = true;
+            this.showUnavailableModal = true;
         },
 
-        async confirmDelivery() {
-            if (!this.selectedPackage) return;
+        async submitUnavailable() {
+            if (this.processing || !this.selectedPackage) return;
             
-            // Vérifier COD exact
-            const expectedCod = parseFloat(this.selectedPackage.cod_amount);
-            const collectedCod = parseFloat(this.deliveryForm.cod_collected);
+            this.processing = true;
             
-            if (Math.abs(expectedCod - collectedCod) > 0.001) {
-                this.showToast(`COD incorrect ! Attendu: ${expectedCod.toFixed(3)} DT, Saisi: ${collectedCod.toFixed(3)} DT`, 'error');
-                return;
-            }
-            
-            this.processingDelivery = true;
             try {
                 const formData = new FormData();
-                formData.append('cod_collected', this.deliveryForm.cod_collected);
-                formData.append('recipient_name', this.deliveryForm.recipient_name);
-                formData.append('delivery_notes', this.deliveryForm.notes);
-                if (this.deliveryForm.photo) {
-                    formData.append('delivery_photo', this.deliveryForm.photo);
+                formData.append('reason', this.unavailableForm.reason);
+                formData.append('attempt_notes', this.unavailableForm.notes);
+                
+                if (this.unavailableForm.nextAttempt) {
+                    formData.append('next_attempt_date', this.unavailableForm.nextAttempt);
+                }
+                
+                if (this.unavailableForm.photo) {
+                    formData.append('attempt_photo', this.unavailableForm.photo);
                 }
 
-                const response = await fetch(`/deliverer/packages/${this.selectedPackage.id}/deliver`, {
+                const response = await fetch(`/deliverer/packages/${this.selectedPackage.id}/unavailable`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -555,116 +620,53 @@ function deliveriesApp() {
 
                 if (data.success) {
                     this.showToast(data.message, 'success');
-                    // Retirer le colis de la liste
-                    this.packages = this.packages.filter(p => p.id !== this.selectedPackage.id);
-                    this.applyFilters();
-                    this.calculateStats();
-                    this.showDeliveryModal = false;
-                    this.resetDeliveryForm();
-                } else {
-                    this.showToast(data.message || 'Erreur lors de la livraison', 'error');
-                }
-            } catch (error) {
-                console.error('Erreur livraison:', error);
-                this.showToast('Erreur de connexion', 'error');
-            }
-            this.processingDelivery = false;
-        },
-
-        async markUnavailable(package) {
-            this.selectedPackage = package;
-            this.unavailableForm = {
-                reason: '',
-                notes: ''
-            };
-            this.showUnavailableModal = true;
-        },
-
-        async confirmUnavailable() {
-            if (!this.selectedPackage) return;
-            
-            this.processingUnavailable = true;
-            try {
-                const response = await fetch(`/deliverer/packages/${this.selectedPackage.id}/unavailable`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        reason: this.unavailableForm.reason,
-                        attempt_notes: this.unavailableForm.notes
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.showToast(data.message, 'success');
+                    this.showUnavailableModal = false;
                     
-                    // Mettre à jour le package ou le retirer s'il passe en VERIFIED
-                    if (data.status === 'VERIFIED') {
+                    // Mettre à jour le package ou le retirer de la liste
+                    if (data.data.is_final_attempt) {
+                        // 3ème tentative -> retirer de la liste (va vers returns)
                         this.packages = this.packages.filter(p => p.id !== this.selectedPackage.id);
                     } else {
-                        // Mettre à jour le compteur de tentatives
-                        const pkgIndex = this.packages.findIndex(p => p.id === this.selectedPackage.id);
-                        if (pkgIndex !== -1) {
-                            this.packages[pkgIndex].delivery_attempts = data.attempt_count;
-                            this.packages[pkgIndex].status = data.status;
+                        // Mettre à jour le package
+                        const packageIndex = this.packages.findIndex(p => p.id === this.selectedPackage.id);
+                        if (packageIndex > -1) {
+                            this.packages[packageIndex].delivery_attempts = data.data.attempt_count;
+                            this.packages[packageIndex].status = data.data.status;
+                            this.packages[packageIndex].unavailable_reason = this.unavailableForm.reason;
+                            this.packages[packageIndex].unavailable_notes = this.unavailableForm.notes;
                         }
                     }
                     
                     this.applyFilters();
                     this.calculateStats();
-                    this.showUnavailableModal = false;
+                    this.resetUnavailableForm();
                 } else {
                     this.showToast(data.message || 'Erreur lors de l\'enregistrement', 'error');
                 }
             } catch (error) {
-                console.error('Erreur tentative:', error);
+                console.error('Erreur unavailable:', error);
                 this.showToast('Erreur de connexion', 'error');
             }
-            this.processingUnavailable = false;
+            
+            this.processing = false;
         },
 
-        scanPackage(packageCode) {
-            openScanner();
-        },
-
-        contactCommercial(package) {
-            // Implémentation contact commercial
-            this.showToast('Fonction contact commercial à implémenter', 'info');
-        },
-
-        openMaps(package) {
-            const address = encodeURIComponent(package.recipient_data?.address || '');
-            const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
-            window.open(url, '_blank');
-        },
-
-        handleDeliveryPhoto(event) {
-            this.deliveryForm.photo = event.target.files[0];
-        },
-
-        resetDeliveryForm() {
-            this.deliveryForm = {
-                cod_collected: '',
-                recipient_name: '',
+        resetUnavailableForm() {
+            this.unavailableForm = {
+                reason: '',
                 notes: '',
-                photo: null
+                nextAttempt: '',
+                photo: null,
+                photoPreview: null
             };
             this.selectedPackage = null;
         },
 
-        startAutoRefresh() {
-            setInterval(() => {
-                if (!this.loading && !this.processingDelivery && !this.processingUnavailable) {
-                    this.loadPackages();
-                }
-            }, 120000); // 2 minutes
-        },
-
-        async loadPackages() {
+        // ==================== ACTIONS SECONDAIRES ====================
+        
+        async refreshData() {
+            this.loading = true;
+            
             try {
                 const response = await fetch('{{ route("deliverer.deliveries.index") }}?ajax=1');
                 if (response.ok) {
@@ -672,60 +674,152 @@ function deliveriesApp() {
                     this.packages = data.packages || [];
                     this.applyFilters();
                     this.calculateStats();
+                    this.showToast('Livraisons mises à jour', 'success');
                 }
             } catch (error) {
                 console.error('Erreur actualisation:', error);
+                this.showToast('Erreur de connexion', 'error');
+            }
+            
+            this.loading = false;
+        },
+
+        scanSpecificPackage(packageCode) {
+            window.dispatchEvent(new CustomEvent('open-scanner', {
+                detail: { prefilledCode: packageCode }
+            }));
+        },
+
+        viewPackageDetails(package) {
+            window.location.href = `/deliverer/packages/${package.id}`;
+        },
+
+        openNavigation(package) {
+            const address = package.recipient_data?.address || '';
+            if (!address) {
+                this.showToast('Adresse non disponible', 'error');
+                return;
+            }
+            
+            const encodedAddress = encodeURIComponent(address);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_system');
+            } else {
+                window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
             }
         },
 
-        // Utility methods
-        isUrgentPackage(package) {
-            const hoursAgo = (new Date() - new Date(package.updated_at)) / (1000 * 60 * 60);
-            return hoursAgo > 24 || package.delivery_attempts >= 2;
+        // ==================== GESTION PHOTOS ====================
+        
+        handleUnavailablePhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.unavailableForm.photo = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.unavailableForm.photoPreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
         },
 
-        is4thAttempt(package) {
-            return package.delivery_attempts >= 3;
+        removeUnavailablePhoto() {
+            this.unavailableForm.photo = null;
+            this.unavailableForm.photoPreview = null;
+            this.$refs.unavailablePhotoInput.value = '';
         },
 
+        // ==================== UI HELPERS ====================
+        
         getPackagePriorityClass(package) {
-            if (this.is4thAttempt(package)) return 'ring-2 ring-purple-500';
-            if (this.isUrgentPackage(package)) return 'ring-2 ring-red-500';
+            if (this.isUrgent(package)) return 'ring-2 ring-red-300 shadow-red-100';
+            if (this.isHighCod(package)) return 'ring-1 ring-green-300 shadow-green-100';
+            if (package.status === 'UNAVAILABLE') return 'ring-1 ring-yellow-300 shadow-yellow-100';
             return '';
         },
 
         getHeaderBackgroundClass(package) {
-            if (this.is4thAttempt(package)) return 'bg-gradient-to-r from-purple-50 to-white';
-            if (this.isUrgentPackage(package)) return 'bg-gradient-to-r from-red-50 to-white';
-            return 'bg-gradient-to-r from-orange-50 to-white';
+            if (this.isUrgent(package)) return 'bg-gradient-to-r from-red-50 to-pink-50';
+            if (this.isHighCod(package)) return 'bg-gradient-to-r from-green-50 to-emerald-50';
+            if (package.status === 'UNAVAILABLE') return 'bg-gradient-to-r from-yellow-50 to-orange-50';
+            return 'bg-gradient-to-r from-orange-50 to-amber-50';
         },
 
-        getPackageStatusText(package) {
-            if (package.status === 'PICKED_UP') return 'À livrer';
-            if (package.status === 'UNAVAILABLE') return 'Nouvelle tentative nécessaire';
-            return package.status;
+        getIconBackgroundClass(package) {
+            if (this.isUrgent(package)) return 'bg-gradient-to-r from-red-500 to-red-600';
+            if (this.isHighCod(package)) return 'bg-gradient-to-r from-green-500 to-green-600';
+            if (package.status === 'UNAVAILABLE') return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+            return 'bg-gradient-to-r from-orange-500 to-orange-600';
         },
 
+        getCodColorClass(amount) {
+            const cod = parseFloat(amount);
+            if (cod >= 100) return 'text-red-600';
+            if (cod >= 50) return 'text-green-600';
+            return 'text-orange-600';
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                'PICKED_UP': 'Collecté - Prêt livraison',
+                'UNAVAILABLE': 'Nouvelle tentative'
+            };
+            return labels[status] || status;
+        },
+
+        getReasonLabel(reason) {
+            const labels = {
+                'CLIENT_ABSENT': 'Client absent',
+                'ADDRESS_NOT_FOUND': 'Adresse introuvable',
+                'CLIENT_REFUSES': 'Client refuse',
+                'PHONE_OFF': 'Téléphone éteint',
+                'OTHER': 'Autre'
+            };
+            return labels[reason] || reason;
+        },
+
+        // ==================== FORMATAGE ====================
+        
         formatAmount(amount) {
             return parseFloat(amount || 0).toFixed(3) + ' DT';
         },
 
+        formatTimeAgo(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffInMinutes < 60) return `il y a ${diffInMinutes}min`;
+            if (diffInMinutes < 1440) return `il y a ${Math.floor(diffInMinutes / 60)}h`;
+            return `il y a ${Math.floor(diffInMinutes / 1440)}j`;
+        },
+
+        // ==================== NOTIFICATIONS ====================
+        
         showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-emerald-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            const bgColor = type === 'success' ? 'bg-orange-500' : 'bg-red-500';
+            const icon = type === 'success' ? 
+                'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 
+                'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+            
             toast.className = `fixed top-24 left-4 right-4 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg z-50 mx-auto max-w-md transition-all duration-300`;
             toast.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : (type === 'error' ? 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z')}"/>
+                <div class="flex items-center space-x-3">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icon}"/>
                     </svg>
-                    <span>${message}</span>
+                    <span class="font-medium">${message}</span>
                 </div>
             `;
             
             document.body.appendChild(toast);
+            
             setTimeout(() => {
                 toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
         }
