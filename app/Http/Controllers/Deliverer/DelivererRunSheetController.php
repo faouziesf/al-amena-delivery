@@ -19,7 +19,7 @@ class DelivererRunSheetController extends Controller
     public function index(Request $request)
     {
         $query = RunSheet::where('deliverer_id', Auth::id())
-                         ->with(['delegation', 'packages'])
+                         ->with(['delegation'])
                          ->orderBy('created_at', 'desc');
 
         if ($request->filled('delegation')) {
@@ -202,7 +202,7 @@ class DelivererRunSheetController extends Controller
     /**
      * Marquer feuille comme terminée
      */
-    public function markComplete(RunSheet $runSheet, Request $request)
+    public function complete(RunSheet $runSheet, Request $request)
     {
         if ($runSheet->deliverer_id !== Auth::id()) {
             return response()->json([
@@ -234,7 +234,9 @@ class DelivererRunSheetController extends Controller
                     'packages_delivered' => $validated['packages_delivered'],
                     'packages_returned' => $validated['packages_returned'],
                     'total_cod_collected' => $validated['total_cod_collected'],
-                    'completion_rate' => round(($validated['packages_delivered'] / $runSheet->packages_count) * 100, 2)
+                    'completion_rate' => $runSheet->packages_count > 0
+                        ? round(($validated['packages_delivered'] / $runSheet->packages_count) * 100, 2)
+                        : 0
                 ]
             ]);
 

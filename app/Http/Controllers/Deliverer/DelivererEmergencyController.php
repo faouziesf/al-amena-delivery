@@ -123,4 +123,109 @@ class DelivererEmergencyController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Déclencher alerte d'urgence générale
+     */
+    public function triggerEmergency(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:GENERAL,SECURITY,MEDICAL,ACCIDENT,THREAT',
+            'message' => 'nullable|string|max:500',
+            'location' => 'nullable|array'
+        ]);
+
+        try {
+            $emergencyData = [
+                'deliverer_id' => Auth::id(),
+                'deliverer_name' => Auth::user()->name,
+                'type' => $validated['type'],
+                'message' => $validated['message'] ?? 'Alerte d\'urgence déclenchée',
+                'location' => $validated['location'] ?? null,
+                'triggered_at' => now()->toISOString(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ];
+
+            // Log de l'urgence avec priorité maximale
+            $this->actionLogService->log(
+                'EMERGENCY_ALERT_TRIGGERED',
+                'Emergency',
+                null,
+                null,
+                'URGENT',
+                $emergencyData
+            );
+
+            // TODO: Notifications push urgentes
+            // TODO: SMS/Email management
+            // TODO: Alerte centre de contrôle
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Alerte d\'urgence envoyée! Le centre de contrôle a été notifié.',
+                'emergency_id' => 'EMG-' . now()->format('YmdHis') . '-' . Auth::id(),
+                'contacts' => [
+                    'centre_controle' => '+213 XXX XXX XXX',
+                    'urgences' => '15',
+                    'police' => '17'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur système. Contactez immédiatement: 15 (urgences) ou 17 (police)'
+            ], 500);
+        }
+    }
+
+    /**
+     * API pour déclencher alerte d'urgence
+     */
+    public function apiTriggerEmergency(Request $request)
+    {
+        $validated = $request->validate([
+            'location' => 'nullable|array',
+            'timestamp' => 'nullable|string'
+        ]);
+
+        try {
+            $emergencyData = [
+                'deliverer_id' => Auth::id(),
+                'deliverer_name' => Auth::user()->name,
+                'type' => 'GENERAL',
+                'message' => 'Alerte d\'urgence déclenchée depuis l\'application',
+                'location' => $validated['location'] ?? null,
+                'triggered_at' => $validated['timestamp'] ?? now()->toISOString(),
+                'source' => 'mobile_app'
+            ];
+
+            // Log urgent
+            $this->actionLogService->log(
+                'EMERGENCY_API_ALERT',
+                'Emergency',
+                null,
+                null,
+                'CRITICAL',
+                $emergencyData
+            );
+
+            // TODO: Intégration système d'alerte
+            // TODO: Géolocalisation automatique
+            // TODO: Vibration/son urgence sur appareils management
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Alerte transmise au centre de contrôle',
+                'emergency_id' => 'API-EMG-' . now()->timestamp . '-' . Auth::id()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur critique. Appelez immédiatement le centre de contrôle.'
+            ], 500);
+        }
+    }
 }

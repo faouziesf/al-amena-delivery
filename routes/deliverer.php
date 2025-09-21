@@ -22,9 +22,12 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
 
     // ==================== GESTION DES COLIS ====================
     Route::prefix('packages')->name('packages.')->group(function () {
+        // Liste principale des colis
+        Route::get('/', [DelivererPackageController::class, 'index'])->name('index');
+
         // Détails d'un colis
         Route::get('/{package}', [DelivererPackageController::class, 'show'])->name('show');
-        
+
         // ACTIONS CRITIQUES SCANNER - NOUVELLES/AMÉLIORÉES
         Route::post('/{package}/accept', [DelivererPackageController::class, 'acceptPickup'])->name('accept');
         Route::post('/{package}/pickup', [DelivererPackageController::class, 'markPickedUp'])->name('pickup');
@@ -32,18 +35,18 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::post('/{package}/unavailable', [DelivererPackageController::class, 'markUnavailable'])->name('unavailable');
         Route::post('/{package}/return', [DelivererPackageController::class, 'returnToSender'])->name('return');
         Route::post('/{package}/attempt', [DelivererPackageController::class, 'recordAttempt'])->name('attempt');
-        
+
         // SCAN QR/CODES-BARRES - AMÉLIORÉ ET ROBUSTE
         Route::post('/scan', [DelivererPackageController::class, 'scanPackage'])->name('scan');
         Route::post('/scan-batch', [DelivererPackageController::class, 'scanBatch'])->name('scan.batch');
         Route::get('/search-advanced', [DelivererPackageController::class, 'searchAdvanced'])->name('search.advanced');
-        
+
         // Actions groupées - NOUVELLES
         Route::post('/bulk-accept', [DelivererPackageController::class, 'bulkAccept'])->name('bulk.accept');
         Route::post('/bulk-pickup', [DelivererPackageController::class, 'bulkPickup'])->name('bulk.pickup');
         Route::post('/bulk-deliver', [DelivererPackageController::class, 'bulkDeliver'])->name('bulk.deliver');
         Route::post('/bulk-return', [DelivererPackageController::class, 'bulkReturn'])->name('bulk.return');
-        
+
         // Documents et preuves
         Route::get('/run-sheet', [DelivererPackageController::class, 'generateRunSheet'])->name('run.sheet');
         Route::get('/{package}/delivery-receipt', [DelivererPackageController::class, 'deliveryReceipt'])->name('delivery.receipt');
@@ -79,6 +82,8 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::get('/', [DelivererWalletController::class, 'index'])->name('index');
         Route::get('/history', [DelivererWalletController::class, 'history'])->name('history');
         Route::get('/sources', [DelivererWalletController::class, 'sources'])->name('sources');
+        Route::get('/topup', [DelivererWalletController::class, 'showTopupForm'])->name('topup');
+        Route::post('/topup', [DelivererWalletController::class, 'processTopup'])->name('topup.process');
         Route::post('/request-emptying', [DelivererWalletController::class, 'requestEmptying'])->name('request.emptying');
         Route::get('/export', [DelivererWalletController::class, 'exportTransactions'])->name('export');
     });
@@ -94,15 +99,23 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::get('/', [DelivererRunSheetController::class, 'index'])->name('index');
         Route::post('/generate', [DelivererRunSheetController::class, 'generate'])->name('generate');
         Route::get('/{runSheet}/print', [DelivererRunSheetController::class, 'print'])->name('print');
-        Route::post('/{runSheet}/complete', [DelivererRunSheetController::class, 'markComplete'])->name('complete');
+        Route::post('/{runSheet}/complete', [DelivererRunSheetController::class, 'complete'])->name('complete');
         Route::get('/{runSheet}/download/{token}', [DelivererRunSheetController::class, 'downloadWithToken'])->name('download');
+    });
+
+    // ==================== API ROUTES ====================
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/runsheets/stats', [DelivererRunSheetController::class, 'apiStats'])->name('runsheets.stats');
     });
     
     // ==================== RECHARGE CLIENT (Ajout Fonds) ====================
     Route::prefix('client-topup')->name('client-topup.')->group(function () {
         Route::get('/', [DelivererClientTopupController::class, 'index'])->name('index');
+        Route::post('/search-client', [DelivererClientTopupController::class, 'searchClient'])->name('search-client');
         Route::post('/process', [DelivererClientTopupController::class, 'processTopup'])->name('process');
         Route::get('/history', [DelivererClientTopupController::class, 'history'])->name('history');
+        Route::get('/{topup}', [DelivererClientTopupController::class, 'show'])->name('show');
+        Route::get('/{topup}/receipt', [DelivererClientTopupController::class, 'receipt'])->name('receipt');
     });
 
     // ==================== NOTIFICATIONS ====================
@@ -116,8 +129,16 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     // ==================== PROFIL & PARAMÈTRES ====================
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [DelivererProfileController::class, 'show'])->name('show');
-        Route::put('/', [DelivererProfileController::class, 'update'])->name('update');
+        Route::post('/update', [DelivererProfileController::class, 'update'])->name('update');
+        Route::post('/avatar', [DelivererProfileController::class, 'updateAvatar'])->name('avatar');
+        Route::post('/preferences', [DelivererProfileController::class, 'updatePreferences'])->name('preferences');
+        Route::post('/documents', [DelivererProfileController::class, 'uploadDocument'])->name('documents');
+        Route::get('/export', [DelivererProfileController::class, 'exportData'])->name('export');
+        Route::get('/password', [DelivererProfileController::class, 'showPasswordForm'])->name('password');
+        Route::post('/password', [DelivererProfileController::class, 'updatePassword'])->name('password.update');
         Route::get('/statistics', [DelivererProfileController::class, 'statistics'])->name('statistics');
+        Route::get('/statistics/period/{period}', [DelivererProfileController::class, 'statisticsByPeriod'])->name('statistics.period');
+        Route::post('/statistics/export/{format}', [DelivererProfileController::class, 'exportStatistics'])->name('statistics.export');
     });
     
     // ==================== SUPPORT & AIDE ====================
@@ -130,8 +151,16 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     
     // ==================== URGENCES & CONTACT COMMERCIAL ====================
     Route::prefix('emergency')->name('emergency.')->group(function () {
+        Route::post('/trigger', [DelivererEmergencyController::class, 'triggerEmergency'])->name('trigger');
         Route::post('/call-commercial', [DelivererEmergencyController::class, 'callCommercial'])->name('call-commercial');
         Route::post('/report-issue', [DelivererEmergencyController::class, 'reportIssue'])->name('report-issue');
+    });
+
+    // ==================== REÇUS ====================
+    Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/package/{package}', [DelivererReceiptController::class, 'packageReceipt'])->name('package');
+        Route::get('/payment/{payment}', [DelivererReceiptController::class, 'paymentReceipt'])->name('payment');
+        Route::get('/topup/{topup}', [DelivererReceiptController::class, 'topupReceipt'])->name('topup');
     });
 
     // ==================== API ENDPOINTS LIVREUR - AMÉLIORÉES ====================
@@ -235,6 +264,14 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::post('/location/update', [DelivererLocationController::class, 'updateLocation'])->name('location.update');
         Route::get('/location/current', [DelivererLocationController::class, 'currentLocation'])->name('location.current');
         Route::get('/location/history', [DelivererLocationController::class, 'locationHistory'])->name('location.history');
+
+        // Emergency API
+        Route::post('/emergency', [DelivererEmergencyController::class, 'apiTriggerEmergency'])->name('emergency.trigger');
+
+        // Verification APIs
+        Route::get('/verify-receipt/{trackingNumber}', [DelivererReceiptController::class, 'verifyReceipt'])->name('verify.receipt');
+        Route::get('/verify-payment/{paymentId}', [DelivererReceiptController::class, 'verifyPayment'])->name('verify.payment');
+        Route::get('/verify-topup/{topupId}', [DelivererReceiptController::class, 'verifyTopup'])->name('verify.topup');
         
         // Health Check - NOUVEAU
         Route::get('/health', function() {
@@ -285,11 +322,11 @@ Route::prefix('deliverer-public')->name('deliverer.public.')->group(function () 
         $package = \App\Models\Package::where('package_code', $code)
             ->select(['package_code', 'status', 'delivered_at', 'delegation_to'])
             ->first();
-        
+
         if (!$package) {
             return response()->json(['error' => 'Package not found'], 404);
         }
-        
+
         return response()->json([
             'code' => $package->package_code,
             'status' => $package->status,
@@ -297,11 +334,18 @@ Route::prefix('deliverer-public')->name('deliverer.public.')->group(function () 
             'destination' => $package->delegationTo->name ?? null
         ]);
     })->name('track');
-    
+
     // Webhook pour notifications push (si implémenté)
     Route::post('/webhook/scanner-notification', function(\Illuminate\Http\Request $request) {
         // Traiter les notifications push pour le scanner
         \Log::info('Scanner webhook received', $request->all());
         return response()->json(['status' => 'received']);
     })->name('webhook.scanner');
+});
+
+// ==================== ROUTES PUBLIQUES DE VÉRIFICATION ====================
+Route::prefix('verify')->name('verify.')->group(function () {
+    Route::get('/receipt/{trackingNumber}', [DelivererReceiptController::class, 'publicVerifyReceipt'])->name('receipt');
+    Route::get('/payment/{paymentId}', [DelivererReceiptController::class, 'publicVerifyPayment'])->name('payment');
+    Route::get('/topup/{topupId}', [DelivererReceiptController::class, 'publicVerifyTopup'])->name('topup');
 });
