@@ -7,6 +7,7 @@ use App\Models\Package;
 use App\Models\Delegation;
 use App\Models\SavedAddress;
 use App\Models\ImportBatch;
+use App\Models\ClientPickupAddress;
 use App\Services\FinancialTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,7 +70,7 @@ class ClientPackageController extends Controller
     private function getPackagesByTab($user, $tab, $request)
     {
         $query = Package::where('sender_id', $user->id)
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress']);
 
         // Filtrer par onglet
         switch ($tab) {
@@ -123,6 +124,16 @@ class ClientPackageController extends Controller
 
         $delegations = Delegation::where('active', true)->orderBy('name')->get();
         $hasAdvancedFeatures = Schema::hasTable('saved_addresses');
+
+        // Récupérer les adresses de pickup du client
+        $pickupAddresses = ClientPickupAddress::forClient($user->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Récupérer les gouvernorats et délégations depuis la config
+        $gouvernorats = config('tunisia.gouvernorats');
+        $delegationsData = config('tunisia.delegations');
         
         // Récupérer les statistiques du jour
         $todayStats = $this->getTodayStats($user);
@@ -157,15 +168,24 @@ class ClientPackageController extends Controller
             $viewName = $request->get('fast') === 'true' ? 'client.packages.create-fast' : 'client.packages.create-advanced';
             
             return view($viewName, array_merge(compact(
-                'user', 
-                'delegations', 
+                'user',
+                'delegations',
                 'supplierAddresses',
                 'clientAddresses',
+                'pickupAddresses',
+                'gouvernorats',
+                'delegationsData',
                 'lastSupplierData',
                 'lastClientData'
             ), $todayStats));
         } else {
-            return view('client.packages.create', array_merge(compact('user', 'delegations'), $todayStats));
+            return view('client.packages.create', array_merge(compact(
+                'user',
+                'delegations',
+                'pickupAddresses',
+                'gouvernorats',
+                'delegationsData'
+            ), $todayStats));
         }
     }
 
@@ -198,20 +218,20 @@ class ClientPackageController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'delegation_from' => 'required|exists:delegations,id',
-            'delegation_to' => [
-                'required',
-                'exists:delegations,id',
-                'different:delegation_from'  // CORRECTION: Empêcher même délégation pickup/livraison
-            ],
-            'recipient_name' => 'required|string|max:255',
-            'recipient_phone' => 'required|string|max:20',
-            'recipient_address' => 'required|string|max:500',
-            'content_description' => 'required|string|max:255',
-            'cod_amount' => 'required|numeric|min:0|max:9999.999',
-            'notes' => 'nullable|string|max:1000'
-        ], [
-            'delegation_to.different' => 'La délégation de livraison doit être différente de la délégation de pickup.'
+            'pickup_address_id' => 'required|exists:client_pickup_addresses,id',
+            'nom_complet' => 'required|string|max:255',
+            'telephone_1' => 'required|string|max:20',
+            'telephone_2' => 'nullable|string|max:20',
+            'adresse_complete' => 'required|string|max:500',
+            'gouvernorat' => 'required|string|max:100',
+            'delegation' => 'required|string|max:100',
+            'contenu' => 'required|string|max:255',
+            'prix' => 'required|numeric|min:0|max:9999.999',
+            'commentaire' => 'nullable|string|max:1000',
+            'fragile' => 'boolean',
+            'signature_obligatoire' => 'boolean',
+            'autorisation_ouverture' => 'boolean',
+            'payment_method' => 'required|in:especes_seulement,cheque_seulement,especes_et_cheques'
         ]);
 
         try {
@@ -487,7 +507,7 @@ class ClientPackageController extends Controller
             abort(403, 'Accès non autorisé à ce colis.');
         }
 
-        $package->load(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+        $package->load(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress']);
 
         return view('client.packages.delivery-note', compact('package'));
     }
@@ -504,7 +524,7 @@ class ClientPackageController extends Controller
 
         $packages = Package::whereIn('id', $validated['package_ids'])
             ->where('sender_id', Auth::id())
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer'])
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -561,12 +581,12 @@ class ClientPackageController extends Controller
         $user = Auth::user();
         
         $query = Package::where('sender_id', $user->id)
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer']);
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress']);
 
         $this->applyFilters($query, $request);
         $packages = $query->orderBy('created_at', 'desc')->get();
 
-        $csvContent = "Code Colis;Date Création;Statut;Fournisseur;Délégation Pickup;Destinataire;Délégation Livraison;Contenu;Montant COD;Notes\n";
+        $csvContent = "Code Colis;Date Création;Statut;Pickup;Délégation Pickup;Destinataire;Délégation Livraison;Contenu;Montant COD;Notes\n";
         
         foreach ($packages as $package) {
             $csvContent .= sprintf(
@@ -682,77 +702,73 @@ class ClientPackageController extends Controller
         $deliveryFee = $clientProfile->offer_delivery_price;
         $returnFee = $clientProfile->offer_return_price;
 
+        // Récupérer l'adresse de pickup sélectionnée
+        $pickupAddress = null;
+        if (isset($validated['pickup_address_id'])) {
+            $pickupAddress = ClientPickupAddress::find($validated['pickup_address_id']);
+        }
+
         // Données de base du package
         $packageData = [
             'sender_id' => $user->id,
+            'pickup_address_id' => $validated['pickup_address_id'] ?? null,
             'sender_data' => [
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'address' => $user->address
+                'name' => $pickupAddress ? $pickupAddress->contact_name : $user->name,
+                'phone' => $pickupAddress ? $pickupAddress->phone : $user->phone,
+                'address' => $pickupAddress ? $pickupAddress->address : $user->address
             ],
             'recipient_data' => [
-                'name' => $validated['recipient_name'],
-                'phone' => $validated['recipient_phone'],
-                'address' => $validated['recipient_address']
+                'name' => $validated['nom_complet'] ?? $validated['recipient_name'],
+                'phone' => $validated['telephone_1'] ?? $validated['recipient_phone'],
+                'phone2' => $validated['telephone_2'] ?? $validated['recipient_phone2'] ?? null,
+                'address' => $validated['adresse_complete'] ?? $validated['recipient_address'],
+                'gouvernorat' => $validated['gouvernorat'] ?? $validated['recipient_gouvernorat'] ?? null,
+                'delegation' => $validated['delegation'] ?? $validated['recipient_delegation'] ?? null
             ],
-            'content_description' => $validated['content_description'],
-            'notes' => $validated['notes'] ?? null,
-            'cod_amount' => $validated['cod_amount'],
+            'content_description' => $validated['contenu'] ?? $validated['content_description'],
+            'notes' => $validated['commentaire'] ?? $validated['notes'] ?? null,
+            'cod_amount' => $validated['prix'] ?? $validated['cod_amount'],
             'delivery_fee' => $deliveryFee,
             'return_fee' => $returnFee,
-            'status' => 'CREATED'
+            'status' => 'CREATED',
+            'is_fragile' => $validated['fragile'] ?? $validated['is_fragile'] ?? false,
+            'requires_signature' => $validated['signature_obligatoire'] ?? $validated['requires_signature'] ?? false,
+            'allow_opening' => $validated['autorisation_ouverture'] ?? $validated['allow_opening'] ?? false,
+            'payment_method' => $this->mapPaymentMethod($validated['payment_method'] ?? 'cash_only')
         ];
 
-        // Ajuster selon le type
-        if ($type === 'advanced' || $type === 'api') {
-            $packageData['delegation_from'] = $validated['pickup_delegation_id'];
-            $packageData['delegation_to'] = $validated['delegation_to'];
-            
-            if (Schema::hasColumn('packages', 'supplier_data')) {
-                $packageData['supplier_data'] = [
-                    'name' => $validated['supplier_name'],
-                    'phone' => $validated['supplier_phone'],
-                ];
-                $packageData['pickup_delegation_id'] = $validated['pickup_delegation_id'];
-                $packageData['pickup_address'] = $validated['pickup_address'];
-                $packageData['pickup_phone'] = $validated['supplier_phone'];
-                $packageData['pickup_notes'] = $validated['notes'] ?? null;
-                
-                // Options avancées
-                if (!empty($validated['package_weight'])) {
-                    $packageData['package_weight'] = $validated['package_weight'];
-                }
-                
-                if (!empty($validated['package_value'])) {
-                    $packageData['package_value'] = $validated['package_value'];
-                }
-                
-                if (!empty($validated['package_length']) || !empty($validated['package_width']) || !empty($validated['package_height'])) {
-                    $packageData['package_dimensions'] = [
-                        'length' => $validated['package_length'] ?? 0,
-                        'width' => $validated['package_width'] ?? 0,
-                        'height' => $validated['package_height'] ?? 0,
-                        'unit' => 'cm'
-                    ];
-                }
-                
-                $packageData['is_fragile'] = $validated['is_fragile'] ?? false;
-                $packageData['requires_signature'] = $validated['requires_signature'] ?? false;
-                $packageData['special_instructions'] = $validated['special_instructions'] ?? null;
-            }
+        // Récupérer les délégations depuis l'adresse pickup et destination
+        // Pour delegation_from : récupérer depuis l'adresse de pickup
+        if ($pickupAddress) {
+            // Mapper le nom de délégation de l'adresse pickup vers un ID
+            $delegationFromId = $this->findDelegationIdByName($pickupAddress->delegation);
+            $packageData['delegation_from'] = $delegationFromId;
         } else {
-            // Type basique
-            $packageData['delegation_from'] = $validated['delegation_from'];
-            $packageData['delegation_to'] = $validated['delegation_to'];
+            $packageData['delegation_from'] = null;
+        }
+
+        // Pour delegation_to : traiter selon le format
+        if ($type === 'basic' && isset($validated['delegation'])) {
+            // Format basique : convertir le nom en ID
+            $delegationToId = $this->findDelegationIdByName($validated['delegation']);
+            $packageData['delegation_to'] = $delegationToId;
+        } else {
+            // Format avancé : utiliser directement l'ID fourni
+            $packageData['delegation_to'] = $validated['delegation_to'] ?? null;
         }
 
         $package = new Package($packageData);
 
-        // Calcul et déduction de l'escrow
-        $escrowAmount = $this->calculateEscrowAmount($package, $validated['cod_amount'], $deliveryFee, $returnFee);
-        
-        if (!$user->wallet->hasSufficientBalance($escrowAmount)) {
-            throw new \Exception("Solde insuffisant. Montant requis: {$escrowAmount} DT");
+        // VALIDATION WALLET OBLIGATOIRE AVANT CRÉATION
+        $codAmount = $validated['prix'] ?? $validated['cod_amount'];
+        $escrowAmount = $this->calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee);
+        $pendingAmount = $this->calculatePendingAmount($codAmount, $deliveryFee, $returnFee);
+
+        // Vérifier le solde disponible (balance - frozen_amount)
+        $availableBalance = $user->wallet->balance - ($user->wallet->frozen_amount ?? 0);
+
+        if ($availableBalance < $escrowAmount) {
+            throw new \Exception("Solde insuffisant. Montant requis: " . number_format($escrowAmount, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT. Rechargez votre portefeuille avant de créer ce colis.");
         }
 
         $package->amount_in_escrow = $escrowAmount;
@@ -767,7 +783,7 @@ class ClientPackageController extends Controller
             'description' => "Création colis #{$package->package_code}",
             'metadata' => [
                 'package_code' => $package->package_code,
-                'escrow_type' => $validated['cod_amount'] >= $deliveryFee ? 'return_fee' : 'delivery_fee'
+                'escrow_type' => $codAmount >= $deliveryFee ? 'return_fee' : 'delivery_fee'
             ]
         ]);
 
@@ -846,14 +862,36 @@ class ClientPackageController extends Controller
     }
 
     /**
-     * Calcul du montant d'escrow
+     * Calcul du montant d'escrow selon les règles SPÉCIFICATIONS EXACTES
      */
     private function calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee)
     {
+        // Cas 1: COD ≥ Frais Livraison (X ≥ Y)
         if ($codAmount >= $deliveryFee) {
+            // Déduction: Z (frais retour) du wallet client
             return $returnFee;
-        } else {
+        }
+        // Cas 2: COD < Frais Livraison (X < Y)
+        else {
+            // Déduction: Y (frais livraison) du wallet client
             return $deliveryFee;
+        }
+    }
+
+    /**
+     * Calcul du montant en attente selon les règles SPÉCIFICATIONS EXACTES
+     */
+    private function calculatePendingAmount($codAmount, $deliveryFee, $returnFee)
+    {
+        // Cas 1: COD ≥ Frais Livraison (X ≥ Y)
+        if ($codAmount >= $deliveryFee) {
+            // Montant en attente: (X + Z) - Y
+            return ($codAmount + $returnFee) - $deliveryFee;
+        }
+        // Cas 2: COD < Frais Livraison (X < Y)
+        else {
+            // Montant en attente: X complet
+            return $codAmount;
         }
     }
 
@@ -928,5 +966,56 @@ class ClientPackageController extends Controller
         Cache::forget("api_saved_addresses_{$user->id}_all");
         Cache::forget("api_saved_addresses_{$user->id}_supplier");
         Cache::forget("api_saved_addresses_{$user->id}_client");
+    }
+
+    /**
+     * Mapper les nouvelles valeurs de payment_method vers les valeurs de la base de données
+     */
+    private function mapPaymentMethod($paymentMethod)
+    {
+        $mapping = [
+            'especes_seulement' => 'cash_only',
+            'cheque_seulement' => 'check_only',
+            'especes_et_cheques' => 'both',
+            // Support des anciennes valeurs au cas où
+            'cash_only' => 'cash_only',
+            'check_only' => 'check_only',
+            'both' => 'both'
+        ];
+
+        return $mapping[$paymentMethod] ?? 'cash_only';
+    }
+
+    /**
+     * Trouver l'ID d'une délégation par son nom ou créer une nouvelle délégation si elle n'existe pas
+     */
+    private function findDelegationIdByName($delegationName)
+    {
+        if (empty($delegationName)) {
+            return null;
+        }
+
+        $delegationName = trim($delegationName);
+
+        // Rechercher la délégation existante par nom (insensible à la casse)
+        $delegation = Delegation::where(function($query) use ($delegationName) {
+            $query->whereRaw('LOWER(name) = ?', [strtolower($delegationName)])
+                  ->orWhereRaw('LOWER(name) LIKE ?', ['%' . strtolower($delegationName) . '%']);
+        })->first();
+
+        // Si trouvé, retourner l'ID
+        if ($delegation) {
+            return $delegation->id;
+        }
+
+        // Si pas trouvé, créer une nouvelle délégation
+        $newDelegation = Delegation::create([
+            'name' => ucfirst($delegationName),
+            'zone' => 'Zone Auto-créée',
+            'active' => true,
+            'created_by' => auth()->id() ?? 1
+        ]);
+
+        return $newDelegation->id;
     }
 }

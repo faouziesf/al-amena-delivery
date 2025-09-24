@@ -395,11 +395,22 @@
 
                 <!-- Notes -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Détails de la tentative *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Détails de la tentative *
+                        <span class="text-xs text-gray-500">
+                            (minimum 10 caractères - <span x-text="unavailableForm.notes.length"></span>/10)
+                        </span>
+                    </label>
                     <textarea x-model="unavailableForm.notes" required
-                              placeholder="Décrivez ce qui s'est passé..."
+                              placeholder="Décrivez ce qui s'est passé (ex: personne n'a répondu, adresse fermée, client pas disponible...)"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                              rows="3"></textarea>
+                              :class="unavailableForm.notes.length < 10 && unavailableForm.notes.length > 0 ? 'border-red-300' : ''"
+                              rows="3"
+                              minlength="10"></textarea>
+                    <div x-show="unavailableForm.notes.length < 10 && unavailableForm.notes.length > 0"
+                         class="text-red-600 text-xs mt-1">
+                        Veuillez entrer au moins 10 caractères
+                    </div>
                 </div>
 
                 <!-- Next Attempt Date -->
@@ -441,8 +452,9 @@
 
                 <!-- Actions -->
                 <div class="flex space-x-3">
-                    <button type="submit" :disabled="processing"
-                            class="flex-1 bg-orange-500 text-white py-4 px-4 rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50">
+                    <button type="submit"
+                            :disabled="processing || !unavailableForm.reason || unavailableForm.notes.length < 10"
+                            class="flex-1 bg-orange-500 text-white py-4 px-4 rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         <span x-show="!processing">⏰ Enregistrer Tentative</span>
                         <span x-show="processing" class="flex items-center justify-center">
                             <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -592,36 +604,111 @@ function deliveriesApp() {
 
         async submitUnavailable() {
             if (this.processing || !this.selectedPackage) return;
-            
+
+            // Validation côté client
+            if (!this.unavailableForm.reason) {
+                this.showToast('Veuillez sélectionner une raison', 'error');
+                return;
+            }
+
+            if (this.unavailableForm.notes.length < 10) {
+                this.showToast('Les détails doivent contenir au moins 10 caractères', 'error');
+                return;
+            }
+
             this.processing = true;
-            
+
             try {
                 const formData = new FormData();
                 formData.append('reason', this.unavailableForm.reason);
                 formData.append('attempt_notes', this.unavailableForm.notes);
-                
+
                 if (this.unavailableForm.nextAttempt) {
                     formData.append('next_attempt_date', this.unavailableForm.nextAttempt);
                 }
-                
+
                 if (this.unavailableForm.photo) {
                     formData.append('attempt_photo', this.unavailableForm.photo);
                 }
 
+                // Vérifier la présence du token CSRF
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                if (!csrfToken) {
+                    this.showToast('Token CSRF manquant - Rechargez la page', 'error');
+                    this.processing = false;
+                    return;
+                }
+
+                console.log('Sending unavailable request:', {
+                    url: `/deliverer/packages/${this.selectedPackage.id}/unavailable`,
+                    formData: Object.fromEntries(formData.entries()),
+                    csrf: csrfToken,
+                    csrfMeta: document.querySelector('meta[name="csrf-token"]') ? 'found' : 'missing'
+                });
+
+                // Ajouter le token CSRF aux données du formulaire aussi (double sécurité)
+                formData.append('_token', csrfToken);
+
                 const response = await fetch(`/deliverer/packages/${this.selectedPackage.id}/unavailable`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
                     },
                     body: formData
                 });
 
-                const data = await response.json();
+                console.log('Response status:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    // Tenter de récupérer le message d'erreur du serveur
+                    let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.text();
+                        console.error('Server error response:', errorData);
+
+                        // Essayer de parser comme JSON pour récupérer le message d'erreur
+                        try {
+                            const jsonError = JSON.parse(errorData);
+                            if (jsonError.message) {
+                                errorMessage = jsonError.message;
+                            } else if (jsonError.errors) {
+                                errorMessage = Object.values(jsonError.errors).flat().join(', ');
+                            }
+                        } catch (e) {
+                            // Si ce n'est pas du JSON, garder le texte brut
+                            if (errorData.length > 0 && errorData.length < 200) {
+                                errorMessage += ': ' + errorData.substring(0, 100);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Could not read error response:', e);
+                    }
+
+                    this.showToast(errorMessage, 'error');
+                    this.processing = false;
+                    return;
+                }
+
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Parsed JSON response:', data);
+                } catch (e) {
+                    console.error('Failed to parse JSON, response was:', responseText.substring(0, 500));
+                    this.showToast('Le serveur a retourné une réponse HTML au lieu de JSON', 'error');
+                    this.processing = false;
+                    return;
+                }
 
                 if (data.success) {
                     this.showToast(data.message, 'success');
                     this.showUnavailableModal = false;
-                    
+
                     // Mettre à jour le package ou le retirer de la liste
                     if (data.data.is_final_attempt) {
                         // 3ème tentative -> retirer de la liste (va vers returns)
@@ -636,7 +723,7 @@ function deliveriesApp() {
                             this.packages[packageIndex].unavailable_notes = this.unavailableForm.notes;
                         }
                     }
-                    
+
                     this.applyFilters();
                     this.calculateStats();
                     this.resetUnavailableForm();
@@ -645,9 +732,20 @@ function deliveriesApp() {
                 }
             } catch (error) {
                 console.error('Erreur unavailable:', error);
-                this.showToast('Erreur de connexion', 'error');
+
+                // Message d'erreur plus détaillé selon le type d'erreur
+                let errorMessage = 'Erreur de connexion';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Erreur réseau - Vérifiez votre connexion internet';
+                } else if (error.name === 'SyntaxError') {
+                    errorMessage = 'Erreur de format de réponse du serveur';
+                } else if (error.message) {
+                    errorMessage = `Erreur: ${error.message}`;
+                }
+
+                this.showToast(errorMessage, 'error');
             }
-            
+
             this.processing = false;
         },
 

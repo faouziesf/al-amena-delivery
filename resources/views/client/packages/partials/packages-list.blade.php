@@ -24,72 +24,75 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
     </div>
     @endif
 
-    <div class="divide-y divide-gray-200 bg-white">
+    <div class="space-y-3">
         @foreach($packages as $package)
-        <div class="package-card group hover:bg-gray-50/50 transition-colors duration-150 relative">
-            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-r-full
-                {{ match($package->status) {
-                    'DELIVERED' => 'bg-green-500',
-                    'PICKED_UP' => 'bg-indigo-500',
-                    'RETURNED' => 'bg-orange-500',
-                    'REFUSED' => 'bg-red-500',
-                    default => 'bg-blue-500',
-                } }}
-            "></div>
-            
-            <div class="pl-5 pr-4 py-3 flex items-center flex-wrap justify-between gap-x-6 gap-y-3">
+        <div class="bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div class="p-4 flex items-center justify-between gap-4">
 
-                <div class="flex items-center space-x-3 min-w-[220px]">
+                <!-- Checkbox et Info de base -->
+                <div class="flex items-center space-x-3">
                     @if($showBulkActions)
                         <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}" data-status="{{ $package->status }}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                     @endif
                     <div>
-                        <a href="{{ route('client.packages.show', $package) }}" class="font-bold text-gray-800 hover:text-blue-600 text-sm">{{ $package->package_code }}</a>
-                        <p class="text-xs text-gray-500">{{ $package->created_at->format('d/m/y H:i') }}</p>
+                        <div class="flex items-center space-x-3">
+                            <a href="{{ route('client.packages.show', $package) }}" class="font-semibold text-gray-900 hover:text-blue-600">{{ $package->package_code }}</a>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full
+                                {{ match($package->status) {
+                                    'CREATED' => 'bg-gray-100 text-gray-700',
+                                    'AVAILABLE' => 'bg-blue-100 text-blue-700',
+                                    'PICKED_UP' => 'bg-indigo-100 text-indigo-700',
+                                    'DELIVERED' => 'bg-green-100 text-green-700',
+                                    'RETURNED' => 'bg-orange-100 text-orange-700',
+                                    'REFUSED' => 'bg-red-100 text-red-700',
+                                    default => 'bg-gray-100 text-gray-700',
+                                } }}
+                            ">{{ $package->status }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">
+                            {{ $package->recipient_data['name'] ?? 'N/A' }} - {{ $package->delegationTo->name ?? 'N/A' }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-2 text-xs min-w-[250px] flex-1">
-                    <div class="text-right">
-                        <p class="font-medium text-gray-800 truncate">{{ $package->supplier_data['name'] ?? 'N/A' }}</p>
-                        <p class="text-gray-500">{{ $package->delegationFrom->name ?? 'N/A' }}</p>
-                    </div>
-                    <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-                    <div>
-                        <p class="font-medium text-gray-800 truncate">{{ $package->recipient_data['name'] ?? 'N/A' }}</p>
-                        <p class="text-gray-500">{{ $package->delegationTo->name ?? 'N/A' }}</p>
-                    </div>
+                <!-- Montant COD -->
+                <div class="text-right">
+                    <p class="text-lg font-bold text-green-600">{{ number_format($package->cod_amount, 2) }} DT</p>
                 </div>
 
-                <div class="min-w-[120px] text-right">
-                    <p class="text-base font-bold text-emerald-600 whitespace-nowrap">{{ number_format($package->cod_amount, 2) }} DT</p>
-                </div>
-                
-                <div class="flex items-center space-x-3">
-                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full
-                        {{ match($package->status) {
-                            'CREATED' => 'bg-gray-100 text-gray-700',
-                            'AVAILABLE' => 'bg-blue-100 text-blue-700',
-                            'PICKED_UP' => 'bg-indigo-100 text-indigo-700',
-                            'DELIVERED' => 'bg-green-100 text-green-700',
-                            'RETURNED' => 'bg-orange-100 text-orange-700',
-                            'REFUSED' => 'bg-red-100 text-red-700',
-                            default => 'bg-gray-100 text-gray-700',
-                        } }}
-                    ">{{ $package->status }}</span>
+                <!-- Actions simplifiées -->
+                <div class="flex items-center space-x-1">
+                    <a href="{{ route('client.packages.show', $package) }}" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir détails">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </a>
 
-                    <div class="flex items-center space-x-1">
-                        <a href="{{ route('client.packages.show', $package) }}" class="p-1.5 text-gray-500 hover:bg-gray-200 rounded" title="Détails"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></a>
-                        
-                        <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank" class="p-1.5 text-gray-500 hover:bg-gray-200 rounded" title="Suivre le colis en ligne">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                        </a>
-                        <a href="{{ route('client.packages.print', $package) }}" target="_blank" class="p-1.5 text-gray-500 hover:bg-gray-200 rounded" title="Imprimer bon"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></a>
-                        
-                        @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
-                        <button onclick="deletePackage({{ $package->id }}, '{{ $package->package_code }}')" class="p-1.5 text-red-500 hover:bg-red-100 rounded" title="Supprimer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-                        @endif
-                    </div>
+                    <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank" class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Suivre">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                    </a>
+
+                    <a href="{{ route('client.packages.print', $package) }}" target="_blank" class="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Imprimer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                    </a>
+
+                    @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
+                        <x-client.package-complaint-button :package="$package" />
+                    @endif
+
+                    @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                        <button onclick="deletePackage({{ $package->id }}, '{{ $package->package_code }}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

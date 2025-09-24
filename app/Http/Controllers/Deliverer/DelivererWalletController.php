@@ -325,6 +325,89 @@ class DelivererWalletController extends Controller
     }
 
     /**
+     * Afficher le formulaire de recharge
+     */
+    public function showTopupForm()
+    {
+        $user = Auth::user();
+        $user->ensureWallet();
+        $wallet = $user->wallet;
+
+        // Stats recharges personnelles (si le livreur peut recharger son propre wallet)
+        $personalTopupStats = [
+            'total_personal_topups' => FinancialTransaction::where('user_id', $user->id)
+                                                          ->where('type', 'WALLET_TOPUP')
+                                                          ->count(),
+            'total_amount_topped_up' => FinancialTransaction::where('user_id', $user->id)
+                                                           ->where('type', 'WALLET_TOPUP')
+                                                           ->where('status', 'COMPLETED')
+                                                           ->sum('amount')
+        ];
+
+        return view('deliverer.wallet.topup', compact('wallet', 'personalTopupStats'));
+    }
+
+    /**
+     * Traiter une recharge de wallet livreur
+     */
+    public function processTopup(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1|max:500',
+            'payment_method' => 'required|in:CASH,BANK_TRANSFER',
+            'reference' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $user = Auth::user();
+            $user->ensureWallet();
+
+            // Créer la transaction de recharge
+            $transaction = FinancialTransaction::create([
+                'transaction_id' => 'TPD_' . $user->id . '_' . time(),
+                'user_id' => $user->id,
+                'type' => 'WALLET_TOPUP',
+                'amount' => $validated['amount'],
+                'description' => "Recharge wallet livreur - {$validated['payment_method']}",
+                'status' => $validated['payment_method'] === 'CASH' ? 'COMPLETED' : 'PENDING',
+                'reference' => $validated['reference'] ?? null,
+                'metadata' => [
+                    'payment_method' => $validated['payment_method'],
+                    'notes' => $validated['notes'],
+                    'topup_type' => 'personal_topup'
+                ]
+            ]);
+
+            // Si paiement cash, mettre à jour le wallet immédiatement
+            if ($validated['payment_method'] === 'CASH') {
+                $wallet = $user->wallet;
+                $wallet->increment('balance', $validated['amount']);
+
+                $transaction->update([
+                    'wallet_balance_before' => $wallet->balance - $validated['amount'],
+                    'wallet_balance_after' => $wallet->balance
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $validated['payment_method'] === 'CASH'
+                    ? "Recharge de {$validated['amount']} DT effectuée avec succès!"
+                    : "Demande de recharge soumise. En attente de validation.",
+                'new_balance' => $user->wallet->fresh()->balance,
+                'transaction_id' => $transaction->transaction_id
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la recharge : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Export wallet données (CSV)
      */
     public function exportTransactions(Request $request)
@@ -340,7 +423,7 @@ class DelivererWalletController extends Controller
             ->get();
 
         $filename = "wallet_transactions_{$user->id}_{$startDate}_to_{$endDate}.csv";
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -348,7 +431,7 @@ class DelivererWalletController extends Controller
 
         return response()->stream(function() use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // Headers CSV
             fputcsv($file, [
                 'Date',

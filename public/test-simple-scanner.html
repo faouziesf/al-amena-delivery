@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Scanner Simple</title>
+    <meta name="csrf-token" content="test-token-for-demo">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-center mb-6">🔍 Test Scanner Simple</h1>
+
+        <!-- Formulaire de scan simple -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-lg font-semibold mb-4">Scanner un code</h2>
+
+            <form class="scan-form space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Code du colis
+                    </label>
+                    <input type="text" name="code"
+                           placeholder="PKG_CLQVFCWP_20250921"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <button type="submit"
+                        class="scan-loading w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Scanner
+                </button>
+            </form>
+        </div>
+
+        <!-- Tests directs -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-lg font-semibold mb-4">Tests rapides</h2>
+            <div class="space-y-2">
+                <button onclick="simpleScan('PKG_CLQVFCWP_20250921')"
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                    Test Code Valide
+                </button>
+                <button onclick="simpleScan('INVALID_CODE')"
+                        class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                    Test Code Invalide
+                </button>
+                <button onclick="simpleScan('')"
+                        class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700">
+                    Test Code Vide
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center text-sm text-gray-600">
+            <p>🚀 Scanner simple avec vérification en base de données</p>
+        </div>
+    </div>
+
+    <!-- Scanner script -->
+    <script src="/js/simple-scanner.js"></script>
+</body>
+</html>

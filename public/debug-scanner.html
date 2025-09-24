@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 DEBUG Scanner Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .warning { background: #fff3e0; color: #ef6c00; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        input { padding: 10px; margin: 5px; width: 300px; border: 1px solid #ddd; border-radius: 5px; }
+        #log { height: 300px; overflow-y: auto; background: #000; color: #00ff00; padding: 10px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Scanner Debug Test</h1>
+
+    <!-- Debug Console -->
+    <div class="debug">
+        <h3>Console Log</h3>
+        <div id="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <!-- Test Form -->
+    <div class="debug">
+        <h3>Test Scanner</h3>
+        <input type="text" id="testCode" value="PKG_CLQVFCWP_20250921" placeholder="Code à tester">
+        <br>
+        <button class="btn-primary" onclick="testScan()">Test Scan</button>
+        <button class="btn-success" onclick="testValidCode()">Test Code Valide</button>
+        <button class="btn-danger" onclick="testInvalidCode()">Test Code Invalide</button>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="debug">
+        Status: Prêt à tester
+    </div>
+
+    <!-- Result -->
+    <div id="result" class="debug" style="display: none;">
+        <!-- Résultat ici -->
+    </div>
+
+    <script>
+        console.log('🚀 DEBUG Scanner Page chargée');
+        log('🚀 DEBUG Scanner Page chargée');
+
+        // Logger dans la page ET console
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+
+            console.log(logEntry);
+            if (logDiv) {
+                logDiv.innerHTML += logEntry + '\n';
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'debug';
+            if (type === 'error') statusDiv.className += ' error';
+            if (type === 'success') statusDiv.className += ' success';
+            if (type === 'warning') statusDiv.className += ' warning';
+            log(`STATUS: ${message}`);
+        }
+
+        // Vérifier les prérequis
+        function checkPrerequisites() {
+            log('🔍 Vérification des prérequis...');
+
+            // Check fetch API
+            if (typeof fetch !== 'undefined') {
+                log('✅ Fetch API disponible');
+            } else {
+                log('❌ Fetch API non disponible');
+            }
+
+            // Test de l'URL
+            const testUrl = '/deliverer/packages/scan';
+            log(`🌐 URL de test: ${window.location.origin}${testUrl}`);
+        }
+
+        // Fonction de scan ultra-simple
+        async function simpleScan(code) {
+            log(`📦 Début scan pour code: "${code}"`);
+            setStatus('Scan en cours...', 'warning');
+
+            try {
+                // Préparer la requête
+                const url = '/deliverer/packages/scan';
+
+                log(`📡 URL: ${url}`);
+
+                const requestData = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ code: code })
+                };
+
+                log(`📤 Request data: ${JSON.stringify(requestData, null, 2)}`);
+
+                // Faire la requête
+                log('🚀 Envoi de la requête...');
+                const response = await fetch(url, requestData);
+
+                log(`📥 Response status: ${response.status}`);
+                log(`📥 Response ok: ${response.ok}`);
+
+                // Analyser la réponse
+                const data = await response.json();
+                log(`📋 Response data: ${JSON.stringify(data, null, 2)}`);
+
+                // Afficher le résultat
+                showResult(response.ok, data);
+
+                if (response.ok) {
+                    setStatus('Scan réussi!', 'success');
+                } else {
+                    setStatus('Scan échoué: ' + response.status, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ ERREUR: ${error.message}`);
+                log(`❌ Stack: ${error.stack}`);
+                setStatus('Erreur: ' + error.message, 'error');
+                showResult(false, { message: error.message });
+            }
+        }
+
+        // Afficher le résultat
+        function showResult(success, data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+
+            let html = `<h3>${success ? '✅ Succès' : '❌ Erreur'}</h3>`;
+
+            if (success && data.package) {
+                html += `
+                    <p><strong>Code:</strong> ${data.package.code}</p>
+                    <p><strong>Status:</strong> ${data.package.status}</p>
+                `;
+                if (data.delivery_info) {
+                    html += `
+                        <p><strong>Destinataire:</strong> ${data.delivery_info.name || 'N/A'}</p>
+                        <p><strong>Adresse:</strong> ${data.delivery_info.address || 'N/A'}</p>
+                    `;
+                }
+                if (data.package.cod_amount > 0) {
+                    html += `<p><strong>COD:</strong> ${data.package.formatted_cod || data.package.cod_amount + ' DA'}</p>`;
+                }
+            } else {
+                html += `<p><strong>Message:</strong> ${data.message || 'Erreur inconnue'}</p>`;
+            }
+
+            html += `<p><strong>Raw data:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre></p>`;
+
+            resultDiv.innerHTML = html;
+            log(`📋 Résultat affiché: ${success ? 'SUCCÈS' : 'ÉCHEC'}`);
+        }
+
+        // Fonctions de test
+        function testScan() {
+            const code = document.getElementById('testCode').value;
+            log(`🧪 Test manuel avec code: "${code}"`);
+            simpleScan(code);
+        }
+
+        function testValidCode() {
+            log('🧪 Test avec code valide prédéfini');
+            simpleScan('PKG_CLQVFCWP_20250921');
+        }
+
+        function testInvalidCode() {
+            log('🧪 Test avec code invalide');
+            simpleScan('INVALID_CODE_123');
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📄 DOM chargé');
+            checkPrerequisites();
+            setStatus('Prêt à tester');
+        });
+    </script>
+</body>
+</html>

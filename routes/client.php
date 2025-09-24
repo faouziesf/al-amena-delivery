@@ -6,6 +6,11 @@ use App\Http\Controllers\Client\ClientPackageImportController;
 use App\Http\Controllers\Client\ClientWalletController;
 use App\Http\Controllers\Client\ClientComplaintController;
 use App\Http\Controllers\Client\ClientNotificationController;
+use App\Http\Controllers\Client\ClientPickupRequestController;
+use App\Http\Controllers\Client\ClientPickupAddressController;
+use App\Http\Controllers\Client\ClientBankAccountController;
+use App\Http\Controllers\Client\ClientProfileController;
+use App\Http\Controllers\Client\ClientTicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +23,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     
     // ==================== DASHBOARD ====================
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/api/stats', [ClientDashboardController::class, 'apiStats'])->name('dashboard.api.stats');
+
+    // ==================== API ROUTES ====================
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/dashboard-stats', [ClientDashboardController::class, 'apiStats'])->name('client.dashboard.stats');
+    });
 
     // ==================== GESTION DES COLIS ====================
     Route::prefix('packages')->name('packages.')->group(function () {
@@ -47,6 +58,37 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
             Route::get('/{batch}/errors', [ClientPackageImportController::class, 'apiImportErrors'])->name('errors');
             Route::post('/validate-csv', [ClientPackageImportController::class, 'apiValidateCsv'])->name('validate');
         });
+    });
+
+    // ==================== GESTION DES DEMANDES DE COLLECTE ====================
+    Route::prefix('pickup-requests')->name('pickup-requests.')->group(function () {
+        Route::get('/', [ClientPickupRequestController::class, 'index'])->name('index');
+        Route::get('/create', [ClientPickupRequestController::class, 'create'])->name('create');
+        Route::post('/', [ClientPickupRequestController::class, 'store'])->name('store');
+        Route::get('/{pickupRequest}', [ClientPickupRequestController::class, 'show'])->name('show');
+        Route::post('/{pickupRequest}/cancel', [ClientPickupRequestController::class, 'cancel'])->name('cancel');
+
+        // Gestion des brouillons de pickup
+        Route::post('/manage-draft', [ClientPickupRequestController::class, 'manageDraft'])->name('manage.draft');
+        Route::post('/create-from-draft', [ClientPickupRequestController::class, 'createFromDraft'])->name('create.from.draft');
+
+        // API Endpoints
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/stats', [ClientPickupRequestController::class, 'apiStats'])->name('stats');
+            Route::get('/recent', [ClientPickupRequestController::class, 'apiRecent'])->name('recent');
+            Route::get('/available-packages', [ClientPickupRequestController::class, 'apiAvailablePackages'])->name('available.packages');
+        });
+    });
+
+    // ==================== GESTION DES ADRESSES DE COLLECTE ====================
+    Route::prefix('pickup-addresses')->name('pickup-addresses.')->group(function () {
+        Route::get('/', [ClientPickupAddressController::class, 'index'])->name('index');
+        Route::get('/create', [ClientPickupAddressController::class, 'create'])->name('create');
+        Route::post('/', [ClientPickupAddressController::class, 'store'])->name('store');
+        Route::get('/{pickupAddress}/edit', [ClientPickupAddressController::class, 'edit'])->name('edit');
+        Route::put('/{pickupAddress}', [ClientPickupAddressController::class, 'update'])->name('update');
+        Route::delete('/{pickupAddress}', [ClientPickupAddressController::class, 'destroy'])->name('destroy');
+        Route::post('/{pickupAddress}/set-default', [ClientPickupAddressController::class, 'setDefault'])->name('set-default');
     });
 
     // ==================== GESTION PORTEFEUILLE CLIENT ====================
@@ -93,6 +135,40 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/{package}/reschedule', [ClientComplaintController::class, 'requestReschedule'])->name('reschedule');
         Route::get('/{complaint}/timeline', [ClientComplaintController::class, 'showTimeline'])->name('timeline');
         Route::post('/{complaint}/mark-resolved', [ClientComplaintController::class, 'markResolved'])->name('mark.resolved');
+    });
+
+    // ==================== TICKETS CLIENT ====================
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [ClientTicketController::class, 'index'])->name('index');
+        Route::get('/create', [ClientTicketController::class, 'create'])->name('create');
+        Route::post('/', [ClientTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [ClientTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/messages', [ClientTicketController::class, 'addMessage'])->name('add.message');
+        Route::post('/{ticket}/mark-resolved', [ClientTicketController::class, 'markResolved'])->name('mark.resolved');
+        Route::get('/from-complaint/{complaint}', [ClientTicketController::class, 'createFromComplaint'])->name('from.complaint');
+    });
+
+    // ==================== PROFIL CLIENT ====================
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ClientProfileController::class, 'index'])->name('index');
+        Route::get('/edit', [ClientProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [ClientProfileController::class, 'update'])->name('update');
+        Route::get('/download-identity', [ClientProfileController::class, 'downloadIdentityDocument'])->name('download-identity');
+        Route::delete('/delete-identity', [ClientProfileController::class, 'deleteIdentityDocument'])->name('delete-identity');
+        Route::post('/validate-fiscal', [ClientProfileController::class, 'validateFiscalNumber'])->name('validate-fiscal');
+    });
+
+    // ==================== COMPTES BANCAIRES CLIENT ====================
+    Route::prefix('bank-accounts')->name('bank-accounts.')->group(function () {
+        Route::get('/', [ClientBankAccountController::class, 'index'])->name('index');
+        Route::get('/create', [ClientBankAccountController::class, 'create'])->name('create');
+        Route::post('/', [ClientBankAccountController::class, 'store'])->name('store');
+        Route::get('/{bankAccount}', [ClientBankAccountController::class, 'show'])->name('show');
+        Route::get('/{bankAccount}/edit', [ClientBankAccountController::class, 'edit'])->name('edit');
+        Route::put('/{bankAccount}', [ClientBankAccountController::class, 'update'])->name('update');
+        Route::delete('/{bankAccount}', [ClientBankAccountController::class, 'destroy'])->name('destroy');
+        Route::post('/{bankAccount}/set-default', [ClientBankAccountController::class, 'setDefault'])->name('set-default');
+        Route::post('/validate-iban', [ClientBankAccountController::class, 'validateIban'])->name('validate-iban');
     });
 
     // ==================== NOTIFICATIONS CLIENT ====================

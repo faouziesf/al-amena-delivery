@@ -16,7 +16,7 @@
 @section('content')
     <!-- Filtres -->
     <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 mb-6">
-        <form method="GET" action="{{ route('client.complaints') }}" class="space-y-4">
+        <form method="GET" action="{{ route('client.complaints.index') }}" class="space-y-4">
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Filtre par statut -->
@@ -61,7 +61,7 @@
                     </button>
                     
                     @if(request()->hasAny(['status', 'type']))
-                        <a href="{{ route('client.complaints') }}" 
+                        <a href="{{ route('client.complaints.index') }}" 
                            class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-xl font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 transition ease-in-out duration-150">
                             Réinitialiser
                         </a>
@@ -334,7 +334,7 @@
             <p class="text-gray-500 mb-6">
                 @if(request()->hasAny(['status', 'type']))
                     Aucune réclamation ne correspond à vos critères de recherche.
-                    <a href="{{ route('client.complaints') }}" class="text-purple-600 hover:text-purple-800 font-medium">
+                    <a href="{{ route('client.complaints.index') }}" class="text-purple-600 hover:text-purple-800 font-medium">
                         Voir toutes les réclamations
                     </a>
                 @else

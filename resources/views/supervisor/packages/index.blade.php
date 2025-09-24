@@ -1,0 +1,306 @@
+@extends('layouts.supervisor')
+
+@section('content')
+<div class="container mx-auto px-4 py-6">
+    <!-- En-tête -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Gestion des Colis</h1>
+            <p class="text-gray-600">Supervision complète de tous les colis du système</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="generateRunSheet()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Feuille de Route
+            </button>
+            <a href="{{ route('supervisor.reports.operational') }}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Rapport
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 uppercase">Total</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['total_packages'] }}</p>
+                </div>
+                <div class="bg-blue-100 rounded-full p-3">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-600">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 uppercase">Livrés</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['delivered_packages'] }}</p>
+                </div>
+                <div class="bg-green-100 rounded-full p-3">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-600">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 uppercase">En Transit</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['picked_up_packages'] }}</p>
+                </div>
+                <div class="bg-yellow-100 rounded-full p-3">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-600">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 uppercase">Problèmes</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['returned_packages'] + $stats['cancelled_packages'] }}</p>
+                </div>
+                <div class="bg-red-100 rounded-full p-3">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+                <input type="text" name="search" value="{{ request('search') }}"
+                       placeholder="N° suivi, destinataire..."
+                       class="w-full border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                <select name="status" class="w-full border-gray-300 rounded-lg">
+                    <option value="">Tous</option>
+                    <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Créé</option>
+                    <option value="AVAILABLE" {{ request('status') == 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
+                    <option value="ACCEPTED" {{ request('status') == 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
+                    <option value="PICKED_UP" {{ request('status') == 'PICKED_UP' ? 'selected' : '' }}>Collecté</option>
+                    <option value="DELIVERED" {{ request('status') == 'DELIVERED' ? 'selected' : '' }}>Livré</option>
+                    <option value="RETURNED" {{ request('status') == 'RETURNED' ? 'selected' : '' }}>Retourné</option>
+                    <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <select name="delivery_type" class="w-full border-gray-300 rounded-lg">
+                    <option value="">Tous</option>
+                    <option value="fast" {{ request('delivery_type') == 'fast' ? 'selected' : '' }}>Rapide</option>
+                    <option value="advanced" {{ request('delivery_type') == 'advanced' ? 'selected' : '' }}>Avancé</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                <select name="client_id" class="w-full border-gray-300 rounded-lg">
+                    <option value="">Tous clients</option>
+                    @foreach($clients as $client)
+                    <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }}>
+                        {{ $client->name }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full border-gray-300 rounded-lg">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Actions groupées -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6" x-data="{ selectedPackages: [] }">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">Actions groupées:</span>
+                <button @click="bulkUpdateStatus('AVAILABLE')" class="px-3 py-1 bg-blue-200 text-blue-800 rounded-lg text-sm hover:bg-blue-300">
+                    Rendre Disponible
+                </button>
+                <button @click="bulkUpdateStatus('CANCELLED')" class="px-3 py-1 bg-red-200 text-red-800 rounded-lg text-sm hover:bg-red-300">
+                    Annuler
+                </button>
+                <button @click="bulkAssignDeliverer()" class="px-3 py-1 bg-green-200 text-green-800 rounded-lg text-sm hover:bg-green-300">
+                    Assigner Livreur
+                </button>
+            </div>
+            <span x-text="selectedPackages.length + ' colis sélectionné(s)'" class="text-sm text-gray-600"></span>
+        </div>
+    </div>
+
+    <!-- Tableau des colis -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" class="rounded border-gray-300">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colis</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destinataire</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COD</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livreur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($packages as $package)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" value="{{ $package->id }}" class="rounded border-gray-300">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">#{{ $package->tracking_number }}</div>
+                            <div class="text-sm text-gray-500">{{ $package->delivery_type === 'fast' ? 'Rapide' : 'Avancé' }}</div>
+                            <div class="text-xs text-gray-400">{{ $package->created_at->format('d/m/Y') }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $package->client->name }}</div>
+                            <div class="text-sm text-gray-500">{{ $package->client->email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $package->recipient_name }}</div>
+                            <div class="text-sm text-gray-500">{{ $package->recipient_phone }}</div>
+                            <div class="text-xs text-gray-400">{{ Str::limit($package->recipient_address, 30) }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                @if($package->status === 'CREATED') bg-gray-100 text-gray-800
+                                @elseif($package->status === 'AVAILABLE') bg-blue-100 text-blue-800
+                                @elseif($package->status === 'ACCEPTED') bg-yellow-100 text-yellow-800
+                                @elseif($package->status === 'PICKED_UP') bg-orange-100 text-orange-800
+                                @elseif($package->status === 'DELIVERED') bg-green-100 text-green-800
+                                @elseif($package->status === 'RETURNED') bg-red-100 text-red-800
+                                @else bg-gray-100 text-gray-800
+                                @endif">
+                                {{ $package->status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ number_format($package->cod_amount, 3) }} TND
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($package->deliverer)
+                            <div class="text-sm font-medium text-gray-900">{{ $package->deliverer->name }}</div>
+                            <div class="text-sm text-gray-500">{{ $package->deliverer->phone }}</div>
+                            @else
+                            <span class="text-sm text-gray-400">Non assigné</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('supervisor.packages.show', $package) }}"
+                                   class="text-red-600 hover:text-red-900">Voir</a>
+
+                                @if(!$package->deliverer_id)
+                                <button onclick="showAssignModal({{ $package->id }})"
+                                        class="text-blue-600 hover:text-blue-900">Assigner</button>
+                                @endif
+
+                                <button onclick="showStatusModal({{ $package->id }}, '{{ $package->status }}')"
+                                        class="text-green-600 hover:text-green-900">Statut</button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                                <p class="text-lg font-medium">Aucun colis trouvé</p>
+                                <p class="text-sm text-gray-400 mt-1">Essayez de modifier vos filtres</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if($packages->hasPages())
+        <div class="bg-white px-6 py-3 border-t border-gray-200">
+            {{ $packages->withQueryString()->links() }}
+        </div>
+        @endif
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Modal assignation livreur -->
+<div id="assignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold mb-4">Assigner un Livreur</h3>
+            <form id="assignForm">
+                <div class="mb-4">
+                    <select id="delivererSelect" class="w-full border-gray-300 rounded-lg">
+                        <option value="">Sélectionner un livreur</option>
+                        @foreach($deliverers as $deliverer)
+                        <option value="{{ $deliverer->id }}">{{ $deliverer->name }} - {{ $deliverer->phone }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('assignModal')" class="px-4 py-2 text-gray-600 border rounded-lg">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">Assigner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPackageId = null;
+
+function showAssignModal(packageId) {
+    currentPackageId = packageId;
+    document.getElementById('assignModal').classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
+function generateRunSheet() {
+    const selectedPackages = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).filter(v => v);
+    if (selectedPackages.length === 0) {
+        alert('Veuillez sélectionner au moins un colis');
+        return;
+    }
+    alert('Génération de la feuille de route pour ' + selectedPackages.length + ' colis...');
+}
+</script>
+@endsection

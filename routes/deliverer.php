@@ -13,12 +13,38 @@ use App\Http\Controllers\Deliverer\DelivererProfileController;
 use App\Http\Controllers\Deliverer\DelivererHelpController;
 use App\Http\Controllers\Deliverer\DelivererEmergencyController;
 use App\Http\Controllers\Deliverer\DelivererReceiptController;
+use App\Http\Controllers\Deliverer\DelivererPickupController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->name('deliverer.')->group(function () {
     
     // ==================== DASHBOARD ====================
     Route::get('/dashboard', [DelivererDashboardController::class, 'index'])->name('dashboard');
+
+    // ==================== GESTION DES DEMANDES DE COLLECTE ====================
+    Route::prefix('pickups')->name('pickups.')->group(function () {
+        Route::get('/', [DelivererPickupController::class, 'index'])->name('index');
+        Route::get('/{pickupRequest}', [DelivererPickupController::class, 'show'])->name('show');
+        Route::post('/{pickupRequest}/assign', [DelivererPickupController::class, 'assign'])->name('assign');
+        Route::post('/{pickupRequest}/complete', [DelivererPickupController::class, 'complete'])->name('complete');
+        Route::get('/scan/pickup', [DelivererPickupController::class, 'scan'])->name('scan');
+        Route::post('/scan/process', [DelivererPickupController::class, 'processScan'])->name('scan.process');
+        Route::get('/api/stats', [DelivererPickupController::class, 'apiStats'])->name('api.stats');
+    });
+
+    // ==================== PAGES DE SCAN SIMPLES ====================
+    Route::get('/scan-simple', function() {
+        return view('deliverer.scan-simple');
+    })->name('scan.simple');
+
+    Route::get('/scan-lot', function() {
+        return view('deliverer.scan-lot');
+    })->name('scan.lot');
+
+    // ==================== SCAN PAR LOT ====================
+    Route::get('/packages/batch-pickup', [DelivererPackageController::class, 'batchPickup'])->name('packages.batch-pickup');
+    Route::post('/packages/check-pickup', [DelivererPackageController::class, 'checkPickup'])->name('packages.check-pickup');
+    Route::post('/packages/batch-accept', [DelivererPackageController::class, 'batchAccept'])->name('packages.batch-accept');
 
     // ==================== GESTION DES COLIS ====================
     Route::prefix('packages')->name('packages.')->group(function () {
@@ -44,6 +70,7 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         // Actions groupées - NOUVELLES
         Route::post('/bulk-accept', [DelivererPackageController::class, 'bulkAccept'])->name('bulk.accept');
         Route::post('/bulk-pickup', [DelivererPackageController::class, 'bulkPickup'])->name('bulk.pickup');
+        Route::post('/bulk-change-deliverer', [DelivererPackageController::class, 'bulkChangeDeliverer'])->name('bulk.change-deliverer');
         Route::post('/bulk-deliver', [DelivererPackageController::class, 'bulkDeliver'])->name('bulk.deliver');
         Route::post('/bulk-return', [DelivererPackageController::class, 'bulkReturn'])->name('bulk.return');
 
@@ -52,20 +79,27 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         Route::get('/{package}/delivery-receipt', [DelivererPackageController::class, 'deliveryReceipt'])->name('delivery.receipt');
         Route::get('/{package}/pickup-photo', [DelivererPackageController::class, 'showPickupPhoto'])->name('pickup.photo');
         Route::get('/{package}/delivery-photo', [DelivererPackageController::class, 'showDeliveryPhoto'])->name('delivery.photo');
+
     });
 
     // ==================== LISTES SPÉCIFIQUES (5 LISTES) ====================
     // LISTE 1: Pickups Disponibles
+    Route::get('/packages/available', [DelivererPackageController::class, 'availablePickups'])->name('packages.available');
     Route::get('/pickups/available', [DelivererPackageController::class, 'availablePickups'])->name('pickups.available');
-    
+
     // LISTE 2: Mes Pickups (acceptés) - AMÉLIORÉE
+    Route::get('/packages/my-pickups', [DelivererPackageController::class, 'myPickups'])->name('packages.my-pickups');
     Route::get('/pickups/mine', [DelivererPackageController::class, 'myPickups'])->name('pickups.mine');
-    
+
     // LISTE 3: Livraisons (à livrer + 4ème tentatives)
+    Route::get('/packages/deliveries', [DelivererPackageController::class, 'deliveries'])->name('packages.deliveries');
     Route::get('/deliveries', [DelivererPackageController::class, 'deliveries'])->name('deliveries.index');
-    
+    Route::get('/deliveries/single', [DelivererPackageController::class, 'singleDelivery'])->name('deliveries.single');
+
     // LISTE 4: Retours (à retourner expéditeur)
+    Route::get('/packages/returns', [DelivererPackageController::class, 'returns'])->name('packages.returns');
     Route::get('/returns', [DelivererPackageController::class, 'returns'])->name('returns.index');
+
 
     // LISTE 5: Paiements clients
     Route::prefix('payments')->name('payments.')->group(function () {
@@ -167,7 +201,7 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     Route::prefix('api')->name('api.')->group(function () {
         
         // Dashboard APIs - AMÉLIORÉES
-        Route::get('/dashboard-stats', [DelivererPackageController::class, 'apiDashboardStats'])->name('dashboard.stats');
+        Route::get('/dashboard-stats', [DelivererPackageController::class, 'apiDashboardStats'])->name('deliverer.dashboard.stats');
         
         // Package APIs - NOUVELLES/AMÉLIORÉES  
         Route::get('/available-count', function() {
@@ -290,27 +324,6 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         })->name('health');
     });
     
-    // ==================== ROUTES DE DÉVELOPPEMENT (à supprimer en prod) ====================
-    Route::prefix('dev')->name('dev.')->middleware(['app.debug'])->group(function () {
-        // Test scanner
-        Route::get('/test-scanner', function() {
-            return view('deliverer.dev.test-scanner');
-        })->name('test.scanner');
-        
-        // Test génération de codes
-        Route::get('/generate-test-codes', function() {
-            $codes = [];
-            for ($i = 0; $i < 10; $i++) {
-                $codes[] = 'PKG_' . strtoupper(\Illuminate\Support\Str::random(8)) . '_' . date('Ymd');
-            }
-            return response()->json(['codes' => $codes]);
-        })->name('generate.codes');
-        
-        // Reset localStorage (pour tests)
-        Route::post('/reset-local-storage', function() {
-            return response()->json(['message' => 'localStorage reset signal sent']);
-        })->name('reset.storage');
-    });
 });
 
 // ==================== ROUTES PUBLIQUES LIÉES AU SCANNER ====================

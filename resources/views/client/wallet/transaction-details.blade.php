@@ -68,14 +68,14 @@
                             <div class="text-center">
                                 <div class="flex items-center justify-center mb-4">
                                     @if($transaction->amount > 0)
-                                        <div class="w-16 h-16 bg-gradient-to-r from-emerald-100 to-green-100 rounded-full flex items-center justify-center shadow-lg">
-                                            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-purple-200 rounded-full flex items-center justify-center shadow-lg">
+                                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                                             </svg>
                                         </div>
                                     @else
-                                        <div class="w-16 h-16 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center shadow-lg">
-                                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="w-16 h-16 bg-gradient-to-r from-purple-200 to-purple-300 rounded-full flex items-center justify-center shadow-lg">
+                                            <svg class="w-8 h-8 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                                             </svg>
                                         </div>
@@ -148,9 +148,9 @@
                 <!-- Impact sur le solde -->
                 @if($transaction->wallet_balance_before !== null && $transaction->wallet_balance_after !== null)
                     <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-emerald-50 to-green-50 px-6 py-4 border-b border-emerald-100">
+                        <div class="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
                             <h3 class="text-xl font-semibold text-gray-800 flex items-center">
-                                <svg class="w-6 h-6 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                                 </svg>
                                 Impact sur le solde
@@ -162,9 +162,9 @@
                             <div class="flex items-center justify-between space-x-4">
                                 <!-- Solde avant -->
                                 <div class="text-center flex-1">
-                                    <div class="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl p-6 shadow-sm">
-                                        <p class="text-sm font-medium text-blue-700 mb-2">Solde avant</p>
-                                        <p class="text-2xl font-bold text-blue-900">{{ number_format($transaction->wallet_balance_before, 3) }} DT</p>
+                                    <div class="bg-gradient-to-r from-purple-100 to-purple-200 rounded-2xl p-6 shadow-sm">
+                                        <p class="text-sm font-medium text-purple-700 mb-2">Solde avant</p>
+                                        <p class="text-2xl font-bold text-purple-900">{{ number_format($transaction->wallet_balance_before, 3) }} DT</p>
                                     </div>
                                 </div>
                                 
@@ -185,16 +185,16 @@
                                 
                                 <!-- Solde après -->
                                 <div class="text-center flex-1">
-                                    <div class="bg-gradient-to-r from-emerald-100 to-green-100 rounded-2xl p-6 shadow-sm">
-                                        <p class="text-sm font-medium text-emerald-700 mb-2">Solde après</p>
-                                        <p class="text-2xl font-bold text-emerald-900">{{ number_format($transaction->wallet_balance_after, 3) }} DT</p>
+                                    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-2xl p-6 shadow-sm">
+                                        <p class="text-sm font-medium text-purple-800 mb-2">Solde après</p>
+                                        <p class="text-2xl font-bold text-purple-900">{{ number_format($transaction->wallet_balance_after, 3) }} DT</p>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Barre de progression visuelle -->
                             <div class="mt-6 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                                <div class="bg-gradient-to-r from-purple-400 to-purple-600 h-full rounded-full transition-all duration-1000 ease-out"
                                      style="width: {{ min(100, ($transaction->wallet_balance_after / max($transaction->wallet_balance_before, $transaction->wallet_balance_after)) * 100) }}%">
                                 </div>
                             </div>
@@ -205,9 +205,9 @@
                 <!-- Informations de colis (si applicable) -->
                 @if($transaction->package_id && $transaction->package)
                     <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
+                        <div class="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
                             <h3 class="text-xl font-semibold text-gray-800 flex items-center">
-                                <svg class="w-6 h-6 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                 </svg>
                                 Colis associé
@@ -215,24 +215,24 @@
                         </div>
                         
                         <div class="p-6">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
                                 <div class="mb-4 sm:mb-0">
-                                    <h4 class="text-xl font-bold text-blue-900 mb-2">{{ $transaction->package->package_code }}</h4>
-                                    <p class="text-blue-700 mb-1">
-                                        <span class="font-medium">Destinataire:</span> 
+                                    <h4 class="text-xl font-bold text-purple-900 mb-2">{{ $transaction->package->package_code }}</h4>
+                                    <p class="text-purple-700 mb-1">
+                                        <span class="font-medium">Destinataire:</span>
                                         {{ $transaction->package->recipient_name ?? 'Non spécifié' }}
                                     </p>
-                                    <p class="text-blue-700">
-                                        <span class="font-medium">Statut du colis:</span> 
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <p class="text-purple-700">
+                                        <span class="font-medium">Statut du colis:</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                             {{ $transaction->package->status }}
                                         </span>
                                     </p>
                                 </div>
                                 <div>
                                     @if(Route::has('client.packages.show'))
-                                        <a href="{{ route('client.packages.show', $transaction->package_id) }}" 
-                                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                        <a href="{{ route('client.packages.show', $transaction->package_id) }}"
+                                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-xl hover:from-purple-600 hover:to-purple-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                             </svg>
@@ -287,9 +287,9 @@
                 <!-- Transactions liées -->
                 @if($relatedTransactions->count() > 0)
                     <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-orange-50 to-red-50 px-6 py-4 border-b border-orange-100">
+                        <div class="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
                             <h3 class="text-xl font-semibold text-gray-800 flex items-center">
-                                <svg class="w-6 h-6 mr-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                                 </svg>
                                 Transactions liées
@@ -299,10 +299,10 @@
                         <div class="p-6">
                             <div class="space-y-3">
                                 @foreach($relatedTransactions as $related)
-                                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 border border-gray-200 hover:border-blue-300">
+                                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-300 border border-purple-200 hover:border-purple-300">
                                         <div class="flex items-center">
-                                            <div class="w-8 h-8 {{ $related->amount >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600' }} rounded-full flex items-center justify-center mr-3 shadow-sm">
-                                                <div class="w-3 h-3 rounded-full {{ $related->amount >= 0 ? 'bg-emerald-600' : 'bg-red-600' }}"></div>
+                                            <div class="w-8 h-8 {{ $related->amount >= 0 ? 'bg-purple-100 text-purple-600' : 'bg-purple-200 text-purple-700' }} rounded-full flex items-center justify-center mr-3 shadow-sm">
+                                                <div class="w-3 h-3 rounded-full {{ $related->amount >= 0 ? 'bg-purple-500' : 'bg-purple-700' }}"></div>
                                             </div>
                                             <div>
                                                 <p class="font-medium text-gray-900">{{ Str::limit($related->description, 40) }}</p>

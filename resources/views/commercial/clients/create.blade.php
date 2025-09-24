@@ -27,8 +27,8 @@
                         <div class="h-0.5 w-full bg-gray-200"></div>
                     </div>
                     <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
-                         :class="currentStep >= 1 ? 'bg-purple-600' : 'bg-gray-300'">
-                        <span class="text-sm font-medium text-white">1</span>
+                         :class="currentStep >= 1 ? 'bg-purple-300' : 'bg-gray-300'">
+                        <span class="text-sm font-medium" :class="currentStep >= 1 ? 'text-purple-800' : 'text-white'">1</span>
                     </div>
                     <span class="mt-2 block text-sm font-medium text-gray-900">Informations</span>
                 </li>
@@ -38,16 +38,16 @@
                         <div class="h-0.5 w-full bg-gray-200"></div>
                     </div>
                     <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
-                         :class="currentStep >= 2 ? 'bg-purple-600' : 'bg-gray-300'">
-                        <span class="text-sm font-medium text-white">2</span>
+                         :class="currentStep >= 2 ? 'bg-purple-300' : 'bg-gray-300'">
+                        <span class="text-sm font-medium" :class="currentStep >= 2 ? 'text-purple-800' : 'text-white'">2</span>
                     </div>
                     <span class="mt-2 block text-sm font-medium text-gray-900">Professionnel</span>
                 </li>
 
                 <li class="relative">
                     <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
-                         :class="currentStep >= 3 ? 'bg-purple-600' : 'bg-gray-300'">
-                        <span class="text-sm font-medium text-white">3</span>
+                         :class="currentStep >= 3 ? 'bg-purple-300' : 'bg-gray-300'">
+                        <span class="text-sm font-medium" :class="currentStep >= 3 ? 'text-purple-800' : 'text-white'">3</span>
                     </div>
                     <span class="mt-2 block text-sm font-medium text-gray-900">Tarification</span>
                 </li>
@@ -156,7 +156,7 @@
             <div class="flex justify-end mt-8">
                 <button type="button" @click="nextStep()" 
                         :disabled="!canProceedStep1()"
-                        class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        class="px-6 py-3 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     Suivant
                     <svg class="w-4 h-4 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -226,7 +226,7 @@
                 </button>
                 
                 <button type="button" @click="nextStep()" 
-                        class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        class="px-6 py-3 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
                     Suivant
                     <svg class="w-4 h-4 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -381,7 +381,7 @@
                     </button>
                     
                     <button type="submit" :disabled="loading || !canSubmit()"
-                            class="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            class="px-8 py-3 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         <span x-show="!loading" class="flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

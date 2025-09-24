@@ -22,8 +22,8 @@
         </svg>
         Rapport
     </button>
-    <button onclick="openBulkEmptyModal()" 
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+    <button onclick="openBulkEmptyModal()"
+            class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
         </svg>
@@ -216,8 +216,8 @@
                     </div>
                     
                     <div class="flex items-end space-x-2">
-                        <button type="submit" 
-                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 transition-colors">
+                        <button type="submit"
+                                class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 focus:ring-2 focus:ring-purple-500 transition-colors">
                             Filtrer
                         </button>
                         <a href="{{ route('commercial.deliverers.index') }}" 

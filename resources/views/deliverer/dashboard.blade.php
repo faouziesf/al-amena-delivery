@@ -5,37 +5,37 @@
 
 @section('content')
 <div x-data="dashboardApp()" x-init="init()">
-    <!-- Header de bienvenue -->
-    <div class="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl mx-4 mb-6 p-6 text-white shadow-lg">
+    <!-- Header de bienvenue modernisé avec pale purple -->
+    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-2xl mx-4 mb-6 p-6 text-purple-800 shadow-lg">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold">Bonjour, {{ auth()->user()->name }}</h1>
-                <p class="text-emerald-100 mt-1">
+                <h1 class="text-2xl font-bold">Bonjour, {{ auth()->user()->name }} !</h1>
+                <p class="text-purple-600 mt-1">
                     <span x-text="getGreetingMessage()"></span>
                 </p>
                 <div class="flex items-center mt-2 space-x-3">
                     <div class="flex items-center space-x-1">
-                        <div class="w-2 h-2 rounded-full animate-pulse" :class="isOnline ? 'bg-green-300' : 'bg-red-300'"></div>
-                        <span class="text-emerald-100 text-sm" x-text="isOnline ? 'En ligne' : 'Hors ligne'"></span>
+                        <div class="w-2 h-2 rounded-full animate-pulse" :class="isOnline ? 'bg-green-500' : 'bg-red-500'"></div>
+                        <span class="text-purple-700 text-sm" x-text="isOnline ? 'En ligne' : 'Hors ligne'"></span>
                     </div>
-                    <span class="text-emerald-100 text-sm">•</span>
-                    <span class="text-emerald-100 text-sm" x-text="currentTime"></span>
+                    <span class="text-purple-600 text-sm">•</span>
+                    <span class="text-purple-600 text-sm" x-text="currentTime"></span>
                 </div>
             </div>
             <div class="text-right">
                 <div class="text-3xl font-bold" x-text="formatAmount(walletData.balance)"></div>
-                <p class="text-emerald-100 text-sm">Solde Wallet</p>
-                <div x-show="walletData.pending_amount > 0" class="text-emerald-200 text-xs mt-1">
+                <p class="text-purple-600 text-sm">Solde Wallet</p>
+                <div x-show="walletData.pending_amount > 0" class="text-purple-700 text-xs mt-1">
                     + <span x-text="formatAmount(walletData.pending_amount)"></span> en attente
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Stats rapides avec animations -->
+    <!-- Stats rapides modernisées avec animations -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mx-4 mb-6">
         <!-- Pickups Disponibles -->
-        <a href="{{ route('deliverer.pickups.available') }}" class="stats-card group">
+        <a href="{{ route('deliverer.packages.available') }}" class="stats-card group">
             <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group-hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
@@ -56,7 +56,7 @@
         </a>
 
         <!-- Mes Pickups -->
-        <a href="{{ route('deliverer.pickups.mine') }}" class="stats-card group">
+        <a href="{{ route('deliverer.packages.my-pickups') }}" class="stats-card group">
             <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group-hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
@@ -123,43 +123,103 @@
         </a>
     </div>
 
-    <!-- Actions rapides avec améliorations -->
-    <div class="mx-4 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Actions Rapides
-        </h2>
-        <div class="grid grid-cols-2 gap-4">
-            <!-- Scanner QR avec indicateur -->
-            <button @click="openScanner()" 
-                    class="bg-gradient-to-r from-emerald-500 to-green-500 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 relative">
-                <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
-                </svg>
-                <p class="font-semibold text-center">Scanner QR</p>
-                <p class="text-xs text-emerald-100 text-center mt-1">Scanner un code colis</p>
-                <!-- Indicateur d'activité -->
-                <div class="absolute top-2 right-2 w-3 h-3 bg-white rounded-full animate-ping"></div>
-            </button>
+    <!-- Scanner Central "Hero Section" -->
+    <div class="mx-4 mb-8">
+        <div class="text-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Scanner QR/Code-barres</h2>
+            <p class="text-gray-600 text-sm">Choisissez votre mode de scan</p>
+        </div>
 
-            <!-- Mon Wallet enrichi -->
-            <a href="{{ route('deliverer.wallet.index') }}" 
-               class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 relative">
-                <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                </svg>
-                <p class="font-semibold text-center">Mon Wallet</p>
-                <p class="text-xs text-purple-100 text-center mt-1" x-text="formatAmount(walletData.balance)"></p>
-                <!-- Indicateur nouvelles transactions -->
-                <div x-show="walletData.recent_transactions && walletData.recent_transactions.length > 0" 
-                     class="absolute top-2 right-2 w-2 h-2 bg-yellow-400 rounded-full"></div>
+        <!-- Bouton Scanner Central avec animation -->
+        <div class="flex justify-center mb-6">
+            <a href="{{ route('deliverer.scan.simple') }}"
+               class="group relative">
+                <!-- Bouton principal rond avec pale purple -->
+                <div class="w-32 h-32 bg-gradient-to-br from-purple-200 via-purple-300 to-purple-400
+                           rounded-full shadow-2xl hover:shadow-purple-300/25
+                           flex items-center justify-center
+                           transition-all duration-300 ease-out
+                           group-hover:scale-110 group-hover:rotate-3
+                           border-4 border-white">
+
+                    <!-- Icône Scanner -->
+                    <svg class="w-12 h-12 text-purple-800 transform transition-transform group-hover:scale-110"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
+                    </svg>
+
+                    <!-- Animation Ring -->
+                    <div class="absolute inset-0 rounded-full border-4 border-purple-200 animate-ping opacity-20"></div>
+                    <div class="absolute inset-0 rounded-full border-2 border-purple-300 animate-pulse opacity-30"></div>
+                </div>
+
+                <!-- Label -->
+                <div class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+                    <p class="text-purple-700 font-bold text-lg">Scanner</p>
+                    <p class="text-purple-500 text-xs">Scan Simple</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Options secondaires modernisées -->
+        <div class="grid grid-cols-3 gap-3 mt-12">
+            <!-- Scan en Lot -->
+            <a href="{{ route('deliverer.scan.lot') }}"
+               class="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
+                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-indigo-200 transition-colors">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-gray-900 text-center">Scan Lot</p>
+                <p class="text-xs text-gray-500 text-center mt-1">Multiple</p>
+            </a>
+
+            <!-- Wallet -->
+            <a href="{{ route('deliverer.wallet.index') }}"
+               class="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:border-emerald-200 transition-all duration-300">
+                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-emerald-200 transition-colors">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-gray-900 text-center">Wallet</p>
+                <p class="text-xs text-emerald-600 text-center mt-1 font-medium" x-text="formatAmountShort(walletData.balance)"></p>
+            </a>
+
+            <!-- Livraison Rapide -->
+            <a href="{{ route('deliverer.deliveries.single') }}"
+               class="group bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:from-red-600 hover:to-pink-600 transition-all duration-300 relative">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-white/30 transition-colors">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-white text-center">⚡ Livraison Rapide</p>
+                <p class="text-xs text-white/80 text-center mt-1 font-medium">Colis par colis</p>
+                <!-- Badge urgent -->
+                <div x-show="stats.urgent_deliveries > 0"
+                     class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span class="text-xs text-red-600 font-bold" x-text="stats.urgent_deliveries"></span>
+                </div>
+            </a>
+
+            <!-- Mes Livraisons -->
+            <a href="{{ route('deliverer.deliveries.index') }}"
+               class="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all duration-300 relative">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-orange-200 transition-colors">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-semibold text-gray-900 text-center">Mes Livraisons</p>
+                <p class="text-xs text-orange-600 text-center mt-1 font-medium" x-text="(stats.deliveries || 0) + ' colis'"></p>
             </a>
         </div>
     </div>
 
-    <!-- Performance aujourd'hui avec graphique -->
+    <!-- Performance aujourd'hui avec graphique modernisé -->
     <div class="mx-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -215,9 +275,9 @@
         </div>
     </div>
 
-    <!-- Wallet détaillé -->
-    <div class="mx-4 mb-6">
-        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-6">
+    <!-- Wallet détaillé avec pale purple -->
+    <div class="mx-4 mb-6" x-show="walletData.balance > 0 || (walletData.recent_transactions && walletData.recent_transactions.length > 0)">
+        <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
@@ -304,7 +364,7 @@
         </div>
     </div>
 
-    <!-- Activité récente enrichie -->
+    <!-- Activité récente modernisée -->
     <div class="mx-4 mb-6" x-show="recentActivity.length > 0">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -345,7 +405,7 @@
         </div>
     </div>
 
-    <!-- Notifications importantes -->
+    <!-- Notifications importantes modernisées -->
     <div class="mx-4 mb-6" x-show="notifications.length > 0">
         <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6">
             <h3 class="text-lg font-semibold text-yellow-800 mb-4 flex items-center">
@@ -398,7 +458,7 @@
         </div>
     </div>
 
-    <!-- Menu Fonctionnalités rapides -->
+    <!-- Menu Fonctionnalités rapides modernisé -->
     <div class="mx-4 mb-20">
         <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +502,7 @@
     </div>
 </div>
 
-<script>
+<script defer>
 function dashboardApp() {
     return {
         // État principal
@@ -584,7 +644,28 @@ function dashboardApp() {
         },
 
         openScanner() {
-            window.dispatchEvent(new Event('open-scanner'));
+            // Test direct en modifiant une variable visible
+            if (window.scannerComponent) {
+                window.scannerComponent.openScanner({ mode: 'single' });
+            } else {
+                window.dispatchEvent(new CustomEvent('open-scanner', {
+                    detail: { mode: 'single' }
+                }));
+            }
+        },
+
+        openBatchScanner(action) {
+            // Redirection vers les différentes pages avec mode scanner activé
+            const routes = {
+                'pickup': '/deliverer/packages/batch-pickup',
+                'delivery': '/deliverer/packages/deliveries?scanner=true',
+                'return': '/deliverer/packages/returns?scanner=true',
+                'validate': '/deliverer/payments?scanner=true'
+            };
+
+            if (routes[action]) {
+                window.location.href = routes[action];
+            }
         }
     }
 }
@@ -648,4 +729,83 @@ function dashboardApp() {
     background: #94a3b8;
 }
 </style>
+
+<script>
+// Scanner Simple - Fonction pour ouvrir le popup de scan
+function openSimpleScanner() {
+    // Supprimer ancien popup s'il existe
+    const oldPopup = document.getElementById('simple-scanner-popup');
+    if (oldPopup) oldPopup.remove();
+
+    // Créer le popup
+    const popup = document.createElement('div');
+    popup.id = 'simple-scanner-popup';
+    popup.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+
+    popup.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-center mb-4">🔍 Scanner un Colis</h3>
+
+            <form class="scan-form space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Code du colis
+                    </label>
+                    <input type="text" name="code"
+                           placeholder="PKG_CLQVFCWP_20250921"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           autofocus>
+                </div>
+
+                <button type="submit"
+                        class="scan-loading w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Scanner
+                </button>
+            </form>
+
+            <div class="mt-4 space-y-2">
+                <button onclick="simpleScan('PKG_CLQVFCWP_20250921')"
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 text-sm">
+                    Test Code Valide
+                </button>
+                <button onclick="simpleScan('CODE_INVALIDE')"
+                        class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 text-sm">
+                    Test Code Invalide
+                </button>
+            </div>
+
+            <button onclick="closeSimpleScanner()"
+                    class="mt-4 w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                Fermer
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Fermer au clic sur le fond
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) closeSimpleScanner();
+    });
+
+    // Fermer avec Escape
+    document.addEventListener('keydown', function escapeHandler(e) {
+        if (e.key === 'Escape') {
+            closeSimpleScanner();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    });
+}
+
+// Fermer le scanner
+function closeSimpleScanner() {
+    const popup = document.getElementById('simple-scanner-popup');
+    if (popup) {
+        popup.remove();
+    }
+}
+
+console.log('✅ Scanner Simple Dashboard chargé');
+</script>
+
 @endsection

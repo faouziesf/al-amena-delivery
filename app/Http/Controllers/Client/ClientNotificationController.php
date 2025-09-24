@@ -166,6 +166,118 @@ class ClientNotificationController extends Controller
     }
 
     /**
+     * API - Polling des notifications
+     */
+    public function apiPollNotifications()
+    {
+        $user = Auth::user();
+
+        $notifications = $user->notifications()
+            ->where('read', false)
+            ->where('created_at', '>', now()->subMinutes(5))
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'type' => $notification->type,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'priority' => $notification->priority,
+                    'read' => $notification->read,
+                    'created_at' => $notification->created_at->diffForHumans(),
+                    'url' => $this->getNotificationUrl($notification)
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'notifications' => $notifications,
+            'total_unread' => $user->notifications()->where('read', false)->count()
+        ]);
+    }
+
+    /**
+     * Suppression en masse de notifications
+     */
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'exists:notifications,id'
+        ]);
+
+        $deleted = Auth::user()->notifications()
+            ->whereIn('id', $validated['notification_ids'])
+            ->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'deleted_count' => $deleted
+            ]);
+        }
+
+        return back()->with('success', "$deleted notifications supprimées");
+    }
+
+    /**
+     * Paramètres de notifications
+     */
+    public function settings()
+    {
+        $user = Auth::user();
+        return view('client.notifications.settings', compact('user'));
+    }
+
+    /**
+     * Mise à jour des paramètres de notifications
+     */
+    public function updateSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'email_notifications' => 'boolean',
+            'sms_notifications' => 'boolean',
+            'push_notifications' => 'boolean',
+            'package_updates' => 'boolean',
+            'complaint_updates' => 'boolean',
+            'wallet_updates' => 'boolean'
+        ]);
+
+        $user = Auth::user();
+        $user->clientProfile()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'notification_settings' => $validated
+            ]
+        );
+
+        return back()->with('success', 'Paramètres de notifications mis à jour');
+    }
+
+    /**
+     * Mise à jour des préférences
+     */
+    public function updatePreferences(Request $request)
+    {
+        $validated = $request->validate([
+            'notification_frequency' => 'in:immediate,hourly,daily',
+            'quiet_hours_start' => 'nullable|date_format:H:i',
+            'quiet_hours_end' => 'nullable|date_format:H:i'
+        ]);
+
+        $user = Auth::user();
+        $user->clientProfile()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'notification_preferences' => $validated
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Obtenir l'URL appropriée pour une notification
      */
     private function getNotificationUrl(Notification $notification)
@@ -179,6 +291,13 @@ class ClientNotificationController extends Controller
                 }
                 break;
 
+            case 'PICKUP_REQUEST_ASSIGNED':
+            case 'PICKUP_REQUEST_COMPLETED':
+                if (isset($data['pickup_request_id'])) {
+                    return route('client.pickup-requests.show', $data['pickup_request_id']);
+                }
+                break;
+
             case 'COMPLAINT_RESPONSE':
                 if (isset($data['complaint_id'])) {
                     return route('client.complaints.show', $data['complaint_id']);
@@ -188,6 +307,10 @@ class ClientNotificationController extends Controller
             case 'WITHDRAWAL_APPROVED':
             case 'WITHDRAWAL_REJECTED':
                 return route('client.withdrawals');
+
+            case 'TOPUP_APPROVED':
+            case 'TOPUP_REJECTED':
+                return route('client.wallet.topup.requests');
 
             case 'WALLET_CREDITED':
             case 'WALLET_DEBITED':

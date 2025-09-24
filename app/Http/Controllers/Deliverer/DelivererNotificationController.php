@@ -31,9 +31,11 @@ class DelivererNotificationController extends Controller
         $notifications = $query->paginate(20)->appends($request->query());
 
         $stats = [
-            'total_unread' => Auth::user()->notifications()->where('read', false)->count(),
-            'urgent_unread' => Auth::user()->notifications()->where('read', false)->where('priority', 'URGENT')->count(),
-            'today_count' => Auth::user()->notifications()->whereDate('created_at', today())->count()
+            'total' => Auth::user()->notifications()->count(),
+            'unread' => Auth::user()->notifications()->where('read', false)->count(),
+            'urgent' => Auth::user()->notifications()->where('read', false)->where('priority', 'URGENT')->count(),
+            'today' => Auth::user()->notifications()->whereDate('created_at', today())->count(),
+            'this_week' => Auth::user()->notifications()->where('created_at', '>=', now()->startOfWeek())->count()
         ];
 
         return view('deliverer.notifications.index', compact('notifications', 'stats'));

@@ -1,7 +1,7 @@
 @extends('layouts.deliverer')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
+<div class="flex items-center justify-center bg-gray-50 py-20">
     <div class="text-center">
         <div class="text-6xl mb-4">📱</div>
         <h1 class="text-2xl font-bold text-gray-900 mb-2">Mode hors ligne</h1>

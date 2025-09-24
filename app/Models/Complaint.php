@@ -38,6 +38,11 @@ class Complaint extends Model
         return $this->belongsTo(User::class, 'assigned_commercial_id');
     }
 
+    public function ticket()
+    {
+        return $this->hasOne(Ticket::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -211,6 +216,37 @@ class Complaint extends Model
         static::creating(function ($complaint) {
             if (empty($complaint->complaint_code)) {
                 $complaint->complaint_code = 'CPL_' . strtoupper(Str::random(8)) . '_' . date('Ymd');
+            }
+        });
+
+        static::created(function ($complaint) {
+            // Créer automatiquement un ticket depuis la réclamation
+            if (class_exists(\App\Services\TicketIntegrationService::class)) {
+                try {
+                    $ticketService = app(\App\Services\TicketIntegrationService::class);
+                    $ticketService->createTicketFromComplaint($complaint);
+                } catch (\Exception $e) {
+                    // Log l'erreur mais ne bloque pas la création de la réclamation
+                    \Log::error('Erreur création ticket depuis réclamation', [
+                        'complaint_id' => $complaint->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        });
+
+        static::updated(function ($complaint) {
+            // Synchroniser le statut avec le ticket associé
+            if ($complaint->isDirty('status') && class_exists(\App\Services\TicketIntegrationService::class)) {
+                try {
+                    $ticketService = app(\App\Services\TicketIntegrationService::class);
+                    $ticketService->syncComplaintTicketStatus($complaint);
+                } catch (\Exception $e) {
+                    \Log::error('Erreur synchronisation statut réclamation-ticket', [
+                        'complaint_id' => $complaint->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
         });
     }

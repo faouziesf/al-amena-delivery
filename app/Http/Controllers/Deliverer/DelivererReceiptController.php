@@ -283,4 +283,124 @@ class DelivererReceiptController extends Controller
 
         return view('deliverer.receipts.topup', compact('topup'));
     }
+
+    /**
+     * Statistiques des reçus générés
+     */
+    public function receiptStats()
+    {
+        $delivererId = Auth::id();
+
+        $stats = [
+            'total_packages_delivered' => Package::where('assigned_deliverer_id', $delivererId)
+                                                ->whereIn('status', ['DELIVERED', 'PAID'])
+                                                ->count(),
+            'total_cod_collected' => FinancialTransaction::where('user_id', $delivererId)
+                                                       ->where('type', 'COD_COLLECTION')
+                                                       ->where('status', 'COMPLETED')
+                                                       ->sum('amount'),
+            'total_topups_processed' => TopupRequest::where('processed_by_id', $delivererId)
+                                                   ->where('method', 'CASH')
+                                                   ->where('status', 'VALIDATED')
+                                                   ->count(),
+            'total_topup_amount' => TopupRequest::where('processed_by_id', $delivererId)
+                                               ->where('method', 'CASH')
+                                               ->where('status', 'VALIDATED')
+                                               ->sum('amount'),
+            'receipts_today' => Package::where('assigned_deliverer_id', $delivererId)
+                                      ->whereIn('status', ['DELIVERED', 'PAID'])
+                                      ->whereDate('delivered_at', today())
+                                      ->count(),
+            'cod_today' => Package::where('assigned_deliverer_id', $delivererId)
+                                 ->whereIn('status', ['DELIVERED', 'PAID'])
+                                 ->whereDate('delivered_at', today())
+                                 ->sum('cod_amount')
+        ];
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Export des reçus en CSV
+     */
+    public function exportReceipts(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'nullable|in:package,topup,all',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from'
+        ]);
+
+        $delivererId = Auth::id();
+        $dateFrom = $validated['date_from'] ?? now()->subMonth()->format('Y-m-d');
+        $dateTo = $validated['date_to'] ?? now()->format('Y-m-d');
+
+        $filename = "receipts_export_{$delivererId}_{$dateFrom}_to_{$dateTo}.csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        return response()->stream(function() use ($validated, $delivererId, $dateFrom, $dateTo) {
+            $file = fopen('php://output', 'w');
+
+            // Headers CSV
+            fputcsv($file, [
+                'Type',
+                'Code',
+                'Date',
+                'Montant (DT)',
+                'Client/Destinataire',
+                'Statut',
+                'Méthode'
+            ]);
+
+            // Export des colis livrés
+            if (!$validated['type'] || in_array($validated['type'], ['package', 'all'])) {
+                $packages = Package::where('assigned_deliverer_id', $delivererId)
+                                  ->whereIn('status', ['DELIVERED', 'PAID'])
+                                  ->whereBetween('delivered_at', [$dateFrom, $dateTo])
+                                  ->orderBy('delivered_at', 'desc')
+                                  ->get();
+
+                foreach ($packages as $package) {
+                    fputcsv($file, [
+                        'Livraison',
+                        $package->package_code,
+                        $package->delivered_at->format('d/m/Y H:i'),
+                        number_format($package->cod_amount, 3),
+                        $package->recipient_data['name'] ?? 'N/A',
+                        $package->status,
+                        'COD'
+                    ]);
+                }
+            }
+
+            // Export des recharges
+            if (!$validated['type'] || in_array($validated['type'], ['topup', 'all'])) {
+                $topups = TopupRequest::where('processed_by_id', $delivererId)
+                                     ->where('method', 'CASH')
+                                     ->where('status', 'VALIDATED')
+                                     ->whereBetween('processed_at', [$dateFrom, $dateTo])
+                                     ->with('client')
+                                     ->orderBy('processed_at', 'desc')
+                                     ->get();
+
+                foreach ($topups as $topup) {
+                    fputcsv($file, [
+                        'Recharge',
+                        $topup->request_code,
+                        $topup->processed_at->format('d/m/Y H:i'),
+                        number_format($topup->amount, 3),
+                        $topup->client->name,
+                        $topup->status,
+                        'CASH'
+                    ]);
+                }
+            }
+
+            fclose($file);
+        }, 200, $headers);
+    }
 }

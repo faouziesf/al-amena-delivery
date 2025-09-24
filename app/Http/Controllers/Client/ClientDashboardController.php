@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Complaint;
 use App\Models\WithdrawalRequest;
+use App\Models\PickupRequest;
 use Illuminate\Support\Facades\Auth;
 
 class ClientDashboardController extends Controller
@@ -29,11 +30,17 @@ class ClientDashboardController extends Controller
         }
 
         $stats = $this->getDashboardStats();
-        
+
         $recentPackages = Package::where('sender_id', $user->id)
             ->with(['delegationFrom', 'delegationTo'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
+            ->get();
+
+        $recentPickupRequests = PickupRequest::where('client_id', $user->id)
+            ->with(['assignedDeliverer'])
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
             ->get();
 
         $notifications = $user->notifications()
@@ -44,14 +51,16 @@ class ClientDashboardController extends Controller
 
         $recentTransactions = $user->transactions()
             ->where('status', 'COMPLETED')
+            ->whereNotNull('completed_at')
             ->orderBy('completed_at', 'desc')
             ->limit(5)
             ->get();
 
         return view('client.dashboard', compact(
             'user',
-            'stats', 
+            'stats',
             'recentPackages',
+            'recentPickupRequests',
             'notifications',
             'recentTransactions'
         ));
@@ -76,7 +85,8 @@ class ClientDashboardController extends Controller
         $user->load('wallet');
         
         $packages = $user->packages();
-        
+        $pickupRequests = $user->pickupRequests();
+
         return [
             'wallet_balance' => (float) ($user->wallet->balance ?? 0),
             'wallet_pending' => (float) ($user->wallet->pending_amount ?? 0),
@@ -87,6 +97,10 @@ class ClientDashboardController extends Controller
             'returned_packages' => $packages->where('status', 'RETURNED')->count(),
             'pending_complaints' => $user->complaints()->where('status', 'PENDING')->count(),
             'pending_withdrawals' => $user->withdrawalRequests()->where('status', 'PENDING')->count(),
+            'pending_pickups' => $pickupRequests->where('status', 'pending')->count(),
+            'assigned_pickups' => $pickupRequests->where('status', 'assigned')->count(),
+            'completed_pickups' => $pickupRequests->where('status', 'picked_up')->count(),
+            'total_pickups' => $pickupRequests->count(),
             'unread_notifications' => $user->notifications()->where('read', false)->count(),
             'monthly_packages' => $packages->whereMonth('created_at', now()->month)->count(),
             'monthly_delivered' => $packages->whereIn('status', ['DELIVERED', 'PAID'])

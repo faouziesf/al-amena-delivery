@@ -3,7 +3,7 @@
 @section('title', 'Paiements Clients')
 
 @section('content')
-<div class="min-h-screen bg-gray-50" x-data="paymentsApp()">
+<div class="bg-gray-50" x-data="paymentsApp()">
     
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-10">
@@ -41,7 +41,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v1a2 2 0 002 2h2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v.93m-6 2.427c0 .1.031.199.09.289l.06.17c.078.315.422.559.75.559h2.28c.328 0 .672-.244.75-.56l.06-.169a.75.75 0 00.09-.29v-2.926m0 0a24.704 24.704 0 00-.161-3.08.676.676 0 00-.088-.281 6.738 6.738 0 01-.748-.924.999.999 0 00-.799-.34h-2.48a.999.999 0 00-.799.34 6.738 6.738 0 01-.748.924.676.676 0 00-.088.281A24.707 24.707 0 009 10.73v2.926z"/>
                         </svg>
                     </button>
-                    <button @click="refreshData()" 
+                    <a href="{{ route('deliverer.payments.history') }}"
+                       class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </a>
+                    <button @click="refreshData()"
                             class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
                             :class="loading ? 'opacity-50' : ''">
                         <svg class="w-5 h-5" :class="loading ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -491,7 +497,7 @@
 <script>
 function paymentsApp() {
     return {
-        payments: @json($payments->items()),
+        payments: @json($payments ?? []),
         loading: false,
         searchQuery: '',
         bulkMode: false,

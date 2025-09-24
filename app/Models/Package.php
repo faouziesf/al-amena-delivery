@@ -27,6 +27,9 @@ class Package extends Model
         'special_instructions',    // Instructions spéciales
         'is_fragile',             // Colis fragile
         'requires_signature',     // Signature requise
+        'allow_opening',          // Autorisation d'ouvrir le colis
+        'payment_method',         // Mode de paiement accepté
+        'pickup_address_id',      // ID de l'adresse de pickup
         'import_batch_id',        // ID du lot d'import (pour CSV)
     ];
 
@@ -45,6 +48,7 @@ class Package extends Model
         'cod_modifiable_by_commercial' => 'boolean',
         'is_fragile' => 'boolean',
         'requires_signature' => 'boolean',
+        'allow_opening' => 'boolean',
     ];
 
     // Relations
@@ -66,6 +70,23 @@ class Package extends Model
     public function assignedDeliverer()
     {
         return $this->belongsTo(User::class, 'assigned_deliverer_id');
+    }
+
+    // Alias relationships for compatibility
+    public function client()
+    {
+        return $this->sender();
+    }
+
+    public function deliverer()
+    {
+        return $this->assignedDeliverer();
+    }
+
+    // Legacy delegation relationship - using delegationTo as default
+    public function delegation()
+    {
+        return $this->delegationTo();
     }
 
     public function complaints()
@@ -91,6 +112,11 @@ class Package extends Model
     public function importBatch()
     {
         return $this->belongsTo(ImportBatch::class, 'import_batch_id');
+    }
+
+    public function pickupAddress()
+    {
+        return $this->belongsTo(ClientPickupAddress::class, 'pickup_address_id');
     }
 
     // Scopes
@@ -181,10 +207,57 @@ class Package extends Model
 
     public function getPickupLocationAttribute()
     {
+        // Priorité aux nouvelles données de pickup depuis ClientPickupAddress
+        if ($this->pickupAddress) {
+            return $this->pickupAddress->name . ' - ' . $this->pickupAddress->address;
+        }
+
+        // Fallback vers les anciennes données
         if ($this->pickupDelegation) {
             return $this->pickupDelegation->name . ' - ' . ($this->pickup_address ?? 'Adresse non spécifiée');
         }
         return $this->pickup_address ?? 'Adresse de pickup non spécifiée';
+    }
+
+    /**
+     * Obtenir les données complètes de pickup depuis ClientPickupAddress
+     */
+    public function getPickupDataAttribute()
+    {
+        if ($this->pickupAddress) {
+            return [
+                'name' => $this->pickupAddress->name,
+                'address' => $this->pickupAddress->address,
+                'phone' => $this->pickupAddress->phone,
+                'tel2' => $this->pickupAddress->tel2,
+                'contact_name' => $this->pickupAddress->contact_name,
+                'gouvernorat' => $this->pickupAddress->gouvernorat,
+                'delegation' => $this->pickupAddress->delegation,
+                'notes' => $this->pickupAddress->notes,
+                'is_default' => $this->pickupAddress->is_default,
+            ];
+        }
+
+        // Fallback vers les anciennes données dans sender_data
+        return $this->sender_data ?? [];
+    }
+
+    /**
+     * Obtenir le nom formaté de l'adresse de pickup
+     */
+    public function getFormattedPickupAttribute()
+    {
+        if ($this->pickupAddress) {
+            $pickup = $this->pickupAddress;
+            return $pickup->name . ' - ' . $pickup->contact_name . ' - ' . $pickup->phone . ' - ' . $pickup->address;
+        }
+
+        // Fallback vers les anciennes données
+        $data = $this->sender_data;
+        if (!$data || !is_array($data)) {
+            return 'N/A';
+        }
+        return ($data['name'] ?? 'N/A') . ' - ' . ($data['phone'] ?? 'N/A') . ' - ' . ($data['address'] ?? 'N/A');
     }
 
     public function getFormattedWeightAttribute()

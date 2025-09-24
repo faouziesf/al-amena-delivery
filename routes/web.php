@@ -127,7 +127,7 @@ if (app()->environment(['local', 'staging'])) {
             if (!auth()->check() || auth()->user()->role !== 'SUPERVISOR') {
                 abort(403, 'Accès non autorisé');
             }
-            
+
             return response()->json([
                 'php_version' => PHP_VERSION,
                 'laravel_version' => app()->version(),
@@ -144,6 +144,99 @@ if (app()->environment(['local', 'staging'])) {
                 'url' => config('app.url')
             ]);
         })->name('system.info');
+
+        // Test scanner - PUBLIC pour debug
+        Route::get('/test-scanner-debug', function() {
+            return view('test-scanner');
+        })->name('test.scanner.debug');
+
+        // Test endpoint scan GET - PUBLIC pour debug (TEMPORAIRE)
+        Route::get('/test-scan/{code}', function($code) {
+            try {
+                if (empty($code)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Code requis'
+                    ], 400);
+                }
+
+                // Chercher le colis sans validation
+                $package = \App\Models\Package::where('package_code', $code)->first();
+
+                if (!$package) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Colis non trouvé avec le code: ' . $code
+                    ], 404);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Colis trouvé!',
+                    'package' => [
+                        'code' => $package->package_code,
+                        'status' => $package->status,
+                        'cod_amount' => $package->cod_amount,
+                        'formatted_cod' => $package->cod_amount . ' DA'
+                    ],
+                    'delivery_info' => [
+                        'name' => $package->receiver_name ?? 'N/A',
+                        'address' => $package->receiver_address ?? 'N/A'
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur: ' . $e->getMessage()
+                ], 500);
+            }
+        })->name('test.scan.get');
+
+        // Test endpoint scan - PUBLIC pour debug (TEMPORAIRE)
+        Route::post('/test-scan', function(Illuminate\Http\Request $request) {
+            try {
+                $code = $request->input('code');
+
+                if (empty($code)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Code requis'
+                    ], 400);
+                }
+
+                // Chercher le colis sans validation
+                $package = \App\Models\Package::where('package_code', $code)->first();
+
+                if (!$package) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Colis non trouvé avec le code: ' . $code
+                    ], 404);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Colis trouvé!',
+                    'package' => [
+                        'code' => $package->package_code,
+                        'status' => $package->status,
+                        'cod_amount' => $package->cod_amount,
+                        'formatted_cod' => $package->cod_amount . ' DA'
+                    ],
+                    'delivery_info' => [
+                        'name' => $package->receiver_name ?? 'N/A',
+                        'address' => $package->receiver_address ?? 'N/A'
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur: ' . $e->getMessage()
+                ], 500);
+            }
+        })->name('test.scan');
     });
 }
 

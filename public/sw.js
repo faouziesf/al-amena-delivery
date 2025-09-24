@@ -8,18 +8,10 @@ const DYNAMIC_CACHE = 'alamena-dynamic-v1.0.0';
 // Fichiers essentiels à mettre en cache lors de l'installation
 const ESSENTIAL_CACHE = [
   '/deliverer/dashboard',
-  '/deliverer/pickups/available',
-  '/deliverer/pickups/mine',
-  '/deliverer/deliveries',
-  '/deliverer/returns',
-  '/deliverer/payments',
-  '/deliverer/wallet',
-  '/deliverer/offline',
+  '/deliverer/scan-simple',
+  '/deliverer/scan-lot',
   '/css/app.css',
-  '/js/app.js',
-  '/images/icons/icon-192x192.png',
-  '/images/offline-placeholder.png',
-  '/manifest.json'
+  '/js/app.js'
 ];
 
 // APIs critiques à mettre en cache
@@ -273,8 +265,6 @@ self.addEventListener('push', event => {
   
   const options = {
     body: 'Nouveau pickup disponible!',
-    icon: '/images/icons/icon-192x192.png',
-    badge: '/images/icons/badge-72x72.png',
     vibrate: [200, 100, 200],
     data: {
       url: '/deliverer/pickups/available'
@@ -283,7 +273,6 @@ self.addEventListener('push', event => {
       {
         action: 'view',
         title: 'Voir',
-        icon: '/images/actions/view.png'
       },
       {
         action: 'dismiss',

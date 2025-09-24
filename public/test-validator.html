@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Validation Codes AL-AMENA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/package-validator.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">🧪 Test Validation Codes AL-AMENA</h1>
+
+        <!-- Interface de test -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Manual</h2>
+            <div class="flex space-x-4">
+                <input type="text"
+                       id="testInput"
+                       placeholder="Entrez un code ou URL à tester..."
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <button onclick="testCode()"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Tester
+                </button>
+                <button onclick="enableDebug()"
+                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    Debug ON
+                </button>
+            </div>
+            <div id="testResult" class="mt-4"></div>
+        </div>
+
+        <!-- Tests automatiques -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Tests Automatiques</h2>
+            <button onclick="runAllTests()"
+                    class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 mb-4">
+                Lancer tous les tests
+            </button>
+            <div id="testResults" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        function enableDebug() {
+            packageValidator.setDebugMode(true);
+            alert('Mode debug activé - Vérifiez la console');
+        }
+
+        function testCode() {
+            const input = document.getElementById('testInput').value;
+            const result = packageValidator.validate(input);
+
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = `
+                <div class="p-4 border rounded-lg ${result.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
+                    <div class="font-semibold ${result.isValid ? 'text-green-800' : 'text-red-800'}">
+                        ${result.isValid ? '✅ VALIDE' : '❌ INVALIDE'}
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <strong>Input:</strong> ${result.originalInput}<br>
+                        <strong>Code normalisé:</strong> ${result.normalizedCode}
+                    </div>
+                </div>
+            `;
+        }
+
+        function runAllTests() {
+            const testCases = [
+                // Cas de réussite attendus
+                { input: 'PKG_HNIZCWH4_20250921', expected: true, description: 'Format principal' },
+                { input: 'PKG_CLQVFCWP_20250921', expected: true, description: 'Format principal 2' },
+                { input: 'PKG_000038', expected: true, description: 'Format seeder' },
+                { input: 'PKG_000007', expected: true, description: 'Format seeder 2' },
+                { input: 'http://127.0.0.1:8000/track/PKG_HNIZCWH4_20250921', expected: true, description: 'URL complète' },
+                { input: 'PKG_WRQFAGFY_20250918', expected: true, description: 'Ancien format qui devrait marcher' },
+                { input: 'PKG_ABC123', expected: true, description: 'PKG général' },
+                { input: 'ABC123DEF', expected: true, description: 'Code alphanumérique' },
+                { input: '123456789', expected: true, description: 'Code numérique' },
+
+                // Cas d'échec attendus
+                { input: 'ABC', expected: false, description: 'Trop court' },
+                { input: 'LIVRAISON', expected: false, description: 'Mot exclus' },
+                { input: '', expected: false, description: 'Vide' },
+                { input: 'PKG_', expected: false, description: 'PKG incomplet' }
+            ];
+
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+
+            let passed = 0;
+            let total = testCases.length;
+
+            testCases.forEach((testCase, index) => {
+                const result = packageValidator.validate(testCase.input);
+                const success = result.isValid === testCase.expected;
+
+                if (success) passed++;
+
+                const resultElement = document.createElement('div');
+                resultElement.className = `p-3 border rounded ${success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+                resultElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium ${success ? 'text-green-800' : 'text-red-800'}">
+                            ${success ? '✅' : '❌'} Test ${index + 1}: ${testCase.description}
+                        </span>
+                        <span class="text-sm text-gray-600">
+                            ${testCase.input} → ${result.isValid ? 'VALIDE' : 'INVALIDE'} (attendu: ${testCase.expected ? 'VALIDE' : 'INVALIDE'})
+                        </span>
+                    </div>
+                `;
+                resultsDiv.appendChild(resultElement);
+            });
+
+            // Résumé
+            const summaryElement = document.createElement('div');
+            summaryElement.className = `p-4 border-2 rounded-lg font-bold ${passed === total ? 'bg-green-100 border-green-400 text-green-800' : 'bg-red-100 border-red-400 text-red-800'}`;
+            summaryElement.innerHTML = `
+                Résultat: ${passed}/${total} tests réussis ${passed === total ? '🎉' : '😞'}
+            `;
+            resultsDiv.appendChild(summaryElement);
+        }
+
+        // Auto-test au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.packageValidator) {
+                console.log('✅ PackageValidator chargé avec succès');
+                setTimeout(runAllTests, 500);
+            } else {
+                console.error('❌ PackageValidator non trouvé');
+            }
+        });
+    </script>
+</body>
+</html>

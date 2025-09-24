@@ -3,15 +3,15 @@
 @section('title', 'Mon Wallet')
 
 @section('content')
-<div class="p-4 space-y-4" x-data="walletApp()" x-init="init()">
+<div class="space-y-4" x-data="walletApp()" x-init="init()">
     
-    <!-- Header avec solde principal -->
-    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+    <!-- Header avec solde principal en pale purple -->
+    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-2xl p-6 text-purple-800 shadow-lg">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-purple-100 text-sm">Mon Solde Wallet</p>
+                <p class="text-purple-600 text-sm">Mon Solde Wallet</p>
                 <p class="text-4xl font-bold" x-text="formatAmount(walletBalance)"></p>
-                <p class="text-purple-200 text-sm mt-1" x-text="getWalletStatusText()"></p>
+                <p class="text-purple-700 text-sm mt-1" x-text="getWalletStatusText()"></p>
             </div>
             <div class="text-right">
                 <div x-show="walletBalance > 100" class="bg-yellow-500 bg-opacity-20 px-3 py-1 rounded-full mb-2">
@@ -143,8 +143,8 @@
                 <span class="font-medium text-gray-700">Historique</span>
             </a>
             
-            <button @click="requestEmptying()" 
-                    class="flex items-center justify-center space-x-2 p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <button @click="requestEmptying()"
+                    class="flex items-center justify-center space-x-2 p-3 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -301,7 +301,7 @@
                     Annuler
                 </button>
                 <button @click="submitEmptyingRequest()" :disabled="emptyingModal.processing"
-                        class="flex-1 py-2 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                        class="flex-1 py-2 px-4 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 disabled:opacity-50">
                     <span x-show="!emptyingModal.processing">Envoyer Demande</span>
                     <span x-show="emptyingModal.processing" class="flex items-center justify-center space-x-2">
                         <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

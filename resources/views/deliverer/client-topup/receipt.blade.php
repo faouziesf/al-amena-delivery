@@ -18,7 +18,7 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <div class="min-h-screen py-4">
+    <div class="py-4">
         <!-- Actions d'impression -->
         <div class="max-w-md mx-auto mb-4 no-print">
             <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">

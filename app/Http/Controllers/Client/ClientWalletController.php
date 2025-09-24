@@ -126,7 +126,7 @@ class ClientWalletController extends Controller
     public function createWithdrawal()
     {
         $user = Auth::user();
-        
+
         if ($user->role !== 'CLIENT') {
             abort(403, 'Accès non autorisé.');
         }
@@ -141,7 +141,11 @@ class ClientWalletController extends Controller
                 ->with('error', 'Aucun montant disponible pour retrait.');
         }
 
-        return view('client.wallet.withdrawal', compact('user', 'availableBalance'));
+        // Charger les comptes bancaires et adresses de pickup du client
+        $bankAccounts = $user->bankAccounts()->recent()->get() ?? collect();
+        $pickupAddresses = $user->clientPickupAddresses()->get() ?? collect();
+
+        return view('client.wallet.withdrawal', compact('user', 'availableBalance', 'bankAccounts', 'pickupAddresses'));
     }
 
     /**

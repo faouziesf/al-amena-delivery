@@ -1,480 +1,495 @@
 @extends('layouts.client')
 
 @section('title', 'Nouveau Colis')
-@section('page-title', 'Création Rapide de Colis')
-@section('page-description', 'Saisie optimisée pour rapidité')
-
-@section('header-actions')
-<div class="flex items-center space-x-3">
-    <div class="text-sm text-gray-600 hidden md:block">
-        <kbd class="px-2 py-1 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
-        <kbd class="px-2 py-1 text-xs bg-gray-100 border rounded">Enter</kbd> = Créer
-    </div>
-    <a href="{{ route('client.packages.index') }}" 
-       class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-        Liste
-    </a>
-</div>
-@endsection
+@section('page-title', 'Créer un Nouveau Colis')
+@section('page-description', 'Créez votre colis en sélectionnant une adresse de pickup et en saisissant les informations')
 
 @section('content')
-<div x-data="fastPackageCreate()" class="max-w-4xl mx-auto">
-    
-    <!-- Success Message -->
-    @if(session('success'))
-    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+<style>
+@keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+.form-section {
+    animation: slideInUp 0.4s ease-out;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    transform: translateY(-2px);
+}
+.address-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.address-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+}
+.address-card.selected {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 40px -5px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.3);
+    animation: pulse 2s infinite;
+}
+.mobile-responsive {
+    @media (max-width: 640px) {
+        padding: 0.75rem;
+    }
+}
+@media (max-width: 640px) {
+    .form-section {
+        margin: 0 -0.5rem;
+        border-radius: 1rem;
+    }
+    .grid-mobile {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+</style>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8" x-data="packageCreateForm()">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
+        <a href="{{ route('client.packages.index') }}"
+           class="mb-4 sm:mb-0 sm:mr-4 inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            {{ session('success') }}
+        </a>
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Nouveau Colis</h1>
+            <p class="text-gray-600 mt-1">Créez votre colis étape par étape</p>
         </div>
     </div>
+
+    <!-- Message d'erreur global -->
+    @if($errors->any())
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Erreurs de validation</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
-    <!-- Header Compact avec Solde -->
-    <div class="bg-gradient-to-r from-blue-600 to-emerald-600 rounded-lg p-4 text-white mb-4 flex items-center justify-between">
-        <div class="flex items-center space-x-6">
-            <div>
-                <span class="text-sm opacity-90">Solde</span>
-                <div class="text-xl font-bold">{{ number_format($user->wallet->balance, 3) }} DT</div>
-            </div>
-            <div class="text-sm">
-                <div>Livraison: {{ number_format($user->clientProfile->offer_delivery_price, 3) }} DT</div>
-                <div>Retour: {{ number_format($user->clientProfile->offer_return_price, 3) }} DT</div>
-            </div>
-        </div>
-        <div class="text-right text-sm">
-            <div>Colis créés aujourd'hui: <span class="font-bold">{{ $todayPackagesCount ?? 0 }}</span></div>
-            <div class="text-xs opacity-75">Gain potentiel: {{ number_format(($todayRevenue ?? 0), 3) }} DT</div>
-        </div>
-    </div>
-
-    <!-- Formulaire Ultra-Rapide -->
-    <form action="{{ route('client.packages.store') }}" method="POST" @submit="submitForm" 
-          @keydown.ctrl.enter="$event.target.closest('form').submit()"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <form action="{{ route('client.packages.store') }}" method="POST" class="space-y-6 sm:space-y-8">
         @csrf
-        <input type="hidden" name="continue_creating" value="1">
-        
-        <!-- Zone Fournisseur -->
-        <div class="bg-blue-50 px-4 py-3 border-b">
-            <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-gray-900">📦 Pickup</h3>
-                @if(isset($supplierAddresses) && $supplierAddresses->count() > 0)
-                <select @change="loadSupplier($event.target.value)" 
-                        class="text-sm border-0 bg-transparent focus:ring-0 text-blue-700 font-medium">
-                    <option value="">🔄 Adresses sauvées</option>
-                    @foreach($supplierAddresses as $addr)
-                        <option value="{{ $addr->id }}" 
-                                data-name="{{ $addr->name }}" 
-                                data-phone="{{ $addr->phone }}" 
-                                data-address="{{ $addr->address }}" 
-                                data-delegation="{{ $addr->delegation_id }}">
-                            {{ $addr->label ?: $addr->name }} ({{ $addr->delegation->name }})
-                        </option>
-                    @endforeach
-                </select>
-                @endif
-            </div>
-        </div>
 
-        <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <!-- Nom Fournisseur -->
-            <div>
-                <input type="text" name="supplier_name" required
-                       value="{{ old('supplier_name', $lastSupplierData['name'] ?? '') }}"
-                       x-model="form.supplier_name" x-ref="firstField"
-                       placeholder="Nom fournisseur *"
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('supplier_name') border-red-500 @enderror">
-                @error('supplier_name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Téléphone Fournisseur -->
-            <div>
-                <input type="tel" name="supplier_phone" required
-                       value="{{ old('supplier_phone', $lastSupplierData['phone'] ?? '') }}"
-                       x-model="form.supplier_phone"
-                       placeholder="Téléphone fournisseur *"
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('supplier_phone') border-red-500 @enderror">
-                @error('supplier_phone')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Délégation Pickup -->
-            <div>
-                <select name="pickup_delegation_id" required x-model="form.pickup_delegation_id" @change="calculateFees()"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('pickup_delegation_id') border-red-500 @enderror">
-                    <option value="">Délégation pickup *</option>
-                    @foreach($delegations as $delegation)
-                        <option value="{{ $delegation->id }}" 
-                                {{ old('pickup_delegation_id', $lastSupplierData['pickup_delegation_id'] ?? '') == $delegation->id ? 'selected' : '' }}>
-                            {{ $delegation->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('pickup_delegation_id')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Save Supplier -->
-            <div class="flex items-center justify-center">
-                <label class="flex items-center text-xs text-gray-600">
-                    <input type="checkbox" name="save_supplier_address" value="1" x-model="form.save_supplier"
-                           class="mr-1 h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    💾 Sauver
-                </label>
-            </div>
-        </div>
-
-        <!-- Adresse Pickup -->
-        <div class="px-4 pb-4">
-            <textarea name="pickup_address" required rows="2" x-model="form.pickup_address"
-                      placeholder="Adresse pickup complète *"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('pickup_address') border-red-500 @enderror">{{ old('pickup_address', $lastSupplierData['pickup_address'] ?? '') }}</textarea>
-            @error('pickup_address')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-        </div>
-
-        <!-- Zone Destinataire -->
-        <div class="bg-emerald-50 px-4 py-3 border-b border-t">
-            <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-gray-900">🎯 Livraison</h3>
-                @if(isset($clientAddresses) && $clientAddresses->count() > 0)
-                <select @change="loadClient($event.target.value)"
-                        class="text-sm border-0 bg-transparent focus:ring-0 text-emerald-700 font-medium">
-                    <option value="">🔄 Clients habituels</option>
-                    @foreach($clientAddresses as $addr)
-                        <option value="{{ $addr->id }}" 
-                                data-name="{{ $addr->name }}" 
-                                data-phone="{{ $addr->phone }}" 
-                                data-address="{{ $addr->address }}" 
-                                data-delegation="{{ $addr->delegation_id }}">
-                            {{ $addr->label ?: $addr->name }} ({{ $addr->delegation->name }})
-                        </option>
-                    @endforeach
-                </select>
-                @endif
-            </div>
-        </div>
-
-        <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <!-- Nom Client -->
-            <div>
-                <input type="text" name="recipient_name" required
-                       value="{{ old('recipient_name') }}" x-model="form.recipient_name"
-                       placeholder="Nom client *"
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-transparent @error('recipient_name') border-red-500 @enderror">
-                @error('recipient_name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Téléphone Client -->
-            <div>
-                <input type="tel" name="recipient_phone" required
-                       value="{{ old('recipient_phone') }}" x-model="form.recipient_phone"
-                       placeholder="Téléphone client *"
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-transparent @error('recipient_phone') border-red-500 @enderror">
-                @error('recipient_phone')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Délégation Destination -->
-            <div>
-                <select name="delegation_to" required x-model="form.delegation_to" @change="calculateFees()"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-transparent @error('delegation_to') border-red-500 @enderror">
-                    <option value="">Destination *</option>
-                    @foreach($delegations as $delegation)
-                        <option value="{{ $delegation->id }}" {{ old('delegation_to') == $delegation->id ? 'selected' : '' }}>
-                            {{ $delegation->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('delegation_to')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- Save Client -->
-            <div class="flex items-center justify-center">
-                <label class="flex items-center text-xs text-gray-600">
-                    <input type="checkbox" name="save_client_address" value="1" x-model="form.save_client"
-                           class="mr-1 h-3 w-3 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                    💾 Sauver
-                </label>
-            </div>
-        </div>
-
-        <!-- Adresse Client -->
-        <div class="px-4 pb-4">
-            <textarea name="recipient_address" required rows="2" x-model="form.recipient_address"
-                      placeholder="Adresse livraison complète *"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-transparent @error('recipient_address') border-red-500 @enderror">{{ old('recipient_address') }}</textarea>
-            @error('recipient_address')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-        </div>
-
-        <!-- Zone Colis -->
-        <div class="bg-purple-50 px-4 py-3 border-b border-t">
-            <h3 class="font-semibold text-gray-900">📋 Colis</h3>
-        </div>
-
-        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Description -->
-            <div>
-                <input type="text" name="content_description" required
-                       value="{{ old('content_description') }}" x-model="form.content_description"
-                       placeholder="Description contenu *"
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('content_description') border-red-500 @enderror">
-                @error('content_description')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-            </div>
-
-            <!-- COD Amount -->
-            <div>
-                <div class="relative">
-                    <input type="number" name="cod_amount" required
-                           value="{{ old('cod_amount', '0') }}" x-model="form.cod_amount"
-                           min="0" max="9999.999" step="0.001" @input="calculateFees()"
-                           placeholder="Montant COD *"
-                           class="w-full px-3 py-2 pr-8 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('cod_amount') border-red-500 @enderror">
-                    <span class="absolute right-2 top-2 text-xs text-gray-500">DT</span>
+        <!-- SECTION 1: ADRESSE DE PICKUP -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
                 </div>
-                @error('cod_amount')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <h2 class="text-lg sm:text-xl font-bold text-gray-900">1. Adresse de Pickup</h2>
+                <span class="ml-3 text-sm text-red-500">*</span>
             </div>
 
-            <!-- Options -->
-            <div class="flex items-center space-x-4">
-                <label class="flex items-center text-xs text-gray-600">
-                    <input type="checkbox" name="is_fragile" value="1" x-model="form.fragile"
-                           class="mr-1 h-3 w-3 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
-                    🔸 Fragile
-                </label>
-                <label class="flex items-center text-xs text-gray-600">
-                    <input type="checkbox" name="requires_signature" value="1" x-model="form.signature"
-                           class="mr-1 h-3 w-3 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
-                    ✍️ Signature
-                </label>
-            </div>
-        </div>
-
-        <!-- Notes -->
-        <div class="px-4 pb-4">
-            <textarea name="notes" rows="2" x-model="form.notes"
-                      placeholder="Notes (optionnel)"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent">{{ old('notes') }}</textarea>
-        </div>
-
-        <!-- Footer avec résumé et actions -->
-        <div class="bg-gray-50 px-4 py-4 border-t flex items-center justify-between">
-            
-            <!-- Résumé rapide -->
-            <div class="flex items-center space-x-6 text-sm" x-show="form.cod_amount > 0">
+            @if($pickupAddresses->count() > 0)
                 <div>
-                    <span class="text-gray-600">COD:</span> 
-                    <span class="font-semibold" x-text="formatCurrency(form.cod_amount)"></span>
+                    <label for="pickup_address_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner une adresse de pickup <span class="text-red-500">*</span>
+                    </label>
+                    <select id="pickup_address_id" name="pickup_address_id" required
+                            x-model="selectedPickupAddressId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 @error('pickup_address_id') border-red-500 @enderror">
+                        <option value="">Choisir une adresse de pickup...</option>
+                        @foreach($pickupAddresses as $address)
+                            <option value="{{ $address->id }}" {{ old('pickup_address_id') == $address->id ? 'selected' : '' }}>
+                                {{ $address->name }} - {{ $address->delegation }}, {{ $address->gouvernorat }}
+                                @if($address->is_default) (Par défaut) @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('pickup_address_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
-                <div>
-                    <span class="text-gray-600">Escrow:</span> 
-                    <span class="font-semibold text-blue-600" x-text="formatCurrency(escrowAmount)"></span>
+
+                <div class="mt-4 text-center">
+                    <a href="{{ route('client.pickup-addresses.create') }}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Ajouter une nouvelle adresse de pickup
+                    </a>
                 </div>
-                <div>
-                    <span class="text-gray-600">Solde après:</span> 
-                    <span class="font-semibold" :class="remainingBalance >= 0 ? 'text-green-600' : 'text-red-600'"
-                          x-text="formatCurrency(remainingBalance)"></span>
+            @else
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">Aucune adresse de pickup enregistrée</p>
+                    <a href="{{ route('client.pickup-addresses.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Créer une adresse de pickup
+                    </a>
                 </div>
+            @endif
+        </div>
+
+        <!-- SECTION 2: INFORMATIONS DU DESTINATAIRE -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-900">2. Informations du Destinataire</h2>
+                <span class="ml-3 text-sm text-red-500">*</span>
             </div>
 
-            <!-- Actions -->
-            <div class="flex items-center space-x-3">
-                <button type="button" @click="resetClient()" 
-                        class="px-4 py-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors">
-                    🔄 Nouveau client
-                </button>
-                
-                <button type="submit" 
-                        :disabled="!canCreate"
-                        :class="canCreate ? 
-                            'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white' : 
-                            'bg-gray-300 text-gray-500 cursor-not-allowed'"
-                        class="px-6 py-2 font-medium rounded-lg transition-all duration-200 transform hover:scale-105">
-                    <span x-show="!submitting">🚀 Créer & Continuer</span>
-                    <span x-show="submitting">⏳ Création...</span>
-                </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 grid-mobile">
+                <!-- Nom complet -->
+                <div class="md:col-span-2">
+                    <label for="nom_complet" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nom complet du destinataire <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="nom_complet" name="nom_complet" required
+                           value="{{ old('nom_complet') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('nom_complet') border-red-500 @enderror"
+                           placeholder="Nom et prénom du destinataire">
+                    @error('nom_complet')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Gouvernorat -->
+                <div>
+                    <label for="gouvernorat" class="block text-sm font-medium text-gray-700 mb-2">
+                        Gouvernorat <span class="text-red-500">*</span>
+                    </label>
+                    <select id="gouvernorat" name="gouvernorat" required
+                            @change="updateDelegations()"
+                            x-model="selectedGouvernorat"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('gouvernorat') border-red-500 @enderror">
+                        <option value="">Sélectionner un gouvernorat</option>
+                        @foreach($gouvernorats as $key => $name)
+                            <option value="{{ $key }}" {{ old('gouvernorat') === $key ? 'selected' : '' }}>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('gouvernorat')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Délégation -->
+                <div>
+                    <label for="delegation" class="block text-sm font-medium text-gray-700 mb-2">
+                        Délégation <span class="text-red-500">*</span>
+                    </label>
+                    <select id="delegation" name="delegation" required
+                            x-model="selectedDelegation"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('delegation') border-red-500 @enderror">
+                        <option value="">Sélectionner une délégation</option>
+                        <template x-for="(delegationName, delegationKey) in availableDelegations" :key="delegationKey">
+                            <option :value="delegationKey" x-text="delegationName" :selected="selectedDelegation === delegationKey"></option>
+                        </template>
+                    </select>
+                    @error('delegation')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Téléphone 1 -->
+                <div>
+                    <label for="telephone_1" class="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone 1 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="tel" id="telephone_1" name="telephone_1" required
+                           value="{{ old('telephone_1') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('telephone_1') border-red-500 @enderror"
+                           placeholder="Ex: +216 XX XXX XXX">
+                    @error('telephone_1')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Téléphone 2 (optionnel) -->
+                <div>
+                    <label for="telephone_2" class="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone 2 <span class="text-gray-400 text-xs">(optionnel)</span>
+                    </label>
+                    <input type="tel" id="telephone_2" name="telephone_2"
+                           value="{{ old('telephone_2') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('telephone_2') border-red-500 @enderror"
+                           placeholder="Ex: +216 XX XXX XXX">
+                    @error('telephone_2')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Adresse complète -->
+                <div class="md:col-span-2">
+                    <label for="adresse_complete" class="block text-sm font-medium text-gray-700 mb-2">
+                        Adresse complète de livraison <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="adresse_complete" name="adresse_complete" rows="3" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('adresse_complete') border-red-500 @enderror"
+                              placeholder="Adresse détaillée de livraison (rue, numéro, quartier, points de repère...)">{{ old('adresse_complete') }}</textarea>
+                    @error('adresse_complete')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </div>
 
-        <!-- Champs cachés pour les options avancées -->
-        <input type="hidden" name="package_weight" x-model="form.package_weight">
-        <input type="hidden" name="package_value" x-model="form.package_value">
-        <input type="hidden" name="package_length" x-model="form.package_length">
-        <input type="hidden" name="package_width" x-model="form.package_width">
-        <input type="hidden" name="package_height" x-model="form.package_height">
-        <input type="hidden" name="special_instructions" x-model="form.special_instructions">
-        <input type="hidden" name="supplier_address_label" x-model="form.supplier_label">
-        <input type="hidden" name="client_address_label" x-model="form.client_label">
+        <!-- SECTION 3: DÉTAILS DU COLIS -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-900">3. Détails du Colis</h2>
+                <span class="ml-3 text-sm text-red-500">*</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 grid-mobile">
+                <!-- Contenu -->
+                <div>
+                    <label for="contenu" class="block text-sm font-medium text-gray-700 mb-2">
+                        Contenu du colis <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="contenu" name="contenu" required
+                           value="{{ old('contenu') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 @error('contenu') border-red-500 @enderror"
+                           placeholder="Ex: Vêtements, électronique, documents...">
+                    @error('contenu')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Prix -->
+                <div>
+                    <label for="prix" class="block text-sm font-medium text-gray-700 mb-2">
+                        Prix du colis (TND) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="prix" name="prix" min="0" step="0.001" required
+                           value="{{ old('prix') }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 @error('prix') border-red-500 @enderror"
+                           placeholder="0.000">
+                    @error('prix')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Commentaire optionnel -->
+                <div class="md:col-span-2">
+                    <label for="commentaire" class="block text-sm font-medium text-gray-700 mb-2">
+                        Commentaire <span class="text-gray-400 text-xs">(optionnel)</span>
+                    </label>
+                    <textarea id="commentaire" name="commentaire" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 @error('commentaire') border-red-500 @enderror"
+                              placeholder="Instructions spéciales, informations complémentaires...">{{ old('commentaire') }}</textarea>
+                    @error('commentaire')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- Options du colis -->
+            <div class="mt-6 space-y-4">
+                <h3 class="text-lg font-medium text-gray-900">Options de traitement</h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Fragile -->
+                    <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all duration-200"
+                           :class="isFragile ? 'border-orange-500 bg-orange-50' : ''">
+                        <input type="checkbox" name="fragile" value="1" x-model="isFragile" class="sr-only">
+                        <div class="flex items-center">
+                            <div class="w-5 h-5 border-2 border-orange-300 rounded mr-3 flex items-center justify-center transition-all duration-200"
+                                 :class="isFragile ? 'bg-orange-600 border-orange-600' : ''">
+                                <svg x-show="isFragile" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">Fragile</span>
+                        </div>
+                    </label>
+
+                    <!-- Signature obligatoire -->
+                    <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200"
+                           :class="requiresSignature ? 'border-blue-500 bg-blue-50' : ''">
+                        <input type="checkbox" name="signature_obligatoire" value="1" x-model="requiresSignature" class="sr-only">
+                        <div class="flex items-center">
+                            <div class="w-5 h-5 border-2 border-blue-300 rounded mr-3 flex items-center justify-center transition-all duration-200"
+                                 :class="requiresSignature ? 'bg-blue-600 border-blue-600' : ''">
+                                <svg x-show="requiresSignature" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">Signature obligatoire</span>
+                        </div>
+                    </label>
+
+                    <!-- Autorisation d'ouvrir -->
+                    <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-green-300 transition-all duration-200"
+                           :class="allowOpening ? 'border-green-500 bg-green-50' : ''">
+                        <input type="checkbox" name="autorisation_ouverture" value="1" x-model="allowOpening" class="sr-only">
+                        <div class="flex items-center">
+                            <div class="w-5 h-5 border-2 border-green-300 rounded mr-3 flex items-center justify-center transition-all duration-200"
+                                 :class="allowOpening ? 'bg-green-600 border-green-600' : ''">
+                                <svg x-show="allowOpening" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">Autoriser l'ouverture</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Mode de paiement -->
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Mode de paiement accepté</h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Espèces seulement (par défaut) -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_method" value="especes_seulement" x-model="paymentMethod" class="sr-only" checked>
+                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                             :class="paymentMethod === 'especes_seulement' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-300'">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-green-300 rounded-full mr-3"
+                                     :class="paymentMethod === 'especes_seulement' ? 'bg-green-600 border-green-600' : ''">
+                                    <div x-show="paymentMethod === 'especes_seulement'" class="w-full h-full flex items-center justify-center">
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                                <span class="font-medium text-gray-900">Espèces seulement</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Paiement uniquement en liquide</p>
+                        </div>
+                    </label>
+
+                    <!-- Chèque seulement -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_method" value="cheque_seulement" x-model="paymentMethod" class="sr-only">
+                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                             :class="paymentMethod === 'cheque_seulement' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-blue-300 rounded-full mr-3"
+                                     :class="paymentMethod === 'cheque_seulement' ? 'bg-blue-600 border-blue-600' : ''">
+                                    <div x-show="paymentMethod === 'cheque_seulement'" class="w-full h-full flex items-center justify-center">
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                                <span class="font-medium text-gray-900">Chèque seulement</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Paiement uniquement par chèque</p>
+                        </div>
+                    </label>
+
+                    <!-- Espèces et Chèque -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="payment_method" value="especes_et_cheques" x-model="paymentMethod" class="sr-only">
+                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                             :class="paymentMethod === 'especes_et_cheques' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-purple-300 rounded-full mr-3"
+                                     :class="paymentMethod === 'especes_et_cheques' ? 'bg-purple-600 border-purple-600' : ''">
+                                    <div x-show="paymentMethod === 'especes_et_cheques'" class="w-full h-full flex items-center justify-center">
+                                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                                <span class="font-medium text-gray-900">Espèces et Chèque</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Paiement en liquide ou par chèque</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <a href="{{ route('client.packages.index') }}"
+               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Annuler
+            </a>
+
+            <button type="submit"
+                    :disabled="!isFormValid()"
+                    :class="isFormValid() ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg' : 'bg-gray-400 cursor-not-allowed'"
+                    class="inline-flex items-center justify-center px-8 py-3 border border-transparent rounded-lg text-base font-medium text-white transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span x-text="isFormValid() ? 'Créer le Colis' : 'Remplir les champs obligatoires'"></span>
+            </button>
+        </div>
     </form>
-
-    <!-- Raccourcis clavier -->
-    <div class="mt-4 bg-blue-100 border border-blue-200 rounded-lg p-3">
-        <div class="text-sm text-blue-800">
-            <strong>⌨️ Raccourcis:</strong> 
-            <kbd class="px-2 py-1 text-xs bg-white border rounded mx-1">Ctrl+Enter</kbd> Créer colis
-            <kbd class="px-2 py-1 text-xs bg-white border rounded mx-1">Ctrl+R</kbd> Nouveau client
-            <kbd class="px-2 py-1 text-xs bg-white border rounded mx-1">Tab</kbd> Champ suivant
-        </div>
-    </div>
 </div>
 
-@push('scripts')
 <script>
-function fastPackageCreate() {
+function packageCreateForm() {
     return {
-        form: {
-            supplier_name: '{{ old("supplier_name", $lastSupplierData["name"] ?? "") }}',
-            supplier_phone: '{{ old("supplier_phone", $lastSupplierData["phone"] ?? "") }}',
-            pickup_delegation_id: '{{ old("pickup_delegation_id", $lastSupplierData["pickup_delegation_id"] ?? "") }}',
-            pickup_address: `{{ old("pickup_address", $lastSupplierData["pickup_address"] ?? "") }}`,
-            save_supplier: false,
-            supplier_label: '',
-            
-            delegation_to: '{{ old("delegation_to") }}',
-            recipient_name: '{{ old("recipient_name") }}',
-            recipient_phone: '{{ old("recipient_phone") }}',
-            recipient_address: `{{ old("recipient_address") }}`,
-            save_client: false,
-            client_label: '',
-            
-            content_description: '{{ old("content_description") }}',
-            cod_amount: {{ old('cod_amount', '0') }},
-            notes: `{{ old("notes") }}`,
-            fragile: false,
-            signature: false,
-            
-            // Champs cachés
-            package_weight: 0,
-            package_value: 0,
-            package_length: 0,
-            package_width: 0,
-            package_height: 0,
-            special_instructions: ''
-        },
-        
-        submitting: false,
-        walletBalance: {{ $user->wallet->balance }},
-        deliveryFee: {{ $user->clientProfile->offer_delivery_price }},
-        returnFee: {{ $user->clientProfile->offer_return_price }},
-        
-        get escrowAmount() {
-            const cod = parseFloat(this.form.cod_amount) || 0;
-            return cod >= this.deliveryFee ? this.returnFee : this.deliveryFee;
-        },
-        
-        get remainingBalance() {
-            return this.walletBalance - this.escrowAmount;
-        },
-        
-        get canCreate() {
-            return this.form.supplier_name && this.form.supplier_phone && 
-                   this.form.pickup_delegation_id && this.form.pickup_address && 
-                   this.form.delegation_to && this.form.pickup_delegation_id !== this.form.delegation_to &&
-                   this.form.recipient_name && this.form.recipient_phone && 
-                   this.form.recipient_address && this.form.content_description && 
-                   this.form.cod_amount >= 0 && this.remainingBalance >= 0 && !this.submitting;
-        },
-        
-        calculateFees() {
-            // Auto-calculé via getters
-        },
-        
-        formatCurrency(amount) {
-            return new Intl.NumberFormat('fr-TN', { 
-                style: 'currency', 
-                currency: 'TND',
-                minimumFractionDigits: 3
-            }).format(amount || 0);
-        },
-        
-        loadSupplier(id) {
-            if (!id) return;
-            const option = event.target.selectedOptions[0];
-            this.form.supplier_name = option.dataset.name;
-            this.form.supplier_phone = option.dataset.phone;
-            this.form.pickup_address = option.dataset.address;
-            this.form.pickup_delegation_id = option.dataset.delegation;
-            
-            // Auto-focus sur destinataire
-            setTimeout(() => {
-                document.querySelector('input[name="recipient_name"]')?.focus();
-            }, 100);
-        },
-        
-        loadClient(id) {
-            if (!id) return;
-            const option = event.target.selectedOptions[0];
-            this.form.recipient_name = option.dataset.name;
-            this.form.recipient_phone = option.dataset.phone;
-            this.form.recipient_address = option.dataset.address;
-            this.form.delegation_to = option.dataset.delegation;
-            
-            // Auto-focus sur description
-            setTimeout(() => {
-                document.querySelector('input[name="content_description"]')?.focus();
-            }, 100);
-        },
-        
-        resetClient() {
-            this.form.delegation_to = '';
-            this.form.recipient_name = '';
-            this.form.recipient_phone = '';
-            this.form.recipient_address = '';
-            this.form.save_client = false;
-            this.form.client_label = '';
-            this.form.content_description = '';
-            this.form.cod_amount = 0;
-            this.form.notes = '';
-            this.form.fragile = false;
-            this.form.signature = false;
-            
-            // Focus sur nom client
-            setTimeout(() => {
-                document.querySelector('input[name="recipient_name"]')?.focus();
-            }, 100);
-        },
-        
-        submitForm(event) {
-            if (!this.canCreate) {
-                event.preventDefault();
-                alert('Veuillez corriger les erreurs du formulaire');
-                return false;
-            }
-            
-            if (this.remainingBalance < 0) {
-                event.preventDefault();
-                alert('Solde insuffisant pour créer ce colis');
-                return false;
-            }
-            
-            this.submitting = true;
-            return true;
-        },
-        
+        selectedPickupAddressId: {{ old('pickup_address_id', 'null') }},
+        selectedGouvernorat: '{{ old('gouvernorat', '') }}',
+        selectedDelegation: '{{ old('delegation', '') }}',
+        isFragile: {{ old('fragile') ? 'true' : 'false' }},
+        requiresSignature: {{ old('signature_obligatoire') ? 'true' : 'false' }},
+        allowOpening: {{ old('autorisation_ouverture') ? 'true' : 'false' }},
+        paymentMethod: '{{ old('payment_method', 'especes_seulement') }}',
+        delegationsData: @json($delegationsData ?? []),
+        availableDelegations: {},
+
         init() {
-            // Auto-focus si fournisseur pré-rempli
-            if (this.form.supplier_name) {
-                setTimeout(() => {
-                    document.querySelector('input[name="recipient_name"]')?.focus();
-                }, 300);
-            } else {
-                setTimeout(() => {
-                    this.$refs.firstField?.focus();
-                }, 300);
+            this.updateDelegations();
+            if (this.selectedDelegation) {
+                this.$nextTick(() => {
+                    this.updateDelegations();
+                });
             }
-            
-            // Raccourcis clavier
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === 'r') {
-                    e.preventDefault();
-                    this.resetClient();
-                }
-            });
+        },
+
+        updateDelegations() {
+            if (this.selectedGouvernorat && this.delegationsData[this.selectedGouvernorat]) {
+                this.availableDelegations = this.delegationsData[this.selectedGouvernorat];
+            } else {
+                this.availableDelegations = {};
+                this.selectedDelegation = '';
+            }
+        },
+
+        isFormValid() {
+            return this.selectedPickupAddressId !== null;
         }
     }
 }
 </script>
-@endpush
 @endsection

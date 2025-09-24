@@ -7,6 +7,7 @@ use App\Http\Controllers\Commercial\WithdrawalController;
 use App\Http\Controllers\Commercial\DelivererController;
 use App\Http\Controllers\Commercial\PackageController;
 use App\Http\Controllers\Commercial\NotificationController;
+use App\Http\Controllers\Commercial\CommercialTicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -123,23 +124,36 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
     // ==================== GESTION NOTIFICATIONS ====================
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
-        
+
         // Actions notifications
         Route::post('/mark-read/{notification?}', [NotificationController::class, 'markAsRead'])->name('mark.read');
         Route::post('/{notification}/mark-unread', [NotificationController::class, 'markAsUnread'])->name('mark.unread');
         Route::delete('/{notification}', [NotificationController::class, 'delete'])->name('delete');
         Route::post('/bulk-action', [NotificationController::class, 'bulkAction'])->name('bulk.action');
         Route::delete('/delete-old', [NotificationController::class, 'deleteOld'])->name('delete.old');
-        
+
         // Test (développement uniquement)
         Route::post('/api/test-notification', [NotificationController::class, 'createTestNotification'])->name('api.test');
+    });
+
+    // ==================== GESTION TICKETS ====================
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [CommercialTicketController::class, 'index'])->name('index');
+        Route::get('/create', [CommercialTicketController::class, 'create'])->name('create');
+        Route::post('/', [CommercialTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [CommercialTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/assign', [CommercialTicketController::class, 'assign'])->name('assign');
+        Route::post('/{ticket}/update-status', [CommercialTicketController::class, 'updateStatus'])->name('update.status');
+        Route::post('/{ticket}/messages', [CommercialTicketController::class, 'addMessage'])->name('add.message');
+        Route::get('/search', [CommercialTicketController::class, 'search'])->name('search');
+        Route::get('/export', [CommercialTicketController::class, 'export'])->name('export');
     });
 
     // ==================== API ENDPOINTS COMMERCIAUX ====================
     Route::prefix('api')->name('api.')->group(function () {
         
         // Dashboard APIs
-        Route::get('/dashboard-stats', [CommercialDashboardController::class, 'api_getDashboardStats'])->name('dashboard.stats');
+        Route::get('/dashboard-stats', [CommercialDashboardController::class, 'api_getDashboardStats'])->name('commercial.dashboard.stats');
         
         // Client APIs
         Route::get('/clients/search', [ClientController::class, 'apiSearch'])->name('clients.search');

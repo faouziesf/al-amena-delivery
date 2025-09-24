@@ -537,7 +537,7 @@ function batchScanner(options = {}) {
 
         // Code Management
         addCodeToBatch(code, method = 'manual', type = 'MANUAL') {
-            const cleanCode = code.trim().toUpperCase();
+            const cleanCode = this.normalizePackageCode(code);
 
             // Check if code already exists (if duplicates not allowed)
             if (!this.allowDuplicates && this.scannedCodes.some(item => item.code === cleanCode)) {
@@ -550,7 +550,7 @@ function batchScanner(options = {}) {
             }
 
             // Validate code
-            const isValid = this.isValidPackageCode(cleanCode);
+            const isValid = this.isValidPackageCode(code);
 
             const item = {
                 code: cleanCode,
@@ -611,18 +611,13 @@ function batchScanner(options = {}) {
             this.quickCode = '';
         },
 
-        // Code Validation
-        isValidPackageCode(code) {
-            if (!code || code.length < 6) return false;
+        // 🚀 LOGIQUE ULTRA SIMPLE - ACCEPTE TOUT
+        normalizePackageCode(input) {
+            return window.extractCodeFromUrl ? window.extractCodeFromUrl(input) : (input || '').toString().trim().toUpperCase();
+        },
 
-            const cleanCode = code.trim().toUpperCase();
-
-            if (/^https?:\/\/.*\/track\//.test(cleanCode)) return true;
-
-            const obviousWords = ['LIVRAISON', 'DELIVERY', 'BON', 'ALAMENA', 'SERVICE', 'CONTACT'];
-            if (obviousWords.some(word => cleanCode.includes(word) && word.length > 4)) return false;
-
-            return true;
+        isValidPackageCode(input) {
+            return window.isValidPackageCode ? window.isValidPackageCode(input) : true;
         },
 
         // Export

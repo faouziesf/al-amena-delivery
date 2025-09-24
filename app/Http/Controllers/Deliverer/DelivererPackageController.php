@@ -15,9 +15,63 @@ use App\Models\ActionLog;
 use App\Http\Requests\Deliverer\ScanPackageRequest;
 use App\Services\PackageScannerService;
 use Carbon\Carbon;
+use App\Http\Controllers\Controller;
 
-class DelivererPackageController
+class DelivererPackageController extends Controller
 {
+    /**
+     * Index principal des colis - NOUVELLE MÉTHODE
+     */
+    public function index(Request $request)
+    {
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            abort(403, 'Accès réservé aux livreurs.');
+        }
+
+        $delivererId = Auth::id();
+
+        // Statistiques globales pour le dashboard
+        $stats = [
+            'available_pickups' => Package::where('status', 'AVAILABLE')->count(),
+            'my_pickups' => Package::where('assigned_deliverer_id', $delivererId)
+                                 ->where('status', 'ACCEPTED')->count(),
+            'deliveries' => Package::where('assigned_deliverer_id', $delivererId)
+                                 ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])->count(),
+            'returns' => Package::where('assigned_deliverer_id', $delivererId)
+                               ->where('status', 'VERIFIED')->count(),
+            'deliveries_today' => Package::where('assigned_deliverer_id', $delivererId)
+                                        ->where('status', 'DELIVERED')
+                                        ->whereDate('delivered_at', today())->count(),
+            'cod_collected_today' => Package::where('assigned_deliverer_id', $delivererId)
+                                           ->where('status', 'DELIVERED')
+                                           ->whereDate('delivered_at', today())
+                                           ->sum('cod_amount'),
+            'urgent_deliveries' => Package::where('assigned_deliverer_id', $delivererId)
+                                         ->where('status', 'UNAVAILABLE')
+                                         ->where('delivery_attempts', '>=', 3)
+                                         ->count()
+        ];
+
+        // Colis urgents (3ème tentative)
+        $urgentPackages = Package::where('assigned_deliverer_id', $delivererId)
+                                ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                                ->where('delivery_attempts', '>=', 3)
+                                ->with(['sender', 'delegationFrom', 'delegationTo'])
+                                ->orderBy('updated_at', 'asc')
+                                ->limit(5)
+                                ->get();
+
+        // Activité récente
+        $recentActivity = Package::where('assigned_deliverer_id', $delivererId)
+                                ->whereIn('status', ['DELIVERED', 'RETURNED', 'PICKED_UP'])
+                                ->with(['sender', 'delegationFrom', 'delegationTo'])
+                                ->orderBy('updated_at', 'desc')
+                                ->limit(10)
+                                ->get();
+
+        return view('deliverer.packages.index', compact('stats', 'urgentPackages', 'recentActivity'));
+    }
+
     /**
      * LISTE 1: Pickups disponibles
      */
@@ -121,6 +175,47 @@ class DelivererPackageController
         $packages = $query->paginate(20);
 
         return view('deliverer.packages.deliveries', compact('packages'));
+    }
+
+    /**
+     * Interface de livraison une par une - MODE RAPIDE
+     */
+    public function singleDelivery(Request $request)
+    {
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            abort(403, 'Accès réservé aux livreurs.');
+        }
+
+        $packages = Package::where('assigned_deliverer_id', Auth::id())
+                           ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                           ->with(['sender', 'delegationFrom', 'delegationTo'])
+                           ->orderByRaw('CASE
+                               WHEN delivery_attempts >= 3 THEN 0
+                               WHEN delivery_attempts = 2 THEN 1
+                               WHEN delivery_attempts = 1 THEN 2
+                               ELSE 3 END')
+                           ->orderBy('cod_amount', 'desc')
+                           ->get()
+                           ->map(function ($package) {
+                               // S'assurer que les données JSON sont décodées
+                               if (is_string($package->recipient_data)) {
+                                   $package->recipient_data = json_decode($package->recipient_data, true);
+                               }
+                               if (is_string($package->sender_data)) {
+                                   $package->sender_data = json_decode($package->sender_data, true);
+                               }
+                               return $package;
+                           });
+
+        // Stats rapides
+        $stats = [
+            'total' => $packages->count(),
+            'urgent' => $packages->where('delivery_attempts', '>=', 3)->count(),
+            'retry' => $packages->where('delivery_attempts', '>', 0)->count(),
+            'total_cod' => $packages->sum('cod_amount')
+        ];
+
+        return view('deliverer.packages.single-delivery', compact('packages', 'stats'));
     }
 
     /**
@@ -307,7 +402,8 @@ class DelivererPackageController
             'recipient_name' => 'required|string|max:100',
             'delivery_notes' => 'nullable|string|max:500',
             'recipient_signature' => 'nullable|string',
-            'delivery_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120'
+            'delivery_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'print_receipt' => 'nullable|boolean'
         ]);
 
         // Vérification COD exact avec tolérance de 0.001 DT
@@ -364,13 +460,20 @@ class DelivererPackageController
 
                 $newBalance = Auth::user()->wallet->fresh()->balance;
 
-                return response()->json([
+                $response = [
                     'success' => true,
                     'message' => "Colis {$package->package_code} livré avec succès! COD {$validated['cod_collected']} DT ajouté à votre wallet.",
                     'cod_amount' => $validated['cod_collected'],
                     'new_wallet_balance' => $newBalance,
                     'formatted_balance' => number_format($newBalance, 3) . ' DT'
-                ]);
+                ];
+
+                // Ajouter l'URL du reçu si demandé
+                if ($request->input('print_receipt')) {
+                    $response['receipt_url'] = route('deliverer.packages.delivery.receipt', $package);
+                }
+
+                return response()->json($response);
             });
         } catch (\Exception $e) {
             Log::error('Erreur livraison', [
@@ -391,14 +494,40 @@ class DelivererPackageController
      */
     public function markUnavailable(Package $package, Request $request)
     {
+        Log::info('markUnavailable called', [
+            'package_id' => $package->id,
+            'package_status' => $package->status,
+            'user_id' => Auth::id(),
+            'user_role' => Auth::user()->role ?? 'not_authenticated',
+            'assigned_deliverer' => $package->assigned_deliverer_id,
+            'request_data' => $request->all()
+        ]);
+
         if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            Log::warning('markUnavailable: Access denied - not deliverer');
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
 
-        if (!$package->canBeScanBy(Auth::user()) || $package->getActionFor(Auth::user()) !== 'deliver') {
+        $canScan = $package->canBeScanBy(Auth::user());
+        $action = $package->getActionFor(Auth::user());
+
+        Log::info('markUnavailable: Permission check', [
+            'can_scan' => $canScan,
+            'action' => $action,
+            'expected_action' => 'deliver'
+        ]);
+
+        if (!$canScan || $action !== 'deliver') {
             return response()->json([
                 'success' => false,
-                'message' => 'Action non autorisée pour ce colis.'
+                'message' => 'Action non autorisée pour ce colis.',
+                'debug' => [
+                    'can_scan' => $canScan,
+                    'action' => $action,
+                    'package_status' => $package->status,
+                    'assigned_to' => $package->assigned_deliverer_id,
+                    'current_user' => Auth::id()
+                ]
             ], 403);
         }
 
@@ -495,7 +624,7 @@ class DelivererPackageController
                                      ($attemptCount == 2 ? "⚠️ Prochaine tentative sera la dernière!" : "Prochaine tentative possible.");
                     
                     // Programmer une notification de rappel si date fournie
-                    if ($validated['next_attempt_date']) {
+                    if (isset($validated['next_attempt_date']) && $validated['next_attempt_date']) {
                         $this->scheduleAttemptReminder($package, $validated['next_attempt_date']);
                     }
                 }
@@ -876,7 +1005,7 @@ class DelivererPackageController
         $stats = [
             'is_urgent' => $package->delivery_attempts >= 3,
             'days_since_created' => $package->created_at->diffInDays(now()),
-            'time_since_last_update' => $package->updated_at->diffForHumans(),
+            'time_since_last_update' => $package->updated_at ? $package->updated_at->diffForHumans() : 'Inconnue',
             'can_be_modified' => $package->canBeModified(),
             'estimated_delivery_time' => $this->estimateDeliveryTime($package)
         ];
@@ -1711,5 +1840,476 @@ class DelivererPackageController
         }
 
         return $baseTime . ' heures';
+    }
+
+    // ==================== NOUVELLES MÉTHODES POUR SCAN PAR LOT ====================
+
+    /**
+     * Page de scan par lot pour les pickups
+     */
+    public function batchPickup()
+    {
+        // Test temporaire pour debug
+        try {
+            return view('deliverer.packages.batch-pickup');
+        } catch (\Exception $e) {
+            return response("Debug Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine(), 500);
+        }
+    }
+
+    /**
+     * Vérifier si un package peut être accepté en pickup
+     */
+    public function checkPickup(Request $request)
+    {
+        $code = strtoupper(trim($request->input('code', '')));
+
+        if (empty($code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code vide ou invalide'
+            ]);
+        }
+
+        // Chercher le package
+        $package = $this->findPackageByCode($code);
+
+        if (!$package) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Colis introuvable'
+            ]);
+        }
+
+        // Vérifier si le package peut être accepté
+        if ($package->status !== 'AVAILABLE') {
+            return response()->json([
+                'success' => false,
+                'message' => "Ce colis n'est pas disponible pour pickup (statut: {$package->status})"
+            ]);
+        }
+
+        // Vérifier la géolocalisation si nécessaire
+        if ($package->pickup_delegation_id && $package->pickup_delegation_id !== auth()->user()->delegation_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce colis est dans une autre délégation'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Colis disponible pour pickup',
+            'package' => [
+                'id' => $package->id,
+                'code' => $package->package_code,
+                'destination' => $package->delegationTo->name ?? 'N/A',
+                'cod_amount' => $package->cod_amount,
+                'content' => $package->content_description,
+                'pickup_address' => $package->pickup_data['address'] ?? 'N/A'
+            ]
+        ]);
+    }
+
+    /**
+     * Accepter plusieurs packages en lot
+     */
+    public function batchAccept(Request $request)
+    {
+        $codes = $request->input('codes', []);
+
+        if (empty($codes)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucun code fourni'
+            ]);
+        }
+
+        $acceptedCount = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($codes as $code) {
+                $package = $this->findPackageByCode($code);
+
+                if (!$package) {
+                    $errors[] = "Code {$code}: Colis introuvable";
+                    continue;
+                }
+
+                if ($package->status !== 'AVAILABLE') {
+                    $errors[] = "Code {$code}: Colis non disponible";
+                    continue;
+                }
+
+                // Accepter le package
+                $package->status = 'ACCEPTED';
+                $package->assigned_deliverer_id = auth()->id();
+                $package->accepted_at = now();
+                $package->save();
+
+                // Log de l'action
+                $this->actionLogService->logAction(
+                    auth()->user(),
+                    'PICKUP_ACCEPTED',
+                    $package,
+                    "Pickup accepté via scan par lot",
+                    ['batch_operation' => true]
+                );
+
+                $acceptedCount++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Opération terminée avec succès",
+                'accepted_count' => $acceptedCount,
+                'errors' => $errors,
+                'total_processed' => count($codes)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du traitement: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    // ==================== MÉTHODES POUR SCAN EN LOT AVEC ACTIONS ====================
+
+    /**
+     * Validation en lot pour Pickup (Available/Accepted → Picked Up)
+     */
+    public function bulkPickup(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids' => 'required|array|min:1|max:50',
+            'package_ids.*' => 'required'
+        ]);
+
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        $delivererId = Auth::id();
+        $successCount = 0;
+        $errorCount = 0;
+        $results = [];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($validated['package_ids'] as $packageId) {
+                // Chercher le package
+                $package = Package::where(function($query) use ($packageId) {
+                    $query->where('id', $packageId)
+                          ->orWhere('package_code', $packageId);
+                })->first();
+
+                if (!$package) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'success' => false,
+                        'message' => 'Colis introuvable'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Vérifier le statut pour action Pickup
+                if (!in_array($package->status, ['AVAILABLE', 'ACCEPTED'])) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'package_code' => $package->package_code,
+                        'success' => false,
+                        'message' => "Statut invalide: {$package->status} (requis: Available ou Accepted)"
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Si Available, assigner d'abord au livreur
+                if ($package->status === 'AVAILABLE') {
+                    $package->update([
+                        'assigned_deliverer_id' => $delivererId,
+                        'assigned_at' => now(),
+                        'status' => 'ACCEPTED'
+                    ]);
+
+                    $this->updatePackageStatus($package, 'ACCEPTED', 'Assigné via scan en lot pour pickup');
+                }
+
+                // Vérifier que le package est assigné à ce livreur
+                if ($package->assigned_deliverer_id !== $delivererId) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'package_code' => $package->package_code,
+                        'success' => false,
+                        'message' => 'Colis assigné à un autre livreur'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Marquer comme Picked Up
+                $package->update([
+                    'status' => 'PICKED_UP',
+                    'picked_up_at' => now(),
+                    'pickup_notes' => 'Collecté via scan en lot'
+                ]);
+
+                $this->updatePackageStatus($package, 'PICKED_UP', 'Collecté via scan en lot');
+
+                $this->logAction('BULK_PICKUP', 'Package', $package->id,
+                               'ACCEPTED', 'PICKED_UP', [
+                    'package_code' => $package->package_code,
+                    'deliverer_id' => $delivererId,
+                    'bulk_operation' => true
+                ]);
+
+                $results[] = [
+                    'package_id' => $packageId,
+                    'package_code' => $package->package_code,
+                    'success' => true,
+                    'message' => 'Pickup réussi'
+                ];
+                $successCount++;
+            }
+
+            if ($successCount > 0) {
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Pickup en lot terminé: {$successCount} succès, {$errorCount} échecs",
+                    'results' => $results,
+                    'summary' => [
+                        'total' => count($validated['package_ids']),
+                        'success' => $successCount,
+                        'errors' => $errorCount
+                    ]
+                ]);
+            } else {
+                DB::rollback();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun colis n\'a pu être traité',
+                    'results' => $results
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            Log::error('Erreur bulk pickup', [
+                'deliverer_id' => $delivererId,
+                'package_ids' => $validated['package_ids'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du pickup en lot: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Changement de livreur en lot (Available/Picked Up/Accepted)
+     */
+    public function bulkChangeDeliverer(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids' => 'required|array|min:1|max:50',
+            'package_ids.*' => 'required',
+            'new_deliverer_id' => 'nullable|exists:users,id' // Optionnel, si null = retour disponible
+        ]);
+
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        $delivererId = Auth::id();
+        $newDelivererId = $validated['new_deliverer_id'] ?? null;
+        $successCount = 0;
+        $errorCount = 0;
+        $results = [];
+
+        // Vérifier le nouveau livreur si spécifié
+        if ($newDelivererId) {
+            $newDeliverer = User::where('id', $newDelivererId)
+                                ->where('role', 'DELIVERER')
+                                ->where('account_status', 'ACTIVE')
+                                ->first();
+
+            if (!$newDeliverer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nouveau livreur invalide ou inactif'
+                ], 400);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($validated['package_ids'] as $packageId) {
+                // Chercher le package
+                $package = Package::where(function($query) use ($packageId) {
+                    $query->where('id', $packageId)
+                          ->orWhere('package_code', $packageId);
+                })->first();
+
+                if (!$package) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'success' => false,
+                        'message' => 'Colis introuvable'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Vérifier le statut pour changement de livreur
+                if (!in_array($package->status, ['AVAILABLE', 'PICKED_UP', 'ACCEPTED'])) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'package_code' => $package->package_code,
+                        'success' => false,
+                        'message' => "Statut invalide: {$package->status} (requis: Available, Picked Up ou Accepted)"
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Vérifier les autorisations
+                if ($package->assigned_deliverer_id && $package->assigned_deliverer_id !== $delivererId) {
+                    $results[] = [
+                        'package_id' => $packageId,
+                        'package_code' => $package->package_code,
+                        'success' => false,
+                        'message' => 'Colis assigné à un autre livreur'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                $oldStatus = $package->status;
+                $oldDelivererId = $package->assigned_deliverer_id;
+
+                // Effectuer le changement
+                if ($newDelivererId) {
+                    // Transférer à un nouveau livreur
+                    $package->update([
+                        'assigned_deliverer_id' => $newDelivererId,
+                        'assigned_at' => now(),
+                        'status' => 'ACCEPTED' // Reset au statut ACCEPTED pour le nouveau livreur
+                    ]);
+
+                    $newDelivererName = User::find($newDelivererId)->name ?? 'Inconnu';
+                    $statusMessage = "Transféré au livreur: {$newDelivererName}";
+                } else {
+                    // Remettre en disponible
+                    $package->update([
+                        'assigned_deliverer_id' => null,
+                        'assigned_at' => null,
+                        'status' => 'AVAILABLE'
+                    ]);
+
+                    $statusMessage = "Remis en disponible - Libéré par le livreur";
+                }
+
+                $this->updatePackageStatus($package, $package->status, $statusMessage);
+
+                $this->logAction('BULK_CHANGE_DELIVERER', 'Package', $package->id,
+                               $oldStatus, $package->status, [
+                    'package_code' => $package->package_code,
+                    'old_deliverer_id' => $oldDelivererId,
+                    'new_deliverer_id' => $newDelivererId,
+                    'action_by_deliverer_id' => $delivererId,
+                    'bulk_operation' => true
+                ]);
+
+                $results[] = [
+                    'package_id' => $packageId,
+                    'package_code' => $package->package_code,
+                    'success' => true,
+                    'message' => $newDelivererId ? 'Transféré avec succès' : 'Remis en disponible'
+                ];
+                $successCount++;
+            }
+
+            if ($successCount > 0) {
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Changement de livreur terminé: {$successCount} succès, {$errorCount} échecs",
+                    'results' => $results,
+                    'summary' => [
+                        'total' => count($validated['package_ids']),
+                        'success' => $successCount,
+                        'errors' => $errorCount,
+                        'action' => $newDelivererId ? 'transfer' : 'release'
+                    ]
+                ]);
+            } else {
+                DB::rollback();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun colis n\'a pu être traité',
+                    'results' => $results
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            Log::error('Erreur bulk change deliverer', [
+                'deliverer_id' => $delivererId,
+                'new_deliverer_id' => $newDelivererId,
+                'package_ids' => $validated['package_ids'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du changement: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Génère et affiche le reçu de livraison
+     */
+    public function deliveryReceipt(Package $package)
+    {
+        if (!Auth::check() || Auth::user()->role !== 'DELIVERER') {
+            abort(403, 'Accès réservé aux livreurs.');
+        }
+
+        // Vérifier que le colis est livré et assigné au livreur connecté
+        if ($package->status !== 'DELIVERED' || $package->assigned_deliverer_id !== Auth::id()) {
+            abort(404, 'Reçu de livraison non disponible pour ce colis.');
+        }
+
+        // Décoder les données JSON si nécessaire
+        $recipientData = is_string($package->recipient_data)
+            ? json_decode($package->recipient_data, true)
+            : $package->recipient_data;
+
+        $senderData = is_string($package->sender_data)
+            ? json_decode($package->sender_data, true)
+            : $package->sender_data;
+
+        return view('deliverer.receipts.delivery-receipt', compact('package', 'recipientData', 'senderData'));
     }
 }

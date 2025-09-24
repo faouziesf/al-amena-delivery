@@ -28,58 +28,79 @@
         color: var(--text-primary) !important;
         font-weight: 600;
         border-radius: 0.75rem;
-    }
-    .scanner-container .text-emerald-600 { color: var(--color-success) !important; }
-    .scanner-container .text-blue-600 { color: var(--color-primary) !important; }
-    .scanner-container .bg-blue-50 { background-color: #eff6ff; }
-    .scanner-container .text-blue-900 { color: #1e3a8a; }
-    .scanner-container .text-blue-700 { color: #1d4ed8; }
-    .scanner-container input[type="text"] {
-        background-color: var(--surface-background);
-        border-radius: var(--border-radius-md);
-        transition: all 0.2s ease-in-out;
-    }
-    .scanner-container .border-gray-300 { border-color: var(--border-color); }
-    .scanner-container input[type="text"]:focus { --tw-ring-opacity: 0.5; }
-    .scanner-container .border-emerald-500 { --tw-border-opacity: 1; border-color: rgb(16 185 129 / var(--tw-border-opacity)); }
-    .scanner-container .focus\:ring-emerald-200:focus { --tw-ring-color: #a7f3d0; }
-    .scanner-container .border-red-500 { --tw-border-opacity: 1; border-color: rgb(239 68 68 / var(--tw-border-opacity)); }
-    .scanner-container .focus\:ring-red-200:focus { --tw-ring-color: #fecaca; }
-    .scanner-container button {
-        border-radius: var(--border-radius-md);
-        font-weight: 600;
-        transition: all 0.2s ease-in-out;
-    }
-    .scanner-container button:hover { filter: brightness(1.1); }
-    .scanner-container .bg-blue-600 { background-color: var(--color-primary); }
-    .scanner-container .bg-emerald-600 { background-color: var(--color-success); }
-    .scanner-container .bg-red-600 { background-color: var(--color-danger); }
-    .result-modal-container { backdrop-filter: blur(4px); }
-    .result-modal-container .bg-white {
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-lg);
-        padding: 1.5rem 2rem;
-    }
-    .result-modal-container .bg-emerald-100 { background-color: #d1fae5; }
-    .result-modal-container .text-emerald-800 { color: #065f46; }
-    .result-modal-container .bg-red-100 { background-color: #fee2e2; }
-    .result-modal-container .text-red-800 { color: #991b1b; }
-    .result-modal-container .bg-gray-50 {
-        background-color: var(--surface-background);
         border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-md);
     }
-    .result-modal-container .bg-gray-200 { background-color: #e2e8f0; color: #334155; }
-    .result-modal-container .bg-gray-200:hover { background-color: #cbd5e1; }
-    @keyframes laser-scan { 0% { top: 0; } 100% { top: 100%; } }
-    .laser-line {
+    .scanner-container .flex.mb-4.bg-gray-100 button:not(.bg-white) {
+        color: var(--text-secondary);
+        background: transparent;
+    }
+    .scanner-container .flex.mb-4.bg-gray-100 button:hover {
+        background-color: rgba(255, 255, 255, 0.8);
+        transform: translateY(-1px);
+    }
+
+    .scanning-overlay {
+        pointer-events: none;
+        border: 2px solid var(--color-success);
+        border-radius: 12px;
+        position: relative;
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+        animation: pulse 2s infinite;
+    }
+
+    .scanning-overlay::before, .scanning-overlay::after {
+        content: '';
         position: absolute;
-        left: 5%;
-        right: 5%;
-        height: 2px;
         background: var(--color-success);
-        box-shadow: 0 0 10px var(--color-success);
+    }
+
+    .scanning-overlay::before {
+        top: 50%;
+        left: 10%;
+        right: 10%;
+        height: 2px;
         animation: laser-scan 2.5s infinite alternate ease-in-out;
+        box-shadow: 0 0 10px var(--color-success);
+    }
+
+    .scanning-overlay::after {
+        top: 10%;
+        bottom: 10%;
+        left: 50%;
+        width: 2px;
+        animation: laser-scan 2.5s infinite alternate-reverse ease-in-out;
+        box-shadow: 0 0 10px var(--color-success);
+    }
+
+    @keyframes laser-scan {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Toast Notifications */
+    .result-modal-container .bg-white {
+        max-height: 90vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+    }
+
+    .result-modal-container .bg-white::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .result-modal-container .bg-white::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .result-modal-container .bg-white::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 3px;
     }
 </style>
 
@@ -98,97 +119,252 @@
          x-transition:enter-end="opacity-100"
          class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center scanner-container">
 
-        <div class="bg-white rounded-3xl p-4 m-4 w-full max-w-md max-h-screen overflow-y-auto">
-
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4">
             <!-- Header -->
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">
+                    <h2 class="text-lg font-bold text-gray-900">
                         <span x-show="scanMode === 'single'">Scanner le Colis</span>
                         <span x-show="scanMode === 'batch'">Scanner par Lot</span>
-                    </h3>
-                    <p class="text-sm text-gray-600" x-text="activeMode === 'camera' ? 'Mode caméra' : 'Saisie manuelle'"></p>
+                    </h2>
+                    <p class="text-sm text-gray-600">Caméra + Saisie manuelle</p>
                 </div>
-                <button @click="closeScanner()"
-                        class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="closeScanner()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- Mode Toggle -->
-            <div class="flex mb-4 bg-gray-100 rounded-xl p-1">
-                <button @click="switchMode('camera')"
-                        :class="activeMode === 'camera' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'"
-                        :disabled="!isHttps && isMobile"
-                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all disabled:opacity-50 flex items-center justify-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Interface unique avec caméra en haut -->
+            <div class="space-y-4">
+                <!-- Camera Permission Request -->
+                <div x-show="!permissionAsked && !cameraActive" class="text-center p-6 bg-blue-50 rounded-xl border border-blue-200">
+                    <svg class="w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <span>Caméra</span>
-                </button>
-                <button @click="switchMode('manual')"
-                        :class="activeMode === 'manual' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600'"
-                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    <span>Manuel</span>
-                </button>
-            </div>
-
-            <!-- Camera Mode -->
-            <x-deliverer.scanner.camera-overlay />
-
-            <!-- Manual Mode -->
-            <x-deliverer.scanner.code-input />
-
-            <!-- Recent Codes (if enabled) -->
-            <div x-show="showRecent && recentCodes.length > 0 && activeMode === 'manual'" class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Codes récents</h4>
-                <div class="space-y-1 max-h-32 overflow-y-auto">
-                    <template x-for="item in recentCodes.slice(0, 5)" :key="item.value">
-                        <button @click="useRecentCode(item.value)"
-                                class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex justify-between items-center">
-                            <span class="font-mono text-xs" x-text="item.value"></span>
-                            <span class="text-xs text-gray-500" x-text="formatTime(item.timestamp)"></span>
-                        </button>
-                    </template>
+                    <h3 class="font-semibold text-blue-900 mb-2">Accès Caméra Requis</h3>
+                    <p class="text-sm text-blue-700 mb-4">Autorisez l'accès à votre caméra pour scanner les codes-barres</p>
+                    <button @click="startCamera()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                        Activer la Caméra
+                    </button>
                 </div>
-            </div>
 
-            <!-- Batch Mode Results -->
-            <div x-show="scanMode === 'batch' && scannedCodes.length > 0" class="mt-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-sm font-medium text-gray-700">Codes scannés</h4>
-                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full" x-text="scannedCodes.length"></span>
-                </div>
-                <div class="space-y-1 max-h-32 overflow-y-auto border rounded-lg p-2">
-                    <template x-for="(code, index) in scannedCodes" :key="index">
-                        <div class="flex items-center justify-between text-xs bg-gray-50 px-2 py-1 rounded">
-                            <span class="font-mono" x-text="code"></span>
-                            <button @click="removeBatchCode(index)" class="text-red-500 hover:text-red-700">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
+                <!-- Camera View (En haut) -->
+                <div x-show="permissionAsked" class="relative bg-black rounded-2xl overflow-hidden camera-container" :style="`aspect-ratio: ${getAspectRatio()}`">
+                    <video x-ref="videoElement" class="w-full h-full object-cover" autoplay playsinline muted x-show="permissionAsked && !cameraErrorMsg"></video>
+                    <canvas x-ref="canvasElement" style="display: none;"></canvas>
+
+                    <!-- Scanning Overlay -->
+                    <div x-show="cameraActive && !searching" class="absolute inset-4 scanning-overlay">
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-center">
+                            <div class="bg-black bg-opacity-50 px-3 py-2 rounded-lg">
+                                <p class="text-sm font-medium" x-text="scanType === 'qr' ? 'Scan QR Code...' : 'Scan Code-Barres...'"></p>
+                            </div>
                         </div>
-                    </template>
+                    </div>
+
+                    <!-- Searching Overlay -->
+                    <div x-show="searching" class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center text-white">
+                        <div class="text-center">
+                            <div class="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-2"></div>
+                            <p class="text-sm">Recherche en cours...</p>
+                        </div>
+                    </div>
+
+                    <div x-show="permissionAsked && !cameraActive && !cameraErrorMsg" class="text-white text-center">
+                        <div class="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-2"></div>
+                        <p class="text-sm">Démarrage de la caméra...</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div x-show="cameraErrorMsg" class="bg-red-500 text-white p-6 rounded-xl text-center max-w-xs mx-4">
+                        <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.732 0L4.08 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <p class="font-semibold mb-2">Erreur Caméra</p>
+                        <p class="text-xs mb-4" x-text="cameraErrorMsg"></p>
+                        <button @click="startCamera()" class="bg-white text-red-600 px-4 py-2 rounded-lg text-sm font-medium">
+                            Réessayer
+                        </button>
+                    </div>
+
+                    <!-- Scanning Overlay -->
+                    <div x-show="cameraActive && !cameraErrorMsg" class="absolute inset-0 pointer-events-none scanning-overlay" style="box-shadow: rgba(0, 0, 0, 0.6) 0px 0px 0px 9999px inset;">
+                        <div class="absolute inset-4 border-2 border-emerald-400 rounded-2xl"></div>
+                    </div>
+
+                    <!-- Status Indicator -->
+                    <div class="absolute top-4 left-4 right-4">
+                        <div :class="getStatusIndicatorClass()" class="flex items-center space-x-2 px-3 py-2 rounded-lg">
+                            <div class="w-2 h-2 rounded-full animate-pulse" :class="cameraActive ? 'bg-emerald-400' : 'bg-red-400'"></div>
+                            <span class="text-sm font-medium" x-text="getStatusText()"></span>
+                            <div class="ml-auto flex items-center space-x-2">
+                                <div x-show="batchScanMode" class="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">
+                                    <span x-text="totalScanned"></span> scannés
+                                </div>
+                                <span class="text-xs font-medium" x-text="getScanModeText()"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Torch Button (Mobile) -->
+                    <div x-show="cameraActive && isMobile" class="absolute bottom-4 right-4">
+                        <button @click="toggleTorch()" :class="torchEnabled ? 'bg-yellow-500' : 'bg-black bg-opacity-50'" class="text-white p-3 rounded-full transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex space-x-2 mt-2">
-                    <button @click="processBatchCodes()"
-                            :disabled="scannedCodes.length === 0 || processing"
-                            class="flex-1 bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50">
-                        <span x-show="!processing">Traiter (<span x-text="scannedCodes.length"></span>)</span>
-                        <span x-show="processing">Traitement...</span>
+
+                <!-- Camera Controls -->
+                <div x-show="permissionAsked" class="flex justify-center space-x-3">
+                    <button @click="startCamera()" x-show="!cameraActive && !cameraErrorMsg" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Démarrer</span>
                     </button>
-                    <button @click="clearBatchCodes()"
-                            class="bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-600">
-                        Vider
+
+                    <button @click="stopCamera()" x-show="cameraActive" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h6v4H9z"/>
+                        </svg>
+                        <span>Arrêter</span>
+                    </button>
+
+                    <button @click="switchCamera()" x-show="cameraActive && isMobile && hasMultipleCameras" class="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        <span>Changer</span>
                     </button>
                 </div>
+
+                <!-- Camera Settings -->
+                <div x-show="cameraActive" class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="font-medium text-gray-700">Qualité:</label>
+                        <select x-model="scanQuality" @change="adjustScanQuality()" class="text-sm border-gray-300 rounded">
+                            <option value="low">Basse</option>
+                            <option value="medium">Moyenne</option>
+                            <option value="high">Haute</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-2">
+                        <span>Résolution: <span x-text="getCurrentResolution()"></span></span>
+                        <span>FPS: <span x-text="getCurrentFPS()"></span></span>
+                    </div>
+                </div>
+
+                <!-- Champ de saisie manuelle (En dessous) -->
+                <div class="space-y-3">
+                    <div class="relative">
+                        <input type="text"
+                               x-ref="manualInput"
+                               x-model="currentCode"
+                               @keydown.enter="validateCurrentPackage()"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:border-blue-500 focus:ring-blue-200 text-lg font-mono uppercase transition-colors"
+                               placeholder="Scanner, saisir le code ou coller l'URL de suivi..."
+                               autofocus>
+
+                    </div>
+
+                    <div x-show="currentCode.trim().length > 0" class="text-sm text-blue-600">
+                        Prêt à rechercher : <span x-text="currentCode.trim()"></span>
+                    </div>
+
+                    <!-- Aide pour les formats -->
+                    <div x-show="currentCode.length >= 3" class="mt-2 text-xs text-gray-500 space-y-1">
+                        <p class="font-medium">Le backend déterminera si le code est valide</p>
+                        <div>• PKG_CLQVFCWP_20250921</div>
+                        <div>• PKG_000038</div>
+                        <div>• PKG_000007</div>
+                        <div>• http://127.0.0.1:8000/track/PKG_HNIZCWH4_20250921</div>
+                    </div>
+
+                    <!-- Bouton de validation -->
+                    <button @click="validateCurrentPackage()"
+                            :disabled="!codeValid || searching"
+                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <span x-show="!searching" class="flex items-center justify-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Valider le Colis</span>
+                        </span>
+                        <span x-show="searching" class="flex items-center justify-center space-x-2">
+                            <div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            <span>Validation...</span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Camera Error -->
+                <div x-show="cameraErrorMsg" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="text-center text-yellow-800">
+                        <p class="font-medium">Problème avec la caméra</p>
+                        <p class="text-sm mt-1">Utilisez la saisie manuelle ci-dessous</p>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Liste des colis (pour le mode batch) -->
+                <div x-show="scanMode === 'batch' && packageList.length > 0" class="mt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-700">Colis Scannés
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2" x-text="totalPackages"></span>
+                        </h4>
+                        <div class="text-xs text-gray-600">
+                            COD Total: <span class="font-semibold text-emerald-600" x-text="formatCurrency(totalCOD)"></span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 max-h-48 overflow-y-auto mb-4">
+                        <template x-for="(pkg, index) in packageList" :key="index">
+                            <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                <div class="flex-1">
+                                    <div class="font-mono text-sm text-emerald-800" x-text="pkg.code"></div>
+                                    <div class="text-xs text-gray-600" x-text="pkg.name || 'Destinataire non spécifié'"></div>
+                                    <div class="text-xs text-emerald-600 font-semibold" x-show="pkg.cod_amount > 0" x-text="'COD: ' + pkg.formatted_cod"></div>
+                                </div>
+                                <button @click="removePackageFromList(index)" class="text-red-500 hover:text-red-700 p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Bouton Terminer (pour le mode batch) -->
+                    <button @click="showBatchSummary()"
+                            class="w-full bg-emerald-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Terminer le Lot (<span x-text="totalPackages"></span> colis)</span>
+                    </button>
+                </div>
+
+                <!-- Codes récents (pour mode single) -->
+                <div x-show="scanMode === 'single' && recentCodes.length > 0" class="mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-gray-700">Derniers codes scannés</h4>
+                        <button @click="clearRecentCodes()" class="text-xs text-red-600 hover:text-red-700">Effacer</button>
+                    </div>
+                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                        <template x-for="item in recentCodes.slice(0, 3)" :key="item.value">
+                            <button @click="selectRecentCode(item.value)" class="w-full text-left p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                                <div class="font-mono text-sm text-gray-700" x-text="item.value"></div>
+                                <div class="text-xs text-gray-500" x-text="formatTime(item.timestamp)"></div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -215,547 +391,113 @@
 
                 <!-- Package Details -->
                 <div x-show="result.package" class="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-4">
-                    <div class="pb-3 border-b border-gray-200">
-                        <p class="text-sm text-gray-500">Code Colis</p>
+                    <div class="text-center border-b pb-4">
                         <p class="font-mono text-lg text-blue-600 font-bold" x-text="result.package?.code"></p>
                     </div>
-                    <dl class="text-sm space-y-3">
+
+                    <dl class="space-y-3">
                         <div x-show="result.delivery_info?.name">
-                            <dt class="font-semibold text-gray-600">Destinataire</dt>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Destinataire</dt>
                             <dd class="text-gray-900" x-text="result.delivery_info?.name"></dd>
                         </div>
                         <div x-show="result.delivery_info?.address">
-                            <dt class="font-semibold text-gray-600">Adresse</dt>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Adresse</dt>
                             <dd class="text-gray-900" x-text="result.delivery_info?.address"></dd>
                         </div>
                         <div x-show="result.package?.cod_amount > 0">
-                            <dt class="font-semibold text-gray-600">Montant à encaisser</dt>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant COD</dt>
                             <dd class="text-emerald-600 font-bold text-lg" x-text="result.package?.formatted_cod"></dd>
                         </div>
                     </dl>
                 </div>
 
-                <!-- Actions -->
+                <!-- Action Buttons -->
                 <div class="flex space-x-3">
-                    <button @click="closeResult()"
-                            class="flex-1 py-3 px-4 bg-gray-200 text-gray-800 rounded-xl font-semibold hover:bg-gray-300">
+                    <button @click="closeResult()" class="flex-1 py-3 px-4 bg-gray-200 text-gray-800 rounded-xl font-semibold hover:bg-gray-300">
                         Fermer
                     </button>
                     <button x-show="result.success && result.redirect && autoRedirect"
                             @click="goToPackage()"
                             class="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700"
-                            x-text="getActionLabel()">
-                    </button>
+                            x-text="getActionLabel()"></button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Résumé du Lot Modal -->
+    <div x-show="batchSummaryVisible" x-transition class="fixed inset-0 bg-black bg-opacity-75 z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Résumé du Lot</h3>
+                <button @click="closeBatchSummary()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-blue-600" x-text="totalPackages"></div>
+                    <div class="text-sm text-blue-700">Nombre de Colis</div>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-emerald-600" x-text="formatCurrency(totalCOD)"></div>
+                    <div class="text-sm text-emerald-700">COD Total</div>
+                </div>
+            </div>
+
+            <!-- Liste des colis -->
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">Détail des Colis</h4>
+                <div class="space-y-3 max-h-64 overflow-y-auto">
+                    <template x-for="(pkg, index) in packageList" :key="index">
+                        <div class="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="font-mono text-lg font-semibold text-blue-600" x-text="pkg.code"></div>
+                                    <div class="text-gray-700 mt-1" x-text="pkg.name || 'Destinataire non spécifié'"></div>
+                                    <div class="text-sm text-gray-600 mt-1" x-text="pkg.address || 'Adresse non spécifiée'"></div>
+                                    <div class="mt-2">
+                                        <span class="text-sm text-emerald-600 font-semibold" x-show="pkg.cod_amount > 0" x-text="'COD: ' + pkg.formatted_cod"></span>
+                                        <span class="text-sm text-gray-500" x-show="!pkg.cod_amount || pkg.cod_amount === 0">Aucun COD</span>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    #<span x-text="index + 1"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="packageList.length === 0" class="text-center py-8 text-gray-500">
+                        Aucun colis dans le lot
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="flex space-x-3">
+                <button @click="closeBatchSummary()" class="flex-1 py-3 px-4 bg-gray-200 text-gray-800 rounded-xl font-semibold hover:bg-gray-300">
+                    Continuer le Scan
+                </button>
+                <button @click="submitBatch()" class="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">
+                    Valider le Lot (<span x-text="totalPackages"></span> colis)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="fixed bottom-20 sm:bottom-4 right-4 z-50 space-y-2">
+        <!-- Toasts will be dynamically inserted here -->
+    </div>
 </div>
 
-@push('scripts')
-<script>
-function delivererQRScanner(options = {}) {
-    return {
-        // Configuration
-        scanMode: options.mode || 'single',
-        autoRedirect: options.autoRedirect !== false,
-        showRecent: options.showRecent !== false,
-
-        // UI State
-        scannerVisible: false,
-        activeMode: 'manual',
-        resultVisible: false,
-
-        // Camera State
-        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-        isHttps: location.protocol === 'https:',
-        cameraActive: false,
-        cameraErrorMsg: '',
-        videoStream: null,
-        scanInterval: null,
-        lastDetection: null,
-        permissionAsked: false,
-        scanCycle: 0,
-        currentScanMode: 'barcode',
-
-        // Manual Input
-        manualCode: '',
-        codeValid: false,
-        searching: false,
-        processing: false,
-
-        // Data
-        recentCodes: [],
-        scannedCodes: [],
-        result: {},
-        scanHistory: [],
-
-        init() {
-            this.loadStoredData();
-            if (this.isMobile && !this.isHttps) {
-                this.activeMode = 'manual';
-            }
-            this.$watch('manualCode', () => this.validateCode());
-        },
-
-        // Scanner Management
-        openScanner(params = {}) {
-            this.scanMode = params.mode || this.scanMode;
-            this.scannerVisible = true;
-            this.resetScanner();
-
-            if (this.activeMode === 'manual') {
-                setTimeout(() => {
-                    if (this.$refs.manualInput) {
-                        this.$refs.manualInput.focus();
-                    }
-                }, 100);
-            }
-        },
-
-        closeScanner() {
-            this.stopCamera();
-            this.scannerVisible = false;
-            this.resetScanner();
-        },
-
-        resetScanner() {
-            this.manualCode = '';
-            this.codeValid = false;
-            this.searching = false;
-            this.processing = false;
-            this.cameraErrorMsg = '';
-            this.resultVisible = false;
-            this.permissionAsked = false;
-
-            if (this.scanMode === 'single') {
-                this.scannedCodes = [];
-            }
-        },
-
-        switchMode(mode) {
-            if (mode === 'camera' && this.isMobile && !this.isHttps) {
-                return;
-            }
-
-            this.activeMode = mode;
-
-            if (mode === 'manual') {
-                this.stopCamera();
-                setTimeout(() => {
-                    if (this.$refs.manualInput) {
-                        this.$refs.manualInput.focus();
-                    }
-                }, 100);
-            }
-        },
-
-        // Camera Functions (imported from original)
-        async requestCameraPermission() {
-            this.permissionAsked = true;
-            this.cameraErrorMsg = '';
-
-            if (this.isMobile && !this.isHttps) {
-                this.cameraErrorMsg = 'HTTPS requis pour la caméra sur mobile.';
-                return;
-            }
-
-            try {
-                if (!navigator.mediaDevices?.getUserMedia) {
-                    throw new Error('getUserMedia non supporté');
-                }
-                await this.startCamera();
-            } catch (error) {
-                this.cameraErrorMsg = this.getCameraErrorMessage(error);
-            }
-        },
-
-        async startCamera() {
-            this.cameraErrorMsg = '';
-
-            try {
-                this.stopCamera();
-
-                const constraints = {
-                    video: {
-                        width: { min: 640, ideal: this.isMobile ? 1280 : 1920 },
-                        height: { min: 480, ideal: this.isMobile ? 720 : 1080 },
-                        frameRate: { min: 15, ideal: 30 }
-                    }
-                };
-
-                if (this.isMobile) {
-                    constraints.video.facingMode = { exact: "environment" };
-                }
-
-                this.videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-                const video = this.$refs.videoElement;
-
-                if (!video) {
-                    throw new Error('Élément vidéo non trouvé');
-                }
-
-                video.srcObject = this.videoStream;
-
-                await new Promise((resolve, reject) => {
-                    video.onloadedmetadata = () => resolve();
-                    video.onerror = reject;
-                    setTimeout(() => reject(new Error('Timeout chargement vidéo')), 10000);
-                });
-
-                this.cameraActive = true;
-                this.startScanning();
-
-            } catch (error) {
-                this.cameraErrorMsg = this.getCameraErrorMessage(error);
-                this.stopCamera();
-            }
-        },
-
-        stopCamera() {
-            this.stopScanning();
-
-            if (this.videoStream) {
-                this.videoStream.getTracks().forEach(track => track.stop());
-                this.videoStream = null;
-            }
-
-            if (this.$refs.videoElement) {
-                this.$refs.videoElement.srcObject = null;
-            }
-
-            this.cameraActive = false;
-        },
-
-        retryCamera() {
-            this.cameraErrorMsg = '';
-            this.requestCameraPermission();
-        },
-
-        getCameraErrorMessage(error) {
-            const msg = error.message || error.toString();
-
-            if (msg.includes('Permission denied') || msg.includes('NotAllowedError')) {
-                return 'Permission refusée. Autorisez la caméra dans les paramètres.';
-            }
-            if (msg.includes('NotFoundError')) {
-                return 'Aucune caméra trouvée.';
-            }
-            if (msg.includes('NotReadableError')) {
-                return 'Caméra déjà utilisée.';
-            }
-
-            return 'Erreur caméra. Réessayez ou utilisez le mode manuel.';
-        },
-
-        // Scanning Functions (imported from original)
-        startScanning() {
-            this.initQuaggaScanner();
-            this.startAlternatingScans();
-        },
-
-        startAlternatingScans() {
-            this.scanInterval = setInterval(() => {
-                this.scanCycle++;
-                if (this.scanCycle % 2 === 0) {
-                    this.currentScanMode = 'barcode';
-                } else {
-                    this.currentScanMode = 'qr';
-                    this.analyzeQRFrame();
-                }
-            }, 750);
-        },
-
-        stopScanning() {
-            if (this.scanInterval) {
-                clearInterval(this.scanInterval);
-                this.scanInterval = null;
-            }
-            this.stopQuaggaScanner();
-            this.scanCycle = 0;
-            this.currentScanMode = 'barcode';
-        },
-
-        initQuaggaScanner() {
-            if (typeof Quagga === 'undefined') return;
-
-            try {
-                const video = this.$refs.videoElement;
-                if (!video) return;
-
-                Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: video,
-                        constraints: {
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 },
-                            facingMode: this.isMobile ? "environment" : "user"
-                        }
-                    },
-                    decoder: {
-                        readers: ["code_128_reader", "ean_reader", "code_39_reader"]
-                    },
-                    locate: true,
-                    debug: false
-                }, (err) => {
-                    if (err) return;
-                    Quagga.start();
-                });
-
-                Quagga.onDetected((result) => {
-                    if (result?.codeResult?.code && this.currentScanMode === 'barcode') {
-                        const code = result.codeResult.code.trim();
-                        if (this.isValidPackageCode(code)) {
-                            this.onCodeDetected(code, 'BARCODE');
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error('Erreur Quagga:', error);
-            }
-        },
-
-        stopQuaggaScanner() {
-            try {
-                if (typeof Quagga !== 'undefined') {
-                    Quagga.stop();
-                }
-            } catch (error) {
-                console.error('Erreur arrêt Quagga:', error);
-            }
-        },
-
-        analyzeQRFrame() {
-            try {
-                const video = this.$refs.videoElement;
-                const canvas = this.$refs.canvasElement;
-
-                if (!video || !canvas || !video.videoWidth) return;
-
-                const ctx = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0);
-
-                if (typeof jsQR !== 'undefined') {
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const qrResult = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert"
-                    });
-
-                    if (qrResult?.data) {
-                        const code = qrResult.data.trim();
-                        if (this.isValidCode(code)) {
-                            this.onCodeDetected(code, 'QR');
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur analyse QR:', error);
-            }
-        },
-
-        onCodeDetected(code, type) {
-            const now = Date.now();
-
-            if (this.lastDetection &&
-                (now - this.lastDetection.time < 2000) &&
-                this.lastDetection.code === code) {
-                return;
-            }
-
-            this.lastDetection = { code, time: now, type };
-
-            if (navigator.vibrate) {
-                navigator.vibrate(100);
-            }
-
-            if (this.scanMode === 'batch') {
-                this.addToBatch(code);
-            } else {
-                this.stopCamera();
-                this.processCode(code);
-            }
-        },
-
-        // Code Validation (imported from original)
-        isValidPackageCode(code) {
-            if (!code || code.length < 6) return false;
-
-            const cleanCode = code.trim().toUpperCase();
-
-            if (/^https?:\/\/.*\/track\//.test(cleanCode)) return true;
-
-            const obviousWords = ['LIVRAISON', 'DELIVERY', 'BON', 'ALAMENA', 'SERVICE', 'CONTACT', 'TELEPHONE', 'ADRESSE', 'CLIENT', 'DATE'];
-            if (obviousWords.some(word => cleanCode.includes(word) && word.length > 4)) return false;
-
-            return true;
-        },
-
-        isValidCode(code) {
-            return this.isValidPackageCode(code);
-        },
-
-        validateCode() {
-            this.codeValid = this.isValidPackageCode(this.manualCode);
-        },
-
-        // Manual Input
-        searchCode() {
-            if (!this.codeValid || this.searching) return;
-            this.processCode(this.manualCode.trim().toUpperCase());
-        },
-
-        useRecentCode(code) {
-            this.manualCode = code;
-            this.validateCode();
-            this.processCode(code);
-        },
-
-        // Batch Mode
-        addToBatch(code) {
-            if (!this.scannedCodes.includes(code)) {
-                this.scannedCodes.push(code);
-                this.addToRecent(code);
-            }
-        },
-
-        removeBatchCode(index) {
-            this.scannedCodes.splice(index, 1);
-        },
-
-        clearBatchCodes() {
-            this.scannedCodes = [];
-        },
-
-        async processBatchCodes() {
-            if (this.scannedCodes.length === 0 || this.processing) return;
-
-            this.processing = true;
-
-            try {
-                const response = await fetch('/deliverer/packages/scan-batch', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ codes: this.scannedCodes })
-                });
-
-                const data = await response.json();
-                this.showResult(data);
-
-                if (data.success) {
-                    this.clearBatchCodes();
-                }
-
-            } catch (error) {
-                this.showResult({
-                    success: false,
-                    message: 'Erreur lors du traitement par lot.'
-                });
-            }
-
-            this.processing = false;
-        },
-
-        // Code Processing (imported from original)
-        async processCode(code) {
-            this.searching = true;
-
-            try {
-                this.addToRecent(code);
-
-                const response = await fetch('/deliverer/packages/scan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ code: code })
-                });
-
-                const data = await response.json();
-                this.showResult(data);
-
-            } catch (error) {
-                this.showResult({
-                    success: false,
-                    message: 'Erreur de connexion.'
-                });
-            }
-
-            this.searching = false;
-        },
-
-        // Result Handling
-        showResult(data) {
-            this.result = data;
-            this.resultVisible = true;
-
-            if (data.success && data.redirect && this.autoRedirect) {
-                setTimeout(() => {
-                    this.goToPackage();
-                }, 5000);
-            }
-        },
-
-        closeResult() {
-            this.resultVisible = false;
-        },
-
-        goToPackage() {
-            if (this.result.redirect) {
-                this.closeScanner();
-                window.location.href = this.result.redirect;
-            }
-        },
-
-        getActionLabel() {
-            const action = this.result.action;
-            switch (action) {
-                case 'accept': return 'Accepter';
-                case 'pickup': return 'Collecter';
-                case 'deliver': return 'Livrer';
-                case 'return': return 'Retourner';
-                default: return 'Voir';
-            }
-        },
-
-        // Storage
-        loadStoredData() {
-            try {
-                this.recentCodes = JSON.parse(localStorage.getItem('scanner_recent_codes') || '[]');
-                this.scanHistory = [];
-            } catch {
-                this.recentCodes = [];
-            }
-        },
-
-        addToRecent(code) {
-            const item = { value: code, timestamp: Date.now() };
-            this.recentCodes = [
-                item,
-                ...this.recentCodes.filter(c => c.value !== code)
-            ].slice(0, 10);
-
-            try {
-                localStorage.setItem('scanner_recent_codes', JSON.stringify(this.recentCodes));
-            } catch (error) {
-                console.error('Erreur sauvegarde localStorage:', error);
-            }
-        },
-
-        formatTime(timestamp) {
-            return new Date(timestamp).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-    }
-}
-</script>
-@endpush
+<!--
+SCRIPT DÉPLACÉ DANS LAYOUT PRINCIPAL
+Le script delivererQRScanner a été déplacé dans layouts/deliverer.blade.php
+pour s'assurer qu'il se charge avant Alpine.js
+-->

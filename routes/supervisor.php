@@ -6,6 +6,8 @@ use App\Http\Controllers\Supervisor\UserController;
 use App\Http\Controllers\Supervisor\SystemController;
 use App\Http\Controllers\Supervisor\ReportController;
 use App\Http\Controllers\Supervisor\SettingsController;
+use App\Http\Controllers\Supervisor\PackageController;
+use App\Http\Controllers\Supervisor\SupervisorTicketController;
 use App\Services\FinancialTransactionService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -55,22 +57,22 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
-        
+
         // Actions spécifiques
         Route::post('/{user}/activate', [UserController::class, 'activate'])->name('activate');
         Route::post('/{user}/deactivate', [UserController::class, 'deactivate'])->name('deactivate');
         Route::post('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset.password');
         Route::post('/{user}/force-logout', [UserController::class, 'forceLogout'])->name('force.logout');
-        
+
         // Gestion des rôles et permissions
         Route::get('/{user}/permissions', [UserController::class, 'permissions'])->name('permissions');
         Route::post('/{user}/permissions', [UserController::class, 'updatePermissions'])->name('permissions.update');
-        
+
         // Actions groupées
         Route::post('/bulk-activate', [UserController::class, 'bulkActivate'])->name('bulk.activate');
         Route::post('/bulk-deactivate', [UserController::class, 'bulkDeactivate'])->name('bulk.deactivate');
         Route::post('/bulk-delete', [UserController::class, 'bulkDelete'])->name('bulk.delete');
-        
+
         // Export
         Route::get('/export', [UserController::class, 'export'])->name('export');
     });
@@ -128,6 +130,28 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         Route::get('/api/performance-chart', [ReportController::class, 'apiPerformanceChart'])->name('api.performance.chart');
     });
 
+    // ==================== GESTION COLIS SUPERVISEUR ====================
+    Route::prefix('packages')->name('packages.')->group(function () {
+        Route::get('/', [PackageController::class, 'index'])->name('index');
+        Route::get('/{package}', [PackageController::class, 'show'])->name('show');
+        Route::get('/tracking/{code}', [PackageController::class, 'tracking'])->name('tracking');
+        Route::post('/{package}/force-deliver', [PackageController::class, 'forceDeliver'])->name('force.deliver');
+        Route::post('/{package}/cancel', [PackageController::class, 'cancel'])->name('cancel');
+        Route::post('/bulk-update', [PackageController::class, 'bulkUpdate'])->name('bulk.update');
+        Route::get('/export', [PackageController::class, 'export'])->name('export');
+    });
+
+    // ==================== GESTION TICKETS SUPERVISEUR ====================
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [SupervisorTicketController::class, 'index'])->name('index');
+        Route::get('/overview', [SupervisorTicketController::class, 'overview'])->name('overview');
+        Route::get('/{ticket}', [SupervisorTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/escalate', [SupervisorTicketController::class, 'escalate'])->name('escalate');
+        Route::post('/{ticket}/force-close', [SupervisorTicketController::class, 'forceClose'])->name('force.close');
+        Route::post('/bulk-reassign', [SupervisorTicketController::class, 'bulkReassign'])->name('bulk.reassign');
+        Route::get('/performance-report', [SupervisorTicketController::class, 'performanceReport'])->name('performance.report');
+    });
+
     // ==================== PARAMÈTRES SYSTÈME ====================
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
@@ -169,7 +193,7 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
     Route::prefix('api')->name('api.')->group(function () {
         
         // Dashboard APIs
-        Route::get('/dashboard-stats', [SupervisorDashboardController::class, 'apiStats'])->name('dashboard.stats');
+        Route::get('/dashboard-stats', [SupervisorDashboardController::class, 'apiStats'])->name('supervisor.dashboard.stats');
         Route::get('/system-status', [SupervisorDashboardController::class, 'apiSystemStatus'])->name('system.status');
         
         // User APIs

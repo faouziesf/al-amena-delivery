@@ -37,7 +37,7 @@
 
         <!-- Titre principal -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-3">
                 💳 Demande #{{ $topupRequest->request_code }}
             </h1>
             <p class="text-gray-600 text-lg">Détails de votre demande de rechargement</p>
@@ -45,7 +45,7 @@
 
         <!-- Alertes -->
         @if(session('success'))
-            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 text-purple-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
                 <div class="flex items-center">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -91,7 +91,7 @@
                                 {{ $topupRequest->status_display }}
                             </span>
                             
-                            <div class="text-4xl font-bold text-emerald-600 mb-2">
+                            <div class="text-4xl font-bold text-purple-600 mb-2">
                                 {{ $topupRequest->formatted_amount }}
                             </div>
                             
@@ -168,7 +168,7 @@
                     @if($topupRequest->notes)
                         <div class="mb-6">
                             <h4 class="text-md font-semibold text-gray-700 mb-3">Vos notes</h4>
-                            <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-purple-500">
                                 <p class="text-gray-700">{{ $topupRequest->notes }}</p>
                             </div>
                         </div>
@@ -179,8 +179,8 @@
                             <h4 class="text-md font-semibold text-gray-700 mb-3">Justificatif de paiement</h4>
                             <div class="flex items-center justify-between bg-gray-50 rounded-lg p-4 border">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                         </svg>
                                     </div>
@@ -190,7 +190,7 @@
                                     </div>
                                 </div>
                                 <a href="{{ route('client.wallet.topup.request.download.proof', $topupRequest) }}" 
-                                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium">
+                                   class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 text-sm font-medium">
                                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
@@ -270,8 +270,8 @@
                     <div class="space-y-6">
                         <!-- Création -->
                         <div class="flex items-start">
-                            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                 </svg>
                             </div>
@@ -334,7 +334,7 @@
                     
                     <div class="space-y-4">
                         <a href="{{ route('client.wallet.index') }}" 
-                           class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 font-semibold text-center block">
+                           class="w-full bg-gradient-to-r from-purple-500 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-purple-800 transition-all duration-300 font-semibold text-center block">
                             <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
@@ -351,7 +351,7 @@
                         
                         @if($topupRequest->status !== 'PENDING')
                             <a href="{{ route('client.wallet.topup') }}" 
-                               class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 font-semibold text-center block">
+                               class="w-full bg-gradient-to-r from-purple-500 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-purple-800 transition-all duration-300 font-semibold text-center block">
                                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                 </svg>
@@ -361,9 +361,9 @@
                     </div>
 
                     <!-- Informations d'aide -->
-                    <div class="mt-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                        <h4 class="text-sm font-semibold text-blue-800 mb-2">💡 Besoin d'aide ?</h4>
-                        <ul class="text-sm text-blue-700 space-y-1">
+                    <div class="mt-8 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
+                        <h4 class="text-sm font-semibold text-purple-800 mb-2">💡 Besoin d'aide ?</h4>
+                        <ul class="text-sm text-purple-700 space-y-1">
                             @if($topupRequest->isPending())
                                 @if($topupRequest->requiresBankValidation())
                                     <li>• Assurez-vous que l'identifiant de virement est correct</li>

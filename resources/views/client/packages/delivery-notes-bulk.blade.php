@@ -98,17 +98,35 @@
 
             <section class="parties-section">
                 <div class="partie">
-                    <div class="partie-title">EXPÉDITEUR</div>
+                    <div class="partie-title">EXPÉDITEUR (PICKUP)</div>
+                    @if($package->pickupAddress)
+                    <div class="info-line"><strong>Nom:</strong> <span>{{ $package->pickupAddress->name }}</span></div>
+                    <div class="info-line"><strong>Contact:</strong> <span>{{ $package->pickupAddress->contact_name ?? 'N/A' }}</span></div>
+                    <div class="info-line"><strong>Téléphone:</strong> <span>{{ $package->pickupAddress->phone }}</span></div>
+                    @if($package->pickupAddress->tel2)
+                    <div class="info-line"><strong>Tél. 2:</strong> <span>{{ $package->pickupAddress->tel2 }}</span></div>
+                    @endif
+                    <div class="info-line"><strong>Délégation:</strong> <span>{{ $package->pickupAddress->delegation }}</span></div>
+                    <div class="info-line"><strong>Adresse:</strong> <span>{{ $package->pickupAddress->address }}</span></div>
+                    @else
+                    {{-- Fallback vers les anciennes données --}}
                     <div class="info-line"><strong>Nom:</strong> <span>{{ ($package->supplier_data['name'] ?? $package->sender_data['name']) ?? 'N/A' }}</span></div>
                     <div class="info-line"><strong>Téléphone:</strong> <span>{{ ($package->supplier_data['phone'] ?? $package->sender_data['phone']) ?? 'N/A' }}</span></div>
                     <div class="info-line"><strong>Délégation:</strong> <span>{{ $package->delegationFrom->name ?? 'N/A' }}</span></div>
                     <div class="info-line"><strong>Adresse:</strong> <span>{{ $package->pickup_address ?? 'N/A' }}</span></div>
+                    @endif
                 </div>
                 <div class="partie">
                     <div class="partie-title">DESTINATAIRE</div>
                     <div class="info-line"><strong>Nom:</strong> <span>{{ $package->recipient_data['name'] ?? 'N/A' }}</span></div>
                     <div class="info-line"><strong>Téléphone:</strong> <span>{{ $package->recipient_data['phone'] ?? 'N/A' }}</span></div>
-                    <div class="info-line"><strong>Délégation:</strong> <span>{{ $package->delegationTo->name ?? 'N/A' }}</span></div>
+                    @if(isset($package->recipient_data['phone2']) && $package->recipient_data['phone2'])
+                    <div class="info-line"><strong>Tél. 2:</strong> <span>{{ $package->recipient_data['phone2'] }}</span></div>
+                    @endif
+                    @if(isset($package->recipient_data['gouvernorat']) && $package->recipient_data['gouvernorat'])
+                    <div class="info-line"><strong>Gouvernorat:</strong> <span>{{ ucfirst(str_replace('_', ' ', $package->recipient_data['gouvernorat'])) }}</span></div>
+                    @endif
+                    <div class="info-line"><strong>Délégation:</strong> <span>{{ $package->delegationTo->name ?? ($package->recipient_data['delegation'] ?? 'N/A') }}</span></div>
                     <div class="info-line"><strong>Adresse:</strong> <span>{{ $package->recipient_data['address'] ?? 'N/A' }}</span></div>
                 </div>
             </section>

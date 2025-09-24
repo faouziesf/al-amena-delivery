@@ -21,7 +21,7 @@
         <div class="max-w-4xl mx-auto">
             <!-- Titre principal -->
             <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-3">
                     💳 Demande de rechargement
                 </h1>
                 <p class="text-gray-600 text-lg">Faites une demande de rechargement qui sera validée par notre équipe</p>
@@ -29,7 +29,7 @@
 
             <!-- Alertes -->
             @if(session('success'))
-                <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+                <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 text-purple-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
                     <div class="flex items-center">
                         <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -66,13 +66,13 @@
             @endif
 
             <!-- Affichage du solde actuel -->
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-6 mb-8 shadow-xl">
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl p-6 mb-8 shadow-xl">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-emerald-100 mb-2">💰 Solde actuel</h3>
+                        <h3 class="text-lg font-semibold text-purple-100 mb-2">💰 Solde actuel</h3>
                         <p class="text-4xl font-bold" id="currentBalance">{{ number_format($user->wallet->balance, 3) }} DT</p>
                     </div>
-                    <div class="text-right text-emerald-100">
+                    <div class="text-right text-purple-100">
                         @if($user->wallet->frozen_amount > 0)
                             <p class="text-sm">Montant gelé: {{ number_format($user->wallet->frozen_amount, 3) }} DT</p>
                         @endif
@@ -82,7 +82,7 @@
                 
                 <!-- Simulateur de nouveau solde -->
                 <div id="newBalancePreview" class="hidden mt-4 p-3 bg-white/20 rounded-lg">
-                    <p class="text-emerald-100 text-sm">Nouveau solde après rechargement:</p>
+                    <p class="text-purple-100 text-sm">Nouveau solde après rechargement:</p>
                     <p class="text-2xl font-bold" id="newBalanceAmount">0.000 DT</p>
                 </div>
             </div>
@@ -95,7 +95,7 @@
                 <!-- Montant à recharger -->
                 <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
                     <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full p-3 mr-4">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
@@ -116,15 +116,15 @@
                                        min="10" 
                                        max="10000" 
                                        value="{{ old('amount') }}"
-                                       class="block w-full pl-4 pr-16 py-4 text-lg rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50"
+                                       class="block w-full pl-4 pr-16 py-4 text-lg rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50"
                                        placeholder="0.000" required>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-4">
                                     <span class="text-gray-500 text-sm font-medium">DT</span>
                                 </div>
                             </div>
                             <p class="mt-2 text-sm text-gray-500">
-                                Minimum: <span class="font-semibold text-emerald-600">10.000 DT</span> • 
-                                Maximum: <span class="font-semibold text-emerald-600">10,000.000 DT</span>
+                                Minimum: <span class="font-semibold text-purple-600">10.000 DT</span> •
+                                Maximum: <span class="font-semibold text-purple-600">10,000.000 DT</span>
                             </p>
                         </div>
 
@@ -133,9 +133,9 @@
                             <p class="text-sm font-medium text-gray-700 mb-3">Montants populaires:</p>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 @foreach([50, 100, 200, 500] as $quickAmount)
-                                    <button type="button" 
+                                    <button type="button"
                                             onclick="setAmount({{ $quickAmount }})"
-                                            class="px-4 py-3 text-sm bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 rounded-xl hover:from-emerald-200 hover:to-teal-200 transition-all duration-300 transform hover:scale-105 font-semibold border-2 border-transparent hover:border-emerald-300">
+                                            class="px-4 py-3 text-sm bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 rounded-xl hover:from-purple-200 hover:to-purple-300 transition-all duration-300 transform hover:scale-105 font-semibold border-2 border-transparent hover:border-purple-400">
                                         {{ $quickAmount }} DT
                                     </button>
                                 @endforeach
@@ -143,19 +143,19 @@
                         </div>
 
                         <!-- Aperçu des frais -->
-                        <div id="feePreview" class="hidden bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                        <div id="feePreview" class="hidden bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-blue-800">Montant:</span>
-                                <span id="previewAmount" class="font-bold text-blue-900">0.000 DT</span>
+                                <span class="text-purple-800">Montant:</span>
+                                <span id="previewAmount" class="font-bold text-purple-900">0.000 DT</span>
                             </div>
                             <div class="flex justify-between items-center text-sm mt-1">
-                                <span class="text-blue-800">Frais:</span>
-                                <span class="font-bold text-blue-900">Gratuit 🎉</span>
+                                <span class="text-purple-800">Frais:</span>
+                                <span class="font-bold text-purple-900">Gratuit 🎉</span>
                             </div>
-                            <hr class="my-2 border-blue-200">
+                            <hr class="my-2 border-purple-200">
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-blue-800 font-semibold">Total à payer:</span>
-                                <span id="totalAmount" class="font-bold text-blue-900 text-lg">0.000 DT</span>
+                                <span class="text-purple-800 font-semibold">Total à payer:</span>
+                                <span id="totalAmount" class="font-bold text-purple-900 text-lg">0.000 DT</span>
                             </div>
                         </div>
                     </div>
@@ -164,7 +164,7 @@
                 <!-- Méthode de paiement -->
                 <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
                     <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full p-3 mr-4">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
@@ -182,19 +182,19 @@
                                    class="sr-only peer" 
                                    {{ old('method', 'BANK_TRANSFER') === 'BANK_TRANSFER' ? 'checked' : '' }}>
                             <label for="bank_transfer" 
-                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 peer-checked:border-blue-500 peer-checked:bg-gradient-to-br peer-checked:from-blue-50 peer-checked:to-indigo-50 transition-all duration-300">
+                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-purple-100 transition-all duration-300">
                                 <div class="flex-shrink-0 mr-4">
-                                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-500 relative">
+                                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-purple-500 peer-checked:bg-purple-500 relative">
                                         <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block"></div>
                                     </div>
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex items-center mb-2">
-                                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
                                         <span class="font-semibold text-gray-900">Virement bancaire</span>
-                                        <span class="ml-3 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">24-48h</span>
+                                        <span class="ml-3 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">24-48h</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
                                         Effectuez un virement depuis votre compte bancaire
@@ -206,7 +206,7 @@
                                             </svg>
                                             Sécurisé
                                         </span>
-                                        <span class="flex items-center text-blue-600">
+                                        <span class="flex items-center text-purple-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                             </svg>
@@ -250,7 +250,7 @@
                                             </svg>
                                             En espèces
                                         </span>
-                                        <span class="flex items-center text-blue-600">
+                                        <span class="flex items-center text-purple-600">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                             </svg>
@@ -310,7 +310,7 @@
                 <!-- Informations supplémentaires (conditionnelles) -->
                 <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6" id="additional-info">
                     <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
@@ -355,7 +355,7 @@
                                        id="proof_document" 
                                        name="proof_document" 
                                        accept=".jpg,.jpeg,.png,.pdf"
-                                       class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                       class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
                             </div>
                             <p class="mt-2 text-sm text-gray-500">
                                 Formats acceptés: JPG, PNG, PDF (max 5 MB)
@@ -370,7 +370,7 @@
                             <textarea id="notes" 
                                       name="notes" 
                                       rows="3"
-                                      class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 resize-none"
+                                      class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 resize-none"
                                       placeholder="Ajoutez des informations supplémentaires si nécessaire...">{{ old('notes') }}</textarea>
                             <p class="mt-2 text-sm text-gray-500">Maximum 500 caractères</p>
                         </div>
@@ -381,7 +381,7 @@
                 <div class="flex flex-col sm:flex-row gap-4 pt-6">
                     <button type="submit" 
                             id="submitBtn"
-                            class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl hover:from-emerald-600 hover:to-teal-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 text-white px-8 py-4 rounded-xl hover:from-purple-600 hover:to-purple-800 focus:ring-4 focus:ring-purple-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span class="flex items-center justify-center">
                             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -401,7 +401,7 @@
             @if($recentRequests && $recentRequests->count() > 0)
                 <div class="mt-12 bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
                     <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
@@ -411,10 +411,10 @@
                     
                     <div class="space-y-3">
                         @foreach($recentRequests as $request)
-                            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg hover:from-purple-50 hover:to-purple-100 transition-all duration-300">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mr-3">
-                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-purple-100 to-purple-200 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                                         </svg>
                                     </div>
@@ -428,7 +428,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-lg font-bold text-blue-600">
+                                    <p class="text-lg font-bold text-purple-600">
                                         {{ $request->formatted_amount }}
                                     </p>
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $request->status_color }}">
@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Animation du champ montant
         amountInput.style.transform = 'scale(1.05)';
-        amountInput.style.borderColor = '#10b981';
+        amountInput.style.borderColor = '#8b5cf6';
         setTimeout(() => {
             amountInput.style.transform = 'scale(1)';
             amountInput.style.borderColor = '';
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
             amountInput.classList.add('border-red-500', 'bg-red-50');
         } else {
             amountInput.classList.remove('border-red-500', 'bg-red-50');
-            amountInput.classList.add('border-emerald-500', 'bg-green-50');
+            amountInput.classList.add('border-purple-500', 'bg-purple-50');
         }
         
         // Validation de la méthode

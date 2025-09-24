@@ -4,14 +4,14 @@
 @section('page-title', 'Centre de Notifications')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" x-data="notificationsApp()">
+<div class="bg-gradient-to-br from-purple-50 to-purple-100" x-data="notificationsApp()">
     
     <!-- Header avec stats -->
     <div class="bg-white shadow-sm border-b border-gray-200 px-4 py-6">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-                    <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
                     </svg>
                     Notifications
@@ -23,7 +23,7 @@
             <div class="flex space-x-2">
                 <button @click="markAllAsRead()" 
                         :disabled="stats.unread === 0"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -73,13 +73,13 @@
             </div>
 
             <!-- Aujourd'hui -->
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+            <div class="bg-gradient-to-r from-purple-300 to-purple-400 rounded-xl p-4 text-purple-800">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm">Aujourd'hui</p>
+                        <p class="text-purple-600 text-sm">Aujourd'hui</p>
                         <p class="text-2xl font-bold" x-text="stats.today"></p>
                     </div>
-                    <div class="bg-blue-400 bg-opacity-30 rounded-lg p-2">
+                    <div class="bg-purple-200 bg-opacity-50 rounded-lg p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
@@ -155,16 +155,16 @@
                     <option value="">Tous types</option>
                     <option value="NEW_PICKUP_AVAILABLE">Nouveaux pickups</option>
                     <option value="DELIVERY_URGENT">Livraisons urgentes</option>
-                    <option value="PAYMENT_ASSIGNED">Paiements assignés</option>
-                    <option value="WALLET_HIGH_BALANCE">Wallet élevé</option>
-                    <option value="COD_MODIFICATION">COD modifié</option>
-                    <option value="SYSTEM_UPDATE">Mises à jour</option>
+                    <option value="PAYMENT_ASSIGNED">Paiements assignes</option>
+                    <option value="WALLET_HIGH_BALANCE">Wallet eleve</option>
+                    <option value="COD_MODIFICATION">COD modifie</option>
+                    <option value="SYSTEM_UPDATE">Mises a jour</option>
                 </select>
 
-                <!-- Filtre par priorité -->
+                <!-- Filtre par priorite -->
                 <select x-model="priorityFilter" @change="filterNotifications()" 
                         class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">Toutes priorités</option>
+                    <option value="">Toutes priorites</option>
                     <option value="URGENT">Urgente</option>
                     <option value="HIGH">Haute</option>
                     <option value="NORMAL">Normale</option>
@@ -356,7 +356,7 @@ function notificationsApp() {
     return {
         // État
         loading: true,
-        notifications: @json($notifications ?? []),
+        notifications: {!! json_encode(isset($notifications) ? $notifications->items() : []) !!},
         filteredNotifications: [],
         
         // Filtres
@@ -371,7 +371,7 @@ function notificationsApp() {
         totalPages: 1,
         
         // Stats
-        stats: @json($stats ?? ['total' => 0, 'unread' => 0, 'urgent' => 0, 'today' => 0, 'this_week' => 0]),
+        stats: {!! json_encode($stats ?? ['total' => 0, 'unread' => 0, 'urgent' => 0, 'today' => 0, 'this_week' => 0]) !!},
 
         init() {
             this.filterNotifications();
@@ -385,6 +385,9 @@ function notificationsApp() {
 
         // Filtrage des notifications
         filterNotifications() {
+            if (!Array.isArray(this.notifications)) {
+                this.notifications = [];
+            }
             let filtered = [...this.notifications];
             
             // Filtre principal
@@ -439,10 +442,12 @@ function notificationsApp() {
 
                 if (response.ok) {
                     // Mettre à jour localement
-                    const notification = this.notifications.find(n => n.id === notificationId);
-                    if (notification) {
-                        notification.read = true;
-                        notification.read_at = new Date().toISOString();
+                    if (Array.isArray(this.notifications)) {
+                        const notification = this.notifications.find(n => n.id === notificationId);
+                        if (notification) {
+                            notification.read = true;
+                            notification.read_at = new Date().toISOString();
+                        }
                     }
                     
                     this.updateStats();
@@ -469,12 +474,14 @@ function notificationsApp() {
 
                 if (response.ok) {
                     // Mettre à jour toutes les notifications
-                    this.notifications.forEach(n => {
-                        if (!n.read) {
-                            n.read = true;
-                            n.read_at = new Date().toISOString();
-                        }
-                    });
+                    if (Array.isArray(this.notifications)) {
+                        this.notifications.forEach(n => {
+                            if (!n.read) {
+                                n.read = true;
+                                n.read_at = new Date().toISOString();
+                            }
+                        });
+                    }
                     
                     this.updateStats();
                     this.filterNotifications();
@@ -499,7 +506,9 @@ function notificationsApp() {
 
                 if (response.ok) {
                     // Supprimer localement
-                    this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                    if (Array.isArray(this.notifications)) {
+                        this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                    }
                     this.updateStats();
                     this.filterNotifications();
                     this.showToast('Notification supprimée', 'success');
@@ -544,10 +553,13 @@ function notificationsApp() {
 
         // Utilitaires
         updateStats() {
+            if (!Array.isArray(this.notifications)) {
+                this.notifications = [];
+            }
             this.stats.total = this.notifications.length;
             this.stats.unread = this.notifications.filter(n => !n.read).length;
             this.stats.urgent = this.notifications.filter(n => n.priority === 'URGENT').length;
-            
+
             const today = new Date().toDateString();
             this.stats.today = this.notifications.filter(n => new Date(n.created_at).toDateString() === today).length;
         },

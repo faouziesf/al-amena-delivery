@@ -8,8 +8,8 @@
     stats: {{ json_encode($stats ?? []) }}
 })" class="max-w-4xl mx-auto p-4 space-y-6">
 
-    <!-- Profile Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
+    <!-- Profile Header avec pale purple -->
+    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-xl p-6 text-purple-800">
         <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
             <!-- Avatar -->
             <div class="relative">
@@ -18,7 +18,7 @@
                         <img :src="deliverer.avatar" :alt="deliverer.name" class="w-24 h-24 rounded-full object-cover">
                     </template>
                     <template x-if="!deliverer.avatar">
-                        <i class="fas fa-user text-blue-600 text-3xl"></i>
+                        <i class="fas fa-user text-purple-600 text-3xl"></i>
                     </template>
                 </div>
                 <button @click="changeAvatar" class="absolute bottom-0 right-0 bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-yellow-600 transition-colors">
@@ -29,15 +29,15 @@
             <!-- Basic Info -->
             <div class="flex-1 text-center md:text-left">
                 <h1 class="text-2xl font-bold mb-2" x-text="deliverer.name || 'N/A'"></h1>
-                <p class="text-blue-100 mb-1">
+                <p class="text-purple-600 mb-1">
                     <i class="fas fa-id-badge mr-2"></i>
                     ID: <span x-text="deliverer.deliverer_id || deliverer.id || 'N/A'"></span>
                 </p>
-                <p class="text-blue-100 mb-1">
+                <p class="text-purple-600 mb-1">
                     <i class="fas fa-phone mr-2"></i>
                     <span x-text="deliverer.phone || 'N/A'"></span>
                 </p>
-                <p class="text-blue-100">
+                <p class="text-purple-600">
                     <i class="fas fa-envelope mr-2"></i>
                     <span x-text="deliverer.email || 'N/A'"></span>
                 </p>
@@ -49,7 +49,7 @@
                     <i class="fas fa-check-circle mr-2"></i>
                     <span x-text="getStatusText()"></span>
                 </div>
-                <p class="text-blue-100 text-sm">
+                <p class="text-purple-600 text-sm">
                     Membre depuis <span x-text="formatDate(deliverer.created_at)"></span>
                 </p>
             </div>
@@ -114,11 +114,11 @@
         <div class="bg-white rounded-lg shadow-sm border p-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-semibold text-gray-900">
-                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                    <i class="fas fa-user mr-2 text-purple-600"></i>
                     Informations personnelles
                 </h2>
                 <button @click="editPersonalInfo = !editPersonalInfo"
-                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        class="text-purple-600 hover:text-purple-800 text-sm font-medium">
                     <i :class="editPersonalInfo ? 'fas fa-times' : 'fas fa-edit'" class="mr-1"></i>
                     <span x-text="editPersonalInfo ? 'Annuler' : 'Modifier'"></span>
                 </button>
@@ -154,7 +154,7 @@
                 </div>
                 <div class="flex space-x-3">
                     <button type="submit"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            class="bg-purple-300 text-purple-800 px-4 py-2 rounded-lg hover:bg-purple-400 transition-colors">
                         Enregistrer
                     </button>
                     <button type="button" @click="editPersonalInfo = false"
@@ -307,7 +307,7 @@
                 </div>
 
                 <button @click="savePreferences"
-                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        class="w-full bg-purple-300 text-purple-800 px-4 py-2 rounded-lg hover:bg-purple-400 transition-colors">
                     Enregistrer les préférences
                 </button>
             </div>

@@ -152,6 +152,46 @@ class User extends Authenticatable
     }
 
     /**
+     * Demandes de collecte créées par ce client
+     */
+    public function pickupRequests()
+    {
+        return $this->hasMany(PickupRequest::class, 'client_id');
+    }
+
+    /**
+     * Demandes de collecte assignées à ce livreur
+     */
+    public function assignedPickupRequests()
+    {
+        return $this->hasMany(PickupRequest::class, 'assigned_deliverer_id');
+    }
+
+    /**
+     * Adresses de collecte de ce client
+     */
+    public function clientPickupAddresses()
+    {
+        return $this->hasMany(ClientPickupAddress::class, 'client_id');
+    }
+
+    /**
+     * Comptes bancaires du client
+     */
+    public function bankAccounts()
+    {
+        return $this->hasMany(ClientBankAccount::class, 'client_id');
+    }
+
+    /**
+     * Alias pour les adresses de pickup
+     */
+    public function pickupAddresses()
+    {
+        return $this->clientPickupAddresses();
+    }
+
+    /**
      * Notifications de l'utilisateur
      */
     public function notifications()
@@ -229,6 +269,30 @@ class User extends Authenticatable
     public function processedWalletEmptyings()
     {
         return $this->hasMany(DelivererWalletEmptying::class, 'commercial_id');
+    }
+
+    /**
+     * Tickets créés par ce client
+     */
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'client_id');
+    }
+
+    /**
+     * Tickets assignés à ce commercial/superviseur
+     */
+    public function assignedTickets()
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to_id');
+    }
+
+    /**
+     * Messages de tickets envoyés par cet utilisateur
+     */
+    public function ticketMessages()
+    {
+        return $this->hasMany(TicketMessage::class, 'sender_id');
     }
 
     // ==================== SCOPES ====================
@@ -461,15 +525,19 @@ class User extends Authenticatable
      */
     public function ensureWallet()
     {
-        if (!$this->wallet) {
-            $this->wallet()->create([
+        // Utiliser une vérification plus sûre
+        $wallet = $this->wallet()->first();
+
+        if (!$wallet) {
+            $wallet = $this->wallet()->create([
                 'balance' => 0.000,
                 'pending_amount' => 0.000,
                 'frozen_amount' => 0.000
             ]);
-            $this->load('wallet');
+            $this->setRelation('wallet', $wallet);
         }
-        return $this->wallet;
+
+        return $wallet;
     }
 
     /**

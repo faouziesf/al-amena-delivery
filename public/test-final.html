@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test FINAL - AL-AMENA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/package-validator-final.js"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-6">🎯 TEST FINAL - AL-AMENA</h1>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test de Validation</h2>
+            <div class="space-y-4">
+                <input type="text" id="testInput"
+                       placeholder="Tapez PKG_CLQVFCWP_20250921..."
+                       class="w-full p-3 border rounded-lg text-lg">
+                <button onclick="testCode()"
+                        class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 text-lg">
+                    TESTER
+                </button>
+                <div id="result" class="p-4 border rounded-lg bg-gray-50 min-h-[100px]"></div>
+            </div>
+        </div>
+
+        <div class="bg-green-50 border border-green-200 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-green-800 mb-3">✅ CODES QUI DOIVENT MARCHER :</h3>
+            <div class="space-y-2 text-sm">
+                <button onclick="testSpecific('PKG_CLQVFCWP_20250921')" class="block w-full text-left p-2 bg-white rounded hover:bg-green-100">PKG_CLQVFCWP_20250921</button>
+                <button onclick="testSpecific('PKG_HNIZCWH4_20250921')" class="block w-full text-left p-2 bg-white rounded hover:bg-green-100">PKG_HNIZCWH4_20250921</button>
+                <button onclick="testSpecific('PKG_000038')" class="block w-full text-left p-2 bg-white rounded hover:bg-green-100">PKG_000038</button>
+                <button onclick="testSpecific('PKG_000007')" class="block w-full text-left p-2 bg-white rounded hover:bg-green-100">PKG_000007</button>
+                <button onclick="testSpecific('http://127.0.0.1:8000/track/PKG_ABC123')" class="block w-full text-left p-2 bg-white rounded hover:bg-green-100">http://127.0.0.1:8000/track/PKG_ABC123</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testCode() {
+            const input = document.getElementById('testInput').value;
+            const result = window.validatePackageCode(input);
+
+            document.getElementById('result').innerHTML = `
+                <div class="space-y-2">
+                    <div class="text-2xl font-bold ${result.isValid ? 'text-green-600' : 'text-red-600'}">
+                        ${result.isValid ? '✅ VALIDE' : '❌ INVALIDE'}
+                    </div>
+                    <div><strong>Input:</strong> ${result.originalInput}</div>
+                    <div><strong>Code:</strong> ${result.normalizedCode}</div>
+                </div>
+            `;
+        }
+
+        function testSpecific(code) {
+            document.getElementById('testInput').value = code;
+            testCode();
+        }
+
+        // Test automatique au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Test FINAL chargé');
+            console.log('Validateur disponible:', !!window.validatePackageCode);
+
+            // Test automatique
+            const testResult = window.validatePackageCode('PKG_CLQVFCWP_20250921');
+            console.log('Test auto PKG_CLQVFCWP_20250921:', testResult);
+        });
+    </script>
+</body>
+</html>

@@ -12,11 +12,11 @@
             theme: {
                 extend: {
                     colors: {
-                        'pale-purple': '#E0D4FF',
+                        'pale-purple': '#E9D8FD',
                         'purple': {
-                            50: '#F5F3FF', 100: '#EDE9FE', 200: '#DDD6FE', 300: '#C4B5FD',
-                            400: '#A78BFA', 500: '#8B5CF6', 600: '#7C3AED', 700: '#6D28D9',
-                            800: '#5B21B6', 900: '#4C1D95'
+                            50: '#F7EEFF', 100: '#F0E7FF', 200: '#E9D8FD', 300: '#D6C2F0',
+                            400: '#B794E6', 500: '#A78BFA', 600: '#8B5CF6', 700: '#6D28D9',
+                            800: '#553C9A', 900: '#44337A'
                         }
                     }
                 }
@@ -30,7 +30,7 @@
         <!-- Sidebar -->
         <div class="w-64 bg-white shadow-xl border-r border-purple-200">
             <!-- Logo & Brand -->
-            <div class="p-6 border-b border-purple-200 bg-gradient-to-r from-purple-600 to-purple-700">
+            <div class="p-6 border-b border-purple-200 bg-gradient-to-r from-purple-200 to-purple-300">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,8 +38,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white">Al-Amena</h1>
-                        <p class="text-xs text-purple-200">Espace Commercial</p>
+                        <h1 class="text-lg font-bold text-purple-800">Al-Amena</h1>
+                        <p class="text-xs text-purple-600">Espace Commercial</p>
                     </div>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('commercial.complaints.index') }}" 
+                <a href="{{ route('commercial.complaints.index') }}"
                    class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.complaints.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
                     <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
@@ -74,6 +74,18 @@
                     <div class="ml-auto flex space-x-1">
                         <span x-show="stats.urgent_complaints > 0" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse" x-text="stats.urgent_complaints"></span>
                         <span x-show="stats.pending_complaints > 0 && stats.urgent_complaints == 0" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_complaints"></span>
+                    </div>
+                </a>
+
+                <a href="{{ route('commercial.tickets.index') }}"
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.tickets.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
+                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <span class="font-medium">Tickets</span>
+                    <div class="ml-auto flex space-x-1">
+                        <span x-show="stats.urgent_tickets > 0" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse" x-text="stats.urgent_tickets"></span>
+                        <span x-show="stats.unassigned_tickets > 0 && stats.urgent_tickets == 0" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.unassigned_tickets"></span>
                     </div>
                 </a>
 
@@ -128,8 +140,8 @@
             <!-- User Info -->
             <div class="p-4 border-t border-purple-200 bg-gray-50">
                 <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                    <div class="w-10 h-10 bg-gradient-to-r from-purple-200 to-purple-300 rounded-full flex items-center justify-center">
+                        <span class="text-purple-800 font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>

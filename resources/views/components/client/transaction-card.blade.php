@@ -126,7 +126,7 @@
                 </p>
             @else
                 <p class="text-xs text-gray-500 mt-1">
-                    {{ $transaction->created_at->diffForHumans() }}
+                    {{ $transaction->created_at ? $transaction->created_at->diffForHumans() : 'Date inconnue' }}
                 </p>
             @endif
         </div>

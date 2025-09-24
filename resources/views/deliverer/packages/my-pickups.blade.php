@@ -3,10 +3,10 @@
 @section('title', 'Mes Pickups')
 
 @section('content')
-<div x-data="myPickupsApp()" x-init="init()">
+<div class="p-4 space-y-4" x-data="myPickupsApp()" x-init="init()">
     
     <!-- Header avec stats et actions -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4 sticky top-20 z-10">
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4 sticky top-20 z-10">
         <div class="p-4">
             <!-- En-tête principal -->
             <div class="flex items-center justify-between mb-4">
@@ -18,7 +18,7 @@
                         Mes Pickups
                     </h1>
                     <div class="flex items-center space-x-4 mt-1">
-                        <span class="text-sm text-gray-600" x-text="`${filteredPackages.length} pickup(s) à collecter`"></span>
+                        <span class="text-sm text-gray-600" x-text="`${packages.length} colis acceptés à collecter`"></span>
                         <div class="flex items-center space-x-1" x-show="oldestPackage">
                             <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                             <span class="text-xs text-orange-600" x-text="oldestPackage ? `Le plus ancien: ${oldestPackage.days_old} jour(s)` : ''"></span>
@@ -28,15 +28,7 @@
                 
                 <!-- Actions rapides -->
                 <div class="flex items-center space-x-2">
-                    <!-- Tout collecter -->
-                    <button @click="showBulkCollectModal = true" 
-                            x-show="filteredPackages.length > 1"
-                            class="bg-gradient-to-r from-emerald-500 to-green-500 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </button>
-                    
+
                     <!-- Scanner QR -->
                     <button @click="$dispatch('open-scanner')" 
                             class="bg-purple-100 text-purple-600 p-3 rounded-xl hover:bg-purple-200 transition-all">
@@ -44,16 +36,16 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M12 12v4.01M12 12V7.99"/>
                         </svg>
                     </button>
-                    
+
                     <!-- Actualiser -->
                     <button @click="refreshData()" 
                             :class="loading ? 'animate-spin' : ''"
-                            class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-200 transition-all">
+                            class="bg-gray-100 text-gray-600 p-3 rounded-xl hover:bg-gray-200 transition-all">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                     </button>
-                    
+
                     <!-- Filtres mobile -->
                     <button @click="showFilters = !showFilters" 
                             class="bg-gray-100 text-gray-600 p-3 rounded-xl hover:bg-gray-200 transition-all">
@@ -67,7 +59,6 @@
             <!-- Filtres rapides -->
             <div x-show="!showFilters" class="flex items-center space-x-3 overflow-x-auto pb-2">
                 <button @click="activeFilter = ''; applyFilters()" 
-                        :class="activeFilter === '' ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-300' : 'bg-gray-100 text-gray-600'"
                         class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
                     <span class="flex items-center">
                         📦 Tous (<span x-text="packages.length"></span>)
@@ -75,7 +66,6 @@
                 </button>
                 
                 <button @click="activeFilter = 'today'; applyFilters()" 
-                        :class="activeFilter === 'today' ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300' : 'bg-gray-100 text-gray-600'"
                         class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
                     <span class="flex items-center">
                         🕐 Aujourd'hui (<span x-text="todayCount"></span>)
@@ -83,7 +73,6 @@
                 </button>
                 
                 <button @click="activeFilter = 'high_cod'; applyFilters()" 
-                        :class="activeFilter === 'high_cod' ? 'bg-green-100 text-green-700 ring-2 ring-green-300' : 'bg-gray-100 text-gray-600'"
                         class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
                     <span class="flex items-center">
                         💰 COD Élevé (<span x-text="highCodCount"></span>)
@@ -91,14 +80,12 @@
                 </button>
                 
                 <button @click="activeFilter = 'same_delegation'; applyFilters()" 
-                        :class="activeFilter === 'same_delegation' ? 'bg-orange-100 text-orange-700 ring-2 ring-orange-300' : 'bg-gray-100 text-gray-600'"
                         class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
                     📍 Même Zone
                 </button>
                 
                 <button @click="activeFilter = 'old'; applyFilters()" 
                         :class="activeFilter === 'old' ? 'bg-red-100 text-red-700 ring-2 ring-red-300' : 'bg-gray-100 text-gray-600'"
-                        class="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all">
                     <span class="flex items-center">
                         ⏰ Anciens (<span x-text="oldCount"></span>)
                     </span>
@@ -106,7 +93,7 @@
             </div>
 
             <!-- Filtres avancés -->
-            <div x-show="showFilters" x-transition class="mt-4 p-4 bg-gray-50 rounded-xl space-y-4">
+            <div x-show="showFilters" x-transition class="mt-4 p-4 bg-gray-50/50 rounded-xl space-y-4">
                 <!-- Recherche -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">🔍 Recherche</label>
@@ -166,7 +153,7 @@
                         🗑️ Effacer filtres
                     </button>
                     <button @click="showFilters = false" 
-                            class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                         ✅ Appliquer
                     </button>
                 </div>
@@ -240,7 +227,7 @@
             <span x-text="`${filteredPackages.length} résultat(s)`"></span>
         </div>
         
-        <template x-for="package in filteredPackages" :key="package.id">
+        <template x-for="package in packages" :key="package.id">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200"
                  :class="getPackagePriorityClass(package)"
                  @click="isSelectionMode ? toggleSelection(package.id) : null">
@@ -252,7 +239,6 @@
                         <!-- Checkbox pour sélection multiple -->
                         <div x-show="isSelectionMode" class="flex-shrink-0">
                             <input type="checkbox" 
-                                   :checked="selectedPackages.includes(package.id)"
                                    @change="toggleSelection(package.id)"
                                    class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
                         </div>
@@ -267,7 +253,7 @@
                         
                         <div>
                             <p class="font-bold text-gray-900" x-text="package.package_code"></p>
-                            <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-2 mt-1">
                                 <span class="text-xs text-gray-500" x-text="formatTimeAgo(package.assigned_at)"></span>
                                 <!-- Badges priorité -->
                                 <span x-show="isOldPackage(package)" 
@@ -301,7 +287,7 @@
                         <div class="flex items-center mb-3">
                             <div class="text-sm font-medium text-orange-600">📦 POINT DE COLLECTE</div>
                         </div>
-                        
+
                         <div class="bg-orange-50 p-3 rounded-xl border-l-4 border-orange-400">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
@@ -309,7 +295,7 @@
                                     <p class="text-xs text-gray-600" x-text="package.supplier_data?.phone || package.sender_data?.phone || 'N/A'"></p>
                                     <p class="text-xs text-orange-600 font-medium mt-1" x-text="package.delegation_from?.name || 'N/A'"></p>
                                     <p class="text-xs text-gray-700 mt-1" x-text="package.pickup_address || package.sender_data?.address || 'Adresse non spécifiée'"></p>
-                                    
+
                                     <!-- Notes pickup si disponibles -->
                                     <div x-show="package.pickup_notes" class="mt-2 pt-2 border-t border-orange-200">
                                         <p class="text-xs font-medium text-orange-700">📝 Notes:</p>
@@ -317,7 +303,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Distance estimation si géolocalisation disponible -->
+                                <!-- Distance estimation si géolocalisation disponible
                                 <div class="text-right ml-3">
                                     <div class="text-xs text-gray-500">Distance</div>
                                     <div class="text-sm font-medium text-blue-600">~2.1km</div>
@@ -326,6 +312,7 @@
                         </div>
                     </div>
 
+ -->
                     <!-- Informations destinataire (aperçu) -->
                     <div class="mb-4">
                         <div class="text-sm font-medium text-green-600 mb-2">🎯 DESTINATION</div>
@@ -344,7 +331,7 @@
                             <div class="flex-1">
                                 <p class="text-sm font-medium text-gray-700">📋 Contenu</p>
                                 <p class="text-sm text-gray-900 mt-1" x-text="package.content_description || 'Non spécifié'"></p>
-                                
+
                                 <!-- Attributs spéciaux -->
                                 <div x-show="package.is_fragile || package.requires_signature" class="mt-2 pt-2 border-t border-gray-200">
                                     <div class="flex flex-wrap gap-1">
@@ -360,6 +347,7 @@
                                 </div>
                             </div>
                             
+
                             <!-- Heure d'acceptation -->
                             <div class="text-right ml-3">
                                 <div class="text-xs text-gray-500">Accepté</div>
@@ -371,7 +359,8 @@
                     <!-- Actions principales -->
                     <div class="flex items-center space-x-3">
                         <!-- Marquer comme collecté (Action principale) -->
-                        <button @click="markAsCollected(package)" 
+                        <!-- Action principale : Marquer comme collecté -->
+                        <button @click="markAsCollected(package)"
                                 :disabled="processing === package.id"
                                 class="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white py-4 px-4 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                             <span x-show="processing !== package.id" class="flex items-center justify-center space-x-2">
@@ -397,6 +386,7 @@
                                 </svg>
                             </button>
 
+ -->
                             <!-- Voir détails -->
                             <button @click="viewPackageDetails(package)" 
                                     class="bg-blue-100 text-blue-600 p-3 rounded-xl hover:bg-blue-200 transition-colors"
@@ -406,6 +396,7 @@
                                 </svg>
                             </button>
 
+ -->
                             <!-- Navigation GPS -->
                             <button @click="openNavigation(package)" 
                                     class="bg-orange-100 text-orange-600 p-3 rounded-xl hover:bg-orange-200 transition-colors"
@@ -415,6 +406,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
                             </button>
+                            </button> -->
                             
                             <!-- Toggle sélection -->
                             <button @click="toggleSelectionMode(package.id)" 
@@ -425,6 +417,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </button>
+                            </button> -->
                         </div>
                     </div>
                 </div>
@@ -432,7 +425,7 @@
         </template>
 
         <!-- État vide -->
-        <div x-show="filteredPackages.length === 0 && !loading" 
+        <div x-show="packages.length === 0 && !loading" 
              class="text-center py-16">
             <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -440,11 +433,9 @@
                 </svg>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-3">
-                <span x-show="activeFilter === ''">Aucun pickup accepté</span>
                 <span x-show="activeFilter !== ''">Aucun résultat pour ce filtre</span>
             </h3>
             <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                <span x-show="activeFilter === ''">Vous n'avez pas encore accepté de pickup, ou vous les avez tous collectés.</span>
                 <span x-show="activeFilter !== ''">Essayez d'ajuster vos filtres ou de rafraîchir la liste.</span>
             </p>
             
@@ -464,7 +455,6 @@
     </div>
 
     <!-- Modal Collecte Simple -->
-    <div x-show="showCollectModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
         <div x-show="showCollectModal" 
              x-transition:enter="transform transition ease-out duration-300"
              x-transition:enter-start="translate-y-full sm:scale-95 sm:translate-y-0"
@@ -477,7 +467,6 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                </button>
             </div>
 
             <div x-show="selectedPackageForCollect" class="space-y-4">
@@ -490,7 +479,6 @@
 
                 <!-- Notes -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes de collecte (optionnel)</label>
                     <textarea x-model="collectForm.notes" 
                               placeholder="Notes sur la collecte..."
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -499,7 +487,6 @@
 
                 <!-- Photo Upload -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Photo de collecte (optionnel)</label>
                     <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
                         <input type="file" @change="handleCollectPhoto($event)" 
                                accept="image/*" capture="environment"
@@ -533,7 +520,6 @@
                         <span x-show="!processing">✅ Confirmer Collecte</span>
                         <span x-show="processing" class="flex items-center justify-center">
                             <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Collecte en cours...
                         </span>
                     </button>
                     <button @click="showCollectModal = false" 
@@ -546,7 +532,6 @@
     </div>
 
     <!-- Modal Collecte en Lot -->
-    <div x-show="showBulkCollectModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
         <div x-show="showBulkCollectModal" 
              x-transition:enter="transform transition ease-out duration-300"
              x-transition:enter-start="translate-y-full sm:scale-95 sm:translate-y-0"
@@ -559,7 +544,6 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                </button>
             </div>
 
             <div class="space-y-4">
@@ -567,15 +551,15 @@
                 <div class="bg-blue-50 p-4 rounded-xl">
                     <h4 class="font-semibold text-blue-800 mb-2">Sélection automatique</h4>
                     <div class="space-y-2">
-                        <button @click="autoSelectByDelegation()" 
+                        <button @click="autoSelectByDelegation()"
                                 class="w-full bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors text-left">
                             📍 Même délégation (optimisation de route)
                         </button>
-                        <button @click="autoSelectByTime()" 
+                        <button @click="autoSelectByTime()"
                                 class="w-full bg-orange-100 text-orange-700 py-2 px-3 rounded-lg hover:bg-orange-200 transition-colors text-left">
                             ⏰ Les plus anciens (priorité)
                         </button>
-                        <button @click="autoSelectByCod()" 
+                        <button @click="autoSelectByCod()"
                                 class="w-full bg-green-100 text-green-700 py-2 px-3 rounded-lg hover:bg-green-200 transition-colors text-left">
                             💰 COD élevé (priorité financière)
                         </button>
@@ -592,7 +576,7 @@
                                     <span class="text-sm font-medium" x-text="getPackageById(packageId)?.package_code"></span>
                                     <span class="text-xs text-gray-500 ml-2" x-text="formatAmount(getPackageById(packageId)?.cod_amount)"></span>
                                 </div>
-                                <button @click="removeFromSelection(packageId)" 
+                                <button @click="removeFromSelection(packageId)"
                                         class="text-red-500 hover:text-red-700">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -605,7 +589,6 @@
 
                 <!-- Notes pour le lot -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes pour ce lot</label>
                     <textarea x-model="bulkCollectForm.notes" 
                               placeholder="Notes générales pour cette collecte en lot..."
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -614,13 +597,12 @@
 
                 <!-- Actions -->
                 <div class="flex space-x-3 pt-4">
-                    <button @click="submitBulkCollect()" 
+                    <button @click="submitBulkCollect()"
                             :disabled="selectedPackages.length === 0 || processing"
                             class="flex-1 bg-emerald-500 text-white py-4 px-4 rounded-xl font-semibold hover:bg-emerald-600 transition-colors disabled:opacity-50">
                         <span x-show="!processing" x-text="`Collecter ${selectedPackages.length} colis`"></span>
                         <span x-show="processing" class="flex items-center justify-center">
                             <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Collecte en cours...
                         </span>
                     </button>
                     <button @click="showBulkCollectModal = false" 
@@ -641,11 +623,10 @@
     </div>
 </div>
 
-<script>
 function myPickupsApp() {
     return {
         // Données principales
-        packages: @json($packages->items()),
+        packages: @json($packages->items() ?? []),
         delegations: @json($delegations ?? []),
         filteredPackages: [],
         
@@ -653,7 +634,7 @@ function myPickupsApp() {
         loading: false,
         refreshing: false,
         processing: null,
-        
+
         // Mode sélection
         isSelectionMode: false,
         selectedPackages: [],
@@ -669,7 +650,7 @@ function myPickupsApp() {
             dateFrom: '',
             dateTo: ''
         },
-        
+
         // Statistiques
         todayCount: 0,
         highCodCount: 0,
@@ -682,7 +663,6 @@ function myPickupsApp() {
         showBulkCollectModal: false,
         selectedPackageForCollect: null,
         
-        // Forms
         collectForm: {
             notes: '',
             photo: null,
@@ -721,7 +701,7 @@ function myPickupsApp() {
                     (pkg.content_description || '').toLowerCase().includes(query)
                 );
             }
-            
+
             // Filtres par délégation
             if (this.filters.delegationFrom) {
                 filtered = filtered.filter(pkg => 
@@ -755,6 +735,7 @@ function myPickupsApp() {
                 );
             }
             
+
             // Filtres rapides
             switch (this.activeFilter) {
                 case 'today':
@@ -788,6 +769,7 @@ function myPickupsApp() {
                     break;
             }
             
+
             // Tri : anciens en premier, puis par heure d'acceptation
             filtered.sort((a, b) => {
                 const aOld = this.isOldPackage(a);
@@ -800,6 +782,7 @@ function myPickupsApp() {
                 return new Date(a.assigned_at) - new Date(b.assigned_at);
             });
             
+
             this.filteredPackages = filtered;
         },
 
@@ -816,6 +799,7 @@ function myPickupsApp() {
             this.applyFilters();
         },
 
+        
         // ==================== STATISTIQUES ====================
         
         calculateStats() {
@@ -837,6 +821,7 @@ function myPickupsApp() {
                 sum + parseFloat(pkg.cod_amount || 0), 0
             );
             
+
             // Trouver le plus ancien
             if (this.packages.length > 0) {
                 const oldest = this.packages.reduce((oldest, pkg) => 
@@ -872,7 +857,6 @@ function myPickupsApp() {
         },
 
         async submitCollect() {
-            if (this.processing || !this.selectedPackageForCollect) return;
             
             this.processing = this.selectedPackageForCollect.id;
             
@@ -894,7 +878,6 @@ function myPickupsApp() {
                 const data = await response.json();
 
                 if (data.success) {
-                    this.showToast(data.message, 'success');
                     
                     // Retirer le colis de la liste
                     this.packages = this.packages.filter(p => p.id !== this.selectedPackageForCollect.id);
@@ -905,12 +888,10 @@ function myPickupsApp() {
                     this.showCollectModal = false;
                     this.resetCollectForm();
                 } else {
-                    this.showToast(data.message || 'Erreur lors de la collecte', 'error');
                 }
             } catch (error) {
                 console.error('Erreur collecte:', error);
                 this.showToast('Erreur de connexion', 'error');
-            }
             
             this.processing = null;
         },
@@ -924,6 +905,7 @@ function myPickupsApp() {
             this.selectedPackageForCollect = null;
         },
 
+        
         // ==================== SÉLECTION MULTIPLE ====================
         
         toggleSelectionMode(packageId = null) {
@@ -970,6 +952,7 @@ function myPickupsApp() {
 
         // ==================== SÉLECTION AUTOMATIQUE ====================
         
+
         autoSelectByDelegation() {
             // Sélectionner tous les colis de la délégation la plus fréquente
             const delegationCounts = {};
@@ -983,7 +966,6 @@ function myPickupsApp() {
             const mostCommonDelegation = Object.keys(delegationCounts).reduce((a, b) => 
                 delegationCounts[a] > delegationCounts[b] ? a : b, null);
             
-            if (mostCommonDelegation) {
                 this.selectedPackages = this.filteredPackages
                     .filter(pkg => pkg.delegation_from?.id == mostCommonDelegation)
                     .map(pkg => pkg.id);
@@ -1006,7 +988,6 @@ function myPickupsApp() {
         },
 
         async submitBulkCollect() {
-            if (this.selectedPackages.length === 0 || this.processing) return;
             
             this.processing = true;
             
@@ -1032,7 +1013,6 @@ function myPickupsApp() {
 
                 if (data.success) {
                     const successCount = data.summary?.success || 0;
-                    this.showToast(`${successCount} colis collectés avec succès!`, 'success');
                     
                     // Retirer les colis collectés de la liste
                     this.packages = this.packages.filter(p => 
@@ -1046,12 +1026,10 @@ function myPickupsApp() {
                     this.exitSelectionMode();
                     this.bulkCollectForm.notes = '';
                 } else {
-                    this.showToast(data.message || 'Erreur lors de la collecte en lot', 'error');
                 }
             } catch (error) {
                 console.error('Erreur collecte en lot:', error);
                 this.showToast('Erreur de connexion', 'error');
-            }
             
             this.processing = false;
         },
@@ -1060,7 +1038,7 @@ function myPickupsApp() {
         
         async refreshData() {
             this.refreshing = true;
-            
+
             try {
                 const response = await fetch('{{ route("deliverer.pickups.mine") }}?ajax=1');
                 if (response.ok) {
@@ -1068,12 +1046,10 @@ function myPickupsApp() {
                     this.packages = data.packages || [];
                     this.applyFilters();
                     this.calculateStats();
-                    this.showToast('Pickups mis à jour', 'success');
                 }
             } catch (error) {
                 console.error('Erreur actualisation:', error);
                 this.showToast('Erreur de connexion', 'error');
-            }
             
             this.refreshing = false;
         },
@@ -1093,7 +1069,6 @@ function myPickupsApp() {
             if (!address) {
                 this.showToast('Adresse non disponible', 'error');
                 return;
-            }
             
             const encodedAddress = encodeURIComponent(address);
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1107,6 +1082,7 @@ function myPickupsApp() {
 
         // ==================== GESTION PHOTOS ====================
         
+
         handleCollectPhoto(event) {
             const file = event.target.files[0];
             if (file) {
@@ -1123,7 +1099,6 @@ function myPickupsApp() {
             this.collectForm.photo = null;
             this.collectForm.photoPreview = null;
             this.$refs.collectPhotoInput.value = '';
-        },
 
         // ==================== UI HELPERS ====================
         
@@ -1134,6 +1109,7 @@ function myPickupsApp() {
             return '';
         },
 
+        
         getHeaderBackgroundClass(package) {
             if (this.isOldPackage(package)) return 'bg-gradient-to-r from-red-50 to-pink-50';
             if (this.isHighCod(package)) return 'bg-gradient-to-r from-green-50 to-emerald-50';
@@ -1141,7 +1117,6 @@ function myPickupsApp() {
             return 'bg-gradient-to-r from-purple-50 to-indigo-50';
         },
 
-        getIconBackgroundClass(package) {
             if (this.isOldPackage(package)) return 'bg-gradient-to-r from-red-500 to-red-600';
             if (this.isHighCod(package)) return 'bg-gradient-to-r from-green-500 to-green-600';
             if (this.isAcceptedToday(package)) return 'bg-gradient-to-r from-blue-500 to-blue-600';
@@ -1155,6 +1130,7 @@ function myPickupsApp() {
             return 'text-purple-600';
         },
 
+        
         // ==================== FORMATAGE ====================
         
         formatAmount(amount) {
@@ -1171,6 +1147,7 @@ function myPickupsApp() {
             return `il y a ${Math.floor(diffInMinutes / 1440)}j`;
         },
 
+        
         formatAcceptedTime(timestamp) {
             const date = new Date(timestamp);
             const today = new Date().toDateString();
@@ -1182,6 +1159,7 @@ function myPickupsApp() {
             }
         },
 
+        
         // ==================== FONCTIONNALITÉS MOBILES ====================
         
         setupPullToRefresh() {
@@ -1213,6 +1191,7 @@ function myPickupsApp() {
             }, { passive: true });
         },
 
+        
         startAutoRefresh() {
             setInterval(() => {
                 if (!this.refreshing && !this.processing) {
@@ -1221,6 +1200,7 @@ function myPickupsApp() {
             }, 60000); // Actualisation auto toutes les minutes
         },
 
+        
         // ==================== NOTIFICATIONS ====================
         
         showToast(message, type = 'success') {
@@ -1242,7 +1222,6 @@ function myPickupsApp() {
             
             document.body.appendChild(toast);
             
-            setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(-20px)';
                 setTimeout(() => toast.remove(), 300);

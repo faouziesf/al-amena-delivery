@@ -28,14 +28,14 @@
 <div x-data="editClientApp()" class="max-w-4xl mx-auto">
     
     <!-- Client Info Header -->
-    <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg text-white p-6 mb-8">
+    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-xl shadow-lg text-purple-800 p-6 mb-8">
         <div class="flex items-center space-x-4">
             <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <span class="text-2xl font-bold text-white">{{ substr($client->name, 0, 2) }}</span>
+                <span class="text-2xl font-bold text-purple-800">{{ substr($client->name, 0, 2) }}</span>
             </div>
             <div>
                 <h1 class="text-2xl font-bold">{{ $client->name }}</h1>
-                <p class="text-purple-100">Client #{{ $client->id }} - {{ $client->email }}</p>
+                <p class="text-purple-700">Client #{{ $client->id }} - {{ $client->email }}</p>
                 <div class="flex items-center space-x-4 mt-2">
                     <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
                         {{ $client->account_status === 'ACTIVE' ? 'bg-green-500 text-white' : 
@@ -43,7 +43,7 @@
                         {{ $client->account_status === 'ACTIVE' ? 'Actif' : 
                            ($client->account_status === 'PENDING' ? 'En attente' : 'Suspendu') }}
                     </span>
-                    <span class="text-purple-200 text-sm">
+                    <span class="text-purple-700 text-sm">
                         Créé le {{ $client->created_at->format('d/m/Y') }}
                     </span>
                 </div>
@@ -356,7 +356,7 @@
                 </button>
                 
                 <button type="submit" :disabled="loading || !canSubmit()"
-                        class="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        class="px-8 py-3 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     <span x-show="!loading" class="flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

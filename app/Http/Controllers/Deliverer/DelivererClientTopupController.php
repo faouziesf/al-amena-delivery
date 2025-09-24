@@ -309,6 +309,20 @@ class DelivererClientTopupController extends Controller
     }
 
     /**
+     * Générer le reçu d'une recharge
+     */
+    public function receipt(TopupRequest $topupRequest)
+    {
+        if ($topupRequest->processed_by_id !== Auth::id()) {
+            abort(403, 'Cette recharge n\'a pas été effectuée par vous.');
+        }
+
+        $topupRequest->load(['client', 'processedBy']);
+
+        return view('deliverer.client-topup.receipt', compact('topupRequest'));
+    }
+
+    /**
      * Imprimer reçu de recharge
      */
     public function printReceipt(TopupRequest $topupRequest)
@@ -319,7 +333,7 @@ class DelivererClientTopupController extends Controller
 
         $topupRequest->load(['client', 'processedBy']);
 
-        return view('deliverer.client-topup.receipt', compact('topupRequest'));
+        return view('deliverer.client-topup.print-receipt', compact('topupRequest'));
     }
 
     /**

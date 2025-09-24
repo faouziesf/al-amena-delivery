@@ -3,7 +3,7 @@
 @section('title', $title ?? 'En développement')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 flex items-center justify-center">
+<div class="bg-gray-50 flex items-center justify-center py-20">
     <div class="text-center">
         <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

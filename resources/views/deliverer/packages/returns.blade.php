@@ -3,7 +3,7 @@
 @section('title', 'Retours')
 
 @section('content')
-<div class="min-h-screen bg-gray-50" x-data="returnsApp()">
+<div class="bg-gray-50" x-data="returnsApp()">
     
     <!-- Header Section -->
     <div class="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-10">

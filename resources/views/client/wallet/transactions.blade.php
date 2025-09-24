@@ -15,8 +15,8 @@
             </div>
             
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('client.wallet.export') }}" 
-                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+                <a href="{{ route('client.wallet.export') }}"
+                   class="bg-gradient-to-r from-purple-400 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-purple-500 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -134,58 +134,58 @@
         @endphp
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-6 border border-emerald-200">
+            <div class="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-6 border border-purple-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-emerald-700 text-sm font-medium">Total crédité</p>
-                        <p class="text-2xl font-bold text-emerald-800">{{ number_format($totalCredits, 3) }} DT</p>
+                        <p class="text-purple-700 text-sm font-medium">Total crédité</p>
+                        <p class="text-2xl font-bold text-purple-800">{{ number_format($totalCredits, 3) }} DT</p>
                     </div>
-                    <div class="bg-emerald-200 rounded-full p-3">
-                        <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-purple-300 rounded-full p-3">
+                        <svg class="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-red-100 to-pink-100 rounded-2xl p-6 border border-red-200">
+            <div class="bg-gradient-to-br from-purple-200 to-purple-300 rounded-2xl p-6 border border-purple-400">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-red-700 text-sm font-medium">Total débité</p>
-                        <p class="text-2xl font-bold text-red-800">{{ number_format($totalDebits, 3) }} DT</p>
+                        <p class="text-purple-800 text-sm font-medium">Total débité</p>
+                        <p class="text-2xl font-bold text-purple-900">{{ number_format($totalDebits, 3) }} DT</p>
                     </div>
-                    <div class="bg-red-200 rounded-full p-3">
-                        <svg class="w-6 h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-purple-400 rounded-full p-3">
+                        <svg class="w-6 h-6 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl p-6 border border-purple-200">
+            <div class="bg-gradient-to-br from-purple-300 to-purple-400 rounded-2xl p-6 border border-purple-500">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-700 text-sm font-medium">Solde net</p>
-                        <p class="text-2xl font-bold {{ $netAmount >= 0 ? 'text-emerald-800' : 'text-red-800' }}">
+                        <p class="text-purple-900 text-sm font-medium">Solde net</p>
+                        <p class="text-2xl font-bold {{ $netAmount >= 0 ? 'text-green-700' : 'text-red-700' }}">
                             {{ number_format($netAmount, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-purple-200 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-purple-500 rounded-full p-3">
+                        <svg class="w-6 h-6 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-6 border border-blue-200">
+            <div class="bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl p-6 border border-purple-600">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-700 text-sm font-medium">Nb transactions</p>
-                        <p class="text-2xl font-bold text-blue-800">{{ $transactions->total() }}</p>
+                        <p class="text-purple-100 text-sm font-medium">Nb transactions</p>
+                        <p class="text-2xl font-bold text-white">{{ $transactions->total() }}</p>
                     </div>
-                    <div class="bg-blue-200 rounded-full p-3">
-                        <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-purple-600 rounded-full p-3">
+                        <svg class="w-6 h-6 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>

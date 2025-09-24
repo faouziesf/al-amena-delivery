@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Package;
+use App\Models\PickupRequest;
 use App\Models\FinancialTransaction;
 use App\Models\Notification;
 use App\Models\User;
@@ -201,39 +202,43 @@ class DelivererDashboardController extends Controller
             $thisWeek = Carbon::now()->startOfWeek();
             $thisMonth = Carbon::now()->startOfMonth();
 
-            // Requête unique optimisée pour tous les statuts
-            $packageStats = Package::select([
-                    'status',
-                    'assigned_deliverer_id',
-                    DB::raw('COUNT(*) as count'),
-                    DB::raw('SUM(cod_amount) as total_cod'),
-                    DB::raw('SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today_count'),
-                    DB::raw('SUM(CASE WHEN DATE(delivered_at) = CURDATE() THEN 1 ELSE 0 END) as delivered_today'),
-                    DB::raw('SUM(CASE WHEN DATE(delivered_at) = CURDATE() THEN cod_amount ELSE 0 END) as cod_today')
-                ])
-                ->where(function($query) use ($delivererId) {
-                    $query->where('status', 'AVAILABLE')
-                          ->orWhere('assigned_deliverer_id', $delivererId);
-                })
-                ->groupBy('status', 'assigned_deliverer_id')
-                ->get()
-                ->keyBy(function($item) {
-                    return $item->status . '_' . ($item->assigned_deliverer_id ?? 'null');
-                });
+            // Statistiques des demandes de collecte
+            $availablePickups = PickupRequest::where('status', 'pending')
+                ->whereDate('requested_pickup_date', '>=', $today)
+                ->count();
 
-            // Extraction des données
-            $availablePickups = $packageStats->get('AVAILABLE_null')->count ?? 0;
-            $myPickups = $packageStats->get("ACCEPTED_{$delivererId}")->count ?? 0;
-            
-            $deliveriesCount = collect([
-                $packageStats->get("PICKED_UP_{$delivererId}")->count ?? 0,
-                $packageStats->get("UNAVAILABLE_{$delivererId}")->count ?? 0
-            ])->sum();
-            
-            $returnsCount = $packageStats->get("VERIFIED_{$delivererId}")->count ?? 0;
-            
-            $deliveredToday = $packageStats->sum('delivered_today');
-            $codCollectedToday = $packageStats->sum('cod_today');
+            $myPickups = PickupRequest::where('assigned_deliverer_id', $delivererId)
+                ->whereIn('status', ['assigned', 'picked_up'])
+                ->count();
+
+            $completedToday = PickupRequest::where('assigned_deliverer_id', $delivererId)
+                ->where('status', 'picked_up')
+                ->whereDate('picked_up_at', $today)
+                ->count();
+
+            $pendingToday = PickupRequest::where('assigned_deliverer_id', $delivererId)
+                ->where('status', 'assigned')
+                ->whereDate('requested_pickup_date', $today)
+                ->count();
+
+            // Statistiques des packages livrés
+            $deliveriesCount = Package::where('assigned_deliverer_id', $delivererId)
+                ->whereIn('status', ['DELIVERED', 'PAID'])
+                ->count();
+
+            $deliveredToday = Package::where('assigned_deliverer_id', $delivererId)
+                ->whereIn('status', ['DELIVERED', 'PAID'])
+                ->whereDate('delivered_at', $today)
+                ->count();
+
+            $codCollectedToday = Package::where('assigned_deliverer_id', $delivererId)
+                ->whereIn('status', ['DELIVERED', 'PAID'])
+                ->whereDate('delivered_at', $today)
+                ->sum('cod_amount');
+
+            $returnsCount = Package::where('assigned_deliverer_id', $delivererId)
+                ->where('status', 'RETURNED')
+                ->count();
 
             // Stats additionnelles
             $urgentDeliveries = Package::where('assigned_deliverer_id', $delivererId)
@@ -255,9 +260,10 @@ class DelivererDashboardController extends Controller
             return [
                 'available_pickups' => $availablePickups,
                 'my_pickups' => $myPickups,
+                'completed_today' => $completedToday,
+                'pending_today' => $pendingToday,
                 'deliveries' => $deliveriesCount,
                 'returns' => $returnsCount,
-                'payments' => 0, // À implémenter selon les paiements
                 'deliveries_today' => $deliveredToday,
                 'cod_collected_today' => $codCollectedToday,
                 'urgent_deliveries' => $urgentDeliveries,
@@ -334,7 +340,7 @@ class DelivererDashboardController extends Controller
                 'icon' => '✅',
                 'title' => 'Colis livré',
                 'description' => "#{$package->package_code} - " . number_format($package->cod_amount, 3) . ' DT',
-                'time' => $package->delivered_at->diffForHumans(),
+                'time' => $package->delivered_at ? $package->delivered_at->diffForHumans() : 'Récemment',
                 'color' => 'text-green-600'
             ]);
         }
@@ -372,7 +378,7 @@ class DelivererDashboardController extends Controller
                 'icon' => '💰',
                 'title' => 'COD encaissé',
                 'description' => number_format($transaction->amount, 3) . ' DT',
-                'time' => $transaction->created_at->diffForHumans(),
+                'time' => $transaction->created_at ? $transaction->created_at->diffForHumans() : 'Récemment',
                 'color' => 'text-emerald-600'
             ]);
         }
@@ -399,7 +405,7 @@ class DelivererDashboardController extends Controller
                                   'message' => $notification->message,
                                   'priority' => $notification->priority,
                                   'priority_color' => $notification->priority_color,
-                                  'created_at' => $notification->created_at->diffForHumans(),
+                                  'created_at' => $notification->created_at ? $notification->created_at->diffForHumans() : 'Récemment',
                                   'action_url' => $notification->action_url
                               ];
                           });
@@ -472,9 +478,10 @@ class DelivererDashboardController extends Controller
         return [
             'available_pickups' => 0,
             'my_pickups' => 0,
+            'completed_today' => 0,
+            'pending_today' => 0,
             'deliveries' => 0,
             'returns' => 0,
-            'payments' => 0,
             'deliveries_today' => 0,
             'cod_collected_today' => 0,
             'urgent_deliveries' => 0,

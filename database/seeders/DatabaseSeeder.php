@@ -565,6 +565,10 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // 17. Exécuter le seeder de données de test spécifiques
+        echo "🔄 Création de données de test spécifiques avec délégations...\n";
+        $this->call(TestDataSeeder::class);
+
         echo "✅ Seeding terminé avec succès!\n";
         echo "📊 Données créées:\n";
         echo "   - " . (1 + 3 + 5 + 10) . " utilisateurs (1 superviseur, 3 commerciaux, 5 livreurs, 10 clients)\n";
@@ -573,6 +577,7 @@ class DatabaseSeeder extends Seeder
         echo "   - " . count($allUserIds) . " wallets avec transactions\n";
         echo "   - " . count($packages) . " packages\n";
         echo "   - 15 réclamations\n";
+        echo "   - Données de test supplémentaires avec adresses de pickup et colis utilisant les délégations\n";
         echo "   - Notifications, demandes de retrait, modifications COD, etc.\n";
         echo "🔐 Mot de passe pour tous les utilisateurs: password123\n";
     }
