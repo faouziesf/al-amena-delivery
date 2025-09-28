@@ -166,9 +166,9 @@
                     Colis Récents
                 </h3>
 
-                @if($recentPackages && $recentPackages->count() > 0)
+                @if($packages && $packages->count() > 0)
                 <div class="space-y-3">
-                    @foreach($recentPackages as $package)
+                    @foreach($packages as $package)
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div class="flex-1">
                             <div class="font-medium text-gray-900">{{ $package->tracking_number }}</div>
@@ -336,6 +336,114 @@
 </div>
 @endsection
 
+@push('modals')
+<!-- Assign Cash Delivery Modal -->
+<div id="assign-cash-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900">Assigner Paiement Espèces</h3>
+                <button onclick="closeAssignCashModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="assign-cash-form" class="p-6 space-y-6">
+                <!-- Deliverer Info -->
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
+                            <span class="text-lg font-bold text-purple-800">{{ substr($deliverer->name, 0, 2) }}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-purple-900">{{ $deliverer->name }}</h4>
+                            <p class="text-sm text-purple-700">Solde: {{ number_format($deliverer->wallet->balance ?? 0, 3) }} DT</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Cash Delivery -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Paiement à assigner</label>
+                    <select id="cash-delivery-select" required
+                            onchange="updateDeliveryDetails()"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        <option value="">Sélectionner un paiement...</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Paiements approuvés en attente d'assignation</p>
+                </div>
+
+                <!-- Delivery Details -->
+                <div id="delivery-details" class="bg-green-50 border-2 border-green-200 rounded-xl p-4 hidden">
+                    <h4 class="font-semibold text-green-900 mb-3">Détails du Paiement</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-green-700">Code:</span>
+                            <span id="detail-code" class="font-mono font-semibold text-green-900"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700">Client:</span>
+                            <span id="detail-client" class="font-semibold text-green-900"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-700">Montant à remettre:</span>
+                            <span id="detail-amount" class="font-bold text-xl text-green-900"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions pour le livreur (optionnel)</label>
+                    <textarea id="assignment-notes" rows="3"
+                              placeholder="Instructions spéciales, adresse de livraison, contact client..."
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+                </div>
+
+                <!-- Cash Transfer Confirmation -->
+                <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-orange-900 mb-2">⚠️ Remise d'Espèces Obligatoire</h4>
+                            <p class="text-sm text-orange-800 mb-3">Vous devez remettre le montant exact en espèces au livreur avant qu'il ne parte en livraison.</p>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="cash-confirmation" required
+                                       class="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                                <label for="cash-confirmation" class="text-sm text-orange-800 font-medium">
+                                    Je confirme avoir remis les espèces au livreur
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit"
+                            class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Assigner Paiement
+                    </button>
+                    <button type="button" onclick="closeAssignCashModal()"
+                            class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endpush
+
 @push('scripts')
 <script>
 function delivererShowApp() {
@@ -375,8 +483,126 @@ function emptyWallet() {
 }
 
 function assignCashDelivery() {
-    // TODO: Implémenter l'assignment de livraison cash
-    showToast('Fonctionnalité d\'assignment en cours de développement', 'info');
+    loadPendingCashDeliveries();
+    document.getElementById('assign-cash-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
+
+async function loadPendingCashDeliveries() {
+    try {
+        const response = await fetch('/commercial/withdrawals/api/pending-cash');
+        if (response.ok) {
+            const cashDeliveries = await response.json();
+            populateCashDeliveriesSelect(cashDeliveries);
+        }
+    } catch (error) {
+        console.error('Erreur chargement paiements espèce:', error);
+    }
+}
+
+function populateCashDeliveriesSelect(cashDeliveries) {
+    const select = document.getElementById('cash-delivery-select');
+    select.innerHTML = '<option value="">Sélectionner un paiement...</option>';
+
+    cashDeliveries.forEach(delivery => {
+        const option = document.createElement('option');
+        option.value = delivery.id;
+        option.dataset.amount = delivery.amount;
+        option.dataset.client = delivery.client.name;
+        option.dataset.code = delivery.request_code;
+        option.textContent = `${delivery.request_code} - ${delivery.client.name} (${parseFloat(delivery.amount).toFixed(3)} DT)`;
+        select.appendChild(option);
+    });
+}
+
+function updateDeliveryDetails() {
+    const select = document.getElementById('cash-delivery-select');
+    const selectedOption = select.options[select.selectedIndex];
+    const detailsDiv = document.getElementById('delivery-details');
+
+    if (selectedOption.value) {
+        document.getElementById('detail-code').textContent = selectedOption.dataset.code;
+        document.getElementById('detail-client').textContent = selectedOption.dataset.client;
+        document.getElementById('detail-amount').textContent = parseFloat(selectedOption.dataset.amount).toFixed(3) + ' DT';
+        detailsDiv.classList.remove('hidden');
+    } else {
+        detailsDiv.classList.add('hidden');
+    }
+}
+
+function closeAssignCashModal() {
+    document.getElementById('assign-cash-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.getElementById('assign-cash-form').reset();
+    document.getElementById('delivery-details').classList.add('hidden');
+}
+
+// Form submission handler
+document.addEventListener('DOMContentLoaded', function() {
+    const assignCashForm = document.getElementById('assign-cash-form');
+    if (assignCashForm) {
+        assignCashForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const withdrawalId = document.getElementById('cash-delivery-select').value;
+            const notes = document.getElementById('assignment-notes').value;
+            const cashConfirmation = document.getElementById('cash-confirmation').checked;
+
+            if (!withdrawalId) {
+                showToast('Veuillez sélectionner un paiement', 'error');
+                return;
+            }
+
+            if (!cashConfirmation) {
+                showToast('Veuillez confirmer la remise des espèces', 'error');
+                return;
+            }
+
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2"></div>
+                Assignment...
+            `;
+
+            try {
+                const response = await fetch(`/commercial/withdrawals/${withdrawalId}/assign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        deliverer_id: {{ $deliverer->id }},
+                        notes: notes,
+                        cash_delivered_by_commercial: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Paiement assigné avec succès au livreur!', 'success');
+                    closeAssignCashModal();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Erreur lors de l\'assignation', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur assignation:', error);
+                showToast('Erreur de connexion', 'error');
+            }
+
+            // Reset button
+            submitButton.disabled = false;
+            submitButton.innerHTML = `
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Assigner Paiement
+            `;
+        });
+    }
+});
 </script>
 @endpush

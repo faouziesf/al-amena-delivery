@@ -28,6 +28,29 @@
             <form method="POST" action="{{ route('supervisor.users.store') }}" class="p-6 space-y-6">
                 @csrf
 
+                <!-- Affichage des erreurs -->
+                @if($errors->any())
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Erreurs de validation</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Informations personnelles -->
                 <div class="space-y-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Informations Personnelles</h3>
@@ -110,6 +133,9 @@
                                 <option value="COMMERCIAL" {{ old('role') == 'COMMERCIAL' ? 'selected' : '' }}>
                                     💼 Commercial
                                 </option>
+                                <option value="DEPOT_MANAGER" {{ old('role') == 'DEPOT_MANAGER' ? 'selected' : '' }}>
+                                    🏢 Chef Dépôt
+                                </option>
                                 <option value="SUPERVISOR" {{ old('role') == 'SUPERVISOR' ? 'selected' : '' }}>
                                     👨‍💼 Superviseur
                                 </option>
@@ -120,28 +146,28 @@
                         </div>
 
                         <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                            <label for="account_status" class="block text-sm font-medium text-gray-700 mb-2">
                                 Statut Initial *
                             </label>
-                            <select name="status" id="status" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('status') border-red-500 @enderror">
+                            <select name="account_status" id="account_status" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('account_status') border-red-500 @enderror">
                                 <option value="">Sélectionner un statut</option>
-                                <option value="ACTIVE" {{ old('status') == 'ACTIVE' ? 'selected' : '' }}>
+                                <option value="ACTIVE" {{ old('account_status') == 'ACTIVE' ? 'selected' : '' }}>
                                     ✅ Actif
                                 </option>
-                                <option value="PENDING" {{ old('status') == 'PENDING' ? 'selected' : '' }}>
+                                <option value="PENDING" {{ old('account_status') == 'PENDING' ? 'selected' : '' }}>
                                     ⏳ En attente
                                 </option>
-                                <option value="SUSPENDED" {{ old('status') == 'SUSPENDED' ? 'selected' : '' }}>
+                                <option value="SUSPENDED" {{ old('account_status') == 'SUSPENDED' ? 'selected' : '' }}>
                                     ❌ Suspendu
                                 </option>
                             </select>
-                            @error('status')
+                            @error('account_status')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        @if(isset($delegations) && $delegations->count() > 0)
+                        @if(isset($delegations) && count($delegations) > 0)
                         <div class="md:col-span-2">
                             <label for="delegation_id" class="block text-sm font-medium text-gray-700 mb-2">
                                 Délégation
@@ -149,9 +175,9 @@
                             <select name="delegation_id" id="delegation_id"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('delegation_id') border-red-500 @enderror">
                                 <option value="">Aucune délégation</option>
-                                @foreach($delegations as $delegation)
-                                <option value="{{ $delegation->id }}" {{ old('delegation_id') == $delegation->id ? 'selected' : '' }}>
-                                    {{ $delegation->name }}
+                                @foreach($delegations as $key => $name)
+                                <option value="{{ $key }}" {{ old('delegation_id') == $key ? 'selected' : '' }}>
+                                    {{ $name }}
                                 </option>
                                 @endforeach
                             </select>
@@ -161,6 +187,28 @@
                             <p class="mt-1 text-sm text-gray-500">Optionnel - Requis pour certains rôles</p>
                         </div>
                         @endif
+
+                        <!-- Section Gouvernorats pour Chef Dépôt -->
+                        <div id="gouvernorats-section" class="md:col-span-2 hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Gouvernorats assignés <span class="text-red-500">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                                @if(isset($gouvernorats) && count($gouvernorats) > 0)
+                                    @foreach($gouvernorats as $key => $name)
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="assigned_gouvernorats[]" value="{{ $key }}"
+                                               class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                                        <span class="ml-2 text-sm text-gray-700">{{ $name }}</span>
+                                    </label>
+                                    @endforeach
+                                @endif
+                            </div>
+                            @error('assigned_gouvernorats')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">Sélectionnez les gouvernorats que ce chef dépôt pourra gérer</p>
+                        </div>
                     </div>
                 </div>
 
@@ -171,6 +219,7 @@
                         <div><strong>👤 Client:</strong> Peut créer des colis et gérer son portefeuille</div>
                         <div><strong>🚚 Livreur:</strong> Accepte et livre les colis, scanne les QR codes</div>
                         <div><strong>💼 Commercial:</strong> Traite les demandes de recharge et réclamations</div>
+                        <div><strong>🏢 Chef Dépôt:</strong> Gère les livreurs et clients de gouvernorats spécifiques</div>
                         <div><strong>👨‍💼 Superviseur:</strong> Accès complet au système et surveillance</div>
                     </div>
                 </div>
@@ -250,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     const phoneInput = document.getElementById('phone');
     const roleSelect = document.getElementById('role');
-    const statusSelect = document.getElementById('status');
+    const statusSelect = document.getElementById('account_status');
 
     // Format du téléphone
     phoneInput.addEventListener('input', function() {
@@ -266,8 +315,25 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = value;
     });
 
+    // Gestion de l'affichage des sections selon le rôle
+    const gouvernoratsSection = document.getElementById('gouvernorats-section');
+
+    function toggleRoleSpecificSections() {
+        const selectedRole = roleSelect.value;
+
+        // Masquer toutes les sections spécifiques
+        gouvernoratsSection.classList.add('hidden');
+
+        // Afficher les sections selon le rôle
+        if (selectedRole === 'DEPOT_MANAGER') {
+            gouvernoratsSection.classList.remove('hidden');
+        }
+    }
+
     // Auto-sélection du statut actif
     roleSelect.addEventListener('change', function() {
+        toggleRoleSpecificSections();
+
         if (this.value && statusSelect.value === '') {
             statusSelect.value = 'ACTIVE';
         }

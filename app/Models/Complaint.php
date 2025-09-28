@@ -13,7 +13,7 @@ class Complaint extends Model
     protected $fillable = [
         'complaint_code', 'package_id', 'client_id', 'type', 'description',
         'additional_data', 'status', 'priority', 'assigned_commercial_id',
-        'resolution_notes', 'resolution_data', 'resolved_at'
+        'resolution_notes', 'resolution_data', 'resolved_at', 'ticket_id'
     ];
 
     protected $casts = [
@@ -40,7 +40,7 @@ class Complaint extends Model
 
     public function ticket()
     {
-        return $this->hasOne(Ticket::class);
+        return $this->belongsTo(Ticket::class);
     }
 
     // Scopes

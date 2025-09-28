@@ -14,8 +14,7 @@ class ClientTicketController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
-        $this->middleware('role:CLIENT');
+        // Middleware handling is done in routes or through middleware groups
     }
 
     /**
@@ -75,13 +74,13 @@ class ClientTicketController extends Controller
             'type' => 'required|in:COMPLAINT,QUESTION,SUPPORT,OTHER',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
-            'priority' => 'required|in:LOW,NORMAL,HIGH,URGENT',
             'complaint_id' => 'nullable|exists:complaints,id',
             'package_id' => 'nullable|exists:packages,id',
             'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
         ]);
 
         $validated['client_id'] = Auth::id();
+        $validated['priority'] = 'NORMAL'; // Les clients créent toujours des tickets avec priorité normale
 
         // Créer le ticket
         $ticket = Ticket::create($validated);
@@ -158,21 +157,32 @@ class ClientTicketController extends Controller
             abort(403);
         }
 
-        // Vérifier que le ticket accepte encore des messages
-        if (!$ticket->canAddMessages()) {
-            return back()->with('error', 'Ce ticket est fermé. Vous ne pouvez plus ajouter de messages.');
+        // Vérifier que le ticket accepte encore des messages du client
+        if (!$ticket->canClientAddMessages()) {
+            $message = $ticket->isResolved()
+                ? 'Ce ticket est résolu. Vous ne pouvez plus ajouter de messages.'
+                : 'Ce ticket est fermé. Vous ne pouvez plus ajouter de messages.';
+            return back()->with('error', $message);
         }
 
-        $validated = $request->validate([
-            'message' => 'required|string',
-            'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
+        // Validation personnalisée : message requis SAUF si fichiers présents
+        $request->validate([
+            'message' => 'nullable|string',
+            'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt'
         ]);
+
+        // Vérifier qu'il y a au moins un message ou un fichier
+        if (empty(trim($request->message)) && !$request->hasFile('attachments')) {
+            return back()->with('error', 'Veuillez écrire un message ou joindre au moins un fichier.');
+        }
+
+        $validated = $request->all();
 
         $messageData = [
             'ticket_id' => $ticket->id,
             'sender_id' => Auth::id(),
             'sender_type' => 'CLIENT',
-            'message' => $validated['message'],
+            'message' => $validated['message'] ?? '',
             'is_internal' => false
         ];
 
@@ -261,5 +271,13 @@ class ClientTicketController extends Controller
 
         return redirect()->route('client.tickets.show', $ticket)
                         ->with('success', 'Ticket créé depuis votre réclamation. Un commercial va traiter votre demande.');
+    }
+
+    /**
+     * Ajouter une réponse à un ticket (alias pour addMessage)
+     */
+    public function reply(Request $request, Ticket $ticket)
+    {
+        return $this->addMessage($request, $ticket);
     }
 }

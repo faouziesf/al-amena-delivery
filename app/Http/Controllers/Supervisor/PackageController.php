@@ -124,28 +124,32 @@ class PackageController extends Controller
             ]);
         }
 
-        // Ajouter les transactions
-        foreach ($package->transactions as $transaction) {
-            $timeline->push([
-                'type' => 'transaction',
-                'icon' => 'dollar-sign',
-                'title' => 'Transaction',
-                'description' => "{$transaction->type}: {$transaction->amount} TND",
-                'date' => $transaction->created_at,
-                'color' => 'green',
-            ]);
+        // Ajouter les transactions (si la relation existe)
+        if ($package->relationLoaded('transactions') && $package->transactions) {
+            foreach ($package->transactions as $transaction) {
+                $timeline->push([
+                    'type' => 'transaction',
+                    'icon' => 'dollar-sign',
+                    'title' => 'Transaction',
+                    'description' => "{$transaction->type}: {$transaction->amount} TND",
+                    'date' => $transaction->created_at,
+                    'color' => 'green',
+                ]);
+            }
         }
 
-        // Ajouter les réclamations
-        foreach ($package->complaints as $complaint) {
-            $timeline->push([
-                'type' => 'complaint',
-                'icon' => 'alert-triangle',
-                'title' => 'Réclamation',
-                'description' => $complaint->type,
-                'date' => $complaint->created_at,
-                'color' => 'red',
-            ]);
+        // Ajouter les réclamations (si la relation existe)
+        if ($package->relationLoaded('complaints') && $package->complaints) {
+            foreach ($package->complaints as $complaint) {
+                $timeline->push([
+                    'type' => 'complaint',
+                    'icon' => 'alert-triangle',
+                    'title' => 'Réclamation',
+                    'description' => $complaint->type,
+                    'date' => $complaint->created_at,
+                    'color' => 'red',
+                ]);
+            }
         }
 
         $timeline = $timeline->sortBy('date');
@@ -181,20 +185,22 @@ class PackageController extends Controller
                     break;
             }
 
-            // Créer une notification pour le changement de statut
-            \App\Models\Notification::create([
-                'user_id' => $package->sender_id,
-                'type' => 'PACKAGE_STATUS_CHANGED',
-                'title' => 'Statut du colis modifié',
-                'message' => "Le statut de votre colis #{$package->package_code} a été modifié de {$oldStatus} vers {$request->status}",
-                'priority' => 'NORMAL',
-                'data' => [
-                    'package_id' => $package->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status,
-                    'changed_by' => auth()->id(),
-                ]
-            ]);
+                // Créer une notification pour le changement de statut (si le modèle existe)
+            if (class_exists(\App\Models\Notification::class)) {
+                \App\Models\Notification::create([
+                    'user_id' => $package->sender_id,
+                    'type' => 'PACKAGE_STATUS_CHANGED',
+                    'title' => 'Statut du colis modifié',
+                    'message' => "Le statut de votre colis #{$package->package_code} a été modifié de {$oldStatus} vers {$request->status}",
+                    'priority' => 'NORMAL',
+                    'data' => [
+                        'package_id' => $package->id,
+                        'old_status' => $oldStatus,
+                        'new_status' => $request->status,
+                        'changed_by' => auth()->id(),
+                    ]
+                ]);
+            }
         });
 
         return back()->with('success', 'Statut du colis mis à jour avec succès.');
@@ -218,18 +224,20 @@ class PackageController extends Controller
             'assigned_at' => now(),
         ]);
 
-        // Créer une notification pour le livreur
-        \App\Models\Notification::create([
-            'user_id' => $request->deliverer_id,
-            'type' => 'PACKAGE_ASSIGNED',
-            'title' => 'Nouveau colis assigné',
-            'message' => "Un nouveau colis #{$package->package_code} vous a été assigné",
-            'priority' => 'HIGH',
-            'data' => [
-                'package_id' => $package->id,
-                'assigned_by' => auth()->id(),
-            ]
-        ]);
+        // Créer une notification pour le livreur (si le modèle existe)
+        if (class_exists(\App\Models\Notification::class)) {
+            \App\Models\Notification::create([
+                'user_id' => $request->deliverer_id,
+                'type' => 'PACKAGE_ASSIGNED',
+                'title' => 'Nouveau colis assigné',
+                'message' => "Un nouveau colis #{$package->package_code} vous a été assigné",
+                'priority' => 'HIGH',
+                'data' => [
+                    'package_id' => $package->id,
+                    'assigned_by' => auth()->id(),
+                ]
+            ]);
+        }
 
         return back()->with('success', 'Livreur assigné avec succès.');
     }
@@ -308,21 +316,23 @@ class PackageController extends Controller
                 'updated_at' => now(),
             ]);
 
-            // Créer des notifications pour les clients
-            $packages = Package::whereIn('id', $request->package_ids)->with('client')->get();
-            foreach ($packages as $package) {
-                \App\Models\Notification::create([
-                    'user_id' => $package->client_id,
-                    'type' => 'PACKAGE_STATUS_CHANGED',
-                    'title' => 'Statut du colis modifié',
-                    'message' => "Le statut de votre colis #{$package->tracking_number} a été modifié vers {$request->status}",
-                    'priority' => 'NORMAL',
-                    'data' => [
-                        'package_id' => $package->id,
-                        'new_status' => $request->status,
-                        'changed_by' => auth()->id(),
-                    ]
-                ]);
+            // Créer des notifications pour les clients (si le modèle existe)
+            if (class_exists(\App\Models\Notification::class)) {
+                $packages = Package::whereIn('id', $request->package_ids)->with('sender')->get();
+                foreach ($packages as $package) {
+                    \App\Models\Notification::create([
+                        'user_id' => $package->sender_id,
+                        'type' => 'PACKAGE_STATUS_CHANGED',
+                        'title' => 'Statut du colis modifié',
+                        'message' => "Le statut de votre colis #{$package->package_code} a été modifié vers {$request->status}",
+                        'priority' => 'NORMAL',
+                        'data' => [
+                            'package_id' => $package->id,
+                            'new_status' => $request->status,
+                            'changed_by' => auth()->id(),
+                        ]
+                    ]);
+                }
             }
         });
 
@@ -425,7 +435,7 @@ class PackageController extends Controller
         $blockedPackages = Package::where(function ($query) {
             $query->where('delivery_attempts', '>=', 3)
                   ->orWhere('status', 'RETURNED')
-                  ->orWhereRaw('DATEDIFF(NOW(), created_at) > 7 AND status != "DELIVERED"');
+                  ->orWhereRaw('(julianday("now") - julianday(created_at)) > 7 AND status != "DELIVERED"');
         })->with(['sender', 'assignedDeliverer'])->get();
 
         return response()->json($blockedPackages);

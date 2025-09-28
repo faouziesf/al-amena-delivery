@@ -61,9 +61,7 @@ class PackageController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        if ($request->filled('with_complaints') && $request->with_complaints) {
-            $query->withPendingComplaints();
-        }
+        // Suppression du filtre réclamations - les livreurs n'ont pas accès aux réclamations
 
         if ($request->filled('blocked_only') && $request->blocked_only) {
             $query->inProgress()->where('created_at', '<', now()->subDays(3));
@@ -84,13 +82,12 @@ class PackageController extends Controller
 
         $packages = $query->orderBy('created_at', 'desc')->paginate(30);
 
-        // Statistiques
+        // Statistiques (sans réclamations - les livreurs n'y ont pas accès)
         $stats = [
             'total' => Package::count(),
             'created_today' => Package::whereDate('created_at', today())->count(),
             'in_progress' => Package::inProgress()->count(),
             'delivered_today' => Package::delivered()->whereDate('updated_at', today())->count(),
-            'with_complaints' => Package::withPendingComplaints()->count(),
             'blocked' => Package::inProgress()->where('created_at', '<', now()->subDays(3))->count(),
             'total_cod_today' => Package::whereDate('created_at', today())->sum('cod_amount'),
         ];
@@ -109,7 +106,6 @@ class PackageController extends Controller
             'assignedDeliverer',
             'delegationFrom',
             'delegationTo',
-            'complaints.assignedCommercial',
             'statusHistory.changedBy',
             'codModifications.modifiedByCommercial'
         ]);

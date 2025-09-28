@@ -46,6 +46,7 @@ class UserController extends Controller
             'clients' => User::where('role', 'CLIENT')->count(),
             'deliverers' => User::where('role', 'DELIVERER')->count(),
             'commercials' => User::where('role', 'COMMERCIAL')->count(),
+            'depot_managers' => User::where('role', 'DEPOT_MANAGER')->count(),
         ];
 
         return view('supervisor.users.index', compact('users', 'stats'));
@@ -53,40 +54,92 @@ class UserController extends Controller
 
     public function create()
     {
-        $delegations = \App\Models\Delegation::where('active', true)->get();
-        return view('supervisor.users.create', compact('delegations'));
+        $delegations = User::getAvailableDelegations();
+        $delivererTypes = User::getDelivererTypes();
+        $gouvernorats = User::getAvailableDelegations(); // Même structure pour les gouvernorats
+        return view('supervisor.users.create', compact('delegations', 'delivererTypes', 'gouvernorats'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validationRules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:20|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:CLIENT,DELIVERER,COMMERCIAL,SUPERVISOR',
-            'status' => 'required|in:ACTIVE,PENDING,SUSPENDED',
-        ]);
+            'role' => 'required|in:CLIENT,DELIVERER,COMMERCIAL,SUPERVISOR,DEPOT_MANAGER',
+            'account_status' => 'required|in:ACTIVE,PENDING,SUSPENDED',
+        ];
 
-        DB::transaction(function () use ($request) {
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'password' => Hash::make($request->password),
-                'role' => $request->role,
-                'status' => $request->status,
-                'email_verified_at' => now(),
-            ]);
+        // Validation spéciale pour les livreurs
+        if ($request->role === 'DELIVERER') {
+            $delivererTypes = array_keys(User::getDelivererTypes());
+            $validationRules['deliverer_type'] = 'required|in:' . implode(',', $delivererTypes);
 
-            // Créer le wallet si nécessaire
-            if (in_array($user->role, ['CLIENT', 'DELIVERER'])) {
-                $user->ensureWallet();
+            // Validation conditionnelle selon le type de livreur
+            if ($request->deliverer_type === 'DELEGATION') {
+                $delegations = array_keys(User::getAvailableDelegations());
+                $validationRules['assigned_delegation'] = 'required|in:' . implode(',', $delegations);
+            } elseif ($request->deliverer_type === 'JOKER') {
+                $validationRules['assigned_delegation'] = 'nullable';
+            } else { // TRANSIT
+                $validationRules['assigned_delegation'] = 'nullable';
             }
-        });
 
-        return redirect()->route('supervisor.users.index')
-                        ->with('success', 'Utilisateur créé avec succès.');
+            $validationRules['delegation_latitude'] = 'nullable|numeric|between:-90,90';
+            $validationRules['delegation_longitude'] = 'nullable|numeric|between:-180,180';
+            $validationRules['delegation_radius_km'] = 'nullable|integer|min:1|max:50';
+        }
+
+        // Validation spéciale pour les chefs dépôt
+        if ($request->role === 'DEPOT_MANAGER') {
+            $delegations = array_keys(User::getAvailableDelegations());
+            $validationRules['assigned_gouvernorats'] = 'required|array|min:1';
+            $validationRules['assigned_gouvernorats.*'] = 'in:' . implode(',', $delegations);
+        }
+
+        $request->validate($validationRules);
+
+        try {
+            DB::transaction(function () use ($request) {
+                $userData = [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'password' => Hash::make($request->password),
+                    'role' => $request->role,
+                    'account_status' => $request->account_status,
+                    'verified_at' => now(),
+                ];
+
+                // Ajouter les champs spécifiques pour les livreurs
+                if ($request->role === 'DELIVERER') {
+                    $userData['deliverer_type'] = $request->deliverer_type;
+                    $userData['assigned_delegation'] = $request->assigned_delegation;
+                    $userData['delegation_latitude'] = $request->delegation_latitude;
+                    $userData['delegation_longitude'] = $request->delegation_longitude;
+                    $userData['delegation_radius_km'] = $request->delegation_radius_km ?? 10;
+                }
+
+                // Ajouter les champs spécifiques pour les chefs dépôt
+                if ($request->role === 'DEPOT_MANAGER') {
+                    $userData['assigned_gouvernorats'] = json_encode($request->assigned_gouvernorats);
+                }
+
+                $user = User::create($userData);
+
+                // Créer le wallet si nécessaire
+                if (in_array($user->role, ['CLIENT', 'DELIVERER'])) {
+                    $user->ensureWallet();
+                }
+            });
+
+            return redirect()->route('supervisor.users.index')
+                            ->with('success', 'Utilisateur créé avec succès.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                        ->withErrors(['error' => 'Erreur lors de la création: ' . $e->getMessage()]);
+        }
     }
 
     public function show(User $user)
@@ -138,7 +191,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
-            'role' => 'required|in:CLIENT,DELIVERER,COMMERCIAL,SUPERVISOR',
+            'role' => 'required|in:CLIENT,DELIVERER,COMMERCIAL,SUPERVISOR,DEPOT_MANAGER',
             'status' => 'required|in:ACTIVE,PENDING,SUSPENDED',
         ]);
 
@@ -308,6 +361,7 @@ class UserController extends Controller
                 'DELIVERER' => User::where('role', 'DELIVERER')->count(),
                 'COMMERCIAL' => User::where('role', 'COMMERCIAL')->count(),
                 'SUPERVISOR' => User::where('role', 'SUPERVISOR')->count(),
+                'DEPOT_MANAGER' => User::where('role', 'DEPOT_MANAGER')->count(),
             ]
         ]);
     }

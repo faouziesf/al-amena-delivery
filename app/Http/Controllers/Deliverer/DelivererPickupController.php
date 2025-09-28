@@ -16,11 +16,48 @@ class DelivererPickupController extends Controller
     use AuthorizesRequests;
     public function index()
     {
-        $availablePickups = PickupRequest::with(['client', 'assignedDeliverer'])
-            ->where('status', 'pending')
-            ->whereDate('requested_pickup_date', '>=', Carbon::today())
-            ->orderBy('requested_pickup_date')
-            ->paginate(10);
+        $deliverer = Auth::user();
+
+        // Vérifier si le livreur peut voir les pickup requests
+        if (!$deliverer->canViewPickupRequests()) {
+            return view('deliverer.pickups.index', [
+                'availablePickups' => collect(),
+                'myPickups' => collect(),
+                'error' => 'Votre type de compte ne permet pas de voir les demandes de collecte.',
+                'deliverer_type' => $deliverer->deliverer_type
+            ]);
+        }
+
+        // Logique selon le type de livreur
+        if ($deliverer->isJokerDeliverer()) {
+            // Les livreurs JOKER voient tous les pickups
+            $availablePickups = PickupRequest::with(['client', 'assignedDeliverer'])
+                ->where('status', 'pending')
+                ->whereDate('requested_pickup_date', '>=', Carbon::today())
+                ->orderBy('requested_pickup_date')
+                ->paginate(10);
+        } elseif ($deliverer->isDelegationDeliverer()) {
+            // Vérifier si le livreur a une délégation assignée
+            if (!$deliverer->hasAssignedDelegation()) {
+                return view('deliverer.pickups.index', [
+                    'availablePickups' => collect(),
+                    'myPickups' => collect(),
+                    'error' => 'Aucune délégation assignée. Contactez votre superviseur.',
+                    'deliverer_type' => $deliverer->deliverer_type
+                ]);
+            }
+
+            // Filtrer les pickups disponibles par délégation du livreur
+            $availablePickups = PickupRequest::with(['client', 'assignedDeliverer'])
+                ->where('status', 'pending')
+                ->where('delegation', $deliverer->assigned_delegation)
+                ->whereDate('requested_pickup_date', '>=', Carbon::today())
+                ->orderBy('requested_pickup_date')
+                ->paginate(10);
+        } else {
+            // Fallback pour autres types
+            $availablePickups = collect();
+        }
 
         $myPickups = PickupRequest::with(['client'])
             ->where('assigned_deliverer_id', Auth::id())
@@ -33,8 +70,31 @@ class DelivererPickupController extends Controller
 
     public function assign(PickupRequest $pickupRequest)
     {
+        $deliverer = Auth::user();
+
         if ($pickupRequest->status !== 'pending') {
             return back()->withErrors(['status' => 'Cette demande n\'est plus disponible']);
+        }
+
+        // Vérifier que le livreur peut voir les pickup requests
+        if (!$deliverer->canViewPickupRequests()) {
+            return back()->withErrors(['type' => 'Votre type de compte ne permet pas d\'assigner des demandes de collecte.']);
+        }
+
+        // Vérifications selon le type de livreur
+        if ($deliverer->isDelegationDeliverer()) {
+            // Vérifier que le livreur a une délégation assignée
+            if (!$deliverer->hasAssignedDelegation()) {
+                return back()->withErrors(['delegation' => 'Aucune délégation assignée. Contactez votre superviseur.']);
+            }
+
+            // Vérifier que le pickup est dans la délégation du livreur
+            if ($pickupRequest->delegation !== $deliverer->assigned_delegation) {
+                return back()->withErrors(['delegation' => 'Ce pickup n\'est pas dans votre délégation.']);
+            }
+        } elseif ($deliverer->isJokerDeliverer()) {
+            // Les livreurs JOKER peuvent s'assigner n'importe quel pickup
+            // Pas de vérification de délégation
         }
 
         DB::transaction(function () use ($pickupRequest) {
@@ -74,20 +134,17 @@ class DelivererPickupController extends Controller
             return back()->withErrors(['status' => 'Cette demande ne peut pas être complétée']);
         }
 
-        DB::transaction(function () use ($pickupRequest) {
-            $pickupRequest->update([
-                'status' => 'picked_up',
-                'picked_up_at' => now()
-            ]);
+        try {
+            // Utiliser la méthode du modèle pour marquer comme collecté
+            $pickupRequest = $pickupRequest->markAsPickedUp(Auth::id());
+        } catch (\Exception $e) {
+            return back()->withErrors(['status' => $e->getMessage()]);
+        }
 
-            if ($pickupRequest->packages) {
-                Package::whereIn('id', $pickupRequest->packages)
-                    ->update(['status' => 'in_progress']);
-            }
-        });
+        $packagesCount = is_array($pickupRequest->packages) ? count($pickupRequest->packages) : 0;
 
         return redirect()->route('deliverer.pickups.index')
-            ->with('success', 'Collecte complétée avec succès');
+            ->with('success', "Collecte complétée avec succès. {$packagesCount} colis marqués comme collectés.");
     }
 
     public function scan()

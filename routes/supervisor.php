@@ -149,7 +149,7 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         Route::post('/{ticket}/escalate', [SupervisorTicketController::class, 'escalate'])->name('escalate');
         Route::post('/{ticket}/force-close', [SupervisorTicketController::class, 'forceClose'])->name('force.close');
         Route::post('/bulk-reassign', [SupervisorTicketController::class, 'bulkReassign'])->name('bulk.reassign');
-        Route::get('/performance-report', [SupervisorTicketController::class, 'performanceReport'])->name('performance.report');
+        Route::get('/performance-report', [SupervisorTicketController::class, 'performanceReport'])->name('performance-report');
     });
 
     // ==================== PARAMÈTRES SYSTÈME ====================

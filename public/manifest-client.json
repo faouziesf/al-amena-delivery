@@ -1,0 +1,192 @@
+{
+  "name": "Al-Amena Client",
+  "short_name": "Al-Amena Client",
+  "description": "Application client Al-Amena Delivery - Envoyer, Suivre, Gérer vos colis",
+  "start_url": "/client/dashboard",
+  "display": "standalone",
+  "theme_color": "#059669",
+  "background_color": "#10B981",
+  "orientation": "portrait-primary",
+  "scope": "/client/",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["business", "logistics", "delivery"],
+  "prefer_related_applications": false,
+
+  "icons": [
+    {
+      "src": "/images/icons/client-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/icons/client-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/images/screenshots/client-dashboard-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tableau de bord client mobile"
+    },
+    {
+      "src": "/images/screenshots/client-packages-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gestion des colis mobile"
+    },
+    {
+      "src": "/images/screenshots/client-tracking-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Suivi des colis mobile"
+    },
+    {
+      "src": "/images/screenshots/client-wallet-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Portefeuille mobile"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Créer un colis",
+      "short_name": "Nouveau colis",
+      "description": "Créer un nouveau colis rapidement",
+      "url": "/client/packages/create",
+      "icons": [
+        {
+          "src": "/images/shortcuts/create-package.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Suivre un colis",
+      "short_name": "Tracking",
+      "description": "Suivre l'état de vos colis",
+      "url": "/client/packages?tracking=1",
+      "icons": [
+        {
+          "src": "/images/shortcuts/track-package.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mon portefeuille",
+      "short_name": "Wallet",
+      "description": "Gérer votre portefeuille",
+      "url": "/client/wallet",
+      "icons": [
+        {
+          "src": "/images/shortcuts/wallet.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Recharger",
+      "short_name": "Topup",
+      "description": "Recharger votre solde",
+      "url": "/client/topup",
+      "icons": [
+        {
+          "src": "/images/shortcuts/topup.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Support",
+      "short_name": "Aide",
+      "description": "Contacter le support",
+      "url": "/client/tickets/create",
+      "icons": [
+        {
+          "src": "/images/shortcuts/support.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+
+  "share_target": {
+    "action": "/client/packages/create",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+alamena",
+      "url": "/client/packages/track?code=%s"
+    }
+  ],
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

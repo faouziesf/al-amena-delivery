@@ -21,7 +21,7 @@ return new class extends Migration
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->rememberToken();
-                $table->enum('role', ['CLIENT', 'DELIVERER', 'COMMERCIAL', 'SUPERVISOR'])->nullable();
+                $table->enum('role', ['CLIENT', 'DELIVERER', 'COMMERCIAL', 'SUPERVISOR', 'DEPOT_MANAGER'])->nullable();
                 $table->string('phone')->nullable();
                 $table->text('address')->nullable();
                 $table->enum('account_status', ['PENDING', 'ACTIVE', 'SUSPENDED'])->default('PENDING');

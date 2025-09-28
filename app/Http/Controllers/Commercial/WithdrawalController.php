@@ -20,7 +20,21 @@ class WithdrawalController extends Controller
 
     public function index(Request $request)
     {
+        $user = Auth::user();
         $query = WithdrawalRequest::with(['client', 'processedByCommercial', 'assignedDeliverer']);
+
+        // FILTRAGE PAR DÉLÉGATIONS POUR CHEF DÉPÔT
+        if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
+            $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                ? $user->assigned_gouvernorats
+                : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+            if (!empty($assignedGouvernorats)) {
+                $query->whereHas('client', function($q) use ($assignedGouvernorats) {
+                    $q->whereIn('delegation_id', $assignedGouvernorats);
+                });
+            }
+        }
 
         // Filtres
         if ($request->filled('status')) {
@@ -60,24 +74,41 @@ class WithdrawalController extends Controller
 
         $withdrawals = $query->orderBy('created_at', 'asc')->paginate(20);
 
+        // Statistiques avec filtrage par délégations pour chef dépôt
+        $statsQuery = WithdrawalRequest::query();
+        if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
+            $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                ? $user->assigned_gouvernorats
+                : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+            if (!empty($assignedGouvernorats)) {
+                $statsQuery->whereHas('client', function($q) use ($assignedGouvernorats) {
+                    $q->whereIn('delegation_id', $assignedGouvernorats);
+                });
+            }
+        }
+
         $stats = [
-            'total_pending' => WithdrawalRequest::where('status', 'PENDING')->count(),
-            'total_amount_pending' => WithdrawalRequest::where('status', 'PENDING')->sum('amount'),
-            'bank_transfers_pending' => WithdrawalRequest::where('status', 'PENDING')
+            'total_pending' => (clone $statsQuery)->where('status', 'PENDING')->count(),
+            'total_amount_pending' => (clone $statsQuery)->where('status', 'PENDING')->sum('amount'),
+            'bank_transfers_pending' => (clone $statsQuery)->where('status', 'PENDING')
                                                         ->where('method', 'BANK_TRANSFER')
                                                         ->count(),
-            'cash_deliveries_pending' => WithdrawalRequest::where('status', 'PENDING')
+            'cash_deliveries_pending' => (clone $statsQuery)->where('status', 'PENDING')
                                                          ->where('method', 'CASH_DELIVERY')
                                                          ->count(),
-            'approved_awaiting_delivery' => WithdrawalRequest::where('status', 'APPROVED')
+            'approved_awaiting_delivery' => (clone $statsQuery)->where('status', 'APPROVED')
                                                             ->where('method', 'CASH_DELIVERY')
                                                             ->count(),
-            'processed_by_me_today' => WithdrawalRequest::where('processed_by_commercial_id', Auth::id())
+            'processed_by_me_today' => (clone $statsQuery)->where('processed_by_commercial_id', Auth::id())
                                                        ->whereDate('processed_at', today())
                                                        ->count(),
         ];
 
-        return view('commercial.withdrawals.index', compact('withdrawals', 'stats'));
+        // Déterminer le layout selon le rôle
+        $viewPath = $user->role === 'DEPOT_MANAGER' ? 'depot-manager.commercial.withdrawals.index' : 'commercial.withdrawals.index';
+
+        return view($viewPath, compact('withdrawals', 'stats'));
     }
 
     public function show(WithdrawalRequest $withdrawal)
@@ -88,7 +119,11 @@ class WithdrawalController extends Controller
             'assignedDeliverer'
         ]);
 
-        return view('commercial.withdrawals.show', compact('withdrawal'));
+        // Déterminer le layout selon le rôle
+        $user = Auth::user();
+        $viewPath = $user->role === 'DEPOT_MANAGER' ? 'depot-manager.commercial.withdrawals.show' : 'commercial.withdrawals.show';
+
+        return view($viewPath, compact('withdrawal'));
     }
 
     public function approve(Request $request, WithdrawalRequest $withdrawal)
@@ -155,6 +190,9 @@ class WithdrawalController extends Controller
     public function assignToDeliverer(Request $request, WithdrawalRequest $withdrawal)
     {
         if ($withdrawal->status !== 'APPROVED' || $withdrawal->method !== 'CASH_DELIVERY') {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Cette demande ne peut pas être assignée à un livreur.'], 400);
+            }
             return back()->withErrors(['error' => 'Cette demande ne peut pas être assignée à un livreur.']);
         }
 
@@ -170,10 +208,22 @@ class WithdrawalController extends Controller
 
             $this->commercialService->assignWithdrawalToDeliverer($withdrawal, $deliverer);
 
-            return back()->with('success', 
-                "Retrait assigné au livreur {$deliverer->name}. Code: {$withdrawal->delivery_receipt_code}"
-            );
+            $message = "Retrait assigné au livreur {$deliverer->name}. Code: {$withdrawal->delivery_receipt_code}";
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'deliverer_name' => $deliverer->name,
+                    'delivery_code' => $withdrawal->delivery_receipt_code
+                ]);
+            }
+
+            return back()->with('success', $message);
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Erreur lors de l\'assignation: ' . $e->getMessage()], 500);
+            }
             return back()->withErrors(['error' => 'Erreur lors de l\'assignation: ' . $e->getMessage()]);
         }
     }
@@ -311,6 +361,21 @@ class WithdrawalController extends Controller
         return response()->json($stats);
     }
 
+    /**
+     * API pour récupérer les paiements espèce en attente d'assignation
+     */
+    public function apiPendingCash()
+    {
+        $withdrawals = WithdrawalRequest::where('status', 'APPROVED')
+                                       ->where('method', 'CASH_DELIVERY')
+                                       ->whereNull('assigned_deliverer_id')
+                                       ->with(['client:id,name,email,phone'])
+                                       ->orderBy('created_at', 'desc')
+                                       ->get(['id', 'request_code', 'amount', 'client_id', 'delivery_receipt_code', 'created_at']);
+
+        return response()->json($withdrawals);
+    }
+
     public function apiAwaitingDelivery()
     {
         $withdrawals = WithdrawalRequest::with(['client', 'assignedDeliverer'])
@@ -370,5 +435,16 @@ class WithdrawalController extends Controller
                       ->values();
 
         return response()->json($clients);
+    }
+
+    public function deliveryReceipt(WithdrawalRequest $withdrawal)
+    {
+        $withdrawal->load(['client', 'assignedDeliverer']);
+
+        if (!$withdrawal->delivery_receipt_code) {
+            abort(404, 'Aucun code de reçu trouvé pour cette demande de retrait');
+        }
+
+        return view('commercial.withdrawals.delivery_receipt', compact('withdrawal'));
     }
 }

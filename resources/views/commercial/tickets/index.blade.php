@@ -1,420 +1,356 @@
 @extends('layouts.commercial')
 
-@section('title', 'Gestion des Tickets')
+@section('title', 'Support Client - Tickets')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header avec statistiques -->
-        <div class="mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Gestion des Tickets</h1>
-                    <p class="text-gray-600 mt-1">Traitez et répondez aux demandes clients</p>
-                </div>
-                <a href="{{ route('commercial.tickets.create') }}"
-                   class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Créer un Ticket
-                </a>
-            </div>
-
-            <!-- Statistiques Dashboard -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Total</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</p>
-                        </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+    <!-- Header moderne -->
+    <div class="bg-white shadow-lg border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl flex items-center justify-center text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Support Client</h1>
+                        <p class="text-slate-500 text-sm">Gestion des tickets et demandes clients</p>
                     </div>
                 </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-green-100 rounded-lg">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Ouverts</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['open'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-orange-100 rounded-lg">
-                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">En cours</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['in_progress'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-red-100 rounded-lg">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.168 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Urgents</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['urgent'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-purple-100 rounded-lg">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Mes tickets</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['my_tickets'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-gray-100 rounded-lg">
-                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Non assignés</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['unassigned'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-yellow-100 rounded-lg">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.168 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Attention</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $stats['needs_attention'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filtres avancés -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border mb-6">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                <div>
-                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
-                    <input type="text" name="search" id="search"
-                           value="{{ request('search') }}"
-                           placeholder="Numéro, sujet, client..."
-                           class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                </div>
-
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                    <select name="status" id="status" class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="">Tous les statuts</option>
-                        <option value="OPEN" {{ request('status') === 'OPEN' ? 'selected' : '' }}>Ouvert</option>
-                        <option value="IN_PROGRESS" {{ request('status') === 'IN_PROGRESS' ? 'selected' : '' }}>En cours</option>
-                        <option value="RESOLVED" {{ request('status') === 'RESOLVED' ? 'selected' : '' }}>Résolu</option>
-                        <option value="CLOSED" {{ request('status') === 'CLOSED' ? 'selected' : '' }}>Fermé</option>
-                        <option value="URGENT" {{ request('status') === 'URGENT' ? 'selected' : '' }}>Urgent</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
-                    <select name="priority" id="priority" class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="">Toutes priorités</option>
-                        <option value="LOW" {{ request('priority') === 'LOW' ? 'selected' : '' }}>Faible</option>
-                        <option value="NORMAL" {{ request('priority') === 'NORMAL' ? 'selected' : '' }}>Normale</option>
-                        <option value="HIGH" {{ request('priority') === 'HIGH' ? 'selected' : '' }}>Élevée</option>
-                        <option value="URGENT" {{ request('priority') === 'URGENT' ? 'selected' : '' }}>Urgente</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select name="type" id="type" class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="">Tous les types</option>
-                        <option value="COMPLAINT" {{ request('type') === 'COMPLAINT' ? 'selected' : '' }}>Réclamation</option>
-                        <option value="QUESTION" {{ request('type') === 'QUESTION' ? 'selected' : '' }}>Question</option>
-                        <option value="SUPPORT" {{ request('type') === 'SUPPORT' ? 'selected' : '' }}>Support</option>
-                        <option value="OTHER" {{ request('type') === 'OTHER' ? 'selected' : '' }}>Autre</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-1">Assigné à</label>
-                    <select name="assigned_to" id="assigned_to" class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="">Tous</option>
-                        <option value="me" {{ request('assigned_to') === 'me' ? 'selected' : '' }}>Mes tickets</option>
-                        <option value="unassigned" {{ request('assigned_to') === 'unassigned' ? 'selected' : '' }}>Non assignés</option>
-                        @foreach($commercials as $commercial)
-                            <option value="{{ $commercial->id }}" {{ request('assigned_to') == $commercial->id ? 'selected' : '' }}>
-                                {{ $commercial->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex items-end space-x-2">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Filtrer
+                <div class="flex items-center space-x-3">
+                    <button onclick="refreshTickets()"
+                            class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Actualiser
                     </button>
-                    @if(request()->hasAny(['search', 'status', 'priority', 'type', 'assigned_to']))
-                        <a href="{{ route('commercial.tickets.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            Reset
-                        </a>
-                    @endif
+                    <a href="{{ route('commercial.tickets.create') }}"
+                       class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white rounded-xl transition-all transform hover:scale-105 font-medium shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Nouveau Ticket
+                    </a>
                 </div>
-            </form>
+            </div>
         </div>
+    </div>
 
-        <!-- Actions rapides -->
-        <div class="flex space-x-4 mb-6">
-            <a href="{{ route('commercial.tickets.export') }}"
-               class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Exporter CSV
-            </a>
-
-            <button onclick="toggleBulkActions()"
-                    class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium text-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                Actions groupées
-            </button>
-        </div>
-
-        <!-- Liste des tickets -->
-        <div class="bg-white rounded-lg shadow-sm border">
-            @if($tickets->count() > 0)
-                <!-- Bulk actions bar (hidden by default) -->
-                <div id="bulk-actions" class="hidden bg-blue-50 px-6 py-4 border-b">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <span class="text-sm text-blue-800" id="selected-count">0 sélectionné(s)</span>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard de statistiques moderne -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
                         </div>
-                        <div class="flex space-x-2">
-                            <select id="bulk-assign" class="border-gray-300 rounded text-sm">
-                                <option value="">Assigner à...</option>
-                                @foreach($commercials as $commercial)
-                                    <option value="{{ $commercial->id }}">{{ $commercial->name }}</option>
-                                @endforeach
-                            </select>
-                            <button onclick="bulkAssign()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-                                Assigner
-                            </button>
+                        <div class="ml-4">
+                            <p class="text-blue-100 text-sm font-medium">Total Tickets</p>
+                            <p class="text-white text-2xl font-bold">{{ $stats['total'] ?? 0 }}</p>
                         </div>
                     </div>
                 </div>
+                <div class="p-4">
+                    <div class="text-xs text-slate-500">Tous les tickets dans le système</div>
+                </div>
+            </div>
 
-                <div class="divide-y divide-gray-200">
-                    @foreach($tickets as $ticket)
-                        <div class="p-6 hover:bg-gray-50 transition-colors">
-                            <div class="flex items-center space-x-4">
-                                <input type="checkbox" class="ticket-checkbox hidden rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                       value="{{ $ticket->id }}">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-emerald-100 text-sm font-medium">Ouverts</p>
+                            <p class="text-white text-2xl font-bold">{{ $stats['open'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs text-slate-500">Tickets en attente de traitement</div>
+                </div>
+            </div>
 
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <h3 class="text-lg font-semibold text-gray-900">
-                                            <a href="{{ route('commercial.tickets.show', $ticket) }}" class="hover:text-blue-600 transition-colors">
-                                                #{{ $ticket->ticket_number }}
-                                            </a>
-                                        </h3>
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-amber-100 text-sm font-medium">Urgents</p>
+                            <p class="text-white text-2xl font-bold">{{ $stats['urgent'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs text-slate-500">Tickets haute priorité</div>
+                </div>
+            </div>
 
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $ticket->status_color }}">
-                                            {{ $ticket->status_display }}
-                                        </span>
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-green-100 text-sm font-medium">Résolus</p>
+                            <p class="text-white text-2xl font-bold">{{ $stats['resolved'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs text-slate-500">Tickets traités avec succès</div>
+                </div>
+            </div>
+        </div>
 
-                                        @if($ticket->priority === 'URGENT' || $ticket->status === 'URGENT')
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-red-800 bg-red-100">
-                                                🚨 Urgent
-                                            </span>
-                                        @endif
+        <!-- Filtres modernes -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 mb-8">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"/>
+                    </svg>
+                    <span class="text-slate-600 font-medium">Filtres :</span>
+                </div>
 
-                                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                            {{ $ticket->type_display }}
-                                        </span>
-                                    </div>
+                <form method="GET" class="flex flex-wrap items-center gap-4">
+                    <select name="status" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Tous les statuts</option>
+                        <option value="OPEN" {{ request('status') == 'OPEN' ? 'selected' : '' }}>Ouvert</option>
+                        <option value="IN_PROGRESS" {{ request('status') == 'IN_PROGRESS' ? 'selected' : '' }}>En cours</option>
+                        <option value="RESOLVED" {{ request('status') == 'RESOLVED' ? 'selected' : '' }}>Résolu</option>
+                        <option value="CLOSED" {{ request('status') == 'CLOSED' ? 'selected' : '' }}>Fermé</option>
+                    </select>
 
-                                    <p class="text-gray-900 font-medium mb-1">{{ $ticket->subject }}</p>
-                                    <p class="text-gray-600 text-sm line-clamp-2">{{ Str::limit($ticket->description, 150) }}</p>
+                    <select name="priority" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Toutes priorités</option>
+                        <option value="HIGH" {{ request('priority') == 'HIGH' ? 'selected' : '' }}>Haute</option>
+                        <option value="MEDIUM" {{ request('priority') == 'MEDIUM' ? 'selected' : '' }}>Moyenne</option>
+                        <option value="LOW" {{ request('priority') == 'LOW' ? 'selected' : '' }}>Basse</option>
+                    </select>
 
-                                    <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                            </svg>
-                                            {{ $ticket->client->name }}
-                                        </div>
-                                        <span>{{ $ticket->created_at->format('d/m/Y à H:i') }}</span>
-                                        @if($ticket->assignedTo)
-                                            <span class="text-blue-600">Assigné à {{ $ticket->assignedTo->name }}</span>
-                                        @else
-                                            <span class="text-red-600">Non assigné</span>
-                                        @endif
-                                    </div>
-                                </div>
+                    <input type="text" name="search" placeholder="Rechercher..."
+                           value="{{ request('search') }}"
+                           class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
 
-                                <div class="flex items-center space-x-3">
-                                    @php
-                                        $unreadCount = $ticket->messages()
-                                            ->where('sender_type', 'CLIENT')
-                                            ->whereNull('read_at')
-                                            ->count();
-                                    @endphp
+                    <button type="submit"
+                            class="inline-flex items-center px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Rechercher
+                    </button>
 
-                                    @if($unreadCount > 0)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            {{ $unreadCount }} nouveau(x)
-                                        </span>
-                                    @endif
+                    @if(request()->hasAny(['status', 'priority', 'search']))
+                    <a href="{{ route('commercial.tickets.index') }}"
+                       class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Effacer
+                    </a>
+                    @endif
+                </form>
+            </div>
+        </div>
 
-                                    <div class="flex space-x-2">
-                                        @if(!$ticket->assignedTo)
-                                            <button onclick="assignToMe('{{ $ticket->id }}')"
-                                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                                M'assigner
-                                            </button>
-                                        @endif
-                                        <a href="{{ route('commercial.tickets.show', $ticket) }}"
-                                           class="text-green-600 hover:text-green-800 font-medium">
-                                            Traiter →
-                                        </a>
-                                    </div>
+        <!-- Liste des tickets moderne -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-bold text-slate-900">Liste des Tickets</h3>
+                <p class="text-slate-500 text-sm">{{ $tickets->total() }} ticket(s) au total</p>
+            </div>
+
+            @if($tickets->count() > 0)
+            <div class="divide-y divide-slate-200">
+                @foreach($tickets as $ticket)
+                <div class="p-6 hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 flex-1">
+                            <!-- Avatar et priorité -->
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white
+                                    @if($ticket->priority === 'HIGH') bg-gradient-to-r from-red-500 to-red-600
+                                    @elseif($ticket->priority === 'MEDIUM') bg-gradient-to-r from-yellow-500 to-yellow-600
+                                    @else bg-gradient-to-r from-blue-500 to-blue-600
+                                    @endif">
+                                    #{{ $ticket->id }}
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
 
-                <!-- Pagination -->
-                <div class="px-6 py-4 border-t">
-                    {{ $tickets->appends(request()->query())->links() }}
+                            <!-- Informations du ticket -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="text-lg font-semibold text-slate-900 truncate">{{ $ticket->subject }}</h4>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        @if($ticket->status === 'OPEN') bg-blue-100 text-blue-800
+                                        @elseif($ticket->status === 'IN_PROGRESS') bg-yellow-100 text-yellow-800
+                                        @elseif($ticket->status === 'RESOLVED') bg-green-100 text-green-800
+                                        @elseif($ticket->status === 'CLOSED') bg-slate-100 text-slate-800
+                                        @else bg-purple-100 text-purple-800
+                                        @endif">
+                                        {{ $ticket->status }}
+                                    </span>
+                                    @if($ticket->priority === 'HIGH')
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        URGENT
+                                    </span>
+                                    @endif
+                                </div>
+
+                                <div class="flex items-center text-sm text-slate-500 space-x-4 mb-2">
+                                    @if($ticket->client)
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        {{ $ticket->client->first_name }} {{ $ticket->client->last_name }}
+                                    </span>
+                                    @endif
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        {{ $ticket->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+
+                                @if($ticket->description)
+                                <p class="text-sm text-slate-600 line-clamp-2">{{ Str::limit($ticket->description, 120) }}</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            @if($ticket->package)
+                            <a href="{{ route('commercial.packages.show', $ticket->package) }}"
+                               class="inline-flex items-center px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition-colors text-sm font-medium"
+                               title="Voir le colis associé">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                                Colis
+                            </a>
+                            @endif
+
+                            @if($ticket->client && $ticket->client->phone)
+                            <button onclick="contactTicketClient('{{ $ticket->client->phone }}')"
+                                    class="inline-flex items-center px-3 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors text-sm font-medium"
+                                    title="Appeler le client">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                                Appeler
+                            </button>
+                            @endif
+
+                            <a href="{{ route('commercial.tickets.show', $ticket) }}"
+                               class="inline-flex items-center px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Détails
+                            </a>
+                        </div>
+                    </div>
                 </div>
+                @endforeach
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                {{ $tickets->withQueryString()->links() }}
+            </div>
             @else
-                <div class="p-12 text-center">
-                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            <div class="p-12 text-center">
+                <svg class="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <h3 class="text-lg font-medium text-slate-900 mb-2">Aucun ticket trouvé</h3>
+                <p class="text-slate-500 mb-6">Il n'y a pas de tickets correspondant à vos critères actuels.</p>
+                <a href="{{ route('commercial.tickets.create') }}"
+                   class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun ticket trouvé</h3>
-                    <p class="text-gray-600 mb-6">Aucun ticket ne correspond aux critères de recherche.</p>
-                </div>
+                    Créer le premier ticket
+                </a>
+            </div>
             @endif
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
 <script>
-function toggleBulkActions() {
-    const bulkActions = document.getElementById('bulk-actions');
-    const checkboxes = document.querySelectorAll('.ticket-checkbox');
+function refreshTickets() {
+    window.location.reload();
+}
 
-    if (bulkActions.classList.contains('hidden')) {
-        bulkActions.classList.remove('hidden');
-        checkboxes.forEach(cb => cb.classList.remove('hidden'));
+function contactTicketClient(phone) {
+    if (phone) {
+        window.location.href = `tel:${phone}`;
     } else {
-        bulkActions.classList.add('hidden');
-        checkboxes.forEach(cb => {
-            cb.classList.add('hidden');
-            cb.checked = false;
-        });
-        document.getElementById('select-all').checked = false;
-        updateSelectedCount();
+        alert('Numéro de téléphone du client non disponible');
     }
 }
 
-function assignToMe(ticketId) {
-    fetch(`/commercial/tickets/${ticketId}/assign`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            assigned_to_id: {{ auth()->id() }}
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
+// Notification de succès
+@if(session('success'))
+    document.addEventListener('DOMContentLoaded', function() {
+        showNotification("{{ session('success') }}", 'success');
+    });
+@endif
 
-// Select all functionality
-document.getElementById('select-all').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.ticket-checkbox');
-    checkboxes.forEach(cb => cb.checked = this.checked);
-    updateSelectedCount();
-});
+// Notification d'erreur
+@if(session('error') || $errors->any())
+    document.addEventListener('DOMContentLoaded', function() {
+        showNotification("{{ session('error') ?? $errors->first() }}", 'error');
+    });
+@endif
 
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('ticket-checkbox')) {
-        updateSelectedCount();
-    }
-});
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
 
-function updateSelectedCount() {
-    const selected = document.querySelectorAll('.ticket-checkbox:checked').length;
-    document.getElementById('selected-count').textContent = `${selected} sélectionné(s)`;
-}
+    document.body.appendChild(notification);
 
-function bulkAssign() {
-    const selected = Array.from(document.querySelectorAll('.ticket-checkbox:checked')).map(cb => cb.value);
-    const assignTo = document.getElementById('bulk-assign').value;
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 100);
 
-    if (selected.length === 0 || !assignTo) {
-        alert('Veuillez sélectionner des tickets et choisir un commercial');
-        return;
-    }
-
-    // Implementation for bulk assignment
-    console.log('Bulk assign:', selected, 'to:', assignTo);
+    setTimeout(() => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
 }
 </script>
-
-@push('styles')
-<style>
-.line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-</style>
-@endpush
 @endsection

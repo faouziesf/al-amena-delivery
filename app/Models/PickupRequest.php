@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class PickupRequest extends Model
 {
@@ -18,15 +19,13 @@ class PickupRequest extends Model
         'status',
         'assigned_deliverer_id',
         'assigned_at',
-        'picked_up_at',
-        'packages'
+        'picked_up_at'
     ];
 
     protected $casts = [
         'requested_pickup_date' => 'datetime',
         'assigned_at' => 'datetime',
-        'picked_up_at' => 'datetime',
-        'packages' => 'array'
+        'picked_up_at' => 'datetime'
     ];
 
     public function client(): BelongsTo
@@ -97,24 +96,8 @@ class PickupRequest extends Model
         return in_array($this->status, ['pending', 'assigned']);
     }
 
-    public function getPackagesCount()
-    {
-        return is_array($this->packages) ? count($this->packages) : 0;
-    }
-
-    public function getTotalWeight()
-    {
-        if (!is_array($this->packages)) return 0;
-
-        return Package::whereIn('id', $this->packages)->sum('package_weight') ?? 0;
-    }
-
-    public function getTotalValue()
-    {
-        if (!is_array($this->packages)) return 0;
-
-        return Package::whereIn('id', $this->packages)->sum('cod_amount') ?? 0;
-    }
+    // Note: Les méthodes de packages ont été supprimées car les pickup requests
+    // ne contiennent plus de packages directement
 
     public function getStatusDisplayAttribute()
     {
@@ -136,5 +119,22 @@ class PickupRequest extends Model
             'cancelled' => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800'
         };
+    }
+
+    /**
+     * Marquer ce pickup comme collecté
+     */
+    public function markAsPickedUp($delivererId = null)
+    {
+        if ($this->status !== 'assigned') {
+            throw new \Exception('Ce pickup ne peut pas être marqué comme collecté car il n\'est pas assigné');
+        }
+
+        $this->update([
+            'status' => 'picked_up',
+            'picked_up_at' => now()
+        ]);
+
+        return $this->fresh();
     }
 }

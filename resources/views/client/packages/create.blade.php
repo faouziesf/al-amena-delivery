@@ -322,7 +322,7 @@
             <div class="mt-6 space-y-4">
                 <h3 class="text-lg font-medium text-gray-900">Options de traitement</h3>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Fragile -->
                     <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all duration-200"
                            :class="isFragile ? 'border-purple-400 bg-purple-50' : ''">
@@ -365,6 +365,21 @@
                                 </svg>
                             </div>
                             <span class="text-sm font-medium text-gray-700">Autoriser l'ouverture</span>
+                        </div>
+                    </label>
+
+                    <!-- Colis d'échange -->
+                    <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all duration-200"
+                           :class="isExchange ? 'border-orange-500 bg-orange-50' : ''">
+                        <input type="checkbox" name="est_echange" value="1" x-model="isExchange" class="sr-only">
+                        <div class="flex items-center">
+                            <div class="w-5 h-5 border-2 border-orange-300 rounded mr-3 flex items-center justify-center transition-all duration-200"
+                                 :class="isExchange ? 'bg-orange-500 border-orange-500' : ''">
+                                <svg x-show="isExchange" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">Colis d'échange</span>
                         </div>
                     </label>
                 </div>
@@ -464,6 +479,7 @@ function packageCreateForm() {
         isFragile: {{ old('fragile') ? 'true' : 'false' }},
         requiresSignature: {{ old('signature_obligatoire') ? 'true' : 'false' }},
         allowOpening: {{ old('autorisation_ouverture') ? 'true' : 'false' }},
+        isExchange: {{ old('est_echange') ? 'true' : 'false' }},
         paymentMethod: '{{ old('payment_method', 'especes_seulement') }}',
         delegationsData: @json($delegationsData ?? []),
         availableDelegations: {},

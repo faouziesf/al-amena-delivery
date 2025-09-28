@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Commercial\CommercialDashboardController;
+use App\Http\Controllers\Commercial\AnalyticsController;
 use App\Http\Controllers\Commercial\ClientController;
 use App\Http\Controllers\Commercial\ComplaintController;
 use App\Http\Controllers\Commercial\WithdrawalController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Commercial\DelivererController;
 use App\Http\Controllers\Commercial\PackageController;
 use App\Http\Controllers\Commercial\NotificationController;
 use App\Http\Controllers\Commercial\CommercialTicketController;
+use App\Http\Controllers\Commercial\CommercialTopupRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +27,14 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
     
     // ==================== DASHBOARD ====================
     Route::get('/dashboard', [CommercialDashboardController::class, 'index'])->name('dashboard');
+
+    // ==================== ANALYTICS ====================
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index'])->name('index');
+        Route::get('/export', [AnalyticsController::class, 'exportReport'])->name('export');
+        Route::get('/api/kpis', [AnalyticsController::class, 'apiKPIs'])->name('api.kpis');
+        Route::get('/api/charts', [AnalyticsController::class, 'apiChartData'])->name('api.charts');
+    });
 
     // ==================== GESTION CLIENTS ====================
     Route::prefix('clients')->name('clients.')->group(function () {
@@ -55,6 +65,20 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         Route::get('/{client}/api/stats', [ClientController::class, 'apiStats'])->name('api.stats');
     });
 
+    // ==================== GESTION DEMANDES DE RECHARGE ====================
+    Route::prefix('topup-requests')->name('topup-requests.')->group(function () {
+        Route::get('/', [CommercialTopupRequestController::class, 'index'])->name('index');
+        Route::get('/{topupRequest}', [CommercialTopupRequestController::class, 'show'])->name('show');
+
+        // Actions sur demandes de recharge
+        Route::post('/{topupRequest}/approve', [CommercialTopupRequestController::class, 'approve'])->name('approve');
+        Route::post('/{topupRequest}/reject', [CommercialTopupRequestController::class, 'reject'])->name('reject');
+
+        // API Endpoints
+        Route::get('/api/stats', [CommercialTopupRequestController::class, 'apiStats'])->name('api.stats');
+        Route::get('/api/pending', [CommercialTopupRequestController::class, 'apiPending'])->name('api.pending');
+    });
+
     // ==================== GESTION RÉCLAMATIONS ====================
     Route::prefix('complaints')->name('complaints.')->group(function () {
         Route::get('/', [ComplaintController::class, 'index'])->name('index');
@@ -80,8 +104,12 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         Route::post('/{withdrawal}/approve', [WithdrawalController::class, 'approve'])->name('approve');
         Route::post('/{withdrawal}/reject', [WithdrawalController::class, 'reject'])->name('reject');
         Route::post('/{withdrawal}/assign', [WithdrawalController::class, 'assignToDeliverer'])->name('assign');
+        Route::post('/{withdrawal}/assign-deliverer', [WithdrawalController::class, 'assignToDeliverer'])->name('assign.deliverer');
         Route::post('/{withdrawal}/delivered', [WithdrawalController::class, 'markAsDelivered'])->name('delivered');
         Route::post('/bulk-approve', [WithdrawalController::class, 'bulkApprove'])->name('bulk.approve');
+
+        // Documents
+        Route::get('/{withdrawal}/delivery-receipt', [WithdrawalController::class, 'deliveryReceipt'])->name('delivery-receipt');
         
         // Documents
         Route::get('/{withdrawal}/receipt', [WithdrawalController::class, 'generateDeliveryReceipt'])->name('receipt');
@@ -143,8 +171,10 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         Route::post('/', [CommercialTicketController::class, 'store'])->name('store');
         Route::get('/{ticket}', [CommercialTicketController::class, 'show'])->name('show');
         Route::post('/{ticket}/assign', [CommercialTicketController::class, 'assign'])->name('assign');
-        Route::post('/{ticket}/update-status', [CommercialTicketController::class, 'updateStatus'])->name('update.status');
-        Route::post('/{ticket}/messages', [CommercialTicketController::class, 'addMessage'])->name('add.message');
+        Route::post('/{ticket}/update-status', [CommercialTicketController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{ticket}/update-priority', [CommercialTicketController::class, 'updatePriority'])->name('update-priority');
+        Route::post('/{ticket}/messages', [CommercialTicketController::class, 'addMessage'])->name('add-message');
+        Route::post('/{ticket}/reply', [CommercialTicketController::class, 'reply'])->name('reply');
         Route::get('/search', [CommercialTicketController::class, 'search'])->name('search');
         Route::get('/export', [CommercialTicketController::class, 'export'])->name('export');
     });
@@ -154,6 +184,9 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         
         // Dashboard APIs
         Route::get('/dashboard-stats', [CommercialDashboardController::class, 'api_getDashboardStats'])->name('commercial.dashboard.stats');
+        Route::get('/complaints/urgent', [CommercialDashboardController::class, 'api_getUrgentComplaints'])->name('complaints.urgent');
+        Route::get('/deliverers/high-balance', [CommercialDashboardController::class, 'api_getHighBalanceDeliverers'])->name('deliverers.high.balance');
+        Route::get('/recent-activity', [CommercialDashboardController::class, 'api_getRecentActivity'])->name('recent.activity');
         
         // Client APIs
         Route::get('/clients/search', [ClientController::class, 'apiSearch'])->name('clients.search');
@@ -169,12 +202,15 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         
         // Withdrawal APIs
         Route::get('/withdrawals/pending', [WithdrawalController::class, 'apiPending'])->name('withdrawals.pending');
+        Route::get('/withdrawals/pending-cash', [WithdrawalController::class, 'apiPendingCash'])->name('withdrawals.pending.cash');
         Route::get('/withdrawals/stats', [WithdrawalController::class, 'apiStats'])->name('withdrawals.stats');
         Route::get('/withdrawals/awaiting-delivery', [WithdrawalController::class, 'apiAwaitingDelivery'])->name('withdrawals.awaiting');
         Route::get('/withdrawals/search-clients', [WithdrawalController::class, 'apiSearchClients'])->name('withdrawals.search.clients');
         
         // Deliverer APIs
         Route::get('/deliverers/search', [DelivererController::class, 'apiSearch'])->name('deliverers.search');
+        Route::get('/deliverers/available', [DelivererController::class, 'apiAvailableDeliverers'])->name('deliverers.available');
+        Route::get('/deliverers/active', [DelivererController::class, 'apiActiveDeliverers'])->name('deliverers.active');
         Route::get('/deliverers/high-balance', [DelivererController::class, 'apiHighBalanceDeliverers'])->name('deliverers.high.balance');
         Route::get('/deliverers/stats', [DelivererController::class, 'apiStats'])->name('deliverers.stats');
         Route::get('/deliverers/recent-emptyings', [DelivererController::class, 'apiRecentEmptyings'])->name('deliverers.emptyings');

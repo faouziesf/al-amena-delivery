@@ -161,7 +161,7 @@ class ReportController extends Controller
                 'delegations.name as delegation_name',
                 DB::raw('COUNT(packages.id) as total_packages'),
                 DB::raw('SUM(CASE WHEN packages.status = "DELIVERED" THEN 1 ELSE 0 END) as delivered_packages'),
-                DB::raw('AVG(DATEDIFF(packages.delivery_date, packages.created_at)) as avg_delivery_time')
+                DB::raw('AVG(julianday(packages.delivery_date) - julianday(packages.created_at)) as avg_delivery_time')
             )
             ->join('users', 'packages.client_id', '=', 'users.id')
             ->join('delegations', 'users.delegation_id', '=', 'delegations.id')
@@ -173,7 +173,7 @@ class ReportController extends Controller
         $topDeliverers = User::select(
                 'users.*',
                 DB::raw('COUNT(packages.id) as total_deliveries'),
-                DB::raw('AVG(DATEDIFF(packages.delivery_date, packages.pickup_date)) as avg_delivery_time')
+                DB::raw('AVG(julianday(packages.delivery_date) - julianday(packages.pickup_date)) as avg_delivery_time')
             )
             ->join('packages', 'users.id', '=', 'packages.deliverer_id')
             ->where('users.role', 'DELIVERER')
@@ -291,7 +291,7 @@ class ReportController extends Controller
                 'users.*',
                 DB::raw('COUNT(packages.id) as total_deliveries'),
                 DB::raw('SUM(packages.cod_amount) as total_cod_handled'),
-                DB::raw('AVG(DATEDIFF(packages.delivery_date, packages.pickup_date)) as avg_delivery_time'),
+                DB::raw('AVG(julianday(packages.delivery_date) - julianday(packages.pickup_date)) as avg_delivery_time'),
                 'user_wallets.balance as wallet_balance'
             )
             ->join('packages', 'users.id', '=', 'packages.deliverer_id')

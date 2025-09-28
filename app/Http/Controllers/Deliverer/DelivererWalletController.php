@@ -116,11 +116,24 @@ class DelivererWalletController extends Controller
     {
         $user = Auth::user();
         $wallet = $user->wallet;
-        
+
         if (!$wallet || $wallet->balance <= 0) {
             return response()->json([
                 'success' => false,
                 'message' => 'Votre wallet est vide, aucune vidange nécessaire.'
+            ], 400);
+        }
+
+        // Vérifier s'il y a déjà une demande en cours
+        $existingRequest = DelivererWalletEmptying::where('deliverer_id', $user->id)
+            ->where('commercial_id', null) // Pas encore traitée
+            ->where('created_at', '>=', now()->subHours(24)) // Dans les dernières 24h
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous avez déjà une demande de vidange en cours. Veuillez attendre qu\'elle soit traitée.'
             ], 400);
         }
 
@@ -130,30 +143,49 @@ class DelivererWalletController extends Controller
         ]);
 
         try {
-            // Créer la demande de vidange
+            // Créer la demande de vidange avec VIDAGE AUTOMATIQUE
             $emptyingRequest = DelivererWalletEmptying::create([
                 'deliverer_id' => $user->id,
                 'wallet_amount' => $wallet->balance,
-                'physical_amount' => 0, // Sera rempli par le commercial
+                'physical_amount' => $wallet->balance, // Vidage complet automatique
                 'discrepancy_amount' => 0,
                 'emptying_date' => now(),
-                'notes' => $validated['notes'] ?? null,
+                'notes' => $validated['notes'] ?? 'Vidage automatique - Wallet vidé immédiatement',
                 'emptying_details' => $this->getWalletSources()->toArray(),
-                'deliverer_acknowledged' => false
+                'deliverer_acknowledged' => true, // Auto-acknowledgment
+                'commercial_id' => null, // Sera assigné plus tard si nécessaire
+                'status' => 'COMPLETED' // Marquer comme complété immédiatement
             ]);
 
-            // Notification au commercial (TODO: implémenter le système de notifications)
-            // NotificationService::notifyCommercialWalletEmptyingRequest($user, $emptyingRequest);
+            // VIDER LE WALLET IMMÉDIATEMENT
+            $originalBalance = $wallet->balance;
+
+            // Créer la transaction de vidage
+            FinancialTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'WALLET_EMPTYING',
+                'amount' => -$originalBalance, // Montant négatif pour vider
+                'description' => "Vidage automatique du wallet - Demande #{$emptyingRequest->id}",
+                'metadata' => [
+                    'emptying_request_id' => $emptyingRequest->id,
+                    'original_balance' => $originalBalance,
+                    'emptying_type' => 'AUTOMATIC',
+                    'timestamp' => now()->toISOString()
+                ]
+            ]);
+
+            // Mettre à jour le solde du wallet à 0
+            $wallet->update(['balance' => 0]);
 
             return response()->json([
                 'success' => true,
-                'message' => "Demande de vidange envoyée (Solde: {$wallet->getFormattedBalanceAttribute()}). Un commercial vous contactera bientôt."
+                'message' => "Wallet vidé avec succès ! Montant vidé: " . number_format($originalBalance, 3) . " DT. Votre solde est maintenant à 0 DT."
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la demande de vidange. Veuillez réessayer.'
+                'message' => 'Erreur lors du vidage du wallet. Veuillez réessayer.'
             ], 500);
         }
     }

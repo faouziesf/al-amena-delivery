@@ -56,13 +56,23 @@ class ClientDashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Colis d'échange retournés récents
+        $exchangeReturnedPackages = Package::where('sender_id', $user->id)
+            ->where('est_echange', true)
+            ->where('status', 'RETURNED')
+            ->with(['delegationFrom', 'delegationTo'])
+            ->orderBy('updated_at', 'desc')
+            ->limit(5)
+            ->get();
+
         return view('client.dashboard', compact(
             'user',
             'stats',
             'recentPackages',
             'recentPickupRequests',
             'notifications',
-            'recentTransactions'
+            'recentTransactions',
+            'exchangeReturnedPackages'
         ));
     }
 

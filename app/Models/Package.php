@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Package extends Model
@@ -31,6 +32,16 @@ class Package extends Model
         'payment_method',         // Mode de paiement accepté
         'pickup_address_id',      // ID de l'adresse de pickup
         'import_batch_id',        // ID du lot d'import (pour CSV)
+        'reassigned_at',         // Date de réassignation
+        'reassigned_by',         // ID du livreur TRANSIT qui a fait la réassignation
+        'reassignment_reason',   // Raison de la réassignation
+        'cancelled_by_client',   // Indicateur d'annulation par le client
+        'cancellation_reason',   // Raison de l'annulation
+        'cancelled_at',          // Date d'annulation
+        'cancelled_by',          // ID de l'utilisateur qui a annulé
+        'auto_return_reason',    // Raison automatique du retour
+        'est_echange',          // Indique si ce colis est un échange
+        'delivered_at',         // Date et heure de livraison
     ];
 
     protected $casts = [
@@ -45,10 +56,15 @@ class Package extends Model
         'package_weight' => 'decimal:3',
         'package_value' => 'decimal:3',
         'assigned_at' => 'datetime',
+        'reassigned_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'delivered_at' => 'datetime',
         'cod_modifiable_by_commercial' => 'boolean',
         'is_fragile' => 'boolean',
         'requires_signature' => 'boolean',
         'allow_opening' => 'boolean',
+        'cancelled_by_client' => 'boolean',
+        'est_echange' => 'boolean',
     ];
 
     // Relations
@@ -322,6 +338,45 @@ class Package extends Model
         return !is_null($this->import_batch_id);
     }
 
+    /**
+     * Vérifier si le colis a été annulé par le client
+     */
+    public function isCancelledByClient()
+    {
+        return $this->status === 'CANCELLED' ||
+               (!empty($this->cancellation_reason) && $this->cancelled_by_client);
+    }
+
+    /**
+     * Vérifier si le colis peut être retourné au fournisseur
+     */
+    public function canBeReturnedToSender()
+    {
+        return $this->delivery_attempts >= 3 ||
+               $this->isCancelledByClient() ||
+               $this->status === 'VERIFIED';
+    }
+
+    /**
+     * Obtenir la raison pour laquelle le colis peut être retourné
+     */
+    public function getReturnReason()
+    {
+        if ($this->isCancelledByClient()) {
+            return 'CANCELLED_BY_CLIENT';
+        }
+
+        if ($this->delivery_attempts >= 3) {
+            return 'MAX_ATTEMPTS_REACHED';
+        }
+
+        if ($this->status === 'VERIFIED') {
+            return 'VERIFIED_FOR_RETURN';
+        }
+
+        return null;
+    }
+
     // Méthodes de gestion des statuts
     public function updateStatus($newStatus, $user, $notes = null, $additionalData = [])
     {
@@ -371,6 +426,14 @@ class Package extends Model
         static::creating(function ($package) {
             if (empty($package->package_code)) {
                 $package->package_code = 'PKG_' . strtoupper(Str::random(8)) . '_' . date('Ymd');
+            }
+        });
+
+        // Auto-assignation quand un colis passe au statut PICKED_UP
+        static::updated(function ($package) {
+            if ($package->isDirty('status') && $package->status === 'PICKED_UP') {
+                // Lancer l'auto-assignation en arrière-plan
+                \App\Jobs\AutoAssignPackageJob::dispatch($package->id)->delay(now()->addSeconds(5));
             }
         });
     }
@@ -424,5 +487,16 @@ class Package extends Model
             'RETURNED' => '↩️ Retourné',
             default => $this->status
         };
+    }
+
+    /**
+     * Obtenir les statistiques par délégation
+     */
+    public static function getStatsByDelegation()
+    {
+        return self::select('delegation_to', DB::raw('count(*) as total'))
+                  ->groupBy('delegation_to')
+                  ->orderBy('total', 'desc')
+                  ->get();
     }
 }

@@ -4,12 +4,31 @@ namespace App\Http\Controllers\Supervisor;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Delegation;
 
 class DelegationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('supervisor.delegations.index');
+        $query = Delegation::query();
+
+        // Filtres de recherche
+        if ($request->search) {
+            $query->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('code', 'like', "%{$request->search}%");
+        }
+
+        if ($request->gouvernorat) {
+            $query->where('gouvernorat', $request->gouvernorat);
+        }
+
+        if ($request->status !== null && $request->status !== '') {
+            $query->where('active', (bool) $request->status);
+        }
+
+        $delegations = $query->orderBy('name', 'asc')->paginate(20);
+
+        return view('supervisor.delegations.index', compact('delegations'));
     }
 
     public function create()

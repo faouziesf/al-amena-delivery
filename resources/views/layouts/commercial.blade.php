@@ -47,11 +47,11 @@
             <!-- Navigation -->
             <nav class="p-4 space-y-2 flex-1 overflow-y-auto">
                 <a href="{{ route('commercial.dashboard') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.dashboard') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.dashboard') || request()->routeIs('commercial.analytics.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
                     <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                     </svg>
-                    <span class="font-medium">Dashboard</span>
+                    <span class="font-medium">Dashboard Analytics</span>
                 </a>
 
                 <a href="{{ route('commercial.clients.index') }}" 
@@ -65,15 +65,15 @@
                     </div>
                 </a>
 
-                <a href="{{ route('commercial.complaints.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.complaints.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
+                <a href="{{ route('commercial.packages.index') }}"
+                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.packages.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
                     <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
-                    <span class="font-medium">Réclamations</span>
+                    <span class="font-medium">Colis</span>
                     <div class="ml-auto flex space-x-1">
-                        <span x-show="stats.urgent_complaints > 0" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse" x-text="stats.urgent_complaints"></span>
-                        <span x-show="stats.pending_complaints > 0 && stats.urgent_complaints == 0" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_complaints"></span>
+                        <span x-show="stats.pending_packages > 0" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_packages"></span>
+                        <span x-show="stats.urgent_packages > 0" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse" x-text="stats.urgent_packages"></span>
                     </div>
                 </a>
 
@@ -89,14 +89,15 @@
                     </div>
                 </a>
 
-                <a href="{{ route('commercial.withdrawals.index') }}" 
+                <a href="{{ route('commercial.withdrawals.index') }}"
                    class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.withdrawals.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
                     <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
-                    <span class="font-medium">Retraits</span>
-                    <div class="ml-auto" x-show="stats.pending_withdrawals > 0">
-                        <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_withdrawals"></span>
+                    <span class="font-medium">Demandes de paiement</span>
+                    <div class="ml-auto flex space-x-1">
+                        <span x-show="stats.pending_withdrawals > 0" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_withdrawals"></span>
+                        <span x-show="stats.cash_deliveries_pending > 0" class="bg-green-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.cash_deliveries_pending"></span>
                     </div>
                 </a>
 
@@ -111,16 +112,6 @@
                     </div>
                 </a>
 
-                <a href="{{ route('commercial.packages.index') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('commercial.packages.*') ? 'bg-purple-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    <span class="font-medium">Colis</span>
-                    <div class="ml-auto" x-show="stats.blocked_packages > 0">
-                        <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.blocked_packages"></span>
-                    </div>
-                </a>
 
                 <!-- Divider -->
                 <div class="border-t border-gray-200 my-4"></div>
@@ -313,6 +304,7 @@
                     pending_complaints: 0,
                     urgent_complaints: 0,
                     pending_withdrawals: 0,
+                    cash_deliveries_pending: 0,
                     high_balance_deliverers: 0,
                     packages_today: 0,
                     blocked_packages: 0
@@ -347,7 +339,7 @@
 
                 async loadNotifications() {
                     try {
-                        const response = await fetch('/commercial/notifications/api/unread-count');
+                        const response = await fetch('/commercial/api/notifications/unread-count');
                         if (response.ok) {
                             const data = await response.json();
                             this.notifications.unread_count = data.unread_count;
@@ -355,7 +347,7 @@
                         }
 
                         // Charger la liste des notifications récentes
-                        const recentResponse = await fetch('/commercial/notifications/api/recent');
+                        const recentResponse = await fetch('/commercial/api/notifications/recent');
                         if (recentResponse.ok) {
                             const notifications = await recentResponse.json();
                             this.updateNotificationsList(notifications);
@@ -397,7 +389,7 @@
 
                 async markAllAsRead() {
                     try {
-                        const response = await fetch('/commercial/notifications/api/mark-read', {
+                        const response = await fetch('/commercial/api/notifications/mark-read', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

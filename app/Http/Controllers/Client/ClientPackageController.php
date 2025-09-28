@@ -231,6 +231,7 @@ class ClientPackageController extends Controller
             'fragile' => 'boolean',
             'signature_obligatoire' => 'boolean',
             'autorisation_ouverture' => 'boolean',
+            'est_echange' => 'boolean',
             'payment_method' => 'required|in:especes_seulement,cheque_seulement,especes_et_cheques'
         ]);
 
@@ -288,6 +289,7 @@ class ClientPackageController extends Controller
             'package_height' => 'nullable|numeric|min:0|max:999',
             'is_fragile' => 'nullable|boolean',
             'requires_signature' => 'nullable|boolean',
+            'est_echange' => 'nullable|boolean',
             'special_instructions' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
             
@@ -734,6 +736,7 @@ class ClientPackageController extends Controller
             'is_fragile' => $validated['fragile'] ?? $validated['is_fragile'] ?? false,
             'requires_signature' => $validated['signature_obligatoire'] ?? $validated['requires_signature'] ?? false,
             'allow_opening' => $validated['autorisation_ouverture'] ?? $validated['allow_opening'] ?? false,
+            'est_echange' => $validated['est_echange'] ?? false,
             'payment_method' => $this->mapPaymentMethod($validated['payment_method'] ?? 'cash_only')
         ];
 
@@ -764,8 +767,8 @@ class ClientPackageController extends Controller
         $escrowAmount = $this->calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee);
         $pendingAmount = $this->calculatePendingAmount($codAmount, $deliveryFee, $returnFee);
 
-        // Vérifier le solde disponible (balance - frozen_amount)
-        $availableBalance = $user->wallet->balance - ($user->wallet->frozen_amount ?? 0);
+        // Vérifier le solde disponible en utilisant la méthode du modèle
+        $availableBalance = $user->wallet->available_balance;
 
         if ($availableBalance < $escrowAmount) {
             throw new \Exception("Solde insuffisant. Montant requis: " . number_format($escrowAmount, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT. Rechargez votre portefeuille avant de créer ce colis.");

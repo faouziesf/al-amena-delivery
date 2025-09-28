@@ -118,24 +118,6 @@ class TicketMessage extends Model
         return $this->sender ? $this->sender->name : 'Utilisateur supprimé';
     }
 
-    /**
-     * Obtenir les pièces jointes formatées
-     */
-    public function getFormattedAttachmentsAttribute()
-    {
-        if (empty($this->attachments)) {
-            return [];
-        }
-
-        return collect($this->attachments)->map(function ($attachment) {
-            return [
-                'name' => $attachment['name'] ?? 'Document',
-                'url' => $attachment['url'] ?? '#',
-                'type' => $attachment['type'] ?? 'unknown',
-                'size' => $attachment['size'] ?? null
-            ];
-        })->toArray();
-    }
 
     // ==================== HELPER METHODS ====================
 
@@ -192,14 +174,6 @@ class TicketMessage extends Model
     }
 
     /**
-     * Vérifier si le message a des pièces jointes
-     */
-    public function hasAttachments()
-    {
-        return !empty($this->attachments) && count($this->attachments) > 0;
-    }
-
-    /**
      * Obtenir le nombre de pièces jointes
      */
     public function getAttachmentsCount()
@@ -239,5 +213,84 @@ class TicketMessage extends Model
                 );
             }
         });
+    }
+
+    // ==================== ATTACHMENT METHODS ====================
+
+    /**
+     * Vérifier si le message a des pièces jointes
+     */
+    public function hasAttachments()
+    {
+        return !empty($this->attachments) && is_array($this->attachments) && count($this->attachments) > 0;
+    }
+
+    /**
+     * Obtenir les attachments formatés avec informations d'affichage
+     */
+    public function getFormattedAttachmentsAttribute()
+    {
+        if (!$this->hasAttachments()) {
+            return [];
+        }
+
+        return collect($this->attachments)->map(function ($attachment) {
+            $fileType = $this->getFileType($attachment);
+
+            return [
+                'name' => $attachment['name'] ?? 'Fichier',
+                'url' => $attachment['url'] ?? '#',
+                'type' => $attachment['type'] ?? 'unknown',
+                'size' => $attachment['size'] ?? 0,
+                'file_type' => $fileType,
+                'is_image' => in_array($fileType, ['jpg', 'jpeg', 'png', 'gif', 'webp']),
+                'is_pdf' => $fileType === 'pdf',
+                'is_document' => in_array($fileType, ['doc', 'docx', 'txt']),
+                'icon' => $this->getFileIcon($fileType)
+            ];
+        });
+    }
+
+    /**
+     * Obtenir le type de fichier à partir du nom ou du type MIME
+     */
+    private function getFileType($attachment)
+    {
+        if (isset($attachment['name'])) {
+            return strtolower(pathinfo($attachment['name'], PATHINFO_EXTENSION));
+        }
+
+        if (isset($attachment['type'])) {
+            $mimeType = $attachment['type'];
+            $extensions = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                'application/pdf' => 'pdf',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+                'text/plain' => 'txt'
+            ];
+
+            return $extensions[$mimeType] ?? 'unknown';
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Obtenir l'icône pour le type de fichier
+     */
+    private function getFileIcon($fileType)
+    {
+        return match($fileType) {
+            'jpg', 'jpeg', 'png', 'gif', 'webp' => '🖼️',
+            'pdf' => '📄',
+            'doc', 'docx' => '📝',
+            'txt' => '📄',
+            'zip', 'rar' => '📦',
+            default => '📎'
+        };
     }
 }

@@ -29,6 +29,16 @@ class User extends Authenticatable
         'verified_by',
         'created_by',
         'last_login',
+        'assigned_delegation',
+        'deliverer_type',
+        'delegation_latitude',
+        'delegation_longitude',
+        'delegation_radius_km',
+        // Champs chef dépôt
+        'assigned_gouvernorats',
+        'depot_name',
+        'depot_address',
+        'is_depot_manager',
     ];
 
     /**
@@ -51,6 +61,8 @@ class User extends Authenticatable
         'verified_at' => 'datetime',
         'last_login' => 'datetime',
         'password' => 'hashed',
+        'assigned_gouvernorats' => 'array',
+        'is_depot_manager' => 'boolean',
     ];
 
     // ==================== RELATIONS ====================
@@ -414,6 +426,7 @@ class User extends Authenticatable
             'DELIVERER' => 'Livreur',
             'COMMERCIAL' => 'Commercial',
             'SUPERVISOR' => 'Superviseur',
+            'DEPOT_MANAGER' => 'Chef Dépôt',
             default => $this->role
         };
     }
@@ -895,6 +908,162 @@ class User extends Authenticatable
 
     // ==================== BOOT METHOD ====================
 
+    // ==================== DELEGATION METHODS ====================
+
+    /**
+     * Vérifier si le livreur est assigné à une délégation
+     */
+    public function hasAssignedDelegation()
+    {
+        return $this->role === 'DELIVERER' && !empty($this->assigned_delegation);
+    }
+
+    /**
+     * Vérifier si le livreur est de type DELEGATION (délégation fixe)
+     */
+    public function isDelegationDeliverer()
+    {
+        return $this->role === 'DELIVERER' && $this->deliverer_type === 'DELEGATION';
+    }
+
+    /**
+     * Vérifier si le livreur est de type JOKER (toutes délégations)
+     */
+    public function isJokerDeliverer()
+    {
+        return $this->role === 'DELIVERER' && $this->deliverer_type === 'JOKER';
+    }
+
+    /**
+     * Vérifier si le livreur est de type TRANSIT (changement uniquement)
+     */
+    public function isTransitDeliverer()
+    {
+        return $this->role === 'DELIVERER' && $this->deliverer_type === 'TRANSIT';
+    }
+
+    /**
+     * Vérifier si le livreur peut voir les pickup requests
+     */
+    public function canViewPickupRequests()
+    {
+        if ($this->role !== 'DELIVERER') {
+            return false;
+        }
+
+        // Les livreurs TRANSIT ne peuvent pas voir les pickup requests
+        return $this->deliverer_type !== 'TRANSIT';
+    }
+
+    /**
+     * Vérifier si le livreur peut effectuer des changements de livreur
+     */
+    public function canReassignPackages()
+    {
+        return $this->role === 'DELIVERER' && $this->deliverer_type === 'TRANSIT';
+    }
+
+    /**
+     * Obtenir les colis dans la délégation du livreur
+     */
+    public function getDelegationPackages()
+    {
+        if (!$this->hasAssignedDelegation()) {
+            return collect();
+        }
+
+        return Package::where('delegation_to', $this->assigned_delegation)->get();
+    }
+
+    /**
+     * Obtenir les pickup requests selon le type de livreur
+     */
+    public function getDelegationPickupRequests()
+    {
+        if (!$this->canViewPickupRequests()) {
+            return PickupRequest::where('id', 0); // Query vide pour TRANSIT
+        }
+
+        if ($this->isJokerDeliverer()) {
+            // Les livreurs JOKER voient tous les pickup requests
+            return PickupRequest::query();
+        }
+
+        if ($this->isDelegationDeliverer() && $this->hasAssignedDelegation()) {
+            // Les livreurs DELEGATION voient seulement leur délégation
+            return PickupRequest::where('delegation', $this->assigned_delegation);
+        }
+
+        return PickupRequest::where('id', 0); // Query vide par défaut
+    }
+
+    /**
+     * Vérifier si un colis peut être auto-assigné à ce livreur
+     */
+    public function canAutoAssignPackage(Package $package)
+    {
+        return $this->hasAssignedDelegation() &&
+               $package->delegation_to === $this->assigned_delegation &&
+               $package->status === 'PICKED_UP' &&
+               !$package->assigned_deliverer_id;
+    }
+
+    /**
+     * Obtenir tous les livreurs d'une délégation
+     */
+    public static function getDeliverersInDelegation($delegation)
+    {
+        return self::where('role', 'DELIVERER')
+                   ->where('assigned_delegation', $delegation)
+                   ->where('account_status', 'ACTIVE')
+                   ->get();
+    }
+
+    /**
+     * Obtenir la liste des délégations disponibles
+     */
+    public static function getAvailableDelegations()
+    {
+        return [
+            'Tunis' => 'Tunis',
+            'Ariana' => 'Ariana',
+            'Ben Arous' => 'Ben Arous',
+            'Manouba' => 'Manouba',
+            'Nabeul' => 'Nabeul',
+            'Zaghouan' => 'Zaghouan',
+            'Bizerte' => 'Bizerte',
+            'Béja' => 'Béja',
+            'Jendouba' => 'Jendouba',
+            'Kef' => 'Kef',
+            'Siliana' => 'Siliana',
+            'Sousse' => 'Sousse',
+            'Monastir' => 'Monastir',
+            'Mahdia' => 'Mahdia',
+            'Sfax' => 'Sfax',
+            'Kairouan' => 'Kairouan',
+            'Kasserine' => 'Kasserine',
+            'Sidi Bouzid' => 'Sidi Bouzid',
+            'Gabès' => 'Gabès',
+            'Medenine' => 'Medenine',
+            'Tataouine' => 'Tataouine',
+            'Gafsa' => 'Gafsa',
+            'Tozeur' => 'Tozeur',
+            'Kebili' => 'Kebili'
+        ];
+    }
+
+    /**
+     * Obtenir les types de livreurs disponibles
+     */
+    public static function getDelivererTypes()
+    {
+        return [
+            'DELEGATION' => 'Délégation fixe',
+            'JOKER' => 'Joker (toutes délégations)',
+            'TRANSIT' => 'Transit (changement uniquement)'
+        ];
+    }
+
     /**
      * Boot method pour les événements du modèle
      */
@@ -929,5 +1098,122 @@ class User extends Authenticatable
                 'rejection_reason' => 'Compte utilisateur supprimé'
             ]);
         });
+    }
+
+    // ==================== MÉTHODES CHEF DÉPÔT ====================
+
+    /**
+     * Vérifier si c'est un chef dépôt
+     */
+    public function isDepotManager()
+    {
+        return $this->role === 'DEPOT_MANAGER' || $this->is_depot_manager;
+    }
+
+    /**
+     * Obtenir les livreurs de ce chef dépôt
+     */
+    public function getManagedDeliverers()
+    {
+        if (!$this->isDepotManager() || empty($this->assigned_gouvernorats_array)) {
+            return collect();
+        }
+
+        return User::where('role', 'DELIVERER')
+                   ->where('account_status', 'ACTIVE')
+                   ->whereIn('assigned_delegation', $this->assigned_gouvernorats_array)
+                   ->with(['assignedPackages' => function($q) {
+                       $q->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                         ->select('id', 'assigned_deliverer_id', 'status', 'cod_amount');
+                   }])
+                   ->get();
+    }
+
+    /**
+     * Accesseur pour obtenir les gouvernorats assignés comme array
+     */
+    public function getAssignedGouvernoratsArrayAttribute()
+    {
+        if (is_string($this->assigned_gouvernorats)) {
+            $decoded = json_decode($this->assigned_gouvernorats, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        if (is_array($this->assigned_gouvernorats)) {
+            return $this->assigned_gouvernorats;
+        }
+        return [];
+    }
+
+    /**
+     * Vérifier si ce chef dépôt peut gérer un gouvernorat
+     */
+    public function canManageGouvernorat($gouvernorat)
+    {
+        if (!$this->isDepotManager()) {
+            return false;
+        }
+
+        return in_array($gouvernorat, $this->assigned_gouvernorats_array);
+    }
+
+    /**
+     * Obtenir les statistiques du dépôt
+     */
+    public function getDepotStats()
+    {
+        if (!$this->isDepotManager()) {
+            return null;
+        }
+
+        $deliverers = $this->getManagedDeliverers();
+        $delivererIds = $deliverers->pluck('id')->toArray();
+
+        return [
+            'total_deliverers' => $deliverers->count(),
+            'active_deliverers' => $deliverers->where('account_status', 'ACTIVE')->count(),
+            'packages_in_progress' => Package::whereIn('assigned_deliverer_id', $delivererIds)
+                                           ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                           ->count(),
+            'delivered_today' => Package::whereIn('assigned_deliverer_id', $delivererIds)
+                                      ->where('status', 'DELIVERED')
+                                      ->whereDate('delivered_at', today())
+                                      ->count(),
+            'cod_collected_today' => Package::whereIn('assigned_deliverer_id', $delivererIds)
+                                          ->where('status', 'DELIVERED')
+                                          ->whereDate('delivered_at', today())
+                                          ->sum('cod_amount'),
+            'assigned_gouvernorats' => $this->assigned_gouvernorats_array,
+        ];
+    }
+
+    /**
+     * Obtenir les clients des gouvernorats gérés par ce chef dépôt
+     */
+    public function getManagedClients()
+    {
+        if (!$this->isDepotManager()) {
+            return collect([]);
+        }
+
+        // Pour l'instant, retourner tous les clients
+        // À adapter selon la logique métier (clients par gouvernorat)
+        return User::where('role', 'CLIENT')
+                  ->where('account_status', 'ACTIVE')
+                  ->get();
+    }
+
+    /**
+     * Vérifier si ce chef dépôt peut gérer un client spécifique
+     */
+    public function canManageClient($clientId)
+    {
+        if (!$this->isDepotManager()) {
+            return false;
+        }
+
+        // Pour l'instant, autoriser tous les clients
+        // À adapter selon la logique métier
+        $client = User::find($clientId);
+        return $client && $client->role === 'CLIENT';
     }
 }

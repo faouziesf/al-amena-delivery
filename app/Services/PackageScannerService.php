@@ -125,10 +125,26 @@ class PackageScannerService
         // Assigné à un autre livreur
         if ($package->assigned_deliverer_id) {
             $otherDeliverer = User::find($package->assigned_deliverer_id);
+
+            // Permettre la réassignation pour les colis "in_progress"
+            if (in_array($package->status, ['PICKED_UP', 'UNAVAILABLE'])) {
+                return [
+                    'success' => true,
+                    'message' => "🔄 Colis en transit - Réassignation possible",
+                    'action' => 'reassign',
+                    'current_deliverer' => $otherDeliverer->name ?? 'Inconnu',
+                    'package' => $this->formatPackage($package),
+                    'can_reassign' => true,
+                    'warning' => "Ce colis est actuellement assigné à {$otherDeliverer->name}. Voulez-vous le réassigner ?"
+                ];
+            }
+
+            // Pour les autres statuts, pas de réassignation
             return [
                 'success' => false,
                 'message' => "🔒 Assigné à un autre livreur",
-                'assigned_to' => $otherDeliverer->name ?? 'Inconnu'
+                'assigned_to' => $otherDeliverer->name ?? 'Inconnu',
+                'package' => $this->formatPackage($package)
             ];
         }
 
@@ -185,5 +201,121 @@ class PackageScannerService
         }
         
         return [];
+    }
+
+    /**
+     * Réassigner un colis à un nouveau livreur
+     */
+    public function reassignPackage(Package $package, int $newDelivererId, string $reason = null): array
+    {
+        // Vérifications de sécurité
+        if (!in_array($package->status, ['PICKED_UP', 'UNAVAILABLE'])) {
+            return [
+                'success' => false,
+                'message' => 'Ce colis ne peut pas être réassigné dans son état actuel'
+            ];
+        }
+
+        $newDeliverer = User::find($newDelivererId);
+        if (!$newDeliverer || $newDeliverer->role !== 'DELIVERER') {
+            return [
+                'success' => false,
+                'message' => 'Livreur non valide'
+            ];
+        }
+
+        $previousDeliverer = User::find($package->assigned_deliverer_id);
+
+        try {
+            \DB::transaction(function () use ($package, $newDelivererId, $reason, $previousDeliverer, $newDeliverer) {
+                // Mettre à jour le colis
+                $package->update([
+                    'assigned_deliverer_id' => $newDelivererId,
+                    'reassigned_at' => now(),
+                    'reassignment_reason' => $reason
+                ]);
+
+                // Log de l'action
+                \Log::info('Package reassigned', [
+                    'package_id' => $package->id,
+                    'package_code' => $package->package_code,
+                    'from_deliverer_id' => $previousDeliverer->id ?? null,
+                    'from_deliverer_name' => $previousDeliverer->name ?? 'Inconnu',
+                    'to_deliverer_id' => $newDelivererId,
+                    'to_deliverer_name' => $newDeliverer->name,
+                    'reason' => $reason,
+                    'status' => $package->status,
+                    'reassigned_by' => \Auth::id()
+                ]);
+
+                // Créer des notifications
+                if (class_exists(\App\Models\Notification::class)) {
+                    // Notification au nouveau livreur
+                    \App\Models\Notification::create([
+                        'user_id' => $newDelivererId,
+                        'type' => 'PACKAGE_REASSIGNED_TO',
+                        'title' => 'Colis réassigné à vous',
+                        'message' => "Le colis #{$package->package_code} vous a été réassigné",
+                        'priority' => 'HIGH',
+                        'data' => [
+                            'package_id' => $package->id,
+                            'previous_deliverer' => $previousDeliverer->name ?? 'Inconnu',
+                            'reason' => $reason
+                        ]
+                    ]);
+
+                    // Notification à l'ancien livreur (si existe)
+                    if ($previousDeliverer) {
+                        \App\Models\Notification::create([
+                            'user_id' => $previousDeliverer->id,
+                            'type' => 'PACKAGE_REASSIGNED_FROM',
+                            'title' => 'Colis réassigné',
+                            'message' => "Le colis #{$package->package_code} a été réassigné à {$newDeliverer->name}",
+                            'priority' => 'NORMAL',
+                            'data' => [
+                                'package_id' => $package->id,
+                                'new_deliverer' => $newDeliverer->name,
+                                'reason' => $reason
+                            ]
+                        ]);
+                    }
+
+                    // Notification au client
+                    \App\Models\Notification::create([
+                        'user_id' => $package->sender_id,
+                        'type' => 'PACKAGE_DELIVERER_CHANGED',
+                        'title' => 'Changement de livreur',
+                        'message' => "Votre colis #{$package->package_code} a été confié à un nouveau livreur",
+                        'priority' => 'NORMAL',
+                        'data' => [
+                            'package_id' => $package->id,
+                            'new_deliverer' => $newDeliverer->name,
+                            'reason' => $reason ?? 'Optimisation des livraisons'
+                        ]
+                    ]);
+                }
+            });
+
+            return [
+                'success' => true,
+                'message' => "Colis réassigné avec succès à {$newDeliverer->name}",
+                'package' => $this->formatPackage($package->fresh()),
+                'new_deliverer' => [
+                    'id' => $newDeliverer->id,
+                    'name' => $newDeliverer->name
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Package reassignment failed', [
+                'package_id' => $package->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la réassignation'
+            ];
+        }
     }
 }

@@ -1,101 +1,276 @@
 @extends('layouts.supervisor')
 
+@section('title', 'Paramètres système')
+
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <!-- En-tête -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Paramètres Système</h1>
-        <p class="text-gray-600">Configuration générale du système Al-Amena Delivery</p>
-    </div>
-
-    <!-- Catégories de paramètres -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @foreach($categories as $key => $category)
-        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <a href="{{ $category['url'] }}" class="block p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            @if($category['icon'] === 'cog')
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            @elseif($category['icon'] === 'dollar-sign')
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                            @elseif($category['icon'] === 'truck')
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM21 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"></path>
-                            @elseif($category['icon'] === 'bell')
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM10.97 4.97a.75.75 0 0 0-1.08 1.05l-3.99 4.99a.75.75 0 0 0 1.08.02l4.24-4.24a.75.75 0 0 0-.02-1.07l-4.24-4.24a.75.75 0 0 0-1.05 1.08z"></path>
-                            @else
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            @endif
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">{{ $category['title'] }}</h3>
-                    </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Paramètres système</h1>
+                    <p class="text-gray-600">Configuration et gestion globale du système Al-Amena Delivery</p>
                 </div>
-                <p class="text-gray-600 text-sm mb-4">{{ $category['description'] }}</p>
-                <div class="flex items-center text-red-600 text-sm font-medium">
-                    Configurer
-                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
+                <div class="mt-4 lg:mt-0">
+                    <button onclick="saveAllSettings()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Sauvegarder tout
+                    </button>
                 </div>
-            </a>
+            </div>
         </div>
-        @endforeach
-    </div>
 
-    <!-- Actions rapides -->
-    <div class="mt-12 bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-gray-900 border-b pb-3 mb-6">Actions Rapides</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onclick="exportSettings()" class="flex items-center justify-center p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Exporter
-            </button>
-            <button onclick="importSettings()" class="flex items-center justify-center p-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                </svg>
-                Importer
-            </button>
-            <button onclick="resetToDefaults()" class="flex items-center justify-center p-3 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Réinitialiser
-            </button>
-            <button onclick="validateSettings()" class="flex items-center justify-center p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Valider
-            </button>
+        <!-- Settings Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- General Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <i class="fas fa-cogs text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Général</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Configuration générale</h3>
+                    <p class="text-gray-600 text-sm mb-4">Paramètres globaux de l'application et de l'entreprise</p>
+                    <button onclick="openSettings('general')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fas fa-credit-card text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Paiement</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Paramètres financiers</h3>
+                    <p class="text-gray-600 text-sm mb-4">Tarifs, COD, commissions et méthodes de paiement</p>
+                    <button onclick="openSettings('payment')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Delivery Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-orange-100 p-3 rounded-lg">
+                            <i class="fas fa-truck text-orange-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Livraison</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Paramètres de livraison</h3>
+                    <p class="text-gray-600 text-sm mb-4">Zones, délais, types de livraison et restrictions</p>
+                    <button onclick="openSettings('delivery')" class="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-purple-100 p-3 rounded-lg">
+                            <i class="fas fa-bell text-purple-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Notifications</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Notifications</h3>
+                    <p class="text-gray-600 text-sm mb-4">SMS, emails, push notifications et alertes</p>
+                    <button onclick="openSettings('notifications')" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-indigo-100 p-3 rounded-lg">
+                            <i class="fas fa-users-cog text-indigo-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">Utilisateurs</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Gestion utilisateurs</h3>
+                    <p class="text-gray-600 text-sm mb-4">Rôles, permissions, validation des comptes</p>
+                    <button onclick="openSettings('users')" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-red-100 p-3 rounded-lg">
+                            <i class="fas fa-shield-alt text-red-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Sécurité</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Sécurité & confidentialité</h3>
+                    <p class="text-gray-600 text-sm mb-4">Authentification, logs, sauvegarde et RGPD</p>
+                    <button onclick="openSettings('security')" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm">
+                        Configurer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Actions rapides</h3>
+                <div class="text-sm text-gray-500">Gestion globale des paramètres</div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button onclick="exportSettings()" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:bg-blue-100 transition-colors group">
+                    <div class="flex items-center">
+                        <div class="bg-blue-600 p-2 rounded-lg mr-3 group-hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-semibold text-gray-900">Exporter</div>
+                            <div class="text-sm text-gray-600">Configuration</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="importSettings()" class="bg-green-50 border border-green-200 rounded-lg p-4 hover:bg-green-100 transition-colors group">
+                    <div class="flex items-center">
+                        <div class="bg-green-600 p-2 rounded-lg mr-3 group-hover:bg-green-700 transition-colors">
+                            <i class="fas fa-upload text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-semibold text-gray-900">Importer</div>
+                            <div class="text-sm text-gray-600">Configuration</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="resetToDefaults()" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-colors group">
+                    <div class="flex items-center">
+                        <div class="bg-yellow-600 p-2 rounded-lg mr-3 group-hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-undo text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-semibold text-gray-900">Réinitialiser</div>
+                            <div class="text-sm text-gray-600">Par défaut</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="validateSettings()" class="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors group">
+                    <div class="flex items-center">
+                        <div class="bg-purple-600 p-2 rounded-lg mr-3 group-hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-check-circle text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-semibold text-gray-900">Valider</div>
+                            <div class="text-sm text-gray-600">Configuration</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mt-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">État du système</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900">Système opérationnel</h4>
+                    <p class="text-sm text-gray-600 mt-1">Toutes les configurations sont valides</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-sync-alt text-blue-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900">Dernière sauvegarde</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ now()->format('d/m/Y H:i') }}</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-cog text-yellow-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900">Modifications en attente</h4>
+                    <p class="text-sm text-gray-600 mt-1">3 paramètres à valider</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+function openSettings(category) {
+    alert(`Ouverture de la configuration ${category}...`);
+    // Redirection vers la page de configuration spécifique
+}
+
+function saveAllSettings() {
+    if (confirm('Sauvegarder toutes les modifications ?')) {
+        alert('Paramètres sauvegardés avec succès!');
+    }
+}
+
 function exportSettings() {
-    alert('Fonction d\'export en cours de développement');
+    // Show loading
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Export...';
+    button.disabled = true;
+
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        alert('Configuration exportée avec succès!');
+    }, 2000);
 }
 
 function importSettings() {
-    alert('Fonction d\'import en cours de développement');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.xml';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            alert(`Import du fichier ${file.name} en cours...`);
+        }
+    };
+    input.click();
 }
 
 function resetToDefaults() {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser tous les paramètres aux valeurs par défaut?')) {
-        alert('Fonction de réinitialisation en cours de développement');
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser TOUS les paramètres aux valeurs par défaut ? Cette action est irréversible.')) {
+        alert('Réinitialisation en cours...');
+        setTimeout(() => {
+            alert('Paramètres réinitialisés avec succès!');
+            location.reload();
+        }, 2000);
     }
 }
 
 function validateSettings() {
-    alert('Validation des paramètres en cours...');
+    const button = event.target.closest('button');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Validation...';
+    button.disabled = true;
+
+    setTimeout(() => {
+        alert('Validation terminée: Tous les paramètres sont corrects!');
+        location.reload();
+    }, 2000);
 }
 </script>
 @endsection

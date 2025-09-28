@@ -4,7 +4,9 @@
       "Bash(php:*)",
       "Bash(sqlite3:*)",
       "Bash(find:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(exit)"
     ],
     "deny": [],
     "ask": []

@@ -2,7 +2,7 @@
 
 @section('title', 'Nouvelle Demande de Collecte')
 @section('page-title', 'Créer une Demande de Collecte')
-@section('page-description', 'Organisez la collecte de vos colis en un seul endroit')
+@section('page-description', 'Organisez la collecte à une adresse spécifique')
 
 @section('content')
 <style>
@@ -19,11 +19,6 @@
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-}
-
-@keyframes scaleIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
 }
 
 .form-section {
@@ -43,7 +38,7 @@
     backdrop-filter: blur(5px);
 }
 
-.address-card:not(.cursor-not-allowed):hover {
+.address-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
 }
@@ -52,22 +47,6 @@
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 12px 40px -5px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.3);
     animation: pulse 2s infinite;
-}
-
-.package-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(5px);
-}
-
-.package-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.1);
-}
-
-.package-item.selected {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.25);
-    animation: scaleIn 0.3s ease-out;
 }
 
 .gradient-bg {
@@ -96,10 +75,6 @@
     .address-card {
         padding: 1rem;
     }
-
-    .package-item {
-        padding: 0.75rem;
-    }
 }
 
 @media (max-width: 480px) {
@@ -116,14 +91,14 @@
         font-size: 1.125rem;
     }
 
-    .address-card, .package-item {
+    .address-card {
         padding: 0.75rem;
         font-size: 0.875rem;
     }
 }
 </style>
 
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8" x-data="pickupRequestForm()">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" x-data="pickupRequestForm()">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
@@ -135,7 +110,7 @@
         </a>
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Nouvelle Demande de Collecte</h1>
-            <p class="text-gray-600 mt-1">Sélectionnez vos colis et organisez leur collecte</p>
+            <p class="text-gray-600 mt-1">Créez une demande de collecte pour une adresse spécifique</p>
         </div>
     </div>
 
@@ -226,17 +201,13 @@
                 @if($savedAddresses->count() > 0)
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 grid-mobile">
                         @foreach($savedAddresses as $address)
-                        <label class="address-card block p-4 border-2 rounded-xl transition-all duration-300"
+                        <label class="address-card block p-4 border-2 rounded-xl transition-all duration-300 cursor-pointer hover:border-purple-300"
                                :class="{
-                                   'cursor-pointer hover:border-purple-300': getPackagesForAddress({{ $address->id }}) > 0,
-                                   'cursor-not-allowed border-red-200 bg-red-50 opacity-75': getPackagesForAddress({{ $address->id }}) === 0,
                                    'border-purple-500 bg-purple-50 selected': selectedAddressId == {{ $address->id }},
-                                   'border-gray-200': selectedAddressId != {{ $address->id }} && getPackagesForAddress({{ $address->id }}) > 0
+                                   'border-gray-200': selectedAddressId != {{ $address->id }}
                                }">
                             <input type="radio" name="saved_address_id" value="{{ $address->id }}"
                                    x-model="selectedAddressId"
-                                   @change="filterPackagesByAddress({{ $address->id }})"
-                                   :disabled="getPackagesForAddress({{ $address->id }}) === 0"
                                    class="sr-only">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
@@ -246,9 +217,6 @@
                                             @if($address->is_default)
                                                 <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Par défaut</span>
                                             @endif
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full"
-                                                  :class="getPackagesForAddress({{ $address->id }}) > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  x-text="`${getPackagesForAddress({{ $address->id }})} colis`"></span>
                                         </div>
                                     </div>
                                     <p class="text-sm text-gray-600 mb-1">{{ $address->address }}</p>
@@ -273,15 +241,6 @@
                                             @endif
                                         </div>
                                     @endif
-                                    <div x-show="getPackagesForAddress({{ $address->id }}) === 0"
-                                         class="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            <span class="text-xs text-red-600">Aucun colis disponible pour cette adresse</span>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="w-4 h-4 border-2 border-purple-300 rounded-full ml-3 flex-shrink-0"
                                      :class="selectedAddressId == {{ $address->id }} ? 'bg-purple-600 border-purple-600' : ''">
@@ -399,99 +358,33 @@
             </div>
         </div>
 
-        <!-- Section Colis -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <div class="flex items-center mb-3 sm:mb-0">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-lg sm:text-xl font-bold text-gray-900">Sélection des Colis</h2>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-600" x-text="`${selectedPackages.length} colis sélectionné(s)`"></span>
-                    <span class="text-xs text-gray-500" x-text="`sur ${filteredPackages.length} disponibles`"></span>
-                </div>
-            </div>
-
-            <div x-show="filteredPackages.length > 0" class="space-y-3">
-                <template x-for="packageData in filteredPackages" :key="packageData.id">
-                    <label class="package-item cursor-pointer flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
-                           :class="selectedPackages.includes(packageData.id) ? 'border-blue-500 bg-blue-50 selected' : ''">
-                        <input type="checkbox" name="package_ids[]" :value="packageData.id"
-                               x-model="selectedPackages" class="sr-only">
-                        <div class="w-5 h-5 border-2 border-blue-300 rounded mr-4 flex items-center justify-center transition-all duration-200"
-                             :class="selectedPackages.includes(packageData.id) ? 'bg-blue-600 border-blue-600' : ''">
-                            <svg x-show="selectedPackages.includes(packageData.id)"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-50"
-                                 x-transition:enter-end="opacity-100 scale-100"
-                                 class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                <div class="mb-2 sm:mb-0">
-                                    <p class="font-medium text-gray-900" x-text="packageData.package_code"></p>
-                                    <p class="text-sm text-gray-600" x-text="`${packageData.recipient_name} - ${packageData.recipient_city || 'N/A'}`"></p>
-                                    <p class="text-xs text-gray-500" x-text="packageData.cod_amount ? `${packageData.cod_amount} TND` : 'Livraison gratuite'"></p>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                        En attente
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </label>
-                </template>
-
-                <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <button type="button" @click="selectAllFilteredPackages()"
-                            class="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200"
-                            x-show="filteredPackages.length > 0">
-                        Sélectionner tous les colis visibles
-                    </button>
-                    <button type="button" @click="clearSelection()"
-                            class="text-sm font-medium text-gray-600 hover:text-gray-700 transition-colors duration-200"
-                            x-show="selectedPackages.length > 0">
-                        Désélectionner tout
-                    </button>
-                </div>
-            </div>
-
-            <div x-show="filteredPackages.length === 0" class="text-center py-8">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        <!-- Informations sur le fonctionnement -->
+        <div class="form-section bg-blue-50 rounded-2xl shadow-lg border border-blue-200 mobile-responsive p-4 sm:p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <div x-show="allPackages.length === 0">
-                    <p class="text-gray-600 mb-2">Aucun colis disponible pour la collecte</p>
-                    <p class="text-sm text-gray-500 mb-4">Vous devez créer des colis avant de pouvoir faire une demande de collecte</p>
+                <h2 class="text-lg sm:text-xl font-bold text-blue-900">Comment ça fonctionne</h2>
+            </div>
+            <div class="space-y-3 text-sm text-blue-800">
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">1</div>
+                    <p>Vous créez une demande de collecte pour une adresse spécifique</p>
                 </div>
-                <div x-show="allPackages.length > 0 && addressType === 'saved' && selectedAddressId">
-                    <p class="text-gray-600 mb-2">Aucun colis disponible pour cette adresse</p>
-                    <p class="text-sm text-gray-500 mb-4">Sélectionnez une autre adresse ou créez des colis pour cette adresse</p>
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">2</div>
+                    <p>Un livreur sera assigné à votre demande selon la disponibilité</p>
                 </div>
-                <div x-show="allPackages.length > 0 && addressType === 'saved' && !selectedAddressId">
-                    <p class="text-gray-600 mb-2">Sélectionnez une adresse de collecte</p>
-                    <p class="text-sm text-gray-500 mb-4">Choisissez une adresse qui contient des colis disponibles</p>
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">3</div>
+                    <p>Le livreur se rendra à l'adresse indiquée pour collecter vos colis</p>
                 </div>
-                <div x-show="allPackages.length > 0 && addressType === 'custom'">
-                    <p class="text-gray-600 mb-2">Mode nouvelle adresse</p>
-                    <p class="text-sm text-gray-500 mb-4">Complétez les informations d'adresse ci-dessus</p>
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">4</div>
+                    <p>Vous pouvez suivre le statut de votre demande en temps réel</p>
                 </div>
-                <a href="{{ route('client.packages.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Créer un colis
-                </a>
             </div>
         </div>
 
@@ -512,7 +405,7 @@
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <span x-text="isFormValid() ? 'Créer la Demande' : 'Sélectionner des colis'"></span>
+                <span x-text="isFormValid() ? 'Créer la Demande' : 'Remplir le formulaire'"></span>
             </button>
         </div>
     </form>
@@ -523,54 +416,14 @@ function pickupRequestForm() {
     return {
         addressType: 'saved',
         selectedAddressId: {{ old('saved_address_id', 'null') }},
-        selectedPackages: @json(old('package_ids', [])),
-        allPackages: @json($availablePackages ?? []),
-        filteredPackages: [],
 
         init() {
-            this.filterPackages();
-        },
-
-        filterPackages() {
-            if (this.addressType === 'saved' && this.selectedAddressId) {
-                this.filteredPackages = this.allPackages.filter(pkg => pkg.pickup_address_id == this.selectedAddressId);
-            } else {
-                this.filteredPackages = this.allPackages;
-            }
-
-            // Remove selected packages that are no longer visible
-            this.selectedPackages = this.selectedPackages.filter(id =>
-                this.filteredPackages.some(pkg => pkg.id === id)
-            );
-        },
-
-        filterPackagesByAddress(addressId) {
-            this.selectedAddressId = addressId;
-            this.filterPackages();
-        },
-
-        getPackagesForAddress(addressId) {
-            return this.allPackages.filter(pkg => pkg.pickup_address_id == addressId).length;
+            // Initialize the form
         },
 
         isFormValid() {
-            const hasPackages = this.selectedPackages.length > 0;
-            const hasValidAddress = this.addressType === 'custom' ||
-                (this.selectedAddressId !== null && this.getPackagesForAddress(this.selectedAddressId) > 0);
-            return hasPackages && hasValidAddress;
-        },
-
-        hasValidAddresses() {
-            return this.allPackages.length > 0;
-        },
-
-        selectAllFilteredPackages() {
-            const allFilteredIds = this.filteredPackages.map(pkg => pkg.id);
-            this.selectedPackages = [...new Set([...this.selectedPackages, ...allFilteredIds])];
-        },
-
-        clearSelection() {
-            this.selectedPackages = [];
+            const hasValidAddress = this.addressType === 'custom' || this.selectedAddressId !== null;
+            return hasValidAddress;
         },
 
         submitForm() {

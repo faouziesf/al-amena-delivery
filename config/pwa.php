@@ -20,17 +20,32 @@ return [
     */
 
     'manifest' => [
-        'name' => env('PWA_NAME', 'Al-Amena Livreur'),
-        'short_name' => env('PWA_SHORT_NAME', 'Al-Amena'),
-        'description' => 'Application livreur Al-Amena Delivery - Scanner, Livrer, Gérer',
-        'start_url' => '/deliverer/dashboard',
-        'display' => 'standalone',
-        'theme_color' => '#7C3AED',
-        'background_color' => '#8B5CF6',
-        'orientation' => 'portrait-primary',
-        'scope' => '/deliverer/',
-        'lang' => 'fr',
-        'dir' => 'ltr',
+        'deliverer' => [
+            'name' => env('PWA_DELIVERER_NAME', 'Al-Amena Livreur'),
+            'short_name' => env('PWA_DELIVERER_SHORT_NAME', 'Al-Amena Livreur'),
+            'description' => 'Application livreur Al-Amena Delivery - Scanner, Livrer, Gérer',
+            'start_url' => '/deliverer/dashboard',
+            'display' => 'standalone',
+            'theme_color' => '#7C3AED',
+            'background_color' => '#8B5CF6',
+            'orientation' => 'portrait-primary',
+            'scope' => '/deliverer/',
+            'lang' => 'fr',
+            'dir' => 'ltr',
+        ],
+        'client' => [
+            'name' => env('PWA_CLIENT_NAME', 'Al-Amena Client'),
+            'short_name' => env('PWA_CLIENT_SHORT_NAME', 'Al-Amena Client'),
+            'description' => 'Application client Al-Amena Delivery - Envoyer, Suivre, Gérer vos colis',
+            'start_url' => '/client/dashboard',
+            'display' => 'standalone',
+            'theme_color' => '#059669',
+            'background_color' => '#10B981',
+            'orientation' => 'portrait-primary',
+            'scope' => '/client/',
+            'lang' => 'fr',
+            'dir' => 'ltr',
+        ],
     ],
 
     /*
@@ -56,28 +71,53 @@ return [
         
         // Fichiers à mettre en cache lors de l'installation
         'precache' => [
-            '/deliverer/dashboard',
-            '/deliverer/pickups/available',
-            '/deliverer/pickups/mine',
-            '/deliverer/deliveries',
-            '/deliverer/returns',
-            '/deliverer/payments',
-            '/deliverer/wallet',
-            '/css/app.css',
-            '/js/app.js',
-            '/manifest.json',
+            'deliverer' => [
+                '/deliverer/dashboard',
+                '/deliverer/pickups/available',
+                '/deliverer/pickups/mine',
+                '/deliverer/deliveries',
+                '/deliverer/returns',
+                '/deliverer/payments',
+                '/deliverer/wallet',
+                '/css/app.css',
+                '/js/app.js',
+                '/manifest-deliverer.json',
+            ],
+            'client' => [
+                '/client/dashboard',
+                '/client/packages',
+                '/client/packages/create',
+                '/client/wallet',
+                '/client/topup',
+                '/client/complaints',
+                '/client/tickets',
+                '/css/app.css',
+                '/js/app.js',
+                '/manifest-client.json',
+            ],
         ],
         
         // APIs critiques à mettre en cache
         'api_cache' => [
-            '/deliverer/api/dashboard-stats',
-            '/deliverer/api/wallet/balance',
-            '/deliverer/api/notifications/unread-count',
-            '/deliverer/api/packages/available-count',
-            '/deliverer/api/packages/my-pickups-count',
-            '/deliverer/api/packages/deliveries-count',
-            '/deliverer/api/packages/returns-count',
-            '/deliverer/api/payments-count',
+            'deliverer' => [
+                '/deliverer/api/dashboard-stats',
+                '/deliverer/api/wallet/balance',
+                '/deliverer/api/notifications/unread-count',
+                '/deliverer/api/packages/available-count',
+                '/deliverer/api/packages/my-pickups-count',
+                '/deliverer/api/packages/deliveries-count',
+                '/deliverer/api/packages/returns-count',
+                '/deliverer/api/payments-count',
+            ],
+            'client' => [
+                '/client/api/dashboard-stats',
+                '/client/api/wallet/balance',
+                '/client/api/notifications/unread-count',
+                '/client/api/packages/count',
+                '/client/api/topup/pending-count',
+                '/client/api/complaints/count',
+                '/client/api/tickets/count',
+            ],
         ],
         
         // URLs à ne jamais mettre en cache
@@ -386,7 +426,7 @@ return [
             'urgent_delivery_attempts' => 3,
             'low_battery_warning' => 20,
         ],
-        
+
         // Raccourcis clavier
         'shortcuts' => [
             'scan' => 'Ctrl+S',
@@ -394,7 +434,7 @@ return [
             'wallet' => 'Ctrl+W',
             'deliveries' => 'Ctrl+L',
         ],
-        
+
         // Actions rapides dans le manifest
         'quick_actions' => [
             'scanner' => '/deliverer/packages?scan=1',
@@ -402,13 +442,107 @@ return [
             'wallet' => '/deliverer/wallet',
             'pickups' => '/deliverer/pickups/available',
         ],
-        
+
         // Configuration offline spécifique
         'offline_config' => [
             'max_scan_queue' => 100,
             'max_delivery_queue' => 50,
             'sync_retry_attempts' => 3,
             'sync_retry_delay' => 5000,  // 5 secondes
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Intégrations spécifiques client
+    |--------------------------------------------------------------------------
+    */
+
+    'client' => [
+        // Seuils de notification automatique
+        'thresholds' => [
+            'wallet_low' => 10.000,
+            'package_delivered_reminder' => 24, // heures
+            'topup_pending_reminder' => 48, // heures
+        ],
+
+        // Raccourcis clavier
+        'shortcuts' => [
+            'create_package' => 'Ctrl+N',
+            'dashboard' => 'Ctrl+D',
+            'wallet' => 'Ctrl+W',
+            'packages' => 'Ctrl+P',
+            'tracking' => 'Ctrl+T',
+        ],
+
+        // Actions rapides dans le manifest
+        'quick_actions' => [
+            'create_package' => '/client/packages/create',
+            'track_package' => '/client/packages?tracking=1',
+            'wallet' => '/client/wallet',
+            'topup' => '/client/topup',
+            'support' => '/client/tickets/create',
+        ],
+
+        // Configuration offline spécifique
+        'offline_config' => [
+            'max_package_drafts' => 20,
+            'max_tracking_cache' => 100,
+            'sync_retry_attempts' => 3,
+            'sync_retry_delay' => 3000,  // 3 secondes
+        ],
+
+        // Types de notifications client
+        'notification_types' => [
+            'package_status_change' => [
+                'title' => 'Statut de votre colis mis à jour',
+                'icon' => '/images/notifications/package-status.png',
+                'vibrate' => [200, 100, 200],
+                'requireInteraction' => true,
+            ],
+            'delivery_confirmation' => [
+                'title' => 'Colis livré avec succès',
+                'icon' => '/images/notifications/delivery.png',
+                'vibrate' => [300, 100, 300, 100, 300],
+                'requireInteraction' => true,
+            ],
+            'wallet_low' => [
+                'title' => 'Solde wallet faible',
+                'icon' => '/images/notifications/wallet-low.png',
+                'vibrate' => [200, 100, 200],
+            ],
+            'topup_confirmed' => [
+                'title' => 'Recharge confirmée',
+                'icon' => '/images/notifications/topup.png',
+                'vibrate' => [200, 100, 200],
+            ],
+            'support_response' => [
+                'title' => 'Nouvelle réponse à votre ticket',
+                'icon' => '/images/notifications/support.png',
+                'vibrate' => [200, 100, 200],
+                'requireInteraction' => true,
+            ],
+        ],
+
+        // Features spécifiques mobile
+        'mobile_features' => [
+            'pull_to_refresh' => true,
+            'swipe_actions' => true,
+            'haptic_feedback' => true,
+            'adaptive_brightness' => true,
+            'battery_optimization' => true,
+        ],
+
+        // Interface adaptative
+        'responsive' => [
+            'breakpoints' => [
+                'mobile' => 480,
+                'tablet' => 768,
+                'desktop' => 1024,
+            ],
+            'mobile_first' => true,
+            'touch_optimized' => true,
+            'gesture_navigation' => true,
         ],
     ],
 ];

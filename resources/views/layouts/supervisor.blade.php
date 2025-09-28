@@ -18,36 +18,50 @@
 
     <style>
         :root {
-            --supervisor-primary: #2563eb; /* blue-600 */
-            --supervisor-secondary: #1d4ed8; /* blue-700 */
-            --supervisor-light: #dbeafe; /* blue-100 */
-            --supervisor-dark: #1e3a8a; /* blue-900 */
-            --supervisor-accent: #60a5fa; /* blue-400 */
+            --supervisor-primary: #DC2626; /* red-600 */
+            --supervisor-secondary: #B91C1C; /* red-700 */
+            --supervisor-light: #FEE2E2; /* red-100 */
+            --supervisor-dark: #7F1D1D; /* red-900 */
+            --supervisor-accent: #F87171; /* red-400 */
         }
 
         .bg-supervisor-primary { background-color: var(--supervisor-primary); }
         .bg-supervisor-secondary { background-color: var(--supervisor-secondary); }
         .bg-supervisor-light { background-color: var(--supervisor-light); }
+        .bg-supervisor-dark { background-color: var(--supervisor-dark); }
         .text-supervisor-primary { color: var(--supervisor-primary); }
         .text-supervisor-secondary { color: var(--supervisor-secondary); }
         .border-supervisor-primary { border-color: var(--supervisor-primary); }
-        .ring-supervisor-primary { ring-color: var(--supervisor-primary); }
+
+        .supervisor-gradient {
+            background: linear-gradient(135deg, var(--supervisor-primary) 0%, var(--supervisor-secondary) 100%);
+        }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg, var(--supervisor-dark) 0%, var(--supervisor-secondary) 100%);
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
         .nav-item {
             transition: all 0.3s ease;
         }
 
-        .nav-item:hover, .nav-item.active {
-            background-color: var(--supervisor-primary);
-            color: #fff;
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
         }
 
-        .nav-item:hover svg, .nav-item.active svg {
-            color: #fff;
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-right: 4px solid #fff;
         }
 
         .notification-badge {
-            transform: scale(0.9);
             animation: pulse 2s infinite;
         }
 
@@ -57,32 +71,32 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900" x-data="supervisorApp()">
+<body class="font-sans antialiased bg-gray-50" x-data="supervisorApp()">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0" :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}">
+        <div class="fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient shadow-2xl transform transition-transform duration-300 ease-in-out" :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}">
             <!-- Logo -->
-            <div class="flex items-center justify-center h-20 px-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-center h-16 px-4 border-b border-white/20">
                 <a href="{{ route('supervisor.dashboard') }}" class="flex items-center space-x-3">
-                    <div class="bg-supervisor-primary p-2 rounded-lg">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="glass-effect p-2 rounded-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <div class="text-gray-800 dark:text-white">
-                        <div class="font-bold text-xl">Al-Amena</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">SUPERVISEUR</div>
+                    <div class="text-white">
+                        <div class="font-bold text-lg">Al-Amena</div>
+                        <div class="text-xs text-red-200">SUPERVISEUR</div>
                     </div>
                 </a>
             </div>
 
             <!-- Navigation -->
-            <nav class="mt-6 px-4 flex-grow">
+            <nav class="mt-8 px-4">
                 <div class="space-y-1">
                     <!-- Dashboard -->
                     <a href="{{ route('supervisor.dashboard') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v1H8V5z"></path>
                         </svg>
@@ -91,8 +105,8 @@
 
                     <!-- Utilisateurs -->
                     <a href="{{ route('supervisor.users.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.users.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.users.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                         </svg>
                         <span class="font-medium">Utilisateurs</span>
@@ -100,8 +114,8 @@
 
                     <!-- Colis -->
                     <a href="{{ route('supervisor.packages.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.packages.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.packages.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                         <span class="font-medium">Colis</span>
@@ -109,8 +123,8 @@
 
                     <!-- Délégations -->
                     <a href="{{ route('supervisor.delegations.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.delegations.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.delegations.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
@@ -119,8 +133,8 @@
 
                     <!-- Tickets Support -->
                     <a href="{{ route('supervisor.tickets.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.tickets.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.tickets.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
                         </svg>
                         <span class="font-medium">Tickets Support</span>
@@ -129,8 +143,8 @@
 
                     <!-- Rapports -->
                     <a href="{{ route('supervisor.reports.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.reports.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.reports.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                         <span class="font-medium">Rapports</span>
@@ -138,8 +152,8 @@
 
                     <!-- Système -->
                     <a href="{{ route('supervisor.system.overview') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.system.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.system.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
@@ -148,8 +162,8 @@
 
                     <!-- Paramètres -->
                     <a href="{{ route('supervisor.settings.index') }}"
-                       class="nav-item flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg {{ request()->routeIs('supervisor.settings.*') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="nav-item flex items-center px-4 py-3 text-white rounded-lg {{ request()->routeIs('supervisor.settings.*') ? 'active' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
                         </svg>
                         <span class="font-medium">Paramètres</span>
@@ -158,34 +172,35 @@
             </nav>
 
             <!-- User Info -->
-            <div class="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="absolute bottom-0 w-full p-4 border-t border-white/20">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-supervisor-light flex items-center justify-center">
-                        <span class="text-sm font-bold text-supervisor-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                    <div class="w-10 h-10 rounded-full glass-effect flex items-center justify-center">
+                        <span class="text-sm font-medium text-white">{{ substr(Auth::user()->name, 0, 1) }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Auth::user()->email }}</p>
+                        <p class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-red-200 truncate">{{ Auth::user()->email }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col ml-0 lg:ml-64 transition-all duration-300 ease-in-out">
+        <div class="flex-1 ml-0 lg:ml-64">
             <!-- Top Header -->
-            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-                <div class="flex justify-between items-center h-16 px-4 sm:px-6">
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="flex justify-between items-center px-6 py-4">
                     <!-- Mobile menu button -->
-                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
 
                     <!-- Page title -->
-                    <div class="hidden lg:block">
-                        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">@yield('title', 'Dashboard')</h1>
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-900">@yield('title', 'Dashboard')</h1>
+                        <p class="text-sm text-gray-500">@yield('subtitle', 'Vue d\'ensemble du système')</p>
                     </div>
 
                     <!-- Header actions -->
@@ -206,7 +221,7 @@
                                  x-transition:leave="transition ease-in duration-75"
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
-                                 class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                                 class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                                 <div class="p-4">
                                     <h3 class="text-lg font-medium text-gray-900 mb-3">Notifications</h3>
                                     <div class="space-y-3 max-h-64 overflow-y-auto">
@@ -234,9 +249,9 @@
 
                         <!-- User menu -->
                         <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <div class="w-8 h-8 bg-supervisor-light rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-bold text-supervisor-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                            <button @click="open = !open" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
+                                <div class="w-8 h-8 bg-supervisor-primary rounded-full flex items-center justify-center">
+                                    <span class="text-sm font-medium text-white">{{ substr(Auth::user()->name, 0, 1) }}</span>
                                 </div>
                                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -244,13 +259,13 @@
                             </button>
 
                             <div x-show="open" @click.away="open = false"
-                                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                                 <div class="py-1">
-                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Mon Profil</a>
-                                    <div class="border-t border-gray-100 dark:border-gray-700"></div>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mon Profil</a>
+                                    <div class="border-t border-gray-100"></div>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Se déconnecter
                                         </button>
                                     </form>
@@ -262,12 +277,8 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-6">
+            <main class="flex-1 p-6">
                 <!-- Flash Messages -->
-                <div class="mb-6">
-                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">@yield('title', 'Dashboard')</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">@yield('subtitle', 'Vue d\'ensemble du système')</p>
-                </div>
                 @if (session('success'))
                     <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg" role="alert">
                         <div class="flex items-center">
@@ -280,12 +291,12 @@
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-6 bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg" role="alert">
+                    <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="font-medium">{{ session('error') }}</span>
+                            <span>{{ session('error') }}</span>
                         </div>
                     </div>
                 @endif
@@ -306,9 +317,23 @@
         </div>
     </div>
 
-    <!-- Overlay for mobile sidebar -->
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" x-cloak></div>
-
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12 ml-0 lg:ml-64">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <p class="text-sm text-gray-500">&copy; {{ date('Y') }} Al-Amena Delivery. Tous droits réservés.</p>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span class="text-xs text-gray-500">Système Opérationnel</span>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-400">
+                    Version 1.0.0 | Mode Superviseur
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script>
@@ -341,6 +366,13 @@
                 }
             }
         }
+
+        // Responsive sidebar handling
+        window.addEventListener('resize', function() {
+            if (window.innerWidth < 1024) {
+                Alpine.store('sidebarOpen', false);
+            }
+        });
 
         // Auto-hide flash messages
         document.addEventListener('DOMContentLoaded', function() {

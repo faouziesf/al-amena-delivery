@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Complaint;
+use App\Models\Ticket;
 use App\Models\User;
+use App\Services\TicketIntegrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +42,18 @@ class ClientComplaintController extends Controller
             abort(403, 'Accès non autorisé à ce colis.');
         }
 
-        // Vérifier qu'il n'y a pas déjà une réclamation en cours
+        // Vérifier qu'il n'y a pas déjà une réclamation en cours (ticket ou réclamation traditionnelle)
+        $existingComplaintTicket = Ticket::where('package_id', $package->id)
+            ->where('client_id', Auth::id())
+            ->where('is_complaint', true)
+            ->whereIn('status', ['OPEN', 'IN_PROGRESS', 'URGENT'])
+            ->first();
+
+        if ($existingComplaintTicket) {
+            return redirect()->route('client.tickets.show', $existingComplaintTicket)
+                ->with('info', 'Une réclamation est déjà en cours pour ce colis.');
+        }
+
         $existingComplaint = $package->complaints()
             ->whereIn('status', ['PENDING', 'IN_PROGRESS'])
             ->first();
@@ -100,33 +113,51 @@ class ClientComplaintController extends Controller
             'description' => 'required|string|max:1000',
             'urgent' => 'boolean',
             'new_cod_amount' => 'nullable|numeric|min:0|max:9999.999|required_if:type,CHANGE_COD',
-            'preferred_date' => 'nullable|date|after:today|before:' . now()->addDays(8)->format('Y-m-d') . '|required_if:type,RESCHEDULE_TODAY,FOURTH_ATTEMPT'
+            'preferred_date' => 'nullable|date|after:today|before:' . now()->addDays(8)->format('Y-m-d') . '|required_if:type,RESCHEDULE_TODAY,FOURTH_ATTEMPT',
+            'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt'
         ], [
             'new_cod_amount.required_if' => 'Le nouveau montant COD est obligatoire pour un changement de prix.',
             'preferred_date.required_if' => 'La date est obligatoire pour un report ou une 4ème tentative.',
             'preferred_date.before' => 'La date ne peut pas dépasser 7 jours.',
+            'attachments.*.max' => 'Chaque fichier ne peut pas dépasser 5MB.',
+            'attachments.*.mimes' => 'Types de fichiers autorisés: JPG, PNG, PDF, DOC, DOCX, TXT.',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $complaint = Complaint::create([
-                'package_id' => $package->id,
-                'client_id' => Auth::id(),
-                'type' => $validated['type'],
-                'description' => $validated['description'],
-                'status' => 'PENDING',
-                'urgent' => $validated['urgent'] ?? false,
-                'metadata' => [
-                    'new_cod_amount' => $validated['new_cod_amount'] ?? null,
-                    'preferred_date' => $validated['preferred_date'] ?? null,
-                    'current_cod_amount' => $package->cod_amount,
-                    'package_status_at_complaint' => $package->status
-                ]
-            ]);
+            // Traiter les pièces jointes
+            $attachments = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('complaint_attachments/' . date('Y/m'), 'public');
+                    $attachments[] = [
+                        'name' => $file->getClientOriginalName(),
+                        'url' => asset('storage/' . $path),
+                        'path' => $path,
+                        'size' => $file->getSize(),
+                        'type' => $file->getMimeType()
+                    ];
+                }
+            }
 
-            // TRAITEMENT AUTOMATIQUE selon le type
-            $this->processComplaintByType($complaint, $package, $validated);
+            // Créer le ticket de réclamation directement
+            $ticketService = app(TicketIntegrationService::class);
+            $ticket = $ticketService->createComplaintTicketDirect(
+                $package->id,
+                Auth::id(),
+                $validated['type'],
+                $validated['description'],
+                $attachments
+            );
+
+            // Définir la priorité si urgente
+            if ($validated['urgent'] ?? false) {
+                $ticket->markAsUrgent('Réclamation marquée comme urgente par le client');
+            }
+
+            // Traitement automatique selon le type
+            $this->processComplaintByTypeForTicket($ticket, $package, $validated);
 
             DB::commit();
 
@@ -134,12 +165,13 @@ class ClientComplaintController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Réclamation créée avec succès',
-                    'complaint_id' => $complaint->id
+                    'ticket_id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number
                 ]);
             }
 
-            return redirect()->route('client.complaints.show', $complaint)
-                ->with('success', "Réclamation #{$complaint->id} créée avec succès!");
+            return redirect()->route('client.tickets.show', $ticket)
+                ->with('success', "Réclamation {$ticket->ticket_number} créée avec succès!");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -215,6 +247,83 @@ class ClientComplaintController extends Controller
 
         // Créer notification pour le commercial
         $this->createCommercialNotification($complaint, $package);
+    }
+
+    /**
+     * Traitement automatique selon le type de réclamation pour ticket
+     */
+    private function processComplaintByTypeForTicket($ticket, $package, $validated)
+    {
+        $metadata = $ticket->metadata ?? [];
+
+        switch ($validated['type']) {
+            case 'CHANGE_COD':
+                $metadata['required_action'] = 'MODIFY_COD';
+                $metadata['action_data'] = [
+                    'new_amount' => $validated['new_cod_amount'],
+                    'old_amount' => $package->cod_amount
+                ];
+                break;
+
+            case 'RESCHEDULE_TODAY':
+                $metadata['required_action'] = 'RESCHEDULE_DELIVERY';
+                $metadata['action_data'] = [
+                    'new_date' => $validated['preferred_date']
+                ];
+                break;
+
+            case 'FOURTH_ATTEMPT':
+                $metadata['required_action'] = 'FOURTH_ATTEMPT';
+                $metadata['action_data'] = [
+                    'attempt_date' => $validated['preferred_date']
+                ];
+                break;
+
+            case 'REQUEST_RETURN':
+                $metadata['required_action'] = 'FORCE_RETURN';
+                break;
+
+            default:
+                $metadata['required_action'] = 'REVIEW';
+        }
+
+        $metadata['complaint_type'] = $validated['type'];
+        $metadata['current_cod_amount'] = $package->cod_amount;
+        $metadata['package_status_at_complaint'] = $package->status;
+
+        $ticket->update(['metadata' => $metadata]);
+
+        // Assigner automatiquement à un commercial
+        $this->assignTicketToCommercial($ticket, $package);
+    }
+
+    /**
+     * Assigner le ticket à un commercial
+     */
+    private function assignTicketToCommercial($ticket, $package)
+    {
+        $commercial = User::where('role', 'COMMERCIAL')
+                         ->where('account_status', 'ACTIVE')
+                         ->first();
+
+        if ($commercial) {
+            $ticket->assignTo($commercial->id);
+
+            // Créer une notification pour le commercial
+            $commercial->notifications()->create([
+                'type' => 'NEW_COMPLAINT_TICKET',
+                'title' => 'Nouveau ticket de réclamation' . ($ticket->isUrgent() ? ' URGENT' : ''),
+                'message' => "Ticket {$ticket->ticket_number} - Colis #{$package->package_code}",
+                'data' => [
+                    'ticket_id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                    'package_id' => $package->id,
+                    'package_code' => $package->package_code,
+                    'complaint_type' => $ticket->complaint_type,
+                    'urgent' => $ticket->isUrgent()
+                ]
+            ]);
+        }
     }
 
     /**
@@ -503,5 +612,74 @@ class ClientComplaintController extends Controller
                 'client_name' => $complaint->client->name
             ]
         ]);
+    }
+
+
+    /**
+     * Accepter la résolution d'une réclamation
+     */
+    public function acceptResolution(Request $request, Complaint $complaint)
+    {
+        // Vérifier que le client est propriétaire de la réclamation
+        if ($complaint->client_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé');
+        }
+
+        // Vérifier que la réclamation est résolue
+        if ($complaint->status !== 'RESOLVED') {
+            return redirect()->route('client.complaints.show', $complaint)
+                           ->with('error', 'Cette réclamation n\'est pas marquée comme résolue');
+        }
+
+        // Mettre à jour le statut
+        $complaint->update([
+            'status' => 'CLOSED',
+            'closed_at' => now(),
+            'client_satisfaction' => 'SATISFIED',
+            'last_activity_at' => now()
+        ]);
+
+        // Créer un message de clôture
+        \App\Models\ComplaintMessage::create([
+            'complaint_id' => $complaint->id,
+            'sender_id' => Auth::id(),
+            'sender_type' => 'CLIENT',
+            'message' => 'J\'accepte la résolution proposée. Cette réclamation peut être fermée.',
+            'is_internal' => false
+        ]);
+
+        // Notification au commercial
+        if ($complaint->assigned_commercial_id) {
+            \App\Models\Notification::create([
+                'user_id' => $complaint->assigned_commercial_id,
+                'type' => 'COMPLAINT_ACCEPTED',
+                'title' => 'Résolution acceptée',
+                'message' => "Le client a accepté la résolution de la réclamation #{$complaint->complaint_number}",
+                'priority' => 'NORMAL',
+                'data' => [
+                    'complaint_id' => $complaint->id,
+                    'client_name' => Auth::user()->name,
+                    'resolution_accepted' => true
+                ]
+            ]);
+        }
+
+        // Log de l'action
+        if (app()->bound(\App\Services\ActionLogService::class)) {
+            app(\App\Services\ActionLogService::class)->log(
+                'COMPLAINT_RESOLUTION_ACCEPTED',
+                'Complaint',
+                $complaint->id,
+                'RESOLVED',
+                'CLOSED',
+                [
+                    'complaint_number' => $complaint->complaint_number,
+                    'client_satisfaction' => 'SATISFIED'
+                ]
+            );
+        }
+
+        return redirect()->route('client.complaints.show', $complaint)
+                        ->with('success', 'Merci ! Votre réclamation a été fermée avec succès.');
     }
 }

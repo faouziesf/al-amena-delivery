@@ -53,7 +53,33 @@ class DelivererPaymentController extends Controller
 
         $paymentRequests = $query->paginate(20)->appends($request->query());
 
-        return view('deliverer.payments.index', compact('paymentRequests'));
+        // Transform pour la vue (compatibilité avec la variable payments)
+        $payments = $paymentRequests->getCollection()->map(function($request) {
+            return [
+                'id' => $request->id,
+                'request_code' => $request->request_code,
+                'amount' => $request->amount,
+                'status' => $request->status,
+                'method' => $request->method,
+                'created_at' => $request->created_at->toISOString(),
+                'delivery_receipt_code' => $request->delivery_receipt_code,
+                'delivery_attempts' => $request->delivery_attempts ?? 0,
+                'processing_notes' => $request->processing_notes,
+                'client' => [
+                    'id' => $request->client->id,
+                    'name' => $request->client->name,
+                    'phone' => $request->client->phone,
+                    'email' => $request->client->email,
+                    'address' => $request->client->address ?? null
+                ],
+                'processed_by_commercial' => $request->processedByCommercial ? [
+                    'id' => $request->processedByCommercial->id,
+                    'name' => $request->processedByCommercial->name
+                ] : null
+            ];
+        })->toArray();
+
+        return view('deliverer.payments.index', compact('paymentRequests', 'payments'));
     }
 
     /**
@@ -91,14 +117,16 @@ class DelivererPaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'delivery_confirmation_code' => 'required|string|size:6', // Code à 6 chiffres généré
+            'delivery_confirmation_code' => 'nullable|string',
+            'amount_delivered' => 'nullable|numeric',
             'client_signature' => 'nullable|string',
             'delivery_notes' => 'nullable|string|max:500',
             'delivery_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:5120'
         ]);
 
-        // Vérifier le code de confirmation
-        if ($validated['delivery_confirmation_code'] !== $withdrawalRequest->delivery_receipt_code) {
+        // Vérifier le code de confirmation si fourni
+        if (isset($validated['delivery_confirmation_code']) &&
+            $validated['delivery_confirmation_code'] !== $withdrawalRequest->delivery_receipt_code) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code de confirmation incorrect. Vérifiez le code-barres sur le bon de livraison.'
@@ -233,6 +261,58 @@ class DelivererPaymentController extends Controller
     }
 
     /**
+     * Vue du scanner de paiements
+     */
+    public function scanner()
+    {
+        return view('deliverer.payments.scanner');
+    }
+
+    /**
+     * Scanner par code spécifique
+     */
+    public function scanPaymentByCode(Request $request, $code)
+    {
+        try {
+            $withdrawal = WithdrawalRequest::where('assigned_deliverer_id', Auth::id())
+                                         ->where('method', 'CASH_DELIVERY')
+                                         ->where('status', 'IN_PROGRESS')
+                                         ->where(function($query) use ($code) {
+                                             $query->where('request_code', $code)
+                                                   ->orWhere('delivery_receipt_code', $code);
+                                         })
+                                         ->with(['client'])
+                                         ->first();
+
+            if (!$withdrawal) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paiement non trouvé ou déjà livré'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'id' => $withdrawal->id,
+                'request_code' => $withdrawal->request_code,
+                'delivery_receipt_code' => $withdrawal->delivery_receipt_code,
+                'amount' => $withdrawal->amount,
+                'client_name' => $withdrawal->client->name,
+                'client_phone' => $withdrawal->client->phone,
+                'client_address' => $withdrawal->client->address,
+                'status' => $withdrawal->status,
+                'created_at' => $withdrawal->created_at->format('d/m/Y H:i')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la recherche du paiement'
+            ], 500);
+        }
+    }
+
+    /**
      * API - Compter les paiements en attente
      */
     public function apiPaymentsCount()
@@ -242,7 +322,7 @@ class DelivererPaymentController extends Controller
                                  ->whereIn('status', ['IN_PROGRESS', 'APPROVED'])
                                  ->count();
 
-        return response()->json(['count' => $count]);
+        return response()->json(['payments_pending' => $count]);
     }
 
     /**
@@ -387,6 +467,63 @@ class DelivererPaymentController extends Controller
         // ou simplement par confiance du processus commercial → livreur
         
         return true; // Simplifié pour MVP
+    }
+
+    /**
+     * Scanner un code de paiement pour trouver la demande
+     */
+    public function scanPaymentCode(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|min:3'
+        ]);
+
+        $code = strtoupper(trim($validated['code']));
+
+        try {
+            // Chercher par code de livraison
+            $payment = WithdrawalRequest::where('delivery_receipt_code', $code)
+                                      ->where('assigned_deliverer_id', Auth::id())
+                                      ->where('method', 'CASH_DELIVERY')
+                                      ->whereIn('status', ['IN_PROGRESS', 'APPROVED'])
+                                      ->with(['client', 'processedByCommercial'])
+                                      ->first();
+
+            if ($payment) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Paiement #{$payment->request_code} trouvé",
+                    'redirect' => route('deliverer.payments.show', $payment->id)
+                ]);
+            }
+
+            // Chercher par code de demande
+            $payment = WithdrawalRequest::where('request_code', $code)
+                                      ->where('assigned_deliverer_id', Auth::id())
+                                      ->where('method', 'CASH_DELIVERY')
+                                      ->whereIn('status', ['IN_PROGRESS', 'APPROVED'])
+                                      ->with(['client', 'processedByCommercial'])
+                                      ->first();
+
+            if ($payment) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Paiement #{$payment->request_code} trouvé",
+                    'redirect' => route('deliverer.payments.show', $payment->id)
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => "Aucun paiement trouvé pour le code: {$code}"
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la recherche du paiement'
+            ], 500);
+        }
     }
 
     /**

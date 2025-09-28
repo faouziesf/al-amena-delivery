@@ -532,4 +532,144 @@ class CommercialService
             'action_needed' => 'none'
         ];
     }
+
+    /**
+     * Traiter une demande de retrait
+     */
+    public function processWithdrawalRequest(WithdrawalRequest $withdrawal, string $action, array $data = [], User $commercial = null)
+    {
+        return DB::transaction(function () use ($withdrawal, $action, $data, $commercial) {
+            $withdrawal->load(['client.wallet']);
+
+            switch ($action) {
+                case 'approve_bank_transfer':
+                    return $this->approveBankTransfer($withdrawal, $data, $commercial);
+
+                case 'approve_cash_delivery':
+                    return $this->approveCashDelivery($withdrawal, $data, $commercial);
+
+                case 'reject':
+                    return $this->rejectWithdrawal($withdrawal, $data, $commercial);
+
+                default:
+                    throw new \Exception("Action non supportée: {$action}");
+            }
+        });
+    }
+
+    /**
+     * Approuver un virement bancaire
+     */
+    private function approveBankTransfer(WithdrawalRequest $withdrawal, array $data, User $commercial)
+    {
+        // Vérifier le solde du client
+        if ($withdrawal->client->wallet->balance < $withdrawal->amount) {
+            throw new \Exception('Solde insuffisant pour effectuer le retrait');
+        }
+
+        // Déduire le montant du wallet
+        $withdrawal->client->wallet->decrement('balance', $withdrawal->amount);
+
+        // Créer la transaction financière
+        FinancialTransaction::create([
+            'user_id' => $withdrawal->client->id,
+            'type' => 'WITHDRAWAL',
+            'amount' => -$withdrawal->amount,
+            'description' => "Retrait par virement bancaire - {$withdrawal->request_code}",
+            'status' => 'COMPLETED',
+            'related_type' => 'App\Models\WithdrawalRequest',
+            'related_id' => $withdrawal->id,
+            'processed_by' => $commercial ? $commercial->id : null,
+        ]);
+
+        // Mettre à jour la demande de retrait
+        $withdrawal->update([
+            'status' => 'COMPLETED',
+            'processed_at' => now(),
+            'processed_by_commercial_id' => $commercial ? $commercial->id : null,
+            'commercial_notes' => $data['notes'] ?? null,
+        ]);
+
+        return $withdrawal;
+    }
+
+    /**
+     * Approuver une livraison espèces
+     */
+    private function approveCashDelivery(WithdrawalRequest $withdrawal, array $data, User $commercial)
+    {
+        // Vérifier le solde du client
+        if ($withdrawal->client->wallet->balance < $withdrawal->amount) {
+            throw new \Exception('Solde insuffisant pour effectuer le retrait');
+        }
+
+        // Générer un code de livraison unique
+        $deliveryCode = 'CD-' . strtoupper(uniqid());
+
+        // Mettre à jour la demande de retrait
+        $withdrawal->update([
+            'status' => 'APPROVED',
+            'processed_at' => now(),
+            'processed_by_commercial_id' => $commercial ? $commercial->id : null,
+            'commercial_notes' => $data['notes'] ?? null,
+            'delivery_receipt_code' => $deliveryCode,
+        ]);
+
+        return $withdrawal;
+    }
+
+    /**
+     * Rejeter une demande de retrait
+     */
+    private function rejectWithdrawal(WithdrawalRequest $withdrawal, array $data, User $commercial)
+    {
+        $withdrawal->update([
+            'status' => 'REJECTED',
+            'processed_at' => now(),
+            'processed_by_commercial_id' => $commercial ? $commercial->id : null,
+            'rejection_reason' => $data['rejection_reason'],
+        ]);
+
+        return $withdrawal;
+    }
+
+    /**
+     * Assigner une demande de retrait à un livreur
+     */
+    public function assignWithdrawalToDeliverer(WithdrawalRequest $withdrawal, User $deliverer)
+    {
+        if ($withdrawal->status !== 'APPROVED' || $withdrawal->method !== 'CASH_DELIVERY') {
+            throw new \Exception('Cette demande ne peut pas être assignée à un livreur');
+        }
+
+        if ($deliverer->role !== 'DELIVERER' || $deliverer->account_status !== 'ACTIVE') {
+            throw new \Exception('Le livreur sélectionné n\'est pas valide');
+        }
+
+        return DB::transaction(function () use ($withdrawal, $deliverer) {
+            // Déduire le montant du wallet du client
+            $withdrawal->client->wallet->decrement('balance', $withdrawal->amount);
+
+            // Créer la transaction financière
+            FinancialTransaction::create([
+                'user_id' => $withdrawal->client->id,
+                'type' => 'WITHDRAWAL',
+                'amount' => -$withdrawal->amount,
+                'description' => "Retrait espèces assigné - {$withdrawal->request_code}",
+                'status' => 'PENDING',
+                'related_type' => 'App\Models\WithdrawalRequest',
+                'related_id' => $withdrawal->id,
+                'processed_by' => $deliverer->id,
+            ]);
+
+            // Mettre à jour la demande
+            $withdrawal->update([
+                'status' => 'IN_PROGRESS',
+                'assigned_deliverer_id' => $deliverer->id,
+                'assigned_at' => now(),
+            ]);
+
+            return $withdrawal;
+        });
+    }
 }

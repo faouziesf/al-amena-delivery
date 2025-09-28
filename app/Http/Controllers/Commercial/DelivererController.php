@@ -131,7 +131,7 @@ class DelivererController extends Controller
                                                      ->first(),
         ];
 
-        return view('commercial.deliverers.show', compact('deliverer', 'emptyings', 'packages', 'cashDeliveries', 'stats'));
+        return view('commercial.deliverers.show', compact('deliverer', 'packages', 'cashDeliveries', 'stats'))->with('walletEmptyings', $emptyings);
     }
 
     public function walletDetails(User $deliverer)
@@ -408,5 +408,29 @@ class DelivererController extends Controller
                                            });
 
         return response()->json($emptyings);
+    }
+
+    public function apiAvailableDeliverers()
+    {
+        $deliverers = User::where('role', 'DELIVERER')
+                         ->where('account_status', 'ACTIVE')
+                         ->orderBy('name', 'asc')
+                         ->get()
+                         ->map(function ($deliverer) {
+                             return [
+                                 'id' => $deliverer->id,
+                                 'name' => $deliverer->first_name ? ($deliverer->first_name . ' ' . ($deliverer->last_name ?? '')) : $deliverer->name,
+                                 'phone' => $deliverer->phone,
+                                 'email' => $deliverer->email,
+                             ];
+                         });
+
+        return response()->json($deliverers);
+    }
+
+    public function apiActiveDeliverers()
+    {
+        // Alias pour apiAvailableDeliverers
+        return $this->apiAvailableDeliverers();
     }
 }

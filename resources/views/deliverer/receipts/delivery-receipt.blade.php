@@ -4,294 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reçu de Livraison - {{ $package->package_code }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Inter', sans-serif; }
         @media print {
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { margin: 0; padding: 20px; }
+            @page { margin: 0; size: A4; }
+            .receipt-container { border: none !important; box-shadow: none !important; }
         }
-        @media screen {
-            .print-only { display: none; }
-            body { background: #f5f5f5; padding: 20px; }
-            .receipt { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        }
-
-        .receipt {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            line-height: 1.5;
-        }
-
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-
-        .company-name {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1a365d;
-            margin-bottom: 5px;
-        }
-
-        .document-title {
-            font-size: 20px;
-            color: #4a5568;
-            margin-bottom: 10px;
-        }
-
-        .receipt-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .info-section {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #3182ce;
-        }
-
-        .info-title {
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .info-item {
-            margin-bottom: 8px;
-            color: #4a5568;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .package-details {
-            background: #edf2f7;
-            padding: 25px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #cbd5e0;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-            font-weight: bold;
-            font-size: 18px;
-            color: #1a365d;
-        }
-
-        .cod-amount {
-            color: #e53e3e;
-            font-weight: bold;
-            font-size: 20px;
-        }
-
-        .signature-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 2px solid #e2e8f0;
-        }
-
         .signature-box {
-            text-align: center;
-        }
-
-        .signature-line {
-            border-bottom: 2px solid #4a5568;
-            margin: 40px 0 10px 0;
-            height: 60px;
-        }
-
-        .signature-label {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #718096;
-            font-size: 14px;
-        }
-
-        .print-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #3182ce;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .print-btn:hover {
-            background: #2c5282;
+            border: 2px dashed #D1D5DB;
+            min-height: 80px; /* Reduced height */
+            background: linear-gradient(to bottom, transparent 95%, #F3F4F6 95%);
+            background-size: 100% 20px;
         }
     </style>
 </head>
-<body>
-    <button onclick="window.print()" class="print-btn no-print">🖨️ Imprimer</button>
+<body class="bg-slate-100">
 
-    <div class="receipt">
-        <div class="header">
-            <div class="company-name">AL AMENA DELIVERY</div>
-            <div class="document-title">REÇU DE LIVRAISON</div>
-            <div style="color: #718096; font-size: 14px;">
-                {{ now()->format('d/m/Y à H:i') }}
-            </div>
-        </div>
+    <div class="no-print bg-white shadow-sm p-3 flex justify-between items-center sticky top-0 z-10">
+        <a href="{{ url()->previous() }}" class="text-purple-600 font-semibold hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors">← Retour</a>
+        <h1 class="font-bold text-lg">Reçu de Livraison</h1>
+        <button onclick="window.print()" class="bg-purple-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">Imprimer</button>
+    </div>
 
-        <div class="receipt-info">
-            <div class="info-section">
-                <div class="info-title">📦 INFORMATIONS DU COLIS</div>
-                <div class="info-item">
-                    <span class="info-label">Code:</span> {{ $package->package_code }}
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Date de livraison:</span>
-                    {{ $package->delivered_at ? $package->delivered_at->format('d/m/Y à H:i') : 'N/A' }}
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Livreur:</span> {{ Auth::user()->name }}
-                </div>
-                @if($package->delivery_notes)
-                <div class="info-item">
-                    <span class="info-label">Notes:</span> {{ $package->delivery_notes }}
-                </div>
-                @endif
-            </div>
+    <div class="max-w-3xl mx-auto p-4 print:p-0">
+        <div class="receipt-container bg-white rounded-2xl shadow-lg border border-purple-100 p-6 print:p-8 print:shadow-none print:border-none">
 
-            <div class="info-section">
-                <div class="info-title">👤 DESTINATAIRE</div>
-                <div class="info-item">
-                    <span class="info-label">Nom:</span> {{ $recipientData['name'] ?? 'N/A' }}
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Téléphone:</span> {{ $recipientData['phone'] ?? 'N/A' }}
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Adresse:</span>
-                    {{ $recipientData['address'] ?? 'N/A' }}
-                </div>
-                @if(isset($recipientData['city']))
-                <div class="info-item">
-                    <span class="info-label">Ville:</span> {{ $recipientData['city'] }}
-                </div>
-                @endif
-            </div>
-        </div>
-
-        @if(isset($senderData))
-        <div class="info-section" style="margin-bottom: 30px;">
-            <div class="info-title">📤 EXPÉDITEUR</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <header class="flex justify-between items-center border-b-2 border-purple-100 pb-4 mb-4 print:pb-3 print:mb-3">
                 <div>
-                    <div class="info-item">
-                        <span class="info-label">Nom:</span> {{ $senderData['name'] ?? 'N/A' }}
+                    <h2 class="text-2xl print:text-xl font-bold text-purple-900">AL-AMENA DELIVERY</h2>
+                    <p class="text-purple-700 print:text-sm">Reçu de Livraison Officiel</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-mono text-sm print:text-xs">{{ $package->package_code }}</p>
+                    <p class="text-sm print:text-xs text-gray-500">{{ now()->format('d/m/Y H:i') }}</p>
+                </div>
+            </header>
+
+            <section class="mb-4 print:mb-3 border-t border-b border-purple-100 py-3 print:py-2">
+                <div class="space-y-2 text-sm print:text-xs">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-500">STATUT</span>
+                        <span class="px-3 py-1 rounded-full font-semibold bg-green-100 text-green-800">LIVRÉ</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Téléphone:</span> {{ $senderData['phone'] ?? 'N/A' }}
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-500">MONTANT COLLECTÉ</span>
+                        <span class="text-base print:text-sm font-bold text-green-800">{{ number_format($package->cod_amount, 3) }} DT</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-500">LIVRÉ PAR</span>
+                        <span class="font-semibold text-gray-800">{{ Auth::check() ? Auth::user()->name : 'Livreur' }}</span>
                     </div>
                 </div>
-                <div>
-                    <div class="info-item">
-                        <span class="info-label">Adresse:</span> {{ $senderData['address'] ?? 'N/A' }}
-                    </div>
-                    @if(isset($senderData['city']))
-                    <div class="info-item">
-                        <span class="info-label">Ville:</span> {{ $senderData['city'] }}
-                    </div>
+            </section>
+
+            <section class="grid grid-cols-2 gap-4 mb-4 print:mb-3 print:gap-3">
+                <div class="space-y-1 text-xs print:text-[10px]">
+                    <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1">EXPÉDITEUR</h3>
+                    <p><strong>Nom:</strong> {{ $package->sender->name ?? 'N/A' }}</p>
+                    <p><strong>Tél:</strong> {{ $package->sender->phone ?? 'N/A' }}</p>
+                    <p><strong>Zone:</strong> {{ $package->delegationFrom->name ?? 'N/A' }}</p>
+                </div>
+                <div class="space-y-1 text-xs print:text-[10px]">
+                    <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1">DESTINATAIRE</h3>
+                    <p><strong>Nom:</strong> {{ $recipientData['name'] ?? 'N/A' }}</p>
+                    <p><strong>Tél:</strong> {{ $recipientData['phone'] ?? 'N/A' }}</p>
+                    <p><strong>Adresse:</strong> {{ $recipientData['address'] ?? 'N/A' }}</p>
+                    <p><strong>Zone:</strong> {{ $package->delegationTo->name ?? 'N/A' }}</p>
+                </div>
+            </section>
+
+            @if($package->pickup_address || $package->pickup_phone || $package->pickup_notes)
+            <section class="mb-4 print:mb-3">
+                <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1 text-xs">ADRESSE DE PICKUP</h3>
+                <div class="text-xs print:text-[10px] bg-blue-50 rounded-lg p-2">
+                    @if($package->pickup_address)
+                        <p><strong>Adresse:</strong> {{ $package->pickup_address }}</p>
+                    @endif
+                    @if($package->pickup_phone)
+                        <p><strong>Téléphone Contact:</strong> {{ $package->pickup_phone }}</p>
+                    @endif
+                    @if($package->pickup_notes)
+                        <p><strong>Notes Pickup:</strong> {{ $package->pickup_notes }}</p>
+                    @endif
+                    @if($package->pickupDelegation)
+                        <p><strong>Délégation:</strong> {{ $package->pickupDelegation->name }}</p>
                     @endif
                 </div>
-            </div>
-        </div>
-        @endif
-
-        <div class="package-details">
-            <div class="detail-row">
-                <span>💰 Montant COD (Cash on Delivery)</span>
-                <span class="cod-amount">{{ number_format($package->cod_amount, 3) }} DT</span>
-            </div>
-            @if($package->weight)
-            <div class="detail-row">
-                <span>⚖️ Poids du colis</span>
-                <span>{{ $package->weight }} kg</span>
-            </div>
+            </section>
             @endif
-            @if($package->description)
-            <div class="detail-row">
-                <span>📋 Contenu du colis</span>
-                <span>{{ Str::limit($package->description, 50) }}</span>
-            </div>
+
+            <section class="mb-4 print:mb-3">
+                <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1 text-xs">DÉTAILS DU COLIS</h3>
+                <div class="text-xs print:text-[10px] bg-slate-50 rounded-lg p-2">
+                    <p><strong>Contenu:</strong> {{ $package->content_description ?? 'Non spécifié' }}</p>
+
+                    @if($package->est_echange)
+                        <p class="mt-1"><strong>Type:</strong> <span class="text-orange-600 font-semibold">COLIS D'ÉCHANGE</span></p>
+                    @endif
+
+                    @if($package->package_weight)
+                        <p class="mt-1"><strong>Poids:</strong> {{ number_format($package->package_weight, 3) }} kg</p>
+                    @endif
+
+                    @if($package->package_value)
+                        <p class="mt-1"><strong>Valeur déclarée:</strong> {{ number_format($package->package_value, 3) }} DT</p>
+                    @endif
+
+                    @if($package->package_dimensions)
+                        @php $dims = json_decode($package->package_dimensions, true); @endphp
+                        @if($dims && isset($dims['length'], $dims['width'], $dims['height']))
+                            <p class="mt-1"><strong>Dimensions:</strong> {{ $dims['length'] }}×{{ $dims['width'] }}×{{ $dims['height'] }} cm</p>
+                        @endif
+                    @endif
+
+                    @if($package->payment_method)
+                        <p class="mt-1"><strong>Mode de paiement:</strong>
+                            @switch($package->payment_method)
+                                @case('cash_only') Espèces uniquement @break
+                                @case('check_only') Chèque uniquement @break
+                                @case('cash_and_check') Espèces et chèques @break
+                                @default {{ $package->payment_method }} @break
+                            @endswitch
+                        </p>
+                    @endif
+
+                    @if($package->delivery_notes || $package->notes)
+                        <p class="mt-1"><strong>Notes:</strong> {{ $package->delivery_notes ?? $package->notes }}</p>
+                    @endif
+                </div>
+            </section>
+
+            <!-- Options spéciales -->
+            @if($package->is_fragile || $package->requires_signature || $package->allow_opening)
+            <section class="mb-4 print:mb-3">
+                <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1 text-xs">OPTIONS SPÉCIALES</h3>
+                <div class="text-xs print:text-[10px] bg-yellow-50 rounded-lg p-2">
+                    @if($package->is_fragile)
+                        <p class="flex items-center mb-1">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            <strong>FRAGILE</strong> - Manipuler avec précaution
+                        </p>
+                    @endif
+                    @if($package->requires_signature)
+                        <p class="flex items-center mb-1">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            <strong>SIGNATURE OBLIGATOIRE</strong> - Ne pas laisser sans signature
+                        </p>
+                    @endif
+                    @if($package->allow_opening)
+                        <p class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            <strong>OUVERTURE AUTORISÉE</strong> - Le destinataire peut vérifier le contenu
+                        </p>
+                    @endif
+                </div>
+            </section>
             @endif
-            <div class="detail-row">
-                <span><strong>✅ LIVRAISON CONFIRMÉE</strong></span>
-                <span><strong>{{ number_format($package->cod_amount, 3) }} DT</strong></span>
-            </div>
-        </div>
 
-        <div class="signature-section">
-            <div class="signature-box">
-                <div style="font-weight: 600; margin-bottom: 10px;">SIGNATURE DU DESTINATAIRE</div>
-                <div style="color: #718096; font-size: 14px; margin-bottom: 20px;">
-                    Je certifie avoir reçu le colis en bon état
+            <!-- Informations financières -->
+            <section class="mb-4 print:mb-3">
+                <h3 class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1 text-xs">INFORMATIONS FINANCIÈRES</h3>
+                <div class="text-xs print:text-[10px] bg-green-50 rounded-lg p-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <p><strong>Montant COD:</strong> {{ number_format($package->cod_amount, 3) }} DT</p>
+                        <p><strong>Frais livraison:</strong> {{ number_format($package->delivery_fee ?? 0, 3) }} DT</p>
+                        @if($package->return_fee)
+                            <p><strong>Frais retour:</strong> {{ number_format($package->return_fee, 3) }} DT</p>
+                        @endif
+                        @if($package->delivered_at)
+                            <p><strong>Livré le:</strong> {{ $package->delivered_at->format('d/m/Y H:i') }}</p>
+                        @endif
+                    </div>
                 </div>
-                <div class="signature-line"></div>
-                <div class="signature-label">{{ $recipientData['name'] ?? 'Destinataire' }}</div>
-                <div style="color: #718096; font-size: 12px;">Date: {{ now()->format('d/m/Y') }}</div>
-            </div>
+            </section>
 
-            <div class="signature-box">
-                <div style="font-weight: 600; margin-bottom: 10px;">SIGNATURE DU LIVREUR</div>
-                <div style="color: #718096; font-size: 14px; margin-bottom: 20px;">
-                    Livraison effectuée avec succès
+            <section class="grid grid-cols-2 gap-4 mb-4 print:mb-3 print:gap-3">
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2 text-xs">SIGNATURE DESTINATAIRE</h3>
+                    <p class="text-[10px] text-gray-600 mb-2">Je certifie avoir reçu le colis en bon état.</p>
+                    <div class="signature-box rounded-md"></div>
                 </div>
-                <div class="signature-line"></div>
-                <div class="signature-label">{{ Auth::user()->name }}</div>
-                <div style="color: #718096; font-size: 12px;">ID: {{ Auth::id() }}</div>
-            </div>
-        </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2 text-xs">SIGNATURE LIVREUR</h3>
+                    <p class="text-[10px] text-gray-600 mb-2">Je certifie avoir remis le colis.</p>
+                    <div class="signature-box rounded-md"></div>
+                </div>
+            </section>
 
-        <div class="footer">
-            <div>AL AMENA DELIVERY - Service de livraison professionnel</div>
-            <div style="margin-top: 5px;">
-                Ce reçu certifie la livraison du colis {{ $package->package_code }} le {{ now()->format('d/m/Y à H:i') }}
-            </div>
+            <footer class="border-t-2 border-purple-100 pt-3 text-center">
+                <p class="text-[10px] text-gray-500">Merci d'avoir choisi Al-Amena Delivery.</p>
+                <p class="text-[10px] text-gray-500">Reçu N°: REC-{{ str_pad($package->id, 6, '0', STR_PAD_LEFT) }} | Généré le: {{ now()->format('d/m/Y à H:i') }}</p>
+            </footer>
         </div>
     </div>
 
     <script>
-        // Auto-print for mobile devices
-        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            setTimeout(() => {
-                window.print();
-            }, 1000);
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('print') === 'true') {
+            setTimeout(() => window.print(), 500);
         }
     </script>
 </body>

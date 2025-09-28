@@ -18,6 +18,29 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ==================== ROUTE TEMPORAIRE POUR TESTER LE REÇU ====================
+Route::get('/test-receipt/{id}', function($id) {
+    try {
+        $package = \App\Models\Package::findOrFail($id);
+
+        $recipientData = is_string($package->recipient_data)
+            ? json_decode($package->recipient_data, true)
+            : $package->recipient_data;
+
+        $senderData = is_string($package->sender_data)
+            ? json_decode($package->sender_data, true)
+            : $package->sender_data;
+
+        return view('deliverer.receipts.delivery-receipt', compact('package', 'recipientData', 'senderData'));
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ], 500);
+    }
+});
+
 // ==================== DASHBOARD PRINCIPAL AVEC REDIRECTION ====================
 Route::get('/dashboard', function () {
     $user = auth()->user();
@@ -33,6 +56,10 @@ Route::get('/dashboard', function () {
             return redirect()->route('deliverer.dashboard');
         case 'COMMERCIAL':
             return redirect()->route('commercial.dashboard');
+        case 'DEPOT_MANAGER':
+            return redirect()->route('depot-manager.dashboard');
+        case 'TRANSIT_DRIVER':
+            return redirect()->route('transit-driver.app');
         case 'SUPERVISOR':
             return redirect()->route('supervisor.dashboard');
         default:
@@ -52,7 +79,7 @@ Route::middleware('auth')->group(function () {
 // Routes spécifiques aux clients
 require __DIR__.'/client.php';
 
-// Routes spécifiques aux livreurs  
+// Routes spécifiques aux livreurs
 require __DIR__.'/deliverer.php';
 
 // Routes spécifiques aux commerciaux (inclut aussi SUPERVISOR pour ces routes)
@@ -60,6 +87,12 @@ require __DIR__.'/commercial.php';
 
 // Routes spécifiques aux superviseurs
 require __DIR__.'/supervisor.php';
+
+// Routes spécifiques aux chefs dépôt
+require __DIR__.'/depot-manager.php';
+
+// Routes spécifiques aux livreurs de transit
+require __DIR__.'/transit-driver.php';
 
 // Routes d'authentification
 require __DIR__.'/auth.php';

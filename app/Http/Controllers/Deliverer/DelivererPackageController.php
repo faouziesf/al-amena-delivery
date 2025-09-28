@@ -323,6 +323,39 @@ class DelivererPackageController extends Controller
     }
 
     /**
+     * Réassigner un colis à un nouveau livreur
+     */
+    public function reassignPackage(Request $request, Package $package)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $scannerService = app(PackageScannerService::class);
+            $result = $scannerService->reassignPackage(
+                $package,
+                Auth::id(),
+                $validated['reason'] ?? 'Réassignation via scan'
+            );
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur réassignation package', [
+                'package_id' => $package->id,
+                'deliverer_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la réassignation.'
+            ], 500);
+        }
+    }
+
+    /**
      * Marquer comme collecté (Picked Up) - VERSION AMÉLIORÉE
      */
     public function markPickedUp(Package $package, Request $request)
@@ -397,17 +430,26 @@ class DelivererPackageController extends Controller
             ], 403);
         }
 
+        // Validation adaptée selon le montant COD
+        $expectedCod = (float) $package->cod_amount;
+        $isCodZero = $expectedCod == 0;
+
         $validated = $request->validate([
-            'cod_collected' => 'required|numeric|min:0',
-            'recipient_name' => 'required|string|max:100',
+            'cod_collected' => $isCodZero ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'recipient_name' => $isCodZero ? 'nullable|string|max:100' : 'required|string|max:100',
             'delivery_notes' => 'nullable|string|max:500',
             'recipient_signature' => 'nullable|string',
             'delivery_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'print_receipt' => 'nullable|boolean'
         ]);
 
+        // Pour les colis à 0 DT, définir des valeurs par défaut
+        if ($isCodZero) {
+            $validated['cod_collected'] = $validated['cod_collected'] ?? 0;
+            $validated['recipient_name'] = $validated['recipient_name'] ?? ($package->recipient_data['name'] ?? 'Destinataire');
+        }
+
         // Vérification COD exact avec tolérance de 0.001 DT
-        $expectedCod = (float) $package->cod_amount;
         $collectedCod = (float) $validated['cod_collected'];
         
         if (abs($collectedCod - $expectedCod) > 0.001) {
@@ -714,11 +756,16 @@ class DelivererPackageController extends Controller
 
         try {
             return DB::transaction(function () use ($package, $validated, $request) {
+                // Déterminer la raison du retour
+                $returnReason = $package->getReturnReason() ?? 'OTHER';
+                $oldStatus = $package->status;
+
                 $updateData = [
                     'status' => 'RETURNED',
                     'returned_at' => now(),
                     'return_reason' => $validated['return_reason'],
-                    'return_notes' => $validated['return_notes'] ?? null
+                    'return_notes' => $validated['return_notes'] ?? null,
+                    'auto_return_reason' => $returnReason
                 ];
 
                 if ($request->hasFile('return_photo')) {
@@ -728,21 +775,35 @@ class DelivererPackageController extends Controller
 
                 $package->update($updateData);
 
-                $this->updatePackageStatus($package, 'RETURNED', 
-                    "Retourné à l'expéditeur - Motif: {$validated['return_reason']}");
+                // Message basé sur la raison du retour
+                $statusMessage = match($returnReason) {
+                    'CANCELLED_BY_CLIENT' => "Retourné à l'expéditeur - Colis annulé par le client: {$validated['return_reason']}",
+                    'MAX_ATTEMPTS_REACHED' => "Retourné à l'expéditeur - 3 tentatives échouées: {$validated['return_reason']}",
+                    'VERIFIED_FOR_RETURN' => "Retourné à l'expéditeur - Vérifié pour retour: {$validated['return_reason']}",
+                    default => "Retourné à l'expéditeur - Motif: {$validated['return_reason']}"
+                };
+
+                $this->updatePackageStatus($package, 'RETURNED', $statusMessage);
 
                 $this->logAction('PACKAGE_RETURNED', 'Package', $package->id,
-                               'VERIFIED', 'RETURNED', [
+                               $oldStatus, 'RETURNED', [
                     'return_reason' => $validated['return_reason'],
                     'return_notes' => $validated['return_notes'] ?? null,
+                    'auto_return_reason' => $returnReason,
                     'has_photo' => $request->hasFile('return_photo'),
-                    'deliverer_id' => Auth::id()
+                    'deliverer_id' => Auth::id(),
+                    'delivery_attempts' => $package->delivery_attempts,
+                    'was_cancelled_by_client' => $package->isCancelledByClient()
                 ]);
+
+                // Notification au client selon la raison
+                $this->notifyClientOfReturn($package, $returnReason, $validated['return_reason']);
 
                 return response()->json([
                     'success' => true,
                     'message' => "Colis {$package->package_code} retourné avec succès.",
-                    'redirect' => route('deliverer.returns.index')
+                    'redirect' => route('deliverer.packages.index'),
+                    'reason' => $returnReason
                 ]);
             });
         } catch (\Exception $e) {
@@ -1358,8 +1419,9 @@ class DelivererPackageController extends Controller
                        in_array($package->status, ['PICKED_UP', 'UNAVAILABLE']);
                        
             case 'return':
-                return $package->assigned_deliverer_id === $delivererId && 
-                       in_array($package->status, ['VERIFIED', 'PICKED_UP']);
+                return $package->assigned_deliverer_id === $delivererId &&
+                       in_array($package->status, ['VERIFIED', 'PICKED_UP', 'UNAVAILABLE']) &&
+                       ($package->delivery_attempts >= 3 || $package->isCancelledByClient());
                        
             case 'attempt':
                 return $package->assigned_deliverer_id === $delivererId && 
@@ -2311,5 +2373,122 @@ class DelivererPackageController extends Controller
             : $package->sender_data;
 
         return view('deliverer.receipts.delivery-receipt', compact('package', 'recipientData', 'senderData'));
+    }
+
+    /**
+     * MÉTHODE TEMPORAIRE - Tester le reçu sans authentification
+     * À SUPPRIMER après le test
+     */
+    public function testDeliveryReceipt(Package $package)
+    {
+        // Décoder les données JSON si nécessaire
+        $recipientData = is_string($package->recipient_data)
+            ? json_decode($package->recipient_data, true)
+            : $package->recipient_data;
+
+        $senderData = is_string($package->sender_data)
+            ? json_decode($package->sender_data, true)
+            : $package->sender_data;
+
+        return view('deliverer.receipts.delivery-receipt', compact('package', 'recipientData', 'senderData'));
+    }
+
+    /**
+     * Reçu de livraison simplifié sans vérifications strictes d'authentification
+     */
+    public function simpleDeliveryReceipt(Package $package)
+    {
+        // Vérifier que le colis est au moins livré
+        if ($package->status !== 'DELIVERED') {
+            return redirect()->back()->with('error', 'Ce colis n\'a pas encore été livré.');
+        }
+
+        // Décoder les données JSON si nécessaire
+        $recipientData = is_string($package->recipient_data)
+            ? json_decode($package->recipient_data, true)
+            : $package->recipient_data;
+
+        $senderData = is_string($package->sender_data)
+            ? json_decode($package->sender_data, true)
+            : $package->sender_data;
+
+        return view('deliverer.receipts.delivery-receipt', compact('package', 'recipientData', 'senderData'));
+    }
+
+    /**
+     * Notifier le client du retour du colis
+     */
+    private function notifyClientOfReturn(Package $package, string $returnReason, string $returnReasonDetails)
+    {
+        $message = match($returnReason) {
+            'CANCELLED_BY_CLIENT' => "Votre colis {$package->package_code} a été retourné suite à votre annulation.",
+            'MAX_ATTEMPTS_REACHED' => "Votre colis {$package->package_code} a été retourné après 3 tentatives de livraison échouées.",
+            'VERIFIED_FOR_RETURN' => "Votre colis {$package->package_code} a été retourné à l'expéditeur.",
+            default => "Votre colis {$package->package_code} a été retourné à l'expéditeur."
+        };
+
+        // Ici, vous pouvez ajouter la logique de notification
+        // Par exemple: envoyer un email, SMS, ou notification push
+        Log::info('Notification client retour colis', [
+            'package_id' => $package->id,
+            'client_id' => $package->sender_id,
+            'return_reason' => $returnReason,
+            'message' => $message
+        ]);
+    }
+
+    /**
+     * Annuler un colis par le client (via commercial ou superviseur)
+     */
+    public function cancelByClient(Package $package, Request $request)
+    {
+        $validated = $request->validate([
+            'cancellation_reason' => 'required|string|max:500',
+            'cancelled_by_role' => 'required|in:CLIENT,COMMERCIAL,SUPERVISOR'
+        ]);
+
+        if (!in_array($package->status, ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce colis ne peut plus être annulé car il est déjà livré ou retourné.'
+            ], 400);
+        }
+
+        try {
+            return DB::transaction(function () use ($package, $validated) {
+                $package->update([
+                    'status' => 'CANCELLED',
+                    'cancelled_by_client' => true,
+                    'cancellation_reason' => $validated['cancellation_reason'],
+                    'cancelled_at' => now(),
+                    'cancelled_by' => Auth::id()
+                ]);
+
+                $this->updatePackageStatus($package, 'CANCELLED',
+                    "Colis annulé par le client - Motif: {$validated['cancellation_reason']}");
+
+                $this->logAction('PACKAGE_CANCELLED_BY_CLIENT', 'Package', $package->id,
+                               $package->getOriginal('status'), 'CANCELLED', [
+                    'cancellation_reason' => $validated['cancellation_reason'],
+                    'cancelled_by_role' => $validated['cancelled_by_role'],
+                    'cancelled_by' => Auth::id()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Colis {$package->package_code} annulé avec succès."
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Erreur annulation colis client', [
+                'package_id' => $package->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'annulation du colis.'
+            ], 500);
+        }
     }
 }

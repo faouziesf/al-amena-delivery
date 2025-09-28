@@ -14,8 +14,7 @@ class CommercialTicketController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
-        $this->middleware('role:COMMERCIAL,SUPERVISOR');
+        // Middleware handling is done in routes or through middleware groups
     }
 
     /**
@@ -23,10 +22,24 @@ class CommercialTicketController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $query = Ticket::with(['client', 'messages' => function($q) {
                           $q->orderBy('created_at', 'desc')->limit(1);
                       }])
                       ->orderBy('created_at', 'desc');
+
+        // FILTRAGE PAR DÉLÉGATIONS POUR CHEF DÉPÔT
+        if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
+            $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                ? $user->assigned_gouvernorats
+                : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+            if (!empty($assignedGouvernorats)) {
+                $query->whereHas('client', function($q) use ($assignedGouvernorats) {
+                    $q->whereIn('delegation_id', $assignedGouvernorats);
+                });
+            }
+        }
 
         // Filtres
         if ($request->filled('status')) {
@@ -65,24 +78,41 @@ class CommercialTicketController extends Controller
 
         $tickets = $query->paginate(15);
 
-        // Statistiques pour le dashboard
+        // Statistiques pour le dashboard - avec filtrage par délégations pour chef dépôt
+        $statsQuery = Ticket::query();
+        if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
+            $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                ? $user->assigned_gouvernorats
+                : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+            if (!empty($assignedGouvernorats)) {
+                $statsQuery->whereHas('client', function($q) use ($assignedGouvernorats) {
+                    $q->whereIn('delegation_id', $assignedGouvernorats);
+                });
+            }
+        }
+
         $stats = [
-            'total' => Ticket::count(),
-            'open' => Ticket::open()->count(),
-            'in_progress' => Ticket::inProgress()->count(),
-            'urgent' => Ticket::urgent()->count(),
-            'my_tickets' => Ticket::assignedTo(Auth::id())->count(),
-            'unassigned' => Ticket::whereNull('assigned_to_id')->count(),
-            'needs_attention' => Ticket::needsAttention()->count()
+            'total' => (clone $statsQuery)->count(),
+            'open' => (clone $statsQuery)->open()->count(),
+            'in_progress' => (clone $statsQuery)->inProgress()->count(),
+            'urgent' => (clone $statsQuery)->urgent()->count(),
+            'my_tickets' => (clone $statsQuery)->where('assigned_to_id', Auth::id())->count(),
+            'unassigned' => (clone $statsQuery)->whereNull('assigned_to_id')->count(),
+            'needs_attention' => (clone $statsQuery)->needsAttention()->count()
         ];
 
         // Liste des commerciaux pour le filtre
-        $commercials = User::whereIn('role', ['COMMERCIAL', 'SUPERVISOR'])
+        $commercials = User::whereIn('role', ['COMMERCIAL', 'SUPERVISOR', 'DEPOT_MANAGER'])
                           ->select('id', 'name')
                           ->orderBy('name')
                           ->get();
 
-        return view('commercial.tickets.index', compact('tickets', 'stats', 'commercials'));
+        // Déterminer le layout selon le rôle
+        $user = Auth::user();
+        $viewPath = $user->role === 'DEPOT_MANAGER' ? 'depot-manager.commercial.tickets.index' : 'commercial.tickets.index';
+
+        return view($viewPath, compact('tickets', 'stats', 'commercials'));
     }
 
     /**
@@ -107,7 +137,11 @@ class CommercialTicketController extends Controller
                ->whereNull('read_at')
                ->update(['read_at' => now()]);
 
-        return view('commercial.tickets.show', compact('ticket'));
+        // Déterminer le layout selon le rôle
+        $user = Auth::user();
+        $viewPath = $user->role === 'DEPOT_MANAGER' ? 'depot-manager.commercial.tickets.show' : 'commercial.tickets.show';
+
+        return view($viewPath, compact('ticket'));
     }
 
     /**
@@ -170,8 +204,9 @@ class CommercialTicketController extends Controller
 
         // Message interne du changement de statut
         $statusMessage = "Statut changé de {$ticket->getOriginal('status')} vers {$newStatus}";
-        if ($validated['reason']) {
-            $statusMessage .= "\nRaison: " . $validated['reason'];
+        $reason = $validated['reason'] ?? null;
+        if ($reason) {
+            $statusMessage .= "\nRaison: " . $reason;
         }
 
         TicketMessage::create([
@@ -186,26 +221,82 @@ class CommercialTicketController extends Controller
     }
 
     /**
+     * Mettre à jour la priorité d'un ticket
+     */
+    public function updatePriority(Request $request, Ticket $ticket)
+    {
+        $validated = $request->validate([
+            'priority' => 'required|in:LOW,NORMAL,HIGH,URGENT',
+            'reason' => 'nullable|string|max:500'
+        ]);
+
+        $oldPriority = $ticket->priority;
+        $newPriority = $validated['priority'];
+
+        if ($oldPriority === $newPriority) {
+            return back()->with('info', 'La priorité est déjà définie à ce niveau.');
+        }
+
+        $ticket->update(['priority' => $newPriority]);
+
+        // Message interne du changement de priorité
+        $oldPriorityDisplay = match($oldPriority) {
+            'LOW' => 'Faible',
+            'NORMAL' => 'Normale',
+            'HIGH' => 'Élevée',
+            'URGENT' => 'Urgente',
+            default => $oldPriority
+        };
+
+        $priorityMessage = "Priorité changée de {$oldPriorityDisplay} vers {$ticket->priority_display}";
+        $reason = $validated['reason'] ?? null;
+        if ($reason) {
+            $priorityMessage .= "\nRaison: " . $reason;
+        }
+
+        TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'sender_id' => Auth::id(),
+            'sender_type' => Auth::user()->role,
+            'message' => $priorityMessage,
+            'is_internal' => true
+        ]);
+
+        return back()->with('success', "Priorité du ticket mise à jour vers {$ticket->priority_display}.");
+    }
+
+    /**
      * Ajouter un message/réponse au ticket
      */
     public function addMessage(Request $request, Ticket $ticket)
     {
-        $validated = $request->validate([
-            'message' => 'required|string',
+        // Validation personnalisée : message requis SAUF si fichiers présents
+        $request->validate([
+            'message' => 'nullable|string',
             'is_internal' => 'boolean',
-            'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
+            'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt'
         ]);
 
+        // Vérifier qu'il y a au moins un message ou un fichier
+        if (empty(trim($request->message)) && !$request->hasFile('attachments')) {
+            return back()->with('error', 'Veuillez écrire un message ou joindre au moins un fichier.');
+        }
+
+        $validated = $request->all();
+
         // Vérifier si on peut encore ajouter des messages
-        if (!$ticket->canAddMessages() && !$validated['is_internal']) {
-            return back()->with('error', 'Ce ticket est fermé. Seuls les messages internes sont autorisés.');
+        if (!$ticket->canCommercialAddMessages()) {
+            $message = $ticket->isResolved()
+                ? 'Ce ticket est résolu. Aucun message ne peut être ajouté.'
+                : 'Ce ticket est fermé. Aucun message ne peut être ajouté.';
+            return back()->with('error', $message);
         }
 
         $messageData = [
             'ticket_id' => $ticket->id,
             'sender_id' => Auth::id(),
             'sender_type' => Auth::user()->role,
-            'message' => $validated['message'],
+            'message' => $validated['message'] ?? '',
             'is_internal' => $validated['is_internal'] ?? false
         ];
 
@@ -230,11 +321,12 @@ class CommercialTicketController extends Controller
         TicketMessage::create($messageData);
 
         // Assigner automatiquement le ticket au commercial s'il n'est pas assigné
-        if (!$ticket->assigned_to_id && !$validated['is_internal']) {
+        $isInternal = $validated['is_internal'] ?? false;
+        if (!$ticket->assigned_to_id && !$isInternal) {
             $ticket->assignTo(Auth::id());
         }
 
-        $messageType = $validated['is_internal'] ? 'Message interne' : 'Réponse';
+        $messageType = $isInternal ? 'Message interne' : 'Réponse';
         return back()->with('success', "{$messageType} ajouté avec succès.");
     }
 
@@ -243,14 +335,27 @@ class CommercialTicketController extends Controller
      */
     public function create(Request $request)
     {
+        $user = Auth::user();
         $client = null;
         if ($request->filled('client_id')) {
             $client = User::where('role', 'CLIENT')->findOrFail($request->client_id);
         }
 
-        $clients = User::where('role', 'CLIENT')
-                      ->orderBy('name')
-                      ->get(['id', 'name', 'email']);
+        // FILTRAGE DES CLIENTS PAR DÉLÉGATIONS POUR CHEF DÉPÔT
+        $clientsQuery = User::where('role', 'CLIENT');
+
+        if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
+            $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                ? $user->assigned_gouvernorats
+                : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+            if (!empty($assignedGouvernorats)) {
+                $clientsQuery->whereIn('delegation_id', $assignedGouvernorats);
+            }
+        }
+
+        $clients = $clientsQuery->orderBy('name')
+                              ->get(['id', 'name', 'email']);
 
         return view('commercial.tickets.create', compact('client', 'clients'));
     }
@@ -368,5 +473,13 @@ class CommercialTicketController extends Controller
 
         fclose($handle);
         exit;
+    }
+
+    /**
+     * Ajouter une réponse à un ticket (alias pour addMessage)
+     */
+    public function reply(Request $request, Ticket $ticket)
+    {
+        return $this->addMessage($request, $ticket);
     }
 }

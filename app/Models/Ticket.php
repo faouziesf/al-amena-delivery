@@ -13,8 +13,12 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number',
         'type',
+        'is_complaint',
         'subject',
         'description',
+        'complaint_description',
+        'complaint_data',
+        'complaint_type',
         'status',
         'priority',
         'client_id',
@@ -29,6 +33,8 @@ class Ticket extends Model
     ];
 
     protected $casts = [
+        'is_complaint' => 'boolean',
+        'complaint_data' => 'json',
         'metadata' => 'json',
         'first_response_at' => 'datetime',
         'last_activity_at' => 'datetime',
@@ -166,19 +172,6 @@ class Ticket extends Model
 
     // ==================== ACCESSORS ====================
 
-    /**
-     * Affichage du type en français
-     */
-    public function getTypeDisplayAttribute()
-    {
-        return match($this->type) {
-            'COMPLAINT' => 'Réclamation',
-            'QUESTION' => 'Question',
-            'SUPPORT' => 'Support',
-            'OTHER' => 'Autre',
-            default => $this->type
-        };
-    }
 
     /**
      * Affichage du statut en français
@@ -281,11 +274,30 @@ class Ticket extends Model
     }
 
     /**
-     * Vérifier si des messages peuvent être ajoutés
+     * Vérifier si des messages peuvent être ajoutés (général)
+     * Personne ne peut ajouter de messages sur un ticket résolu ou fermé
      */
     public function canAddMessages()
     {
-        return !$this->isClosed();
+        return !$this->isResolved() && !$this->isClosed();
+    }
+
+    /**
+     * Vérifier si un client peut ajouter des messages
+     * Les clients ne peuvent plus ajouter de messages si le ticket est résolu ou fermé
+     */
+    public function canClientAddMessages()
+    {
+        return $this->canAddMessages();
+    }
+
+    /**
+     * Vérifier si un commercial peut ajouter des messages
+     * Les commerciaux ne peuvent plus ajouter de messages si le ticket est résolu ou fermé
+     */
+    public function canCommercialAddMessages()
+    {
+        return $this->canAddMessages();
     }
 
     /**
@@ -440,5 +452,77 @@ class Ticket extends Model
                 );
             }
         });
+    }
+
+    // ==================== COMPLAINT-TICKET METHODS ====================
+
+    /**
+     * Créer un ticket de réclamation pour un colis
+     */
+    public static function createComplaintTicket($packageId, $clientId, $complaintType, $description, $data = [])
+    {
+        $package = Package::find($packageId);
+        if (!$package) {
+            throw new \Exception('Colis non trouvé');
+        }
+
+        return self::create([
+            'ticket_number' => 'TKT_' . now()->format('Ymd') . '_' . str_pad(self::count() + 1, 3, '0', STR_PAD_LEFT),
+            'type' => 'COMPLAINT',
+            'is_complaint' => true,
+            'subject' => "Réclamation - {$complaintType} - Colis {$package->package_code}",
+            'description' => "Réclamation automatique créée pour le colis {$package->package_code}",
+            'complaint_description' => $description,
+            'complaint_type' => $complaintType,
+            'complaint_data' => $data,
+            'status' => 'OPEN',
+            'priority' => 'NORMAL',
+            'client_id' => $clientId,
+            'package_id' => $packageId
+        ]);
+    }
+
+    /**
+     * Vérifier si c'est un ticket de réclamation
+     */
+    public function isComplaintTicket()
+    {
+        return $this->is_complaint;
+    }
+
+    /**
+     * Obtenir le type d'affichage pour les réclamations-tickets
+     */
+    public function getTypeDisplayAttribute()
+    {
+        if ($this->is_complaint) {
+            return '📋 Réclamation - ' . $this->getComplaintTypeDisplayAttribute();
+        }
+
+        return match($this->type) {
+            'COMPLAINT' => '📋 Réclamation',
+            'QUESTION' => '❓ Question',
+            'SUPPORT' => '🛠️ Support technique',
+            'OTHER' => '📝 Autre',
+            default => $this->type
+        };
+    }
+
+    /**
+     * Obtenir le type de réclamation pour l'affichage
+     */
+    public function getComplaintTypeDisplayAttribute()
+    {
+        if (!$this->complaint_type) return '';
+
+        return match($this->complaint_type) {
+            'DAMAGED' => 'Colis endommagé',
+            'LOST' => 'Colis perdu',
+            'DELAY' => 'Retard de livraison',
+            'WRONG_ADDRESS' => 'Mauvaise adresse',
+            'REFUSED' => 'Refus de livraison',
+            'OTHER' => 'Autre problème',
+            default => $this->complaint_type
+        };
     }
 }

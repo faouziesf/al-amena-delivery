@@ -11,6 +11,7 @@ use App\Http\Controllers\Client\ClientPickupAddressController;
 use App\Http\Controllers\Client\ClientBankAccountController;
 use App\Http\Controllers\Client\ClientProfileController;
 use App\Http\Controllers\Client\ClientTicketController;
+use App\Http\Controllers\Client\ClientManifestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,15 +69,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::get('/{pickupRequest}', [ClientPickupRequestController::class, 'show'])->name('show');
         Route::post('/{pickupRequest}/cancel', [ClientPickupRequestController::class, 'cancel'])->name('cancel');
 
-        // Gestion des brouillons de pickup
-        Route::post('/manage-draft', [ClientPickupRequestController::class, 'manageDraft'])->name('manage.draft');
-        Route::post('/create-from-draft', [ClientPickupRequestController::class, 'createFromDraft'])->name('create.from.draft');
-
         // API Endpoints
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('/stats', [ClientPickupRequestController::class, 'apiStats'])->name('stats');
             Route::get('/recent', [ClientPickupRequestController::class, 'apiRecent'])->name('recent');
-            Route::get('/available-packages', [ClientPickupRequestController::class, 'apiAvailablePackages'])->name('available.packages');
         });
     });
 
@@ -130,6 +126,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/{complaint}/respond', [ClientComplaintController::class, 'respond'])->name('respond');
         Route::post('/{complaint}/close', [ClientComplaintController::class, 'close'])->name('close');
         Route::post('/{complaint}/reopen', [ClientComplaintController::class, 'reopen'])->name('reopen');
+        Route::post('/{complaint}/accept-resolution', [ClientComplaintController::class, 'acceptResolution'])->name('accept-resolution');
         Route::post('/{package}/change-cod', [ClientComplaintController::class, 'requestCodChange'])->name('change.cod');
         Route::post('/{package}/request-return', [ClientComplaintController::class, 'requestReturn'])->name('request.return');
         Route::post('/{package}/reschedule', [ClientComplaintController::class, 'requestReschedule'])->name('reschedule');
@@ -144,6 +141,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/', [ClientTicketController::class, 'store'])->name('store');
         Route::get('/{ticket}', [ClientTicketController::class, 'show'])->name('show');
         Route::post('/{ticket}/messages', [ClientTicketController::class, 'addMessage'])->name('add.message');
+        Route::post('/{ticket}/reply', [ClientTicketController::class, 'reply'])->name('reply');
         Route::post('/{ticket}/mark-resolved', [ClientTicketController::class, 'markResolved'])->name('mark.resolved');
         Route::get('/from-complaint/{complaint}', [ClientTicketController::class, 'createFromComplaint'])->name('from.complaint');
     });
@@ -156,6 +154,15 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::get('/download-identity', [ClientProfileController::class, 'downloadIdentityDocument'])->name('download-identity');
         Route::delete('/delete-identity', [ClientProfileController::class, 'deleteIdentityDocument'])->name('delete-identity');
         Route::post('/validate-fiscal', [ClientProfileController::class, 'validateFiscalNumber'])->name('validate-fiscal');
+    });
+
+    // ==================== MANIFESTES CLIENT ====================
+    Route::prefix('manifests')->name('manifests.')->group(function () {
+        Route::get('/', [ClientManifestController::class, 'index'])->name('index');
+        Route::get('/create', [ClientManifestController::class, 'create'])->name('create');
+        Route::post('/generate', [ClientManifestController::class, 'generate'])->name('generate');
+        Route::post('/preview', [ClientManifestController::class, 'preview'])->name('preview');
+        Route::get('/packages-by-pickup', [ClientManifestController::class, 'getPackagesByPickup'])->name('packages-by-pickup');
     });
 
     // ==================== COMPTES BANCAIRES CLIENT ====================

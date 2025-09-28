@@ -119,62 +119,34 @@
                 @endif
             </div>
 
-            <!-- Liste des Colis -->
-            <div class="detail-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Colis à Collecter</h2>
+            <!-- Informations sur le fonctionnement -->
+            <div class="detail-section bg-blue-50 rounded-2xl shadow-lg border border-blue-200 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                        {{ $packages->count() }} colis
-                    </span>
+                    <h2 class="text-xl font-bold text-blue-900">À propos de cette demande</h2>
                 </div>
-
-                @if($packages->count() > 0)
-                    <div class="space-y-4">
-                        @foreach($packages as $package)
-                        <div class="package-card flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-medium text-gray-900">{{ $package->package_code }}</h3>
-                                    <p class="text-sm text-gray-600">{{ $package->recipient_name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $package->recipient_city }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                @if($package->cod_amount)
-                                    <p class="text-sm font-medium text-gray-900">{{ number_format($package->cod_amount, 2) }} TND</p>
-                                    <p class="text-xs text-gray-500">COD</p>
-                                @else
-                                    <p class="text-sm text-green-600">Livraison gratuite</p>
-                                @endif
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mt-1">
-                                    {{ ucfirst($package->status) }}
-                                </span>
-                            </div>
-                        </div>
-                        @endforeach
+                <div class="space-y-3 text-sm text-blue-800">
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📍</div>
+                        <p>Cette demande de collecte est configurée pour l'adresse indiquée ci-dessus</p>
                     </div>
-                @else
-                    <div class="text-center py-8">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <p class="text-gray-600">Aucun colis trouvé pour cette demande</p>
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">🚛</div>
+                        <p>Un livreur se rendra à cette adresse pour collecter vos colis</p>
                     </div>
-                @endif
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📦</div>
+                        <p>Les colis à collecter seront déterminés lors de la visite du livreur</p>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📱</div>
+                        <p>Vous recevrez des notifications sur le statut de la collecte</p>
+                    </div>
+                </div>
             </div>
         </div>
 

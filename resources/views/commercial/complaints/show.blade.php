@@ -1,427 +1,333 @@
 @extends('layouts.commercial')
 
 @section('title', 'Réclamation #' . $complaint->id)
-@section('page-title', 'Détails de la Réclamation')
-@section('page-description', 'Réclamation #' . $complaint->id . ' - ' . $complaint->type)
-
-@section('header-actions')
-<div class="flex items-center space-x-3">
-    <a href="{{ route('commercial.complaints.index') }}"
-       class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-        Retour à la liste
-    </a>
-
-    @if($complaint->status === 'PENDING')
-    <button onclick="resolveComplaint()"
-            class="px-4 py-2 bg-green-300 text-green-800 rounded-lg hover:bg-green-400 transition-colors">
-        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        Résoudre
-    </button>
-
-    <button onclick="rejectComplaint()"
-            class="px-4 py-2 bg-red-300 text-red-800 rounded-lg hover:bg-red-400 transition-colors">
-        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-        Rejeter
-    </button>
-    @endif
-
-    @if($complaint->package && $complaint->type === 'COD_MODIFICATION')
-    <button onclick="modifyCod()"
-            class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
-        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-        </svg>
-        Modifier COD
-    </button>
-    @endif
-</div>
-@endsection
+@section('page-title', 'Réclamation #' . $complaint->id)
+@section('page-description', 'Détails de la réclamation')
 
 @section('content')
-<div class="max-w-6xl mx-auto" x-data="complaintShowApp()">
+<div class="space-y-6">
 
-    <!-- En-tête avec informations principales -->
-    <div class="bg-gradient-to-r from-purple-200 to-purple-300 rounded-xl shadow-lg text-purple-800 p-6 mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">Réclamation #{{ $complaint->id }}</h1>
-                <p class="text-purple-700">
-                    {{ $complaint->client->name }}
-                    @if($complaint->package)
-                    - Colis {{ $complaint->package->tracking_number }}
-                    @endif
-                </p>
-                <div class="flex items-center space-x-4 mt-2">
-                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
-                        {{ $complaint->status === 'PENDING' ? 'bg-yellow-500 text-white' :
-                           ($complaint->status === 'RESOLVED' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') }}">
-                        {{ $complaint->status === 'PENDING' ? 'En attente' :
-                           ($complaint->status === 'RESOLVED' ? 'Résolue' : 'Rejetée') }}
-                    </span>
-                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {{ $complaint->type === 'COD_MODIFICATION' ? 'Modification COD' :
-                           ($complaint->type === 'DELIVERY_DELAY' ? 'Retard de livraison' :
-                           ($complaint->type === 'DAMAGED_PACKAGE' ? 'Colis endommagé' :
-                           ($complaint->type === 'WRONG_ADDRESS' ? 'Mauvaise adresse' : 'Autre'))) }}
-                    </span>
-                    <span class="text-purple-700 text-sm">
-                        {{ $complaint->created_at->format('d/m/Y à H:i') }}
-                    </span>
-                </div>
-            </div>
-            @if($complaint->priority === 'HIGH')
-            <div class="text-right">
-                <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
-                    Priorité élevée
-                </span>
-            </div>
-            @endif
+    <!-- En-tête avec retour -->
+    <div class="flex items-center space-x-4">
+        <a href="{{ route('commercial.complaints.index') }}"
+           class="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-orange-100 transition-colors">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Réclamation #{{ $complaint->id }}</h1>
+            <p class="text-gray-600">{{ $complaint->created_at->format('d/m/Y à H:i') }}</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        <!-- Colonne principale -->
-        <div class="lg:col-span-2 space-y-8">
-
-            <!-- Description de la réclamation -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Description de la réclamation
-                </h3>
-
-                <div class="prose max-w-none text-gray-700">
-                    {{ $complaint->description }}
-                </div>
-
-                @if($complaint->type === 'COD_MODIFICATION' && $complaint->details)
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <h4 class="text-md font-medium text-gray-900 mb-3">Détails de la modification COD</h4>
-                    <div class="bg-gray-50 rounded-lg p-4 space-y-2">
-                        @if(isset($complaint->details['old_cod_amount']))
-                        <div class="flex justify-between">
-                            <span class="text-sm font-medium text-gray-700">Montant COD actuel:</span>
-                            <span class="text-sm text-gray-900">{{ number_format($complaint->details['old_cod_amount'], 3) }} DT</span>
-                        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Détails de la réclamation -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Informations principales -->
+            <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ $complaint->subject }}</h3>
+                    <div class="flex items-center space-x-2">
+                        @if($complaint->priority === 'URGENT')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                Urgente
+                            </span>
+                        @elseif($complaint->priority === 'HIGH')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                                Élevée
+                            </span>
+                        @elseif($complaint->priority === 'MEDIUM')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                Moyenne
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                Faible
+                            </span>
                         @endif
-                        @if(isset($complaint->details['new_cod_amount']))
-                        <div class="flex justify-between">
-                            <span class="text-sm font-medium text-gray-700">Nouveau montant demandé:</span>
-                            <span class="text-sm font-semibold text-purple-600">{{ number_format($complaint->details['new_cod_amount'], 3) }} DT</span>
-                        </div>
-                        @endif
-                        @if(isset($complaint->details['reason']))
-                        <div class="mt-3 pt-3 border-t border-gray-200">
-                            <span class="text-sm font-medium text-gray-700">Raison:</span>
-                            <div class="text-sm text-gray-900 mt-1">{{ $complaint->details['reason'] }}</div>
-                        </div>
+
+                        @if($complaint->status === 'PENDING')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                En attente
+                            </span>
+                        @elseif($complaint->status === 'IN_PROGRESS')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                En cours
+                            </span>
+                        @elseif($complaint->status === 'RESOLVED')
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                Résolue
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                Rejetée
+                            </span>
                         @endif
                     </div>
                 </div>
-                @endif
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type de réclamation</label>
+                        <p class="text-gray-900">
+                            @switch($complaint->type)
+                                @case('DELIVERY_ISSUE')
+                                    Problème de livraison
+                                    @break
+                                @case('PACKAGE_DAMAGED')
+                                    Colis endommagé
+                                    @break
+                                @case('PACKAGE_LOST')
+                                    Colis perdu
+                                    @break
+                                @case('WRONG_ADDRESS')
+                                    Mauvaise adresse
+                                    @break
+                                @case('PAYMENT_ISSUE')
+                                    Problème de paiement
+                                    @break
+                                @default
+                                    Autre
+                            @endswitch
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-gray-900 whitespace-pre-wrap">{{ $complaint->description }}</p>
+                        </div>
+                    </div>
+
+                    @if($complaint->proposed_solution)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Solution proposée par le client</label>
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <p class="text-gray-900 whitespace-pre-wrap">{{ $complaint->proposed_solution }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($complaint->admin_notes)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes administratives</label>
+                            <div class="bg-orange-50 rounded-lg p-4">
+                                <p class="text-gray-900 whitespace-pre-wrap">{{ $complaint->admin_notes }}</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
 
-            <!-- Informations du Colis (si applicable) -->
-            @if($complaint->package)
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    Informations du Colis
-                </h3>
+            @if($complaint->status === 'PENDING' || $complaint->status === 'IN_PROGRESS')
+                <!-- Actions -->
+                <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Actions disponibles</h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Numéro de suivi</label>
-                        <div class="mt-1 text-sm font-mono text-gray-900">{{ $complaint->package->tracking_number }}</div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Statut</label>
-                        <div class="mt-1">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                {{ $complaint->package->status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                                   ($complaint->package->status === 'IN_TRANSIT' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') }}">
-                                {{ $complaint->package->status }}
-                            </span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Assigner -->
+                        <div class="space-y-3">
+                            <form method="POST" action="{{ route('commercial.complaints.assign', $complaint) }}">
+                                @csrf
+                                <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">Assigner à</label>
+                                <select name="assigned_to" id="assigned_to"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 mb-3">
+                                    <option value="">Sélectionner un agent</option>
+                                    <!-- Les options seront chargées via JavaScript -->
+                                </select>
+                                <button type="submit"
+                                        class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                                    Assigner
+                                </button>
+                            </form>
                         </div>
+
+                        <!-- Marquer comme urgent -->
+                        @if($complaint->priority !== 'URGENT')
+                            <div class="space-y-3">
+                                <form method="POST" action="{{ route('commercial.complaints.urgent', $complaint) }}">
+                                    @csrf
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                                    <p class="text-sm text-gray-600 mb-3">Marquer cette réclamation comme urgente</p>
+                                    <button type="submit"
+                                            class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                                            onclick="return confirm('Marquer cette réclamation comme urgente ?')">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                        </svg>
+                                        Marquer urgent
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Montant COD</label>
-                        <div class="mt-1 text-sm font-semibold text-purple-600">
-                            {{ number_format($complaint->package->cod_amount ?? 0, 3) }} DT
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Résoudre -->
+                        <form method="POST" action="{{ route('commercial.complaints.resolve', $complaint) }}" class="space-y-3">
+                            @csrf
+                            <label for="resolution_notes" class="block text-sm font-medium text-gray-700">Notes de résolution</label>
+                            <textarea name="resolution_notes" id="resolution_notes" rows="3" required
+                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                      placeholder="Décrivez la solution apportée..."></textarea>
+                            <button type="submit"
+                                    class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+                                    onclick="return confirm('Marquer cette réclamation comme résolue ?')">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Résoudre
+                            </button>
+                        </form>
+
+                        <!-- Rejeter -->
+                        <form method="POST" action="{{ route('commercial.complaints.reject', $complaint) }}" class="space-y-3">
+                            @csrf
+                            <label for="rejection_reason" class="block text-sm font-medium text-gray-700">Raison du rejet</label>
+                            <textarea name="rejection_reason" id="rejection_reason" rows="3" required
+                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                      placeholder="Expliquez pourquoi cette réclamation est rejetée..."></textarea>
+                            <button type="submit"
+                                    class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                                    onclick="return confirm('Rejeter cette réclamation ?')">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Rejeter
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Informations colis -->
+            @if($complaint->package)
+                <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Colis concerné</h3>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Code</span>
+                            <span class="text-sm font-medium text-gray-900">{{ $complaint->package->package_code }}</span>
                         </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Statut</span>
+                            <span class="text-sm font-medium text-gray-900">{{ $complaint->package->status }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Montant COD</span>
+                            <span class="text-sm font-medium text-gray-900">{{ number_format($complaint->package->cod_amount, 3) }} DT</span>
+                        </div>
+                        @if($complaint->package->assignedDeliverer)
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-500">Livreur</span>
+                                <span class="text-sm font-medium text-gray-900">{{ $complaint->package->assignedDeliverer->name }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="{{ route('commercial.packages.show', $complaint->package) }}"
+                           class="text-orange-600 hover:text-orange-700 text-sm font-medium">
+                            Voir le colis →
+                        </a>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Informations client -->
+            <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Client</h3>
+
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-orange-800 font-bold">{{ strtoupper(substr($complaint->user->name, 0, 2)) }}</span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Destinataire</label>
-                        <div class="mt-1 text-sm text-gray-900">{{ $complaint->package->receiver_name }}</div>
+                        <p class="text-sm font-medium text-gray-900">{{ $complaint->user->name }}</p>
+                        <p class="text-sm text-gray-500">{{ $complaint->user->email }}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Téléphone</span>
+                        <span class="text-sm text-gray-900">{{ $complaint->user->phone ?? 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Statut</span>
+                        <span class="text-sm text-gray-900">{{ $complaint->user->account_status }}</span>
                     </div>
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-gray-200">
-                    <a href="{{ route('commercial.packages.show', $complaint->package) }}"
-                       class="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                        → Voir les détails complets du colis
+                    <a href="{{ route('commercial.clients.show', $complaint->user) }}"
+                       class="text-orange-600 hover:text-orange-700 text-sm font-medium">
+                        Voir le profil client →
                     </a>
                 </div>
             </div>
+
+            @if($complaint->assignedTo)
+                <!-- Assigné à -->
+                <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Assigné à</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span class="text-blue-800 font-bold text-sm">{{ strtoupper(substr($complaint->assignedTo->name, 0, 2)) }}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ $complaint->assignedTo->name }}</p>
+                            <p class="text-sm text-gray-500">{{ $complaint->assignedTo->role }}</p>
+                        </div>
+                    </div>
+                </div>
             @endif
 
-            <!-- Historique des Actions -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Historique des Actions
-                </h3>
+            <!-- Historique -->
+            <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Historique</h3>
 
-                <div class="space-y-4">
-                    <!-- Action de création -->
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                        <div class="flex-1">
-                            <div class="text-sm text-gray-900">
-                                <span class="font-medium">Réclamation créée</span> par {{ $complaint->client->name }}
-                            </div>
-                            <div class="text-xs text-gray-500">{{ $complaint->created_at->format('d/m/Y à H:i') }}</div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div>
+                            <p class="text-sm text-gray-900">Réclamation créée</p>
+                            <p class="text-xs text-gray-500">{{ $complaint->created_at->format('d/m/Y H:i') }}</p>
                         </div>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Créée</span>
                     </div>
 
-                    @if($complaint->assigned_to)
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-                        <div class="flex-1">
-                            <div class="text-sm text-gray-900">
-                                <span class="font-medium">Assignée</span> à {{ $complaint->assignedTo->name }}
+                    @if($complaint->assigned_at)
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <div>
+                                <p class="text-sm text-gray-900">Assignée</p>
+                                <p class="text-xs text-gray-500">{{ $complaint->assigned_at->format('d/m/Y H:i') }}</p>
                             </div>
-                            <div class="text-xs text-gray-500">{{ $complaint->assigned_at ? $complaint->assigned_at->format('d/m/Y à H:i') : 'Date non spécifiée' }}</div>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Assignée</span>
                         </div>
-                    </div>
                     @endif
 
                     @if($complaint->resolved_at)
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                        <div class="flex-1">
-                            <div class="text-sm text-gray-900">
-                                <span class="font-medium">Réclamation {{ $complaint->status === 'RESOLVED' ? 'résolue' : 'traitée' }}</span>
-                                @if($complaint->resolvedBy)
-                                par {{ $complaint->resolvedBy->name }}
-                                @endif
+                        <div class="flex justify-between items-center py-2">
+                            <div>
+                                <p class="text-sm text-gray-900">Résolue</p>
+                                <p class="text-xs text-gray-500">{{ $complaint->resolved_at->format('d/m/Y H:i') }}</p>
                             </div>
-                            <div class="text-xs text-gray-500">{{ $complaint->resolved_at->format('d/m/Y à H:i') }}</div>
-                            @if($complaint->resolution_notes)
-                            <div class="text-xs text-gray-600 mt-1">{{ $complaint->resolution_notes }}</div>
-                            @endif
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Résolue</span>
                         </div>
-                    </div>
                     @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Colonne de droite -->
-        <div class="space-y-6">
-
-            <!-- Informations du Client -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Client</h3>
-
-                <div class="space-y-3">
-                    <div>
-                        <div class="font-medium text-gray-900">{{ $complaint->client->name }}</div>
-                        <div class="text-sm text-gray-600">{{ $complaint->client->email }}</div>
-                        <div class="text-sm text-gray-600">{{ $complaint->client->phone }}</div>
-                    </div>
-
-                    <div class="pt-3 border-t border-gray-200">
-                        <a href="{{ route('commercial.clients.show', $complaint->client) }}"
-                           class="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                            → Voir le profil complet
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions Rapides -->
-            @if($complaint->status === 'PENDING')
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-
-                <div class="space-y-3">
-                    <button onclick="resolveComplaint()"
-                            class="w-full px-4 py-2 bg-green-300 text-green-800 rounded-lg hover:bg-green-400 transition-colors">
-                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        Résoudre
-                    </button>
-
-                    <button onclick="rejectComplaint()"
-                            class="w-full px-4 py-2 bg-red-300 text-red-800 rounded-lg hover:bg-red-400 transition-colors">
-                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        Rejeter
-                    </button>
-
-                    @if($complaint->type === 'COD_MODIFICATION' && $complaint->package)
-                    <button onclick="modifyCod()"
-                            class="w-full px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
-                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                        Modifier COD
-                    </button>
-                    @endif
-                </div>
-            </div>
-            @endif
-
-            <!-- Récapitulatif -->
-            <div class="bg-purple-50 border border-purple-200 rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-purple-900 mb-4">Récapitulatif</h3>
-
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-purple-700">Type:</span>
-                        <span class="text-purple-900">
-                            {{ $complaint->type === 'COD_MODIFICATION' ? 'Modification COD' :
-                               ($complaint->type === 'DELIVERY_DELAY' ? 'Retard' : 'Autre') }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-purple-700">Statut:</span>
-                        <span class="font-semibold text-purple-900">
-                            {{ $complaint->status === 'PENDING' ? 'En attente' :
-                               ($complaint->status === 'RESOLVED' ? 'Résolue' : 'Rejetée') }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-purple-700">Priorité:</span>
-                        <span class="text-purple-900">
-                            {{ $complaint->priority === 'HIGH' ? 'Élevée' :
-                               ($complaint->priority === 'MEDIUM' ? 'Moyenne' : 'Normale') }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-purple-700">Créée le:</span>
-                        <span class="text-purple-900">{{ $complaint->created_at->format('d/m/Y') }}</span>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
+
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function complaintShowApp() {
-    return {
-        complaint: @json($complaint),
-
-        init() {
-            // Initialisation si nécessaire
-        }
-    }
-}
-
-function resolveComplaint() {
-    const notes = prompt('Notes de résolution (optionnel):');
-    if (notes !== null) {
-        fetch(`/commercial/complaints/${window.complaintShowApp().complaint.id}/resolve`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ notes: notes })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Réclamation résolue avec succès', 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast(data.message || 'Erreur lors de la résolution', 'error');
-            }
-        })
-        .catch(error => {
-            showToast('Erreur de connexion', 'error');
-        });
-    }
-}
-
-function rejectComplaint() {
-    const reason = prompt('Raison du rejet (optionnel):');
-    if (reason !== null) {
-        fetch(`/commercial/complaints/${window.complaintShowApp().complaint.id}/reject`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ reason: reason })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Réclamation rejetée', 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast(data.message || 'Erreur lors du rejet', 'error');
-            }
-        })
-        .catch(error => {
-            showToast('Erreur de connexion', 'error');
-        });
-    }
-}
-
-function modifyCod() {
-    const complaint = window.complaintShowApp().complaint;
-    const newAmount = prompt('Nouveau montant COD (DT):', complaint.details?.new_cod_amount || '');
-
-    if (newAmount !== null && !isNaN(parseFloat(newAmount))) {
-        fetch(`/commercial/complaints/packages/${complaint.package.id}/modify-cod`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                new_cod_amount: parseFloat(newAmount),
-                complaint_id: complaint.id
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('COD modifié avec succès', 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast(data.message || 'Erreur lors de la modification', 'error');
-            }
-        })
-        .catch(error => {
-            showToast('Erreur de connexion', 'error');
-        });
-    }
-}
-</script>
-@endpush

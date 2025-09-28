@@ -14,8 +14,7 @@ class SupervisorTicketController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
-        $this->middleware('role:SUPERVISOR');
+        // Middleware handling is done in routes or through middleware groups
     }
 
     /**
@@ -94,11 +93,11 @@ class SupervisorTicketController extends Controller
                     break;
                 case 'fast': // < 2h
                     $query->whereNotNull('first_response_at')
-                          ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, first_response_at) < 2');
+                          ->whereRaw('(julianday(first_response_at) - julianday(created_at)) * 24 < 2');
                     break;
                 case 'slow': // > 24h
                     $query->whereNotNull('first_response_at')
-                          ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, first_response_at) > 24');
+                          ->whereRaw('(julianday(first_response_at) - julianday(created_at)) * 24 > 24');
                     break;
             }
         }
@@ -235,7 +234,7 @@ class SupervisorTicketController extends Controller
         // Temps de réponse moyens
         $responseTimeStats = Ticket::selectRaw('
                 COALESCE(assigned_to_id, 0) as commercial_id,
-                AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as avg_response_time,
+                AVG((julianday(first_response_at) - julianday(created_at)) * 24) as avg_response_time,
                 COUNT(*) as ticket_count
             ')
             ->whereNotNull('first_response_at')
@@ -246,7 +245,7 @@ class SupervisorTicketController extends Controller
         // Satisfaction client (basée sur résolution rapide)
         $satisfactionStats = Ticket::selectRaw('
                 COALESCE(assigned_to_id, 0) as commercial_id,
-                AVG(CASE WHEN TIMESTAMPDIFF(DAY, created_at, resolved_at) <= 1 THEN 100 ELSE 50 END) as satisfaction_score
+                AVG(CASE WHEN (julianday(resolved_at) - julianday(created_at)) <= 1 THEN 100 ELSE 50 END) as satisfaction_score
             ')
             ->where('status', 'RESOLVED')
             ->where('created_at', '>=', $startDate)
@@ -277,7 +276,7 @@ class SupervisorTicketController extends Controller
             'unassigned' => Ticket::whereNull('assigned_to_id')->count(),
             'needs_attention' => Ticket::needsAttention()->count(),
             'avg_resolution_time' => Ticket::whereNotNull('resolved_at')
-                                           ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, resolved_at)) as avg_time')
+                                           ->selectRaw('AVG((julianday(resolved_at) - julianday(created_at)) * 24) as avg_time')
                                            ->value('avg_time'),
             'response_rate' => Ticket::whereNotNull('first_response_at')->count() * 100 / max(1, Ticket::count()),
         ];

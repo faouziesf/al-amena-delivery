@@ -216,6 +216,65 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Colis d'échange retournés -->
+            @if(($exchangeReturnedPackages ?? collect())->count() > 0)
+            <div class="bg-white rounded-2xl border border-orange-200 shadow-sm">
+                <div class="p-6 border-b border-orange-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-lg font-semibold text-gray-900">Colis d'Échange Retournés</h3>
+                            <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">{{ $exchangeReturnedPackages->count() }}</span>
+                        </div>
+                        <a href="{{ route('client.packages.index', ['exchange_returned' => 1]) }}" class="text-orange-600 hover:text-orange-700 text-sm font-medium">
+                            Voir tout →
+                        </a>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        @foreach($exchangeReturnedPackages as $package)
+                            <div class="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-200">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-2 bg-orange-100 rounded-lg">
+                                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">#{{ $package->package_code }}</p>
+                                        <p class="text-sm text-gray-500">{{ $package->formatted_recipient ?? 'Destinataire non spécifié' }}</p>
+                                        <p class="text-xs text-orange-600 font-medium">🔄 Échange retourné</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                        Retourné
+                                    </span>
+                                    <p class="text-sm text-gray-500 mt-1">{{ $package->updated_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-400">COD: {{ number_format($package->cod_amount, 3) }} DT</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                        <div class="flex items-start space-x-2">
+                            <svg class="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-orange-800">Information sur les échanges</p>
+                                <p class="text-xs text-orange-600 mt-1">
+                                    Ces colis d'échange ont été livrés puis retournés selon vos instructions.
+                                    Le montant COD sera traité selon votre contrat.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
 
         <!-- Sidebar droite -->

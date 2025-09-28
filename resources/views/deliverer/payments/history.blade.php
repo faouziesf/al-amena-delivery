@@ -277,12 +277,12 @@ function paymentsHistoryApp() {
         },
 
         // Stats
-        stats: @json($stats ?? [
-            'total_collected' => 0,
-            'total_payments' => 0,
-            'today_total' => 0,
-            'week_total' => 0
-        ]),
+        stats: {
+            total_collected: 0,
+            total_payments: 0,
+            today_total: 0,
+            week_total: 0
+        },
 
         init() {
             this.filteredPayments = [...this.payments];

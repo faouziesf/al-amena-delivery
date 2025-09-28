@@ -265,6 +265,113 @@ class TicketIntegrationService
     }
 
     /**
+     * Créer un ticket de réclamation directement sans passer par une Complaint
+     */
+    public function createComplaintTicketDirect(
+        int $packageId,
+        int $clientId,
+        string $type,
+        string $description,
+        array $attachments = []
+    ): Ticket {
+        return DB::transaction(function () use ($packageId, $clientId, $type, $description, $attachments) {
+            // Déterminer la priorité basée sur le type
+            $priority = $this->mapComplaintTypeToTicketPriority($type);
+
+            // Créer le ticket directement
+            $ticket = Ticket::create([
+                'type' => 'COMPLAINT',
+                'subject' => $this->generateComplaintSubject($type),
+                'description' => $description,
+                'priority' => $priority,
+                'client_id' => $clientId,
+                'package_id' => $packageId,
+                'status' => 'OPEN',
+                'is_complaint' => true
+            ]);
+
+            // Message initial
+            $initialMessage = $this->generateComplaintMessage($type, $description, $attachments);
+
+            TicketMessage::create([
+                'ticket_id' => $ticket->id,
+                'sender_id' => $clientId,
+                'sender_type' => 'CLIENT',
+                'message' => $initialMessage,
+                'is_internal' => false,
+                'attachments' => !empty($attachments) ? json_encode($attachments) : null,
+                'metadata' => [
+                    'complaint_type' => $type,
+                    'direct_creation' => true,
+                    'package_id' => $packageId
+                ]
+            ]);
+
+            // Log de création
+            Log::info('Ticket de réclamation créé directement', [
+                'ticket_id' => $ticket->id,
+                'package_id' => $packageId,
+                'client_id' => $clientId,
+                'type' => $type
+            ]);
+
+            return $ticket;
+        });
+    }
+
+    /**
+     * Mapper le type de réclamation vers priorité de ticket
+     */
+    private function mapComplaintTypeToTicketPriority(string $type): string
+    {
+        return match($type) {
+            'CHANGE_COD' => 'NORMAL',
+            'DELIVERY_DELAY' => 'NORMAL',
+            'REQUEST_RETURN' => 'HIGH',
+            'RETURN_DELAY' => 'HIGH',
+            'RESCHEDULE_TODAY' => 'HIGH',
+            'FOURTH_ATTEMPT' => 'HIGH',
+            'CUSTOM' => 'NORMAL',
+            default => 'NORMAL'
+        };
+    }
+
+    /**
+     * Générer le sujet du ticket basé sur le type de réclamation
+     */
+    private function generateComplaintSubject(string $type): string
+    {
+        return match($type) {
+            'CHANGE_COD' => 'Demande de modification du montant COD',
+            'DELIVERY_DELAY' => 'Réclamation pour retard de livraison',
+            'REQUEST_RETURN' => 'Demande de retour de colis',
+            'RETURN_DELAY' => 'Réclamation pour retard de retour',
+            'RESCHEDULE_TODAY' => 'Demande de report de livraison',
+            'FOURTH_ATTEMPT' => 'Demande de 4ème tentative de livraison',
+            'CUSTOM' => 'Réclamation personnalisée',
+            default => 'Réclamation de colis'
+        };
+    }
+
+    /**
+     * Générer le message de réclamation
+     */
+    private function generateComplaintMessage(string $type, string $description, array $attachments): string
+    {
+        $message = "📋 **Nouvelle réclamation**\n\n";
+        $message .= "**Type:** " . $this->generateComplaintSubject($type) . "\n";
+        $message .= "**Description:**\n{$description}\n\n";
+
+        if (!empty($attachments)) {
+            $message .= "📎 **Pièces jointes:** " . count($attachments) . " fichier(s)\n\n";
+        }
+
+        $message .= "⏰ **Créée le:** " . now()->format('d/m/Y à H:i') . "\n";
+
+        return $message;
+    }
+
+    /**
      * Obtenir l'affichage du type de réclamation
      */
     private function getComplaintTypeDisplay(string $type): string
