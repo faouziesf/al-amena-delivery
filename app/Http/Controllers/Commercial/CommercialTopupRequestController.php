@@ -22,11 +22,20 @@ class CommercialTopupRequestController extends Controller
 
         $query = TopupRequest::with(['client', 'processedBy'])
                             ->when($user->role === 'DEPOT_MANAGER', function($q) use ($user) {
-                                // Chef dépôt ne voit que les demandes de ses clients
-                                $clientIds = User::where('role', 'CLIENT')
-                                               ->whereIn('assigned_delegation', $user->assigned_gouvernorats_array)
-                                               ->pluck('id');
-                                return $q->whereIn('client_id', $clientIds);
+                                // Chef dépôt ne voit que les demandes des clients de son gouvernorat
+                                $assignedGouvernorats = is_array($user->assigned_gouvernorats)
+                                    ? $user->assigned_gouvernorats
+                                    : json_decode($user->assigned_gouvernorats, true) ?? [];
+
+                                if (!empty($assignedGouvernorats)) {
+                                    return $q->whereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                                        $subQuery->select('user_id')
+                                                 ->from('saved_addresses')
+                                                 ->where('type', 'CLIENT')
+                                                 ->whereIn('delegation_id', $assignedGouvernorats)
+                                                 ->groupBy('user_id');
+                                    });
+                                }
                             });
 
         // Filtres

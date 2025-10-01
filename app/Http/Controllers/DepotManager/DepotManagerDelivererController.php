@@ -276,4 +276,158 @@ class DepotManagerDelivererController extends Controller
 
         return back()->with('success', 'Colis réassignés avec succès.');
     }
+
+    /**
+     * Ajouter des fonds au wallet d'un livreur
+     */
+    public function addFunds(Request $request, User $deliverer)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
+            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.001|max:10000',
+            'description' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $deliverer, $user) {
+                $wallet = $deliverer->ensureWallet();
+                $wallet->addFunds($request->amount, $user->id, $request->description);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Fonds ajoutés avec succès au wallet de {$deliverer->name}",
+                'balance' => $deliverer->fresh()->wallet->balance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'ajout des fonds: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Déduire des fonds du wallet d'un livreur
+     */
+    public function deductFunds(Request $request, User $deliverer)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
+            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.001',
+            'description' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $deliverer, $user) {
+                $wallet = $deliverer->ensureWallet();
+
+                if ($wallet->balance < $request->amount) {
+                    throw new \Exception('Solde insuffisant pour cette déduction');
+                }
+
+                $wallet->deductFunds($request->amount, $user->id, $request->description);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Fonds déduits avec succès du wallet de {$deliverer->name}",
+                'balance' => $deliverer->fresh()->wallet->balance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la déduction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Ajouter une avance au wallet d'un livreur
+     */
+    public function addAdvance(Request $request, User $deliverer)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
+            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.001|max:1000',
+            'description' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $deliverer, $user) {
+                $wallet = $deliverer->ensureWallet();
+                $wallet->addAdvance($request->amount, $user->id, $request->description);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Avance accordée avec succès à {$deliverer->name}",
+                'advance_balance' => $deliverer->fresh()->wallet->advance_balance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'ajout de l\'avance: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Retirer une avance du wallet d'un livreur
+     */
+    public function removeAdvance(Request $request, User $deliverer)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
+            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.001',
+            'description' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $deliverer, $user) {
+                $wallet = $deliverer->ensureWallet();
+
+                if ($wallet->advance_balance < $request->amount) {
+                    throw new \Exception('Avance insuffisante pour cette opération');
+                }
+
+                $wallet->removeAdvance($request->amount, $user->id, $request->description);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Avance retirée avec succès à {$deliverer->name}",
+                'advance_balance' => $deliverer->fresh()->wallet->advance_balance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du retrait de l\'avance: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

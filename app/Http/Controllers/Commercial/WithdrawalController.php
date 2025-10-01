@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Commercial;
 
 use App\Http\Controllers\Controller;
-use App\Services\CommercialService;
 use App\Models\WithdrawalRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -11,38 +10,37 @@ use Illuminate\Support\Facades\Auth;
 
 class WithdrawalController extends Controller
 {
-    protected $commercialService;
-
-    public function __construct(CommercialService $commercialService)
-    {
-        $this->commercialService = $commercialService;
-    }
+    // Plus besoin de CommercialService car les méthodes approve/reject utilisent maintenant directement le modèle
 
     public function index(Request $request)
     {
         $user = Auth::user();
         $query = WithdrawalRequest::with(['client', 'processedByCommercial', 'assignedDeliverer']);
 
-        // FILTRAGE PAR DÉLÉGATIONS POUR CHEF DÉPÔT
+        // FILTRAGE PAR GOUVERNORATS POUR CHEF DÉPÔT
         if ($user->role === 'DEPOT_MANAGER' && $user->assigned_gouvernorats) {
             $assignedGouvernorats = is_array($user->assigned_gouvernorats)
                 ? $user->assigned_gouvernorats
                 : json_decode($user->assigned_gouvernorats, true) ?? [];
 
             if (!empty($assignedGouvernorats)) {
-                $query->whereHas('client', function($q) use ($assignedGouvernorats) {
-                    $q->whereIn('delegation_id', $assignedGouvernorats);
-                });
+                // Les chefs de dépôt voient seulement les paiements espèces des gouvernorats qu'ils gèrent
+                $query->where('method', 'CASH_DELIVERY')
+                      ->whereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                          $subQuery->select('user_id')
+                                   ->from('saved_addresses')
+                                   ->where('type', 'CLIENT')
+                                   ->whereIn('delegation_id', $assignedGouvernorats)
+                                   ->groupBy('user_id');
+                      });
             }
         }
 
         // Filtres
         if ($request->filled('status')) {
             $query->where('status', $request->status);
-        } else {
-            // Par défaut, afficher les demandes en attente et approuvées
-            $query->whereIn('status', ['PENDING', 'APPROVED']);
         }
+        // Pas de filtrage par défaut - afficher tous les statuts
 
         if ($request->filled('method')) {
             $query->where('method', $request->method);
@@ -137,20 +135,9 @@ class WithdrawalController extends Controller
         ]);
 
         try {
-            // Vérifier que le client a suffisamment de fonds
-            if ($withdrawal->client->wallet->balance < $withdrawal->amount) {
-                return back()->withErrors([
-                    'error' => 'Le client n\'a pas suffisamment de fonds. Solde actuel: ' . 
-                               number_format($withdrawal->client->wallet->balance, 3) . ' DT'
-                ]);
-            }
-
-            $this->commercialService->processWithdrawalRequest(
-                $withdrawal,
-                $withdrawal->method === 'BANK_TRANSFER' ? 'approve_bank_transfer' : 'approve_cash_delivery',
-                ['notes' => $request->notes],
-                Auth::user()
-            );
+            // Le montant a déjà été débité lors de la création de la demande
+            // Nous procédons directement à l'approbation
+            $withdrawal->approve(Auth::user(), $request->notes);
 
             $message = 'Demande de retrait approuvée avec succès.';
             if ($withdrawal->method === 'CASH_DELIVERY') {
@@ -160,6 +147,34 @@ class WithdrawalController extends Controller
             return back()->with('success', $message);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Erreur lors de l\'approbation: ' . $e->getMessage()]);
+        }
+    }
+
+    public function markAsProcessed(Request $request, WithdrawalRequest $withdrawal)
+    {
+        if ($withdrawal->status !== 'APPROVED' || $withdrawal->method !== 'BANK_TRANSFER') {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Seuls les virements bancaires approuvés peuvent être marqués comme traités.'], 400);
+            }
+            return back()->withErrors(['error' => 'Seuls les virements bancaires approuvés peuvent être marqués comme traités.']);
+        }
+
+        $request->validate([
+            'processing_notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $withdrawal->markAsProcessed($request->processing_notes);
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => 'Virement bancaire marqué comme traité avec succès.']);
+            }
+            return back()->with('success', 'Virement bancaire marqué comme traité avec succès.');
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Erreur lors du traitement: ' . $e->getMessage()], 500);
+            }
+            return back()->withErrors(['error' => 'Erreur lors du traitement: ' . $e->getMessage()]);
         }
     }
 
@@ -174,12 +189,8 @@ class WithdrawalController extends Controller
         ]);
 
         try {
-            $this->commercialService->processWithdrawalRequest(
-                $withdrawal,
-                'reject',
-                ['rejection_reason' => $request->rejection_reason],
-                Auth::user()
-            );
+            // Utiliser la méthode reject du modèle qui gère automatiquement le remboursement
+            $withdrawal->reject(Auth::user(), $request->rejection_reason);
 
             return back()->with('success', 'Demande de retrait rejetée avec succès.');
         } catch (\Exception $e) {
@@ -206,9 +217,11 @@ class WithdrawalController extends Controller
                            ->where('account_status', 'ACTIVE')
                            ->findOrFail($request->deliverer_id);
 
-            $this->commercialService->assignWithdrawalToDeliverer($withdrawal, $deliverer);
+            // Assigner le livreur et marquer comme prêt pour livraison
+            $withdrawal->assignToDeliverer($deliverer);
+            $withdrawal->prepareForDelivery();
 
-            $message = "Retrait assigné au livreur {$deliverer->name}. Code: {$withdrawal->delivery_receipt_code}";
+            $message = "Retrait assigné au livreur {$deliverer->name} et prêt pour livraison. Code: {$withdrawal->delivery_receipt_code}";
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -246,18 +259,9 @@ class WithdrawalController extends Controller
 
             foreach ($withdrawals as $withdrawal) {
                 try {
-                    // Vérifier le solde du client
-                    if ($withdrawal->client->wallet->balance < $withdrawal->amount) {
-                        $errors[] = "Retrait {$withdrawal->request_code}: Solde insuffisant";
-                        continue;
-                    }
-
-                    $this->commercialService->processWithdrawalRequest(
-                        $withdrawal,
-                        $withdrawal->method === 'BANK_TRANSFER' ? 'approve_bank_transfer' : 'approve_cash_delivery',
-                        ['notes' => $request->bulk_notes],
-                        Auth::user()
-                    );
+                    // Le montant a déjà été débité lors de la création de la demande
+                    // Nous procédons directement à l'approbation
+                    $withdrawal->approve(Auth::user(), $request->bulk_notes);
 
                     $approvedCount++;
                 } catch (\Exception $e) {
@@ -292,8 +296,29 @@ class WithdrawalController extends Controller
 
     public function markAsDelivered(Request $request, WithdrawalRequest $withdrawal)
     {
-        if ($withdrawal->status !== 'IN_PROGRESS' || $withdrawal->method !== 'CASH_DELIVERY') {
-            return back()->withErrors(['error' => 'Ce retrait ne peut pas être marqué comme livré.']);
+        $user = Auth::user();
+
+        // Vérifier les permissions selon le rôle
+        if ($user->role === 'DELIVERER') {
+            // Pour les livreurs : vérifier qu'ils sont assignés et que le statut est READY_FOR_DELIVERY
+            if ($withdrawal->assigned_deliverer_id !== $user->id ||
+                !in_array($withdrawal->status, ['READY_FOR_DELIVERY', 'IN_PROGRESS'])) {
+                $errorMsg = 'Vous n\'êtes pas autorisé à livrer ce retrait.';
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 403);
+                }
+                return back()->withErrors(['error' => $errorMsg]);
+            }
+        } else {
+            // Pour les commerciaux : vérifier le statut approprié
+            if (!in_array($withdrawal->status, ['IN_PROGRESS', 'READY_FOR_DELIVERY']) ||
+                $withdrawal->method !== 'CASH_DELIVERY') {
+                $errorMsg = 'Ce retrait ne peut pas être marqué comme livré.';
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 400);
+                }
+                return back()->withErrors(['error' => $errorMsg]);
+            }
         }
 
         $request->validate([
@@ -302,17 +327,27 @@ class WithdrawalController extends Controller
         ]);
 
         try {
-            $withdrawal->markAsDelivered([
-                'delivered_by_commercial' => Auth::user()->name,
+            $deliveryProof = [
+                'delivered_by' => $user->name,
+                'delivered_by_role' => $user->role,
                 'delivery_notes' => $request->delivery_notes,
                 'client_signature' => $request->client_signature,
                 'confirmed_at' => now()->toISOString(),
-            ]);
+            ];
 
-            return back()->with('success', 
-                "Retrait marqué comme livré. Montant: " . number_format($withdrawal->amount, 3) . " DT"
-            );
+            // Utiliser la nouvelle méthode markAsDeliveredFinal
+            $withdrawal->markAsDeliveredFinal($deliveryProof);
+
+            $message = "Retrait livré avec succès. Montant: " . number_format($withdrawal->amount, 3) . " DT";
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return back()->with('success', $message);
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Erreur lors de la confirmation: ' . $e->getMessage()], 500);
+            }
             return back()->withErrors(['error' => 'Erreur lors de la confirmation: ' . $e->getMessage()]);
         }
     }

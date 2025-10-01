@@ -32,6 +32,26 @@
     </button>
     @endif
 
+    @if($withdrawal->status === 'APPROVED' && $withdrawal->method === 'BANK_TRANSFER')
+    <button onclick="window.withdrawalApp?.markAsProcessed()"
+            class="px-4 py-2 bg-teal-300 text-teal-800 rounded-lg hover:bg-teal-400 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Marquer comme Traité
+    </button>
+    @endif
+
+    @if($withdrawal->status === 'PROCESSED' && $withdrawal->method === 'BANK_TRANSFER')
+    <button onclick="window.withdrawalApp?.markAsDelivered()"
+            class="px-4 py-2 bg-emerald-300 text-emerald-800 rounded-lg hover:bg-emerald-400 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Marquer comme Livré
+    </button>
+    @endif
+
     @if($withdrawal->status === 'APPROVED' && $withdrawal->method === 'CASH_DELIVERY')
     <button onclick="window.withdrawalApp?.openAssignModal()"
             class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
@@ -39,6 +59,16 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
         </svg>
         Assigner Livreur
+    </button>
+    @endif
+
+    @if(in_array($withdrawal->status, ['READY_FOR_DELIVERY', 'IN_PROGRESS']) && $withdrawal->method === 'CASH_DELIVERY')
+    <button onclick="window.withdrawalApp?.markAsDelivered()"
+            class="px-4 py-2 bg-emerald-300 text-emerald-800 rounded-lg hover:bg-emerald-400 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Marquer comme Livré
     </button>
     @endif
 </div>
@@ -57,13 +87,8 @@
                     - {{ number_format($withdrawal->amount, 3) }} DT
                 </p>
                 <div class="flex items-center space-x-4 mt-2">
-                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
-                        {{ $withdrawal->status === 'PENDING' ? 'bg-yellow-500 text-white' :
-                           ($withdrawal->status === 'APPROVED' ? 'bg-green-500 text-white' :
-                           ($withdrawal->status === 'COMPLETED' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white')) }}">
-                        {{ $withdrawal->status === 'PENDING' ? 'En attente' :
-                           ($withdrawal->status === 'APPROVED' ? 'Approuvé' :
-                           ($withdrawal->status === 'COMPLETED' ? 'Terminé' : 'Rejeté')) }}
+                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full {{ $withdrawal->status_color }}">
+                        {{ $withdrawal->status_display }}
                     </span>
                     <span class="text-purple-700 text-sm">
                         {{ $withdrawal->created_at->format('d/m/Y à H:i') }}
@@ -309,6 +334,38 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations</h3>
 
                 <div class="space-y-3 text-sm">
+                    <!-- Informations toujours affichées -->
+                    <div>
+                        <span class="font-medium text-gray-700">Code de demande:</span>
+                        <div class="font-mono text-gray-900">{{ $withdrawal->request_code }}</div>
+                    </div>
+
+                    <div>
+                        <span class="font-medium text-gray-700">Date de création:</span>
+                        <div class="text-gray-900">{{ $withdrawal->created_at->format('d/m/Y à H:i') }}</div>
+                    </div>
+
+                    <div>
+                        <span class="font-medium text-gray-700">Statut:</span>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $withdrawal->status_color }}">
+                                {{ $withdrawal->status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="font-medium text-gray-700">Méthode:</span>
+                        <div class="text-gray-900">{{ $withdrawal->method_display }}</div>
+                    </div>
+
+                    @if($withdrawal->reason)
+                    <div>
+                        <span class="font-medium text-gray-700">Motif:</span>
+                        <div class="text-gray-900">{{ $withdrawal->reason }}</div>
+                    </div>
+                    @endif
+
                     @if($withdrawal->delivery_receipt_code)
                     <div>
                         <span class="font-medium text-gray-700">Code de reçu:</span>
@@ -320,6 +377,27 @@
                     <div>
                         <span class="font-medium text-gray-700">Livreur assigné:</span>
                         <div class="text-gray-900">{{ $withdrawal->assignedDeliverer->name }}</div>
+                    </div>
+                    @endif
+
+                    @if($withdrawal->processed_at)
+                    <div>
+                        <span class="font-medium text-gray-700">Traité le:</span>
+                        <div class="text-gray-900">{{ $withdrawal->processed_at->format('d/m/Y à H:i') }}</div>
+                    </div>
+                    @endif
+
+                    @if($withdrawal->processing_notes)
+                    <div>
+                        <span class="font-medium text-gray-700">Notes de traitement:</span>
+                        <div class="text-gray-900">{{ $withdrawal->processing_notes }}</div>
+                    </div>
+                    @endif
+
+                    @if($withdrawal->delivered_at)
+                    <div>
+                        <span class="font-medium text-gray-700">Livré le:</span>
+                        <div class="text-gray-900">{{ $withdrawal->delivered_at->format('d/m/Y à H:i') }}</div>
                     </div>
                     @endif
 
@@ -348,9 +426,7 @@
                     <div class="flex justify-between">
                         <span class="text-purple-700">Statut:</span>
                         <span class="font-semibold text-purple-900">
-                            {{ $withdrawal->status === 'PENDING' ? 'En attente' :
-                               ($withdrawal->status === 'APPROVED' ? 'Approuvé' :
-                               ($withdrawal->status === 'COMPLETED' ? 'Terminé' : 'Rejeté')) }}
+                            {{ $withdrawal->status_display }}
                         </span>
                     </div>
                 </div>
@@ -558,6 +634,68 @@ function withdrawalShowApp() {
                 window.open(`/commercial/withdrawals/${this.withdrawal.id}/delivery-receipt`, '_blank');
             } else {
                 showToast('Aucun reçu disponible', 'warning');
+            }
+        },
+
+        async markAsProcessed() {
+            const notes = prompt('Notes de traitement (optionnel):');
+            if (notes !== null) {
+                try {
+                    const response = await fetch(`/commercial/withdrawals/${this.withdrawal.id}/mark-processed`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ processing_notes: notes })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast('Virement marqué comme traité', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast(data.message || 'Erreur lors du traitement', 'error');
+                    }
+                } catch (error) {
+                    showToast('Erreur de connexion', 'error');
+                }
+            }
+        },
+
+        async markAsDelivered() {
+            const notes = prompt('Notes de livraison (optionnel):');
+            const isBank = this.withdrawal.method === 'BANK_TRANSFER';
+            const confirmMsg = isBank ?
+                'Confirmer la finalisation de ce virement bancaire (montant sera débité du compte client) ?' :
+                'Confirmer la livraison de ce retrait en espèces ?';
+
+            if (notes !== null && confirm(confirmMsg)) {
+                try {
+                    const response = await fetch(`/commercial/withdrawals/${this.withdrawal.id}/delivered`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ delivery_notes: notes })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        const successMsg = isBank ? 'Virement finalisé avec succès' : 'Retrait marqué comme livré';
+                        showToast(successMsg, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast(data.message || 'Erreur lors de la finalisation', 'error');
+                    }
+                } catch (error) {
+                    showToast('Erreur de connexion', 'error');
+                }
             }
         }
     };

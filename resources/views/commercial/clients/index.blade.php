@@ -13,6 +13,13 @@
         </svg>
         Exporter CSV
     </button>
+    <a href="{{ route('commercial.client-advances.index') }}"
+       class="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors">
+        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+        </svg>
+        Gestion Avances
+    </a>
     <a href="{{ route('commercial.clients.create') }}"
        class="px-4 py-2 bg-purple-300 text-purple-800 rounded-lg hover:bg-purple-400 transition-colors">
         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,6 +212,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Boutique/Fiscal</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarifs (DT)</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wallet</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avances</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Créé le</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -250,6 +258,14 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                @if(($client->wallet->advance_balance ?? 0) > 0)
+                                    <div class="text-sm font-bold text-emerald-600">{{ number_format($client->wallet->advance_balance, 3) }} DT</div>
+                                    <div class="text-xs text-emerald-500">Avance active</div>
+                                @else
+                                    <div class="text-sm text-gray-400">Aucune avance</div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 @if($client->account_status === 'ACTIVE')
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -289,10 +305,10 @@
                                         </svg>
                                     </button>
 
-                                    <!-- Wallet Management -->
-                                    <button onclick="manageWallet({{ $client->id }}, '{{ $client->name }}', {{ $client->wallet->balance ?? 0 }})" 
+                                    <!-- Wallet Management (All Transactions) -->
+                                    <button onclick="manageWallet({{ $client->id }}, '{{ $client->name }}', {{ $client->wallet->balance ?? 0 }}, {{ $client->wallet->advance_balance ?? 0 }})"
                                             class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100 transition-colors"
-                                            title="Gérer wallet">
+                                            title="Gérer wallet et avances">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                         </svg>
@@ -401,19 +417,27 @@
                             <span class="font-medium text-green-600">{{ number_format($client->wallet->balance ?? 0, 3) }} DT</span>
                         </div>
                         <div class="flex justify-between">
+                            <span class="text-gray-600">Avances:</span>
+                            @if(($client->wallet->advance_balance ?? 0) > 0)
+                                <span class="font-medium text-emerald-600">{{ number_format($client->wallet->advance_balance, 3) }} DT</span>
+                            @else
+                                <span class="text-gray-400">Aucune</span>
+                            @endif
+                        </div>
+                        <div class="flex justify-between">
                             <span class="text-gray-600">Tarifs:</span>
                             <span class="font-medium">{{ number_format($client->clientProfile->offer_delivery_price ?? 0, 3) }}/{{ number_format($client->clientProfile->offer_return_price ?? 0, 3) }}</span>
                         </div>
                     </div>
                     
                     <div class="mt-4 flex space-x-2">
-                        <button onclick="viewClient({{ $client->id }})" 
+                        <button onclick="viewClient({{ $client->id }})"
                                 class="flex-1 bg-purple-600 text-white text-sm py-2 px-3 rounded hover:bg-purple-700 transition-colors">
                             Voir
                         </button>
-                        <button onclick="manageWallet({{ $client->id }}, '{{ $client->name }}', {{ $client->wallet->balance ?? 0 }})" 
+                        <button onclick="manageWallet({{ $client->id }}, '{{ $client->name }}', {{ $client->wallet->balance ?? 0 }}, {{ $client->wallet->advance_balance ?? 0 }})"
                                 class="flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded hover:bg-green-700 transition-colors">
-                            Wallet
+                            Gérer Wallet
                         </button>
                     </div>
                 </div>
@@ -464,50 +488,83 @@
 <!-- Wallet Management Modal -->
 <div id="wallet-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div class="flex justify-between items-center p-6 border-b">
-                <h3 class="text-lg font-bold text-gray-900" id="wallet-title">Gérer Wallet</h3>
+                <h3 class="text-lg font-bold text-gray-900" id="wallet-title">Gérer Wallet & Avances</h3>
                 <button onclick="closeWalletModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
-            
+
             <div class="p-6">
-                <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                    <div class="text-sm text-gray-600">Solde actuel</div>
-                    <div class="text-2xl font-bold text-gray-900" id="current-balance">0.000 DT</div>
+                <!-- Client Info Section -->
+                <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center">
+                            <span class="text-white font-bold text-lg" id="wallet-client-initial">C</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900" id="wallet-client-name">Client</div>
+                            <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <div class="text-xs text-gray-600">Solde Principal</div>
+                                    <div class="text-lg font-bold text-blue-600" id="current-balance">0.000 DT</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-600">Avances</div>
+                                    <div class="text-lg font-bold text-green-600" id="current-advance-balance">0.000 DT</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
+
                 <form id="wallet-form" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
-                        <select id="wallet-action" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                            <option value="add">Ajouter des fonds</option>
-                            <option value="deduct">Déduire des fonds</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type de Transaction</label>
+                        <select id="wallet-action" onchange="updateWalletActionUI()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                            <optgroup label="💰 Gestion du Solde Principal">
+                                <option value="add">Ajouter des fonds au solde</option>
+                                <option value="deduct">Déduire des fonds du solde</option>
+                            </optgroup>
+                            <optgroup label="💎 Gestion des Avances">
+                                <option value="add_advance">Ajouter une avance</option>
+                                <option value="remove_advance">Retirer une avance</option>
+                            </optgroup>
                         </select>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Montant (DT)</label>
-                        <input type="number" id="wallet-amount" step="0.001" min="0.001" required 
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                        <input type="number" id="wallet-amount" step="0.001" min="0.001" required
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="text-xs text-gray-500 mt-1" id="wallet-amount-help">
+                            Montant entre 0.001 DT et 10000 DT
+                        </div>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea id="wallet-description" rows="3" required
-                                  placeholder="Motif de l'ajustement..."
-                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+                                  placeholder="Motif de l'opération..."
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
-                    
+
+                    <!-- Transaction Preview -->
+                    <div id="transaction-preview" class="p-3 bg-gray-50 rounded-lg border hidden">
+                        <div class="text-sm font-medium text-gray-700 mb-2">Aperçu de la transaction :</div>
+                        <div id="preview-content" class="text-sm text-gray-600"></div>
+                    </div>
+
                     <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
-                            Confirmer
+                        <button type="submit" id="wallet-submit-btn"
+                                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            Confirmer l'Opération
                         </button>
-                        <button type="button" onclick="closeWalletModal()" 
-                                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">
+                        <button type="button" onclick="closeWalletModal()"
+                                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
                             Annuler
                         </button>
                     </div>
@@ -516,6 +573,7 @@
         </div>
     </div>
 </div>
+
 @endpush
 
 @push('scripts')
@@ -538,10 +596,18 @@ function viewClient(clientId) {
     window.location.href = `/commercial/clients/${clientId}`;
 }
 
-function manageWallet(clientId, clientName, currentBalance) {
+function manageWallet(clientId, clientName, currentBalance, currentAdvanceBalance = 0) {
     currentClientId = clientId;
-    document.getElementById('wallet-title').textContent = `Wallet - ${clientName}`;
+    document.getElementById('wallet-title').textContent = `Wallet & Avances - ${clientName}`;
+    document.getElementById('wallet-client-name').textContent = clientName;
+    document.getElementById('wallet-client-initial').textContent = clientName.charAt(0).toUpperCase();
     document.getElementById('current-balance').textContent = `${parseFloat(currentBalance).toFixed(3)} DT`;
+    document.getElementById('current-advance-balance').textContent = `${parseFloat(currentAdvanceBalance).toFixed(3)} DT`;
+
+    // Reset form
+    document.getElementById('wallet-action').value = 'add';
+    updateWalletActionUI();
+
     document.getElementById('wallet-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
@@ -551,6 +617,47 @@ function closeWalletModal() {
     document.body.style.overflow = 'auto';
     document.getElementById('wallet-form').reset();
     currentClientId = null;
+}
+
+function updateWalletActionUI() {
+    const action = document.getElementById('wallet-action').value;
+    const submitBtn = document.getElementById('wallet-submit-btn');
+    const amountHelp = document.getElementById('wallet-amount-help');
+    const amountInput = document.getElementById('wallet-amount');
+    const preview = document.getElementById('transaction-preview');
+    const previewContent = document.getElementById('preview-content');
+
+    // Hide preview initially
+    preview.classList.add('hidden');
+
+    switch(action) {
+        case 'add':
+            submitBtn.textContent = 'Ajouter des Fonds';
+            submitBtn.className = 'flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors';
+            amountHelp.textContent = 'Montant entre 0.001 DT et 10000 DT';
+            amountInput.setAttribute('max', '10000');
+            break;
+        case 'deduct':
+            submitBtn.textContent = 'Déduire des Fonds';
+            submitBtn.className = 'flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors';
+            const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
+            amountHelp.textContent = `Maximum disponible: ${currentBalance.toFixed(3)} DT`;
+            amountInput.setAttribute('max', currentBalance);
+            break;
+        case 'add_advance':
+            submitBtn.textContent = 'Ajouter une Avance';
+            submitBtn.className = 'flex-1 bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors';
+            amountHelp.textContent = 'Montant entre 0.001 DT et 1000 DT (pour avances)';
+            amountInput.setAttribute('max', '1000');
+            break;
+        case 'remove_advance':
+            submitBtn.textContent = 'Retirer une Avance';
+            submitBtn.className = 'flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors';
+            const currentAdvanceBalance = parseFloat(document.getElementById('current-advance-balance').textContent);
+            amountHelp.textContent = `Maximum disponible: ${currentAdvanceBalance.toFixed(3)} DT`;
+            amountInput.setAttribute('max', currentAdvanceBalance);
+            break;
+    }
 }
 
 async function validateClient(clientId, clientName) {
@@ -647,8 +754,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             try {
-                const endpoint = action === 'add' ? 'add' : 'deduct';
-                const response = await fetch(`/commercial/clients/${currentClientId}/wallet/${endpoint}`, {
+                let endpoint, url;
+
+                if (action === 'add' || action === 'deduct') {
+                    // Wallet operations
+                    endpoint = action === 'add' ? 'add' : 'deduct';
+                    url = `/commercial/clients/${currentClientId}/wallet/${endpoint}`;
+                } else {
+                    // Advance operations
+                    endpoint = action === 'add_advance' ? 'add' : 'remove';
+                    url = `/commercial/client-advances/${currentClientId}/${endpoint}`;
+                }
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -657,19 +775,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ amount, description })
                 });
 
-                if (response.ok) {
-                    showToast(`Wallet mis à jour avec succès`, 'success');
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(data.message || 'Opération réalisée avec succès', 'success');
                     closeWalletModal();
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    const data = await response.json();
-                    showToast(data.message || 'Erreur lors de la mise à jour', 'error');
+                    showToast(data.message || 'Erreur lors de l\'opération', 'error');
                 }
             } catch (error) {
+                console.error('Erreur:', error);
                 showToast('Erreur de connexion', 'error');
             }
         });
     }
+
 });
 </script>
 @endpush

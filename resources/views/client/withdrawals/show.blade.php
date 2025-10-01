@@ -136,9 +136,76 @@
                             </h3>
                         </div>
                         <div class="p-6">
-                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                                <pre class="text-sm text-blue-900 whitespace-pre-wrap">{{ $withdrawal->bank_details }}</pre>
-                            </div>
+                            @php
+                                $bankDetails = is_string($withdrawal->bank_details)
+                                    ? json_decode($withdrawal->bank_details, true)
+                                    : $withdrawal->bank_details;
+                            @endphp
+
+                            @if($bankDetails && is_array($bankDetails))
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    @if(isset($bankDetails['bank_name']))
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600 mb-2">Banque</p>
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                </svg>
+                                                <span class="font-medium text-blue-900">{{ $bankDetails['bank_name'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if(isset($bankDetails['account_holder_name']))
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600 mb-2">Titulaire du compte</p>
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                </svg>
+                                                <span class="font-medium text-blue-900">{{ $bankDetails['account_holder_name'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if(isset($bankDetails['iban']))
+                                        <div class="md:col-span-2">
+                                            <p class="text-sm font-medium text-gray-600 mb-2">IBAN</p>
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                                <span class="font-mono text-blue-900 font-medium tracking-wider">{{ $bankDetails['iban'] }}</span>
+                                                <button onclick="copyToClipboard('{{ $bankDetails['iban'] }}')"
+                                                        class="ml-auto text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                                                        title="Copier l'IBAN">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if(isset($bankDetails['bank_account_id']))
+                                        <div class="md:col-span-2">
+                                            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                                <div class="flex items-center">
+                                                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    <span class="text-sm font-medium text-green-800">Compte bancaire enregistré utilisé</span>
+                                                </div>
+                                                <p class="text-xs text-green-600 mt-1">ID: {{ $bankDetails['bank_account_id'] }}</p>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                    <p class="text-sm text-blue-900">{{ $withdrawal->bank_details }}</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -409,11 +476,98 @@
 
 @push('scripts')
 <script>
+// Fonction pour copier l'IBAN dans le presse-papiers
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() {
+            showCopySuccessMessage();
+        }).catch(function(err) {
+            console.error('Erreur lors de la copie:', err);
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+// Méthode de fallback pour la copie
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccessMessage();
+        }
+    } catch (err) {
+        console.error('Erreur lors de la copie fallback:', err);
+    }
+
+    document.body.removeChild(textArea);
+}
+
+// Affichage du message de succès
+function showCopySuccessMessage() {
+    // Créer une notification temporaire
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            IBAN copié dans le presse-papiers!
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Animation d'entrée
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+
+    // Suppression après 3 secondes
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
 // Auto-actualisation pour les demandes en cours
 @if(in_array($withdrawal->status, ['PENDING', 'APPROVED', 'IN_PROGRESS']))
-    setInterval(function() {
-        location.reload();
-    }, 60000); // 1 minute
+    let autoRefreshTimer;
+
+    function startAutoRefresh() {
+        autoRefreshTimer = setInterval(function() {
+            // Vérifier si l'utilisateur est toujours actif (pas d'inactivité prolongée)
+            if (document.hasFocus()) {
+                location.reload();
+            }
+        }, 60000); // 1 minute
+    }
+
+    // Démarrer l'auto-actualisation
+    startAutoRefresh();
+
+    // Arrêter l'auto-actualisation si l'utilisateur quitte la page
+    window.addEventListener('beforeunload', function() {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+    });
 @endif
 
 // Animation d'entrée
@@ -428,6 +582,29 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.transform = 'translateY(0)';
         }, index * 100);
     });
+
+    // Animation des éléments de la timeline
+    const timelineItems = document.querySelectorAll('.flex.items-start');
+    timelineItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-10px)';
+        setTimeout(() => {
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, 500 + (index * 100));
+    });
+});
+
+// Amélioration de l'accessibilité
+document.addEventListener('keydown', function(e) {
+    // Échap pour fermer les notifications
+    if (e.key === 'Escape') {
+        const notifications = document.querySelectorAll('.fixed.top-4.right-4');
+        notifications.forEach(notification => {
+            notification.style.display = 'none';
+        });
+    }
 });
 </script>
 @endpush

@@ -10,11 +10,14 @@ class UserWallet extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 
-        'balance', 
-        'pending_amount', 
+        'user_id',
+        'balance',
+        'pending_amount',
         'frozen_amount',
-        'last_transaction_at', 
+        'advance_balance',
+        'advance_last_modified_at',
+        'advance_last_modified_by',
+        'last_transaction_at',
         'last_transaction_id'
     ];
 
@@ -22,6 +25,8 @@ class UserWallet extends Model
         'balance' => 'decimal:3',
         'pending_amount' => 'decimal:3',
         'frozen_amount' => 'decimal:3',
+        'advance_balance' => 'decimal:3',
+        'advance_last_modified_at' => 'datetime',
         'last_transaction_at' => 'datetime',
     ];
 
@@ -29,6 +34,11 @@ class UserWallet extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function advanceModifiedBy()
+    {
+        return $this->belongsTo(User::class, 'advance_last_modified_by');
     }
 
     public function transactions()
@@ -70,10 +80,33 @@ class UserWallet extends Model
         return number_format($this->frozen_amount, 3) . ' DT';
     }
 
+    public function getFormattedAdvanceBalanceAttribute()
+    {
+        return number_format($this->advance_balance, 3) . ' DT';
+    }
+
+    public function getTotalAvailableForReturnFeesAttribute()
+    {
+        // Solde disponible + avance pour les frais de retour uniquement
+        return $this->getAvailableBalanceAttribute() + $this->advance_balance;
+    }
+
     // Helper methods
     public function hasSufficientBalance($amount)
     {
         return $this->getAvailableBalanceAttribute() >= $amount;
+    }
+
+    public function hasSufficientBalanceForReturnFees($amount)
+    {
+        // Vérifie si le solde + avance couvre les frais de retour
+        return $this->getTotalAvailableForReturnFeesAttribute() >= $amount;
+    }
+
+    public function canUseAdvanceForReturnFees($amount)
+    {
+        // Vérifie si l'avance peut couvrir le montant demandé
+        return $this->advance_balance >= $amount;
     }
 
     public function addFunds($amount, $description = 'Ajout de fonds', $reference = null)
@@ -226,7 +259,183 @@ class UserWallet extends Model
 
     public function getTotalAmount()
     {
-        return $this->balance + $this->pending_amount + $this->frozen_amount;
+        return $this->balance + $this->pending_amount + $this->frozen_amount + $this->advance_balance;
+    }
+
+    // ================== MÉTHODES DE GESTION DES AVANCES ==================
+
+    /**
+     * Ajouter une avance au compte client (réservé COMMERCIAL/SUPERVISOR)
+     */
+    public function addAdvance($amount, $addedByUserId, $description = 'Avance accordée')
+    {
+        if ($amount <= 0) {
+            throw new \Exception('Le montant de l\'avance doit être positif.');
+        }
+
+        $oldAdvanceBalance = $this->advance_balance;
+        $newAdvanceBalance = $oldAdvanceBalance + $amount;
+
+        $this->update([
+            'advance_balance' => $newAdvanceBalance,
+            'advance_last_modified_at' => now(),
+            'advance_last_modified_by' => $addedByUserId,
+            'last_transaction_at' => now()
+        ]);
+
+        // Créer la transaction d'avance
+        $transaction = FinancialTransaction::create([
+            'transaction_id' => FinancialTransaction::generateTransactionId('ADV'),
+            'user_id' => $this->user_id,
+            'type' => 'ADVANCE_CREDIT',
+            'amount' => $amount,
+            'status' => 'COMPLETED',
+            'description' => $description,
+            'reference' => 'ADVANCE_ADD_' . $addedByUserId,
+            'wallet_balance_before' => $this->balance,
+            'wallet_balance_after' => $this->balance,
+            'completed_at' => now(),
+            'metadata' => json_encode([
+                'operation' => 'add_advance',
+                'advance_balance_before' => $oldAdvanceBalance,
+                'advance_balance_after' => $newAdvanceBalance,
+                'added_by_user_id' => $addedByUserId,
+                'timestamp' => now()->toISOString()
+            ])
+        ]);
+
+        $this->update(['last_transaction_id' => $transaction->transaction_id]);
+
+        return $this;
+    }
+
+    /**
+     * Retirer une avance du compte client (réservé COMMERCIAL/SUPERVISOR)
+     */
+    public function removeAdvance($amount, $removedByUserId, $description = 'Avance retirée')
+    {
+        if ($amount <= 0) {
+            throw new \Exception('Le montant à retirer doit être positif.');
+        }
+
+        if ($this->advance_balance < $amount) {
+            throw new \Exception('Avance insuffisante. Disponible: ' . $this->formatted_advance_balance);
+        }
+
+        $oldAdvanceBalance = $this->advance_balance;
+        $newAdvanceBalance = $oldAdvanceBalance - $amount;
+
+        $this->update([
+            'advance_balance' => $newAdvanceBalance,
+            'advance_last_modified_at' => now(),
+            'advance_last_modified_by' => $removedByUserId,
+            'last_transaction_at' => now()
+        ]);
+
+        // Créer la transaction de retrait d'avance
+        $transaction = FinancialTransaction::create([
+            'transaction_id' => FinancialTransaction::generateTransactionId('RAV'),
+            'user_id' => $this->user_id,
+            'type' => 'ADVANCE_DEBIT',
+            'amount' => -$amount,
+            'status' => 'COMPLETED',
+            'description' => $description,
+            'reference' => 'ADVANCE_REMOVE_' . $removedByUserId,
+            'wallet_balance_before' => $this->balance,
+            'wallet_balance_after' => $this->balance,
+            'completed_at' => now(),
+            'metadata' => json_encode([
+                'operation' => 'remove_advance',
+                'advance_balance_before' => $oldAdvanceBalance,
+                'advance_balance_after' => $newAdvanceBalance,
+                'removed_by_user_id' => $removedByUserId,
+                'timestamp' => now()->toISOString()
+            ])
+        ]);
+
+        $this->update(['last_transaction_id' => $transaction->transaction_id]);
+
+        return $this;
+    }
+
+    /**
+     * Utiliser l'avance pour payer les frais de retour (UNIQUEMENT)
+     */
+    public function useAdvanceForReturnFees($amount, $packageCode = null, $description = 'Utilisation avance - Frais de retour')
+    {
+        if ($amount <= 0) {
+            throw new \Exception('Le montant doit être positif.');
+        }
+
+        if (!$this->canUseAdvanceForReturnFees($amount)) {
+            throw new \Exception('Avance insuffisante pour couvrir les frais de retour. Disponible: ' . $this->formatted_advance_balance);
+        }
+
+        $oldAdvanceBalance = $this->advance_balance;
+        $newAdvanceBalance = $oldAdvanceBalance - $amount;
+
+        $this->update([
+            'advance_balance' => $newAdvanceBalance,
+            'advance_last_modified_at' => now(),
+            'last_transaction_at' => now()
+        ]);
+
+        // Créer la transaction d'utilisation d'avance
+        $transaction = FinancialTransaction::create([
+            'transaction_id' => FinancialTransaction::generateTransactionId('UAV'),
+            'user_id' => $this->user_id,
+            'type' => 'ADVANCE_USAGE',
+            'amount' => -$amount,
+            'status' => 'COMPLETED',
+            'description' => $description . ($packageCode ? " - Colis: {$packageCode}" : ''),
+            'reference' => $packageCode ? "RETURN_FEES_{$packageCode}" : 'RETURN_FEES',
+            'wallet_balance_before' => $this->balance,
+            'wallet_balance_after' => $this->balance,
+            'completed_at' => now(),
+            'metadata' => json_encode([
+                'operation' => 'use_advance_return_fees',
+                'advance_balance_before' => $oldAdvanceBalance,
+                'advance_balance_after' => $newAdvanceBalance,
+                'package_code' => $packageCode,
+                'usage_type' => 'return_fees',
+                'timestamp' => now()->toISOString()
+            ])
+        ]);
+
+        $this->update(['last_transaction_id' => $transaction->transaction_id]);
+
+        return $this;
+    }
+
+    /**
+     * Déduire les frais en utilisant d'abord l'avance puis le solde normal
+     * (Méthode spéciale pour les frais de retour)
+     */
+    public function deductReturnFees($amount, $packageCode = null, $description = 'Frais de retour')
+    {
+        if ($amount <= 0) {
+            throw new \Exception('Le montant des frais doit être positif.');
+        }
+
+        if (!$this->hasSufficientBalanceForReturnFees($amount)) {
+            throw new \Exception('Solde insuffisant (normal + avance) pour couvrir les frais de retour.');
+        }
+
+        $remainingAmount = $amount;
+
+        // Utiliser d'abord l'avance si disponible
+        if ($this->advance_balance > 0 && $remainingAmount > 0) {
+            $advanceToUse = min($this->advance_balance, $remainingAmount);
+            $this->useAdvanceForReturnFees($advanceToUse, $packageCode, $description);
+            $remainingAmount -= $advanceToUse;
+        }
+
+        // Utiliser le solde normal si nécessaire
+        if ($remainingAmount > 0) {
+            $this->deductFunds($remainingAmount, $description . ($packageCode ? " - Colis: {$packageCode}" : ''), $packageCode);
+        }
+
+        return $this;
     }
 
     // Statistiques

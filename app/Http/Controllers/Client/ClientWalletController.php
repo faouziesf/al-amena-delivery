@@ -54,6 +54,21 @@ class ClientWalletController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        // Récupérer les demandes de retrait
+        $withdrawalRequests = WithdrawalRequest::where('client_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Récupérer les demandes de topup
+        $topupRequests = TopupRequest::where('client_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Calculer les avances (colis livrés non encore payés)
+        $advanceInfo = $this->calculateClientAdvance($user);
+
         // Statistiques du portefeuille
         $stats = [
             'total_credited' => $user->transactions()
@@ -66,9 +81,13 @@ class ClientWalletController extends Controller
                 ->sum('amount')),
             'pending_amount' => $user->wallet->pending_amount ?? 0,
             'frozen_amount' => $user->wallet->frozen_amount ?? 0,
+            'pending_withdrawals' => $withdrawalRequests->where('status', 'PENDING')->count(),
+            'pending_withdrawal_amount' => $withdrawalRequests->where('status', 'PENDING')->sum('amount'),
+            'pending_topups' => $topupRequests->where('status', 'PENDING')->count(),
+            'pending_topup_amount' => $topupRequests->where('status', 'PENDING')->sum('amount'),
         ];
 
-        return view('client.wallet.index', compact('user', 'transactions', 'stats'));
+        return view('client.wallet.index', compact('user', 'transactions', 'stats', 'withdrawalRequests', 'topupRequests', 'advanceInfo'));
     }
 
     /**
@@ -164,7 +183,8 @@ class ClientWalletController extends Controller
 
         $availableBalance = $user->wallet->balance - ($user->wallet->frozen_amount ?? 0);
 
-        $validated = $request->validate([
+        // Validation de base
+        $rules = [
             'amount' => [
                 'required',
                 'numeric',
@@ -173,15 +193,59 @@ class ClientWalletController extends Controller
             ],
             'reason' => 'nullable|string|max:500',
             'preferred_method' => 'required|in:BANK_TRANSFER,CASH_DELIVERY',
-            'bank_details' => 'required_if:preferred_method,BANK_TRANSFER|nullable|string|max:500'
-        ], [
+        ];
+
+        $messages = [
             'amount.max' => "Le montant ne peut pas dépasser votre solde disponible ({$availableBalance} DT).",
-            'bank_details.required_if' => 'Les détails bancaires sont requis pour un virement.',
             'preferred_method.required' => 'Veuillez sélectionner une méthode de retrait.',
-        ]);
+        ];
+
+        // Validation spécifique pour virement bancaire
+        if ($request->preferred_method === 'BANK_TRANSFER') {
+            // Si un compte bancaire existant est sélectionné
+            if ($request->has('bank_account_id') && $request->bank_account_id) {
+                $rules['bank_account_id'] = 'required|exists:client_bank_accounts,id';
+                $messages['bank_account_id.required'] = 'Veuillez sélectionner un compte bancaire.';
+                $messages['bank_account_id.exists'] = 'Le compte bancaire sélectionné n\'existe pas.';
+            } else {
+                // Sinon, les détails d'un nouveau compte sont requis
+                $rules['bank_name'] = 'required|string|max:255';
+                $rules['account_holder_name'] = 'required|string|max:255';
+                $rules['iban'] = 'required|string|regex:/^TN\d{22}$/';
+
+                $messages['bank_name.required'] = 'Le nom de la banque est requis pour un nouveau compte.';
+                $messages['account_holder_name.required'] = 'Le nom du titulaire est requis.';
+                $messages['iban.required'] = 'L\'IBAN est requis.';
+                $messages['iban.regex'] = 'Format IBAN invalide. Format attendu: TN suivi de 22 chiffres.';
+            }
+        }
+
+        $validated = $request->validate($rules, $messages);
 
         try {
             DB::beginTransaction();
+
+            // Préparer les détails bancaires selon le cas
+            $bankDetails = null;
+            if ($validated['preferred_method'] === 'BANK_TRANSFER') {
+                if (isset($validated['bank_account_id'])) {
+                    // Utiliser un compte bancaire existant
+                    $bankAccount = $user->bankAccounts()->findOrFail($validated['bank_account_id']);
+                    $bankDetails = [
+                        'bank_account_id' => $bankAccount->id,
+                        'bank_name' => $bankAccount->bank_name,
+                        'account_holder_name' => $bankAccount->account_holder_name,
+                        'iban' => $bankAccount->iban
+                    ];
+                } else {
+                    // Utiliser les détails d'un nouveau compte
+                    $bankDetails = [
+                        'bank_name' => $validated['bank_name'],
+                        'account_holder_name' => $validated['account_holder_name'],
+                        'iban' => strtoupper(preg_replace('/\s+/', '', $validated['iban']))
+                    ];
+                }
+            }
 
             // Créer la demande de retrait
             $withdrawal = WithdrawalRequest::create([
@@ -189,24 +253,29 @@ class ClientWalletController extends Controller
                 'amount' => $validated['amount'],
                 'reason' => $validated['reason'],
                 'method' => $validated['preferred_method'],
-                'bank_details' => $validated['preferred_method'] === 'BANK_TRANSFER' ? $validated['bank_details'] : null,
+                'bank_details' => $bankDetails ? json_encode($bankDetails) : null,
                 'status' => 'PENDING'
             ]);
 
-            // Geler le montant dans le portefeuille
+            // Geler le montant dans le portefeuille (réservation)
+            $previousBalance = $user->wallet->balance;
             $user->wallet->frozen_amount = ($user->wallet->frozen_amount ?? 0) + $validated['amount'];
             $user->wallet->save();
 
-            // Enregistrer la transaction de gel
-            $this->financialService->processTransaction([
+            // Enregistrer la transaction de gel avec statut PENDING
+            $transaction = $this->financialService->processTransaction([
                 'user_id' => $user->id,
-                'type' => 'WITHDRAWAL_FREEZE',
-                'amount' => 0, // Pas de changement du solde, juste gel
-                'description' => "Gel pour demande de retrait #{$withdrawal->request_code}",
+                'type' => 'WITHDRAWAL_RESERVE',
+                'amount' => 0, // Pas de changement du solde, juste réservation
+                'status' => 'PENDING',
+                'description' => "Réservation pour demande de retrait #{$withdrawal->request_code}",
+                'reference' => $withdrawal->request_code,
                 'metadata' => [
                     'withdrawal_id' => $withdrawal->id,
                     'method' => $validated['preferred_method'],
-                    'frozen_amount' => $validated['amount']
+                    'bank_details' => $bankDetails,
+                    'reserved_amount' => $validated['amount'],
+                    'previous_balance' => $previousBalance
                 ]
             ]);
 
@@ -221,6 +290,52 @@ class ClientWalletController extends Controller
             return back()
                 ->withInput()
                 ->with('error', 'Erreur lors de la création: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Calculer les avances du client (colis livrés non encore payés)
+     */
+    private function calculateClientAdvance($user)
+    {
+        // Récupérer les colis livrés mais non encore payés par le client
+        $deliveredPackages = $user->packages()
+            ->where('status', 'DELIVERED')
+            ->where('cod_amount', '>', 0)
+            ->where('paid_to_client', false)
+            ->get();
+
+        $totalAdvance = $deliveredPackages->sum('cod_amount');
+        $packageCount = $deliveredPackages->count();
+
+        return [
+            'total_amount' => $totalAdvance,
+            'package_count' => $packageCount,
+            'packages' => $deliveredPackages->take(5), // Afficher les 5 plus récents
+            'has_advance' => $totalAdvance > 0
+        ];
+    }
+
+    /**
+     * Annuler une demande de retrait
+     */
+    public function cancelWithdrawal(WithdrawalRequest $withdrawal)
+    {
+        $user = Auth::user();
+
+        if ($withdrawal->client_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        try {
+            $withdrawal->cancel('Annulée par le client');
+
+            return redirect()->route('client.wallet.index')
+                ->with('success', "Demande de retrait #{$withdrawal->request_code} annulée avec succès. Le montant a été remboursé dans votre portefeuille.");
+
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
         }
     }
 
@@ -259,58 +374,6 @@ class ClientWalletController extends Controller
         return view('client.withdrawals.show', compact('withdrawal'));
     }
 
-    /**
-     * Annuler une demande de retrait (uniquement si en attente)
-     */
-    public function cancelWithdrawal(WithdrawalRequest $withdrawal)
-    {
-        $user = Auth::user();
-        
-        if ($user->role !== 'CLIENT' || $withdrawal->client_id !== $user->id) {
-            abort(403, 'Accès non autorisé.');
-        }
-
-        if (!$withdrawal->canBeProcessed()) {
-            return back()->with('error', 'Cette demande ne peut plus être annulée.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Dégeler le montant dans le portefeuille
-            $user->ensureWallet();
-            $user->wallet->frozen_amount = max(0, ($user->wallet->frozen_amount ?? 0) - $withdrawal->amount);
-            $user->wallet->save();
-
-            // Marquer la demande comme annulée
-            $withdrawal->update([
-                'status' => 'CANCELLED',
-                'processed_at' => now(),
-                'rejection_reason' => 'Annulé par le client'
-            ]);
-
-            // Enregistrer la transaction d'annulation
-            $this->financialService->processTransaction([
-                'user_id' => $user->id,
-                'type' => 'WITHDRAWAL_CANCEL',
-                'amount' => 0,
-                'description' => "Annulation demande de retrait #{$withdrawal->request_code}",
-                'metadata' => [
-                    'withdrawal_id' => $withdrawal->id,
-                    'unfrozen_amount' => $withdrawal->amount
-                ]
-            ]);
-
-            DB::commit();
-
-            return back()->with('success', 'Demande de retrait annulée avec succès. Le montant a été dégelé.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return back()->with('error', 'Erreur lors de l\'annulation: ' . $e->getMessage());
-        }
-    }
 
     /**
      * Télécharger un relevé de compte PDF
@@ -711,12 +774,15 @@ class ClientWalletController extends Controller
         $user = Auth::user();
         $user->ensureWallet();
         $user->load('wallet');
-        
+
         return response()->json([
             'balance' => (float) $user->wallet->balance,
             'pending' => (float) ($user->wallet->pending_amount ?? 0),
             'frozen' => (float) ($user->wallet->frozen_amount ?? 0),
-            'available' => (float) ($user->wallet->balance - ($user->wallet->frozen_amount ?? 0))
+            'advance_balance' => (float) ($user->wallet->advance_balance ?? 0),
+            'available' => (float) ($user->wallet->balance - ($user->wallet->frozen_amount ?? 0)),
+            'total_available_for_return_fees' => (float) ($user->wallet->getTotalAvailableForReturnFeesAttribute()),
+            'currency' => 'DT'
         ]);
     }
 

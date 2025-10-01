@@ -201,16 +201,50 @@
                                         x-model="newBankAccount.bank_name"
                                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                                     <option value="">Sélectionner une banque</option>
-                                    <option value="Banque Centrale de Tunisie">Banque Centrale de Tunisie</option>
-                                    <option value="Banque de Tunisie">Banque de Tunisie</option>
-                                    <option value="Société Tunisienne de Banque">Société Tunisienne de Banque (STB)</option>
-                                    <option value="Banque Nationale Agricole">Banque Nationale Agricole (BNA)</option>
-                                    <option value="Banque Internationale Arabe de Tunisie">BIAT</option>
-                                    <option value="Union Bancaire pour le Commerce et l'Industrie">UBCI</option>
-                                    <option value="Amen Bank">Amen Bank</option>
-                                    <option value="Attijari Bank">Attijari Bank</option>
-                                    <option value="Banque Zitouna">Banque Zitouna</option>
-                                    <option value="Autre">Autre</option>
+
+                                    <!-- Banques commerciales publiques -->
+                                    <optgroup label="🏛️ Banques Publiques">
+                                        <option value="Banque de Tunisie">Banque de Tunisie (BT)</option>
+                                        <option value="Banque Nationale Agricole">Banque Nationale Agricole (BNA)</option>
+                                        <option value="Société Tunisienne de Banque">Société Tunisienne de Banque (STB)</option>
+                                    </optgroup>
+
+                                    <!-- Banques privées -->
+                                    <optgroup label="🏦 Banques Privées">
+                                        <option value="Amen Bank">Amen Bank</option>
+                                        <option value="Arab Tunisian Bank">Arab Tunisian Bank (ATB)</option>
+                                        <option value="Attijari Bank">Attijari Bank</option>
+                                        <option value="Banque Internationale Arabe de Tunisie">Banque Internationale Arabe de Tunisie (BIAT)</option>
+                                        <option value="Banque de l'Habitat">Banque de l'Habitat (BH Bank)</option>
+                                        <option value="Union Bancaire pour le Commerce et l'Industrie">Union Bancaire pour le Commerce et l'Industrie (UBCI)</option>
+                                        <option value="Union Internationale de Banques">Union Internationale de Banques (UIB)</option>
+                                        <option value="Banque Zitouna">Banque Zitouna</option>
+                                        <option value="Tunisie Leasing Bank">Tunisie Leasing Bank (TLB)</option>
+                                        <option value="Banque Franco-Tunisienne">Banque Franco-Tunisienne (BFT)</option>
+                                        <option value="North Africa International Bank">North Africa International Bank (NAIB)</option>
+                                        <option value="Citybank Tunisia">Citybank Tunisia</option>
+                                        <option value="Al Baraka Bank Tunisia">Al Baraka Bank Tunisia</option>
+                                        <option value="Banque Tuniso-Libyenne">Banque Tuniso-Libyenne (BTL)</option>
+                                        <option value="Banque Tuniso-Koweïtienne">Banque Tuniso-Koweïtienne (BTK)</option>
+                                        <option value="Wifak International Bank">Wifak International Bank</option>
+                                        <option value="Banque de Coopération du Maghreb Arabe">Banque de Coopération du Maghreb Arabe (BCMA)</option>
+                                    </optgroup>
+
+                                    <!-- Banques étrangères -->
+                                    <optgroup label="🌍 Banques Étrangères">
+                                        <option value="Qatar National Bank Tunisia">Qatar National Bank Tunisia (QNB)</option>
+                                        <option value="Crédit du Maroc Tunisia">Crédit du Maroc Tunisia</option>
+                                        <option value="First National Bank Tunisia">First National Bank Tunisia (FNB)</option>
+                                    </optgroup>
+
+                                    <!-- Institutions spécialisées -->
+                                    <optgroup label="🏢 Institutions Spécialisées">
+                                        <option value="Banque Tunisienne de Solidarité">Banque Tunisienne de Solidarité (BTS)</option>
+                                        <option value="Tunisian Foreign Investment Bank">Tunisian Foreign Investment Bank (TFIB)</option>
+                                        <option value="Banque d'Affaires de Tunisie">Banque d'Affaires de Tunisie (BAT)</option>
+                                    </optgroup>
+
+                                    <option value="Autre">🏦 Autre banque</option>
                                 </select>
                             </div>
 

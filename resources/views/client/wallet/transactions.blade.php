@@ -300,9 +300,100 @@
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                                                 </svg>
-                                                Solde: {{ number_format($transaction->wallet_balance_before, 3) }} DT 
+                                                Solde: {{ number_format($transaction->wallet_balance_before, 3) }} DT
                                                 → {{ number_format($transaction->wallet_balance_after, 3) }} DT
                                             </div>
+                                        @endif
+
+                                        @if($transaction->type === 'WITHDRAWAL' && $transaction->reference)
+                                            @php
+                                                $withdrawal = \App\Models\WithdrawalRequest::where('request_code', $transaction->reference)->first();
+                                            @endphp
+                                            @if($withdrawal)
+                                                <div class="mt-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <h5 class="text-sm font-semibold text-orange-800 flex items-center">
+                                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                            </svg>
+                                                            Demande de retrait #{{ $withdrawal->request_code }}
+                                                        </h5>
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $withdrawal->status_color }}">
+                                                            {{ $withdrawal->status_display }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                                        <div class="flex items-center text-orange-700">
+                                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                            </svg>
+                                                            <span>Méthode: {{ $withdrawal->method_display }}</span>
+                                                        </div>
+                                                        @if($withdrawal->bank_details)
+                                                            @php
+                                                                $bankDetails = is_string($withdrawal->bank_details) ? json_decode($withdrawal->bank_details, true) : $withdrawal->bank_details;
+                                                            @endphp
+                                                            @if($bankDetails && isset($bankDetails['bank_name']))
+                                                                <div class="flex items-center text-orange-700">
+                                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                                    </svg>
+                                                                    <span>{{ $bankDetails['bank_name'] }}</span>
+                                                                </div>
+                                                                @if(isset($bankDetails['iban']))
+                                                                    <div class="col-span-1 sm:col-span-2 flex items-center text-orange-700">
+                                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                                        </svg>
+                                                                        <span class="font-mono text-xs bg-orange-100 px-2 py-1 rounded">IBAN: {{ $bankDetails['iban'] }}</span>
+                                                                    </div>
+                                                                @endif
+                                                            @endif
+                                                        @endif
+                                                        @if($withdrawal->processed_at)
+                                                            <div class="flex items-center text-orange-700">
+                                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                                </svg>
+                                                                <span>Traité le {{ $withdrawal->processed_at->format('d/m/Y H:i') }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($withdrawal->processing_notes)
+                                                            <div class="col-span-1 sm:col-span-2 flex items-start text-orange-700">
+                                                                <svg class="w-4 h-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                                                </svg>
+                                                                <span class="text-xs">{{ $withdrawal->processing_notes }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($withdrawal->rejection_reason)
+                                                            <div class="col-span-1 sm:col-span-2 flex items-start text-red-700 bg-red-50 p-2 rounded">
+                                                                <svg class="w-4 h-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L3.197 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                                                </svg>
+                                                                <span class="text-xs">Motif: {{ $withdrawal->rejection_reason }}</span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                    @if($withdrawal->canBeCancelled())
+                                                        <div class="mt-3 pt-3 border-t border-orange-200">
+                                                            <form method="POST" action="{{ route('client.wallet.withdrawal.cancel', $withdrawal) }}"
+                                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette demande? Le montant sera remboursé dans votre portefeuille.')"
+                                                                  class="inline">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <button type="submit"
+                                                                        class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg transition-colors duration-200 flex items-center">
+                                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                    </svg>
+                                                                    Annuler la demande
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>

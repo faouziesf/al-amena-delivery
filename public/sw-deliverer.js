@@ -228,33 +228,257 @@ async function syncDeliveryData() {
   }
 }
 
-// Fonctions helper pour IndexedDB (à implémenter selon besoins)
-function getPendingDeliveryData() {
-  // TODO: Implémenter la récupération depuis IndexedDB
-  return Promise.resolve([]);
+// ===== SYSTÈME INDEXEDDB AVANCÉ POUR OFFLINE =====
+
+const DB_NAME = 'Al-Amena-Deliverer-DB';
+const DB_VERSION = 2;
+
+// Initialisation de la base de données IndexedDB
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Store pour les données en attente de synchronisation
+      if (!db.objectStoreNames.contains('pendingSync')) {
+        const syncStore = db.createObjectStore('pendingSync', { keyPath: 'id', autoIncrement: true });
+        syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+        syncStore.createIndex('type', 'type', { unique: false });
+      }
+
+      // Store pour les données de livraison offline
+      if (!db.objectStoreNames.contains('deliveryData')) {
+        const deliveryStore = db.createObjectStore('deliveryData', { keyPath: 'id' });
+        deliveryStore.createIndex('status', 'status', { unique: false });
+        deliveryStore.createIndex('date', 'date', { unique: false });
+      }
+
+      // Store pour les données du portefeuille
+      if (!db.objectStoreNames.contains('walletData')) {
+        const walletStore = db.createObjectStore('walletData', { keyPath: 'id' });
+        walletStore.createIndex('lastUpdate', 'lastUpdate', { unique: false });
+      }
+
+      // Store pour les médias (photos, signatures)
+      if (!db.objectStoreNames.contains('mediaCache')) {
+        const mediaStore = db.createObjectStore('mediaCache', { keyPath: 'id' });
+        mediaStore.createIndex('type', 'type', { unique: false });
+        mediaStore.createIndex('packageId', 'packageId', { unique: false });
+      }
+
+      console.log('[SW] IndexedDB initialisée avec succès');
+    };
+  });
 }
 
-function removePendingData(id) {
-  // TODO: Implémenter la suppression depuis IndexedDB
-  return Promise.resolve();
-}
+// Récupérer les données en attente de synchronisation
+async function getPendingDeliveryData() {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['pendingSync'], 'readonly');
+    const store = transaction.objectStore('pendingSync');
+    const request = store.getAll();
 
-// Gestion des messages du client
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur getPendingDeliveryData:', error);
+    return [];
   }
+}
 
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_NAME });
+// Supprimer les données synchronisées
+async function removePendingData(id) {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['pendingSync'], 'readwrite');
+    const store = transaction.objectStore('pendingSync');
+
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur removePendingData:', error);
+  }
+}
+
+// Ajouter des données à synchroniser plus tard
+async function addPendingSyncData(data) {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['pendingSync'], 'readwrite');
+    const store = transaction.objectStore('pendingSync');
+
+    const syncData = {
+      ...data,
+      timestamp: Date.now(),
+      retryCount: 0
+    };
+
+    return new Promise((resolve, reject) => {
+      const request = store.add(syncData);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur addPendingSyncData:', error);
+  }
+}
+
+// Sauvegarder les données de livraison pour usage offline
+async function saveDeliveryDataOffline(packageId, data) {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['deliveryData'], 'readwrite');
+    const store = transaction.objectStore('deliveryData');
+
+    const deliveryData = {
+      id: packageId,
+      ...data,
+      lastUpdate: Date.now(),
+      offline: true
+    };
+
+    return new Promise((resolve, reject) => {
+      const request = store.put(deliveryData);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur saveDeliveryDataOffline:', error);
+  }
+}
+
+// Récupérer les données de livraison offline
+async function getDeliveryDataOffline(packageId) {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['deliveryData'], 'readonly');
+    const store = transaction.objectStore('deliveryData');
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(packageId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur getDeliveryDataOffline:', error);
+    return null;
+  }
+}
+
+// Sauvegarder les médias (photos, signatures) offline
+async function saveMediaOffline(packageId, mediaData, type) {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['mediaCache'], 'readwrite');
+    const store = transaction.objectStore('mediaCache');
+
+    const media = {
+      id: `${packageId}-${type}-${Date.now()}`,
+      packageId,
+      type,
+      data: mediaData,
+      timestamp: Date.now()
+    };
+
+    return new Promise((resolve, reject) => {
+      const request = store.add(media);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Erreur saveMediaOffline:', error);
+  }
+}
+
+// ===== GESTION AVANCÉE DES MESSAGES =====
+self.addEventListener('message', async event => {
+  const { data } = event;
+
+  console.log('[SW] Message reçu:', data);
+
+  switch (data.type) {
+    case 'SKIP_WAITING':
+      self.skipWaiting();
+      break;
+
+    case 'GET_VERSION':
+      event.ports[0].postMessage({ version: CACHE_NAME });
+      break;
+
+    case 'SAVE_DELIVERY_OFFLINE':
+      await saveDeliveryDataOffline(data.packageId, data.deliveryData);
+      event.ports[0].postMessage({ success: true });
+      break;
+
+    case 'GET_DELIVERY_OFFLINE':
+      const deliveryData = await getDeliveryDataOffline(data.packageId);
+      event.ports[0].postMessage({ deliveryData });
+      break;
+
+    case 'SAVE_MEDIA_OFFLINE':
+      const mediaId = await saveMediaOffline(data.packageId, data.mediaData, data.mediaType);
+      event.ports[0].postMessage({ mediaId });
+      break;
+
+    case 'QUEUE_SYNC_DATA':
+      await addPendingSyncData(data.syncData);
+      // Déclencher une sync immédiate si possible
+      if ('serviceWorker' in self.registration) {
+        try {
+          await self.registration.sync.register('background-sync-deliveries');
+        } catch (error) {
+          console.log('[SW] Sync registration failed:', error);
+        }
+      }
+      event.ports[0].postMessage({ success: true });
+      break;
+
+    case 'GET_OFFLINE_STATUS':
+      const pendingData = await getPendingDeliveryData();
+      event.ports[0].postMessage({
+        offline: !navigator.onLine,
+        pendingSync: pendingData.length,
+        cacheVersion: CACHE_NAME
+      });
+      break;
+
+    case 'CLEAR_OFFLINE_DATA':
+      await clearOfflineData();
+      event.ports[0].postMessage({ success: true });
+      break;
+
+    default:
+      console.log('[SW] Type de message non géré:', data.type);
   }
 });
 
-// Notification de mise à jour disponible
-self.addEventListener('message', event => {
-  if (event.data.action === 'skipWaiting') {
-    self.skipWaiting();
+// Nettoyer les données offline
+async function clearOfflineData() {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction(['deliveryData', 'mediaCache', 'pendingSync'], 'readwrite');
+
+    await Promise.all([
+      transaction.objectStore('deliveryData').clear(),
+      transaction.objectStore('mediaCache').clear(),
+      transaction.objectStore('pendingSync').clear()
+    ]);
+
+    console.log('[SW] Données offline nettoyées');
+  } catch (error) {
+    console.error('[SW] Erreur clearOfflineData:', error);
   }
-});
+}
 
 console.log('[SW] Service Worker Al-Amena Deliverer chargé');

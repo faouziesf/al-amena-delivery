@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Commercial;
 
 use App\Http\Controllers\Controller;
-use App\Services\CommercialService;
 use App\Services\NotificationService;
 use App\Models\Complaint;
 use App\Models\Package;
@@ -13,12 +12,10 @@ use Illuminate\Support\Facades\Auth;
 
 class ComplaintController extends Controller
 {
-    protected $commercialService;
     protected $notificationService;
 
-    public function __construct(CommercialService $commercialService, NotificationService $notificationService)
+    public function __construct(NotificationService $notificationService)
     {
-        $this->commercialService = $commercialService;
         $this->notificationService = $notificationService;
     }
 

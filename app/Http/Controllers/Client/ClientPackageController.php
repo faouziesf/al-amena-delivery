@@ -164,8 +164,8 @@ class ClientPackageController extends Controller
             $lastSupplierData = session('last_supplier_data', []);
             $lastClientData = session('last_client_data', []);
 
-            // Utiliser la version rapide ou avancée selon les préférences
-            $viewName = $request->get('fast') === 'true' ? 'client.packages.create-fast' : 'client.packages.create-advanced';
+            // Utiliser la version normale de création
+            $viewName = 'client.packages.create';
             
             return view($viewName, array_merge(compact(
                 'user',
@@ -762,33 +762,59 @@ class ClientPackageController extends Controller
 
         $package = new Package($packageData);
 
-        // VALIDATION WALLET OBLIGATOIRE AVANT CRÉATION
+        // VALIDATION WALLET OBLIGATOIRE AVANT CRÉATION avec gestion des avances
         $codAmount = $validated['prix'] ?? $validated['cod_amount'];
         $escrowAmount = $this->calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee);
         $pendingAmount = $this->calculatePendingAmount($codAmount, $deliveryFee, $returnFee);
 
-        // Vérifier le solde disponible en utilisant la méthode du modèle
+        // Vérifier le solde selon les règles d'avance
         $availableBalance = $user->wallet->available_balance;
+        $advanceBalance = $user->wallet->advance_balance;
 
-        if ($availableBalance < $escrowAmount) {
-            throw new \Exception("Solde insuffisant. Montant requis: " . number_format($escrowAmount, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT. Rechargez votre portefeuille avant de créer ce colis.");
+        // Règle: L'avance ne peut être utilisée QUE pour les frais de retour
+        // Si COD >= frais de livraison, alors on retient les frais de retour (l'avance peut être utilisée)
+        // Si COD < frais de livraison, alors on retient les frais de livraison (l'avance ne peut PAS être utilisée)
+
+        $canUseAdvance = $codAmount >= $deliveryFee; // Seulement si on retient les frais de retour
+
+        if ($canUseAdvance) {
+            // L'avance peut être utilisée pour les frais de retour
+            $totalAvailableForReturnFees = $availableBalance + $advanceBalance;
+            if ($totalAvailableForReturnFees < $escrowAmount) {
+                throw new \Exception("Solde insuffisant (normal + avance). Montant requis: " . number_format($escrowAmount, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT, avance: " . number_format($advanceBalance, 3) . " DT. Total disponible: " . number_format($totalAvailableForReturnFees, 3) . " DT.");
+            }
+        } else {
+            // L'avance ne peut PAS être utilisée (frais de livraison retenus)
+            if ($availableBalance < $escrowAmount) {
+                $message = "Solde insuffisant. Montant requis: " . number_format($escrowAmount, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT.";
+                if ($advanceBalance > 0) {
+                    $message .= " Note: Votre avance (" . number_format($advanceBalance, 3) . " DT) ne peut être utilisée que pour les frais de retour, pas pour les frais de livraison.";
+                }
+                throw new \Exception($message);
+            }
         }
 
         $package->amount_in_escrow = $escrowAmount;
         $package->save();
 
-        // Transaction financière
-        $this->financialService->processTransaction([
-            'user_id' => $user->id,
-            'type' => 'PACKAGE_CREATION_DEBIT',
-            'amount' => -$escrowAmount,
-            'package_id' => $package->id,
-            'description' => "Création colis #{$package->package_code}",
-            'metadata' => [
-                'package_code' => $package->package_code,
-                'escrow_type' => $codAmount >= $deliveryFee ? 'return_fee' : 'delivery_fee'
-            ]
-        ]);
+        // Transaction financière avec gestion de l'avance
+        if ($canUseAdvance) {
+            // Utiliser d'abord l'avance puis le solde normal pour les frais de retour
+            $user->wallet->deductReturnFees($escrowAmount, $package->package_code, "Création colis #{$package->package_code} - Frais de retour");
+        } else {
+            // Utiliser uniquement le solde normal pour les frais de livraison
+            $this->financialService->processTransaction([
+                'user_id' => $user->id,
+                'type' => 'PACKAGE_CREATION_DEBIT',
+                'amount' => -$escrowAmount,
+                'package_id' => $package->id,
+                'description' => "Création colis #{$package->package_code} - Frais de livraison",
+                'metadata' => [
+                    'package_code' => $package->package_code,
+                    'escrow_type' => 'delivery_fee'
+                ]
+            ]);
+        }
 
         $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
 
@@ -1020,5 +1046,228 @@ class ClientPackageController extends Controller
         ]);
 
         return $newDelegation->id;
+    }
+
+    /**
+     * Afficher la page de création rapide (accordéon intelligent)
+     */
+    public function createFast(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'CLIENT') {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $user->load(['wallet', 'clientProfile']);
+
+        if (!$user->isActive() || !$user->clientProfile) {
+            return redirect()->route('client.packages.index')
+                ->with('error', 'Votre compte doit être validé avant de créer des colis.');
+        }
+
+        if (!$user->wallet) {
+            $user->ensureWallet();
+            $user->load('wallet');
+        }
+
+        // Récupérer les adresses de pickup du client
+        $pickupAddresses = ClientPickupAddress::forClient($user->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Récupérer les gouvernorats et délégations depuis la config
+        $gouvernorats = config('tunisia.gouvernorats', []);
+        $delegations = config('tunisia.delegations', []);
+
+        return view('client.packages.create-fast', compact(
+            'user',
+            'pickupAddresses',
+            'gouvernorats',
+            'delegations'
+        ));
+    }
+
+    /**
+     * Créer plusieurs colis en une fois (pour l'interface rapide)
+     */
+    public function storeMultiple(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'CLIENT') {
+            return response()->json(['success' => false, 'message' => 'Accès non autorisé'], 403);
+        }
+
+        // Validation des données
+        $validator = Validator::make($request->all(), [
+            'pickup_address_id' => 'required|exists:client_pickup_addresses,id',
+            'packages' => 'required|array|min:1|max:50',
+            'packages.*.recipient_name' => 'required|string|max:255',
+            'packages.*.telephone_1' => 'required|string|max:20',
+            'packages.*.telephone_2' => 'nullable|string|max:20',
+            'packages.*.gouvernorat' => 'required|string',
+            'packages.*.delegation' => 'required|string',
+            'packages.*.adresse_complete' => 'required|string|max:500',
+            'packages.*.contenu' => 'required|string|max:255',
+            'packages.*.prix' => 'required|numeric|min:0',
+            'packages.*.notes' => 'nullable|string|max:1000',
+            'packages.*.fragile' => 'nullable|boolean',
+            'packages.*.est_echange' => 'nullable|boolean',
+            'packages.*.requires_signature' => 'nullable|boolean',
+            'packages.*.allow_opening' => 'nullable|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $createdPackages = [];
+            $packagesData = $request->input('packages');
+
+            // Vérifier et charger le profil client
+            $user->load(['clientProfile']);
+            if (!$user->clientProfile) {
+                throw new \Exception("Profil client non trouvé.");
+            }
+
+            $clientProfile = $user->clientProfile;
+            $deliveryFee = $clientProfile->offer_delivery_price;
+            $returnFee = $clientProfile->offer_return_price;
+
+            // Vérifier que les frais sont positifs
+            if ($deliveryFee <= 0) {
+                throw new \Exception("Le montant des frais de livraison doit être positif.");
+            }
+            if ($returnFee <= 0) {
+                throw new \Exception("Le montant des frais de retour doit être positif.");
+            }
+
+            // Récupérer l'adresse de pickup
+            $pickupAddress = ClientPickupAddress::find($request->pickup_address_id);
+
+            // Vérifier le solde total nécessaire avant de créer les colis
+            $user->ensureWallet();
+            $user->load('wallet');
+
+            $totalEscrowNeeded = 0;
+            foreach ($packagesData as $packageData) {
+                $codAmount = $packageData['prix'];
+                $escrowAmount = $this->calculateEscrowAmount(null, $codAmount, $deliveryFee, $returnFee);
+                $totalEscrowNeeded += $escrowAmount;
+            }
+
+            // Vérifier le solde disponible
+            $availableBalance = $user->wallet->available_balance;
+            $advanceBalance = $user->wallet->advance_balance;
+
+            if ($availableBalance < $totalEscrowNeeded) {
+                throw new \Exception("Solde insuffisant. Montant requis: " . number_format($totalEscrowNeeded, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT.");
+            }
+
+            foreach ($packagesData as $packageData) {
+                // Trouver l'ID de la délégation de destination
+                $delegationTo = DB::table('delegations')
+                    ->where('name', $packageData['delegation'])
+                    ->first();
+
+                // Trouver l'ID de la délégation de pickup
+                $delegationFrom = DB::table('delegations')
+                    ->where('name', $pickupAddress ? $pickupAddress->delegation : 'Tunis')
+                    ->first();
+
+                // Créer le package
+                $package = Package::create([
+                    'package_code' => $this->generatePackageCode(),
+                    'sender_id' => $user->id,
+                    'pickup_address_id' => $request->pickup_address_id,
+                    'sender_data' => [
+                        'name' => $pickupAddress ? $pickupAddress->contact_name : $user->name,
+                        'phone' => $pickupAddress ? $pickupAddress->phone : $user->phone,
+                        'address' => $pickupAddress ? $pickupAddress->address : $user->address
+                    ],
+                    'delegation_from' => $delegationFrom ? $delegationFrom->id : 1, // Défaut Tunis
+                    'recipient_data' => [
+                        'name' => $packageData['recipient_name'],
+                        'phone' => $packageData['telephone_1'],
+                        'phone2' => $packageData['telephone_2'] ?? null,
+                        'city' => $packageData['delegation'],
+                        'gouvernorat' => $packageData['gouvernorat'],
+                        'address' => $packageData['adresse_complete']
+                    ],
+                    'delegation_to' => $delegationTo ? $delegationTo->id : 1, // Défaut si non trouvé
+                    'content_description' => $packageData['contenu'],
+                    'cod_amount' => $packageData['prix'],
+                    'notes' => $packageData['notes'] ?? null,
+                    'delivery_fee' => $deliveryFee,
+                    'return_fee' => $returnFee,
+                    'is_fragile' => $packageData['fragile'] ?? false,
+                    'est_echange' => $packageData['est_echange'] ?? false,
+                    'requires_signature' => $packageData['requires_signature'] ?? false,
+                    'allow_opening' => $packageData['allow_opening'] ?? false,
+                    'status' => 'CREATED'
+                ]);
+
+                // Calculer et définir l'escrow pour ce package
+                $codAmount = $packageData['prix'];
+                $escrowAmount = $this->calculateEscrowAmount($package, $codAmount, $deliveryFee, $returnFee);
+                $package->amount_in_escrow = $escrowAmount;
+                $package->save();
+
+                // Transaction financière
+                $this->financialService->processTransaction([
+                    'user_id' => $user->id,
+                    'type' => 'PACKAGE_CREATION_DEBIT',
+                    'amount' => -$escrowAmount,
+                    'package_id' => $package->id,
+                    'description' => "Création colis #{$package->package_code}",
+                    'metadata' => [
+                        'package_code' => $package->package_code,
+                        'escrow_amount' => $escrowAmount
+                    ]
+                ]);
+
+                // Mettre à jour le statut
+                $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
+
+                $createdPackages[] = $package;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => count($createdPackages) . ' colis créés avec succès',
+                'packages' => $createdPackages
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création des colis: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Générer un code unique pour le package
+     */
+    private function generatePackageCode()
+    {
+        do {
+            $code = 'PKG_' . strtoupper(Str::random(6)) . '_' . now()->format('md');
+        } while (Package::where('code', $code)->exists());
+
+        return $code;
     }
 }

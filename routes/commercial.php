@@ -10,6 +10,8 @@ use App\Http\Controllers\Commercial\PackageController;
 use App\Http\Controllers\Commercial\NotificationController;
 use App\Http\Controllers\Commercial\CommercialTicketController;
 use App\Http\Controllers\Commercial\CommercialTopupRequestController;
+use App\Http\Controllers\Commercial\ClientAdvanceController;
+use App\Http\Controllers\Api\PaymentDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +29,14 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
     
     // ==================== DASHBOARD ====================
     Route::get('/dashboard', [CommercialDashboardController::class, 'index'])->name('dashboard');
+
+    // ==================== NOUVEAU SYSTÈME DE PAIEMENTS ====================
+    Route::prefix('payments')->name('payments.')->group(function () {
+        // Nouvelle interface simplifiée
+        Route::get('/dashboard', function () {
+            return view('commercial.payments.dashboard');
+        })->name('dashboard');
+    });
 
     // ==================== ANALYTICS ====================
     Route::prefix('analytics')->name('analytics.')->group(function () {
@@ -63,6 +73,18 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         
         // API Endpoints
         Route::get('/{client}/api/stats', [ClientController::class, 'apiStats'])->name('api.stats');
+    });
+
+    // ==================== GESTION AVANCES CLIENTS ====================
+    Route::prefix('client-advances')->name('client-advances.')->group(function () {
+        Route::get('/', [ClientAdvanceController::class, 'index'])->name('index');
+        Route::get('/{client}', [ClientAdvanceController::class, 'show'])->name('show');
+        Route::post('/{client}/add', [ClientAdvanceController::class, 'addAdvance'])->name('add');
+        Route::post('/{client}/remove', [ClientAdvanceController::class, 'removeAdvance'])->name('remove');
+
+        // API Endpoints
+        Route::get('/api/search-clients', [ClientAdvanceController::class, 'searchClients'])->name('api.search-clients');
+        Route::get('/api/statistics', [ClientAdvanceController::class, 'statistics'])->name('api.statistics');
     });
 
     // ==================== GESTION DEMANDES DE RECHARGE ====================
@@ -103,6 +125,7 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         // Actions sur retraits
         Route::post('/{withdrawal}/approve', [WithdrawalController::class, 'approve'])->name('approve');
         Route::post('/{withdrawal}/reject', [WithdrawalController::class, 'reject'])->name('reject');
+        Route::post('/{withdrawal}/mark-processed', [WithdrawalController::class, 'markAsProcessed'])->name('mark.processed');
         Route::post('/{withdrawal}/assign', [WithdrawalController::class, 'assignToDeliverer'])->name('assign');
         Route::post('/{withdrawal}/assign-deliverer', [WithdrawalController::class, 'assignToDeliverer'])->name('assign.deliverer');
         Route::post('/{withdrawal}/delivered', [WithdrawalController::class, 'markAsDelivered'])->name('delivered');
@@ -235,5 +258,20 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         Route::get('/withdrawals-count', [CommercialDashboardController::class, 'api_getWithdrawalsCount'])->name('withdrawals.count');
         Route::get('/search-clients', [CommercialDashboardController::class, 'api_searchClients'])->name('search.clients');
         Route::get('/search-deliverers', [CommercialDashboardController::class, 'api_searchDeliverers'])->name('search.deliverers');
+
+        // ==================== NOUVELLES API PAIEMENTS SIMPLIFIÉES ====================
+
+        // Tableau de bord Commercial/Chef Dépôt
+        Route::get('/payment-dashboard', [PaymentDashboardController::class, 'commercialDashboard'])->name('payment.dashboard');
+
+        // Actions sur les demandes de paiement
+        Route::post('/payments/{withdrawal}/approve', [PaymentDashboardController::class, 'approve'])->name('payments.approve');
+        Route::post('/payments/{withdrawal}/reject', [PaymentDashboardController::class, 'reject'])->name('payments.reject');
+        Route::post('/payments/{withdrawal}/process-bank-transfer', [PaymentDashboardController::class, 'processBankTransfer'])->name('payments.process.bank');
+        Route::post('/payments/{withdrawal}/assign-to-depot', [PaymentDashboardController::class, 'assignToDepot'])->name('payments.assign.depot');
+
+        // Interface Chef de Dépôt
+        Route::get('/depot-payments', [PaymentDashboardController::class, 'depotDashboard'])->name('depot.payments');
+        Route::post('/depot-payments/{withdrawal}/create-package', [PaymentDashboardController::class, 'createPaymentPackage'])->name('depot.payments.create.package');
     });
 });

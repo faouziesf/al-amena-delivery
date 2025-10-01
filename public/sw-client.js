@@ -1,34 +1,41 @@
 // Al-Amena Client Service Worker
-// Version 1.0.0
+// Version 2.0.0 - Optimisé pour PWA Offline
 
-const CACHE_NAME = 'alamena-client-v1.0.0';
-const API_CACHE_NAME = 'alamena-client-api-v1.0.0';
-const OFFLINE_PAGE = '/client/offline';
+const CACHE_NAME = 'alamena-client-v2.0.0';
+const API_CACHE_NAME = 'alamena-client-api-v2.0.0';
+const STATIC_CACHE_NAME = 'alamena-client-static-v2.0.0';
+const DB_NAME = 'Al-Amena-Client-DB';
+const DB_VERSION = 2;
 
 // Fichiers critiques à mettre en cache
 const CRITICAL_CACHE = [
     '/client/dashboard',
     '/client/packages',
+    '/client/packages/index',
     '/client/packages/create',
+    '/client/packages/create-fast',
     '/client/wallet',
-    '/client/topup',
-    '/client/complaints',
-    '/client/tickets',
-    '/css/app.css',
-    '/js/app.js',
+    '/client/wallet/index',
+    '/client/wallet/topup',
+    '/client/manifests',
+    '/client/manifests/index',
+    '/client/manifests/create',
+    '/client/pickup-requests',
+    '/client/notifications',
+    '/client/profile',
     '/manifest-client.json',
-    OFFLINE_PAGE
+    'https://cdn.tailwindcss.com',
+    'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'
 ];
 
-// APIs à mettre en cache
+// APIs critiques à mettre en cache
 const API_CACHE_URLS = [
     '/client/api/dashboard-stats',
-    '/client/api/wallet/balance',
+    '/client/api/wallet-balance',
     '/client/api/notifications/unread-count',
-    '/client/api/packages/count',
-    '/client/api/topup/pending-count',
-    '/client/api/complaints/count',
-    '/client/api/tickets/count'
+    '/client/api/notifications/recent',
+    '/client/api/packages/stats',
+    '/client/api/packages/recent'
 ];
 
 // URLs à ne jamais mettre en cache
@@ -36,12 +43,58 @@ const NEVER_CACHE = [
     '/logout',
     '/login',
     '/csrf-token',
-    '/client/api/location/update'
+    '/client/api/location/update',
+    '/client/api/live-updates'
 ];
+
+// ===== SYSTÈME INDEXEDDB POUR CLIENT =====
+
+// Initialisation IndexedDB
+function initClientDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Store pour les données de packages
+      if (!db.objectStoreNames.contains('packages')) {
+        const packagesStore = db.createObjectStore('packages', { keyPath: 'id' });
+        packagesStore.createIndex('status', 'status', { unique: false });
+        packagesStore.createIndex('createdAt', 'created_at', { unique: false });
+      }
+
+      // Store pour les données de portefeuille
+      if (!db.objectStoreNames.contains('wallet')) {
+        const walletStore = db.createObjectStore('wallet', { keyPath: 'id' });
+        walletStore.createIndex('lastUpdate', 'lastUpdate', { unique: false });
+      }
+
+      // Store pour les brouillons
+      if (!db.objectStoreNames.contains('drafts')) {
+        const draftsStore = db.createObjectStore('drafts', { keyPath: 'id', autoIncrement: true });
+        draftsStore.createIndex('type', 'type', { unique: false });
+        draftsStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+
+      // Store pour les actions en attente
+      if (!db.objectStoreNames.contains('pendingActions')) {
+        const actionsStore = db.createObjectStore('pendingActions', { keyPath: 'id', autoIncrement: true });
+        actionsStore.createIndex('type', 'type', { unique: false });
+        actionsStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+
+      console.log('[SW Client] IndexedDB initialisée');
+    };
+  });
+}
 
 // Installation du Service Worker
 self.addEventListener('install', event => {
-    console.log('[SW Client] Installation en cours...');
+    console.log('[SW Client] Installation v2.0.0...');
 
     event.waitUntil(
         Promise.all([

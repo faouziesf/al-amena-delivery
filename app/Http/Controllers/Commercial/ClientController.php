@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Commercial;
 
 use App\Http\Controllers\Controller;
-use App\Services\CommercialService;
 use App\Services\ActionLogService;
 use App\Models\User;
 use App\Models\UserWallet;
@@ -21,12 +20,10 @@ use Carbon\Carbon;
 
 class ClientController extends Controller
 {
-    protected $commercialService;
     protected $actionLogService;
 
-    public function __construct(CommercialService $commercialService, ActionLogService $actionLogService)
+    public function __construct(ActionLogService $actionLogService)
     {
-        $this->commercialService = $commercialService;
         $this->actionLogService = $actionLogService;
     }
 
@@ -143,10 +140,40 @@ class ClientController extends Controller
         ]);
 
         try {
-            $client = $this->commercialService->createClientAccount(
-                $validated,
-                Auth::user()
-            );
+            DB::beginTransaction();
+
+            // Créer l'utilisateur client
+            $client = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+                'role' => 'CLIENT',
+                'account_status' => 'PENDING',
+                'created_by' => Auth::id(),
+            ]);
+
+            // Créer le profil client
+            $client->clientProfile()->create([
+                'offer_delivery_price' => $validated['delivery_price'],
+                'offer_return_price' => $validated['return_price'],
+                'shop_name' => $validated['shop_name'],
+                'fiscal_number' => $validated['fiscal_number'],
+                'business_sector' => $validated['business_sector'],
+                'identity_document' => $validated['identity_document'],
+                'internal_notes' => $validated['internal_notes'],
+                'validation_status' => 'PENDING',
+            ]);
+
+            // Créer le portefeuille
+            $client->ensureWallet();
+
+            // Log de l'action
+            $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_CREATED',
+                "Compte client créé: {$client->name} ({$client->email})", $client->id);
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -164,6 +191,7 @@ class ClientController extends Controller
             return redirect()->route('commercial.clients.show', $client)
                 ->with('success', "Compte client créé avec succès pour {$client->name}.");
         } catch (\Exception $e) {
+            DB::rollback();
             Log::error('Erreur création client:', [
                 'error' => $e->getMessage(),
                 'data' => $request->except(['password', 'password_confirmation']),
@@ -341,9 +369,29 @@ class ClientController extends Controller
         }
 
         try {
-            $this->commercialService->validateClientAccount($client, Auth::user(), [
-                'validation_notes' => $request->input('notes', 'Compte validé par commercial')
+            DB::beginTransaction();
+
+            // Valider le compte client
+            $client->update([
+                'account_status' => 'ACTIVE',
+                'email_verified_at' => now(),
+                'validated_by' => Auth::id(),
+                'validated_at' => now(),
             ]);
+
+            // Mettre à jour le profil client
+            $client->clientProfile()->update([
+                'validation_status' => 'VALIDATED',
+                'validated_by' => Auth::id(),
+                'validated_at' => now(),
+                'validation_notes' => $request->input('notes', 'Compte validé par commercial'),
+            ]);
+
+            // Log de l'action
+            $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_VALIDATED',
+                "Compte client validé: {$client->name} ({$client->email})", $client->id);
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -354,6 +402,7 @@ class ClientController extends Controller
 
             return back()->with('success', "Compte client de {$client->name} validé avec succès.");
         } catch (\Exception $e) {
+            DB::rollback();
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Erreur lors de la validation: ' . $e->getMessage()], 422);
             }
@@ -647,9 +696,26 @@ class ClientController extends Controller
                           ->get();
 
             foreach ($clients as $client) {
-                $this->commercialService->validateClientAccount($client, Auth::user(), [
-                    'validation_notes' => $request->notes ?? 'Validation groupée'
+                // Valider le compte client
+                $client->update([
+                    'account_status' => 'ACTIVE',
+                    'email_verified_at' => now(),
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
                 ]);
+
+                // Mettre à jour le profil client
+                $client->clientProfile()->update([
+                    'validation_status' => 'VALIDATED',
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => $request->notes ?? 'Validation groupée',
+                ]);
+
+                // Log de l'action
+                $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_VALIDATED_BULK',
+                    "Compte client validé (groupé): {$client->name} ({$client->email})", $client->id);
+
                 $validatedCount++;
             }
 

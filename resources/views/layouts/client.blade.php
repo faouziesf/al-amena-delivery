@@ -56,6 +56,35 @@
                             400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7c3aed',
                             800: '#6b21a8', 900: '#581c87'
                         }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-in': 'slideIn 0.5s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'bounce-soft': 'bounceSoft 2s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)' },
+                            '100%': { boxShadow: '0 0 30px rgba(139, 92, 246, 0.6)' }
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(-100%)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        bounceSoft: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        }
                     }
                 }
             }
@@ -102,6 +131,7 @@
                             if (window.clientAppInstance) {
                                 window.clientAppInstance.loadStats();
                                 window.clientAppInstance.loadNotifications();
+                                window.clientAppInstance.loadWalletBalance();
                             }
                             break;
                     }
@@ -199,6 +229,192 @@
 
     <!-- CSS pour PWA -->
     <style>
+        :root {
+            --primary: #8B5CF6;
+            --secondary: #EC4899;
+            --accent: #A855F7;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+            --dark: #1F2937;
+            --light: #F9FAFB;
+        }
+
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .interactive-element {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive-element::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .interactive-element:hover::before {
+            left: 100%;
+        }
+
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.1), 0 10px 10px -5px rgba(139, 92, 246, 0.04);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+        }
+
+        .dropdown-content.open {
+            max-height: 400px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 4px;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            transform: translateX(4px);
+        }
+
+        .modern-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+        }
+
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .sidebar-glass {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+            backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .nav-item-modern {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item-modern.active::before,
+        .nav-item-modern:hover::before {
+            transform: scaleY(1);
+        }
+
+        .nav-item-modern.active {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            color: var(--primary);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+        }
+
+        .nav-item-modern:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(236, 72, 153, 0.05));
+            transform: translateX(8px);
+        }
+
+        .floating-button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .floating-button:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .wallet-modern {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
         .offline {
             filter: grayscale(0.3);
         }
@@ -293,7 +509,22 @@
             }
 
             .mobile-layout .main-content {
-                padding: 0.5rem;
+                padding: 0;
+            }
+
+            /* Ensure proper padding for mobile content */
+            .mobile-layout .main-content > main {
+                padding: 1rem 0.75rem;
+            }
+
+            /* Fix top spacing issues on mobile */
+            body.mobile-layout {
+                padding-top: 0;
+            }
+
+            /* Ensure content doesn't go under navbar */
+            .main-content {
+                min-height: calc(100vh - 56px);
             }
         }
 
@@ -305,6 +536,51 @@
             }
 
             .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            /* More aggressive padding fixes for very small screens */
+            .mobile-layout .main-content > main {
+                padding: 0.75rem 0.5rem;
+            }
+
+            /* Better spacing for mobile cards and containers */
+            .mobile-layout .space-y-6 > * + * {
+                margin-top: 1rem;
+            }
+
+            .mobile-layout .space-y-4 > * + * {
+                margin-top: 0.75rem;
+            }
+        }
+
+        /* Fix for content padding issues */
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-left: 0;
+            }
+
+            .main-content > main {
+                padding-top: 1.5rem;
+            }
+        }
+
+        /* Better responsive container handling */
+        .responsive-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .responsive-container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .responsive-container {
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
             }
@@ -342,35 +618,78 @@
                 height: 52px;
             }
         }
+
+        /* Wallet Balance Styles */
+        .wallet-balance-container {
+            transition: all 0.3s ease;
+        }
+
+        .wallet-balance-container:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .wallet-balance-loading {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+        }
+
+        @keyframes loading-shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .wallet-balance-amount {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pulse animation for low balance */
+        .wallet-balance-low {
+            animation: balance-pulse 2s infinite;
+        }
+
+        @keyframes balance-pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 
     @stack('styles')
 </head>
-<body class="bg-gradient-to-br from-green-50 to-emerald-50 min-h-screen overflow-x-hidden" x-data="clientApp()"
+<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 min-h-screen overflow-x-hidden" x-data="clientApp()"
       :class="{ 'mobile-layout': window.innerWidth <= 768 }"
       x-init="window.clientAppInstance = $data">
     
     <!-- Top Navigation Bar -->
-    <nav class="bg-white shadow-sm border-b border-green-100 fixed top-0 left-0 right-0 z-50 safe-area-top">
+    <nav class="navbar-glass shadow-lg fixed top-0 left-0 right-0 z-50 safe-area-top">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-14 md:h-16">
                 <!-- Logo & Brand -->
                 <div class="flex items-center space-x-4">
                     <!-- Mobile menu button -->
-                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 md:p-2 rounded-lg hover:bg-green-50 transition-colors touch-target">
-                        <svg class="w-5 h-5 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 md:p-2 rounded-lg hover:bg-purple-50 transition-all duration-300 touch-target interactive-element">
+                        <svg class="w-5 h-5 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
 
                     <div class="flex items-center space-x-2 md:space-x-3">
-                        <div class="w-7 h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+                        <div class="w-7 h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 gradient-bg rounded-xl flex items-center justify-center hover-lift">
                             <svg class="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
                         </div>
                         <div class="hidden sm:block">
-                            <h1 class="text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Al-Amena</h1>
+                            <h1 class="text-base md:text-lg lg:text-xl font-bold gradient-text">Al-Amena</h1>
                             <p class="text-xs text-gray-500">Espace Client</p>
                         </div>
                     </div>
@@ -378,6 +697,97 @@
 
                 <!-- Right side - User info and actions -->
                 <div class="flex items-center space-x-2 lg:space-x-4">
+                    <!-- Wallet Balance Display -->
+                    <div class="hidden sm:flex items-center space-x-3 wallet-modern rounded-xl px-3 py-2 lg:px-4 lg:py-2.5 wallet-balance-container hover-lift" :class="{ 'wallet-balance-low': wallet.balance !== null && wallet.balance < 50 }">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-xs text-purple-600 font-medium">Solde Actuel</p>
+                                <p class="text-sm lg:text-base font-bold text-purple-700 wallet-balance-amount" x-text="formatBalance(wallet.balance)" x-show="wallet.balance !== null">
+                                    ---
+                                </p>
+                                <div x-show="wallet.advance_balance > 0 && wallet.advance_balance !== null" class="mt-0.5">
+                                    <p class="text-xs text-blue-600 font-medium">+ Avance: <span x-text="formatBalance(wallet.advance_balance)">---</span></p>
+                                </div>
+                                <div x-show="wallet.balance === null" class="flex items-center space-x-1">
+                                    <div class="w-3 h-3 bg-emerald-300 rounded-full animate-pulse"></div>
+                                    <div class="w-8 h-3 bg-emerald-200 rounded animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Quick Actions Dropdown -->
+                        <div class="relative" x-data="{ walletOpen: false }">
+                            <button @click="walletOpen = !walletOpen" class="p-1 text-emerald-600 hover:text-emerald-700 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                            <div x-show="walletOpen" @click.away="walletOpen = false" x-transition
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border z-50">
+                                <div class="p-2">
+                                    <a href="{{ route('client.wallet.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                        </svg>
+                                        Détails du portefeuille
+                                    </a>
+                                    <a href="{{ route('client.wallet.topup') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        Recharger le compte
+                                    </a>
+                                    <a href="{{ route('client.wallet.transactions') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        Historique
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Wallet Balance (Compact) -->
+                    <div class="sm:hidden" x-data="{ mobileWalletOpen: false }">
+                        <button @click="mobileWalletOpen = !mobileWalletOpen" class="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1.5">
+                            <div class="w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-md flex items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-700" x-text="formatBalanceShort(wallet.balance)" x-show="wallet.balance !== null">--</span>
+                            <div x-show="wallet.balance === null" class="w-6 h-2 bg-emerald-200 rounded animate-pulse"></div>
+                        </button>
+
+                        <div x-show="mobileWalletOpen" @click.away="mobileWalletOpen = false" x-transition
+                             class="absolute right-4 mt-2 w-56 bg-white rounded-xl shadow-xl border z-50">
+                            <div class="p-4 border-b bg-emerald-50">
+                                <div class="text-center">
+                                    <p class="text-xs text-emerald-600 font-medium">Solde Actuel</p>
+                                    <p class="text-lg font-bold text-emerald-700" x-text="formatBalance(wallet.balance)">---</p>
+                                </div>
+                            </div>
+                            <div class="p-2">
+                                <a href="{{ route('client.wallet.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg">
+                                    <svg class="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                    </svg>
+                                    Portefeuille
+                                </a>
+                                <a href="{{ route('client.wallet.topup') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg">
+                                    <svg class="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    Recharger
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Notifications -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" 
@@ -479,135 +889,173 @@
     <!-- Main Layout with fixed sidebar -->
     <div class="flex pt-14 md:pt-16">
         <!-- Fixed Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-30 w-72 md:w-64 bg-white shadow-xl border-r border-green-100 transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-14 md:pt-16 sidebar-compact"
+        <div class="fixed inset-y-0 left-0 z-30 w-72 md:w-64 sidebar-glass shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-14 md:pt-16 sidebar-compact"
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
              @click.away="if (window.innerWidth < 1024) sidebarOpen = false">
             
             <!-- Navigation Menu -->
-            <nav class="p-4 space-y-2 h-full overflow-y-auto pb-20">
-                <a href="{{ route('client.dashboard') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.dashboard') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
+            <nav class="p-4 space-y-1 h-full overflow-y-auto pb-20" x-data="navigationData()">
+                <!-- Dashboard -->
+                <a href="{{ route('client.dashboard') }}"
+                   class="nav-item-modern interactive-element {{ request()->routeIs('client.dashboard') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                     </svg>
                     <span class="font-medium">Dashboard</span>
                 </a>
 
-                <a href="{{ route('client.packages.index') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.packages.*') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    <span class="font-medium">Mes Colis</span>
-                    <div class="ml-auto" x-show="stats.in_progress_packages > 0">
-                        <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.in_progress_packages"></span>
+                <!-- Gestion des Colis -->
+                <div class="nav-dropdown" x-data="{ open: {{ request()->routeIs('client.packages.*') ? 'true' : 'false' }} }">
+                    <div class="nav-item-modern interactive-element {{ request()->routeIs('client.packages.*') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700 cursor-pointer" @click="open = !open">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span class="font-medium flex-1">Gestion des Colis</span>
+                        <div class="flex items-center space-x-2">
+                            <span x-show="stats.in_progress_packages > 0" class="notification-badge bg-purple-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.in_progress_packages"></span>
+                            <svg class="w-4 h-4 dropdown-arrow transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
-                </a>
-
-                <a href="{{ route('client.packages.create') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.packages.create') ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 shadow-sm' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <span class="font-medium">Nouveau Colis</span>
-                </a>
-
-                <!-- Séparateur -->
-                <div class="border-t border-gray-200 my-3"></div>
-                <div class="px-4 py-2">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Demandes de Collecte</h3>
+                    <div class="dropdown-content" :class="{ 'open': open }">
+                        <a href="{{ route('client.packages.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                            </svg>
+                            <span>Mes Colis</span>
+                        </a>
+                        <a href="{{ route('client.packages.create') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            <span>Nouveau Colis</span>
+                        </a>
+                    </div>
                 </div>
 
-                <a href="{{ route('client.pickup-requests.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.pickup-requests.*') ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    <span class="font-medium">Mes Collectes</span>
-                    <div class="ml-auto" x-show="stats.pending_pickups > 0">
-                        <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_pickups"></span>
+                <!-- Demandes de Collecte -->
+                <div class="nav-dropdown" x-data="{ open: {{ request()->routeIs('client.pickup-requests.*') ? 'true' : 'false' }} }">
+                    <div class="nav-item-modern interactive-element {{ request()->routeIs('client.pickup-requests.*') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700 cursor-pointer" @click="open = !open">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        <span class="font-medium flex-1">Demandes de Collecte</span>
+                        <div class="flex items-center space-x-2">
+                            <span x-show="stats.pending_pickups > 0" class="notification-badge bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_pickups"></span>
+                            <svg class="w-4 h-4 dropdown-arrow transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
-                </a>
+                    <div class="dropdown-content" :class="{ 'open': open }">
+                        <a href="{{ route('client.pickup-requests.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                            </svg>
+                            <span>Mes Collectes</span>
+                        </a>
+                        <a href="{{ route('client.pickup-requests.create') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            <span>Nouvelle Collecte</span>
+                        </a>
+                    </div>
+                </div>
 
-                <a href="{{ route('client.pickup-requests.create') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.pickup-requests.create') ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-sm' : 'text-gray-700 hover:bg-green-50 hover:text-green-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <span class="font-medium">Nouvelle Collecte</span>
-                </a>
-
-                <a href="{{ route('client.manifests.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.manifests.*') ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm' : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                    <span class="font-medium">Manifestes</span>
-                    <div class="ml-auto">
-                        <svg class="w-4 h-4 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                <!-- Manifestes & Adresses -->
+                <div class="nav-dropdown" x-data="{ open: {{ request()->routeIs('client.manifests.*', 'client.pickup-addresses.*') ? 'true' : 'false' }} }">
+                    <div class="nav-item-modern interactive-element {{ request()->routeIs('client.manifests.*', 'client.pickup-addresses.*') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700 cursor-pointer" @click="open = !open">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span class="font-medium flex-1">Documents & Adresses</span>
+                        <svg class="w-4 h-4 dropdown-arrow transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </div>
-                </a>
-
-                <a href="{{ route('client.pickup-addresses.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.pickup-addresses.*') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="font-medium">Adresses Collecte</span>
-                </a>
-
-                <a href="{{ route('client.wallet.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.wallet.*') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                    </svg>
-                    <span class="font-medium">Mon Portefeuille</span>
-                </a>
-
-                <a href="{{ route('client.bank-accounts.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.bank-accounts.*') ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-sm' : 'text-gray-700 hover:bg-green-50 hover:text-green-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    <span class="font-medium">Comptes Bancaires</span>
-                </a>
-
-                <a href="{{ route('client.withdrawals') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.withdrawals*') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    <span class="font-medium">Mes Retraits</span>
-                    <div class="ml-auto" x-show="stats.pending_withdrawals > 0">
-                        <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_withdrawals"></span>
+                    <div class="dropdown-content" :class="{ 'open': open }">
+                        <a href="{{ route('client.manifests.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Manifestes</span>
+                        </a>
+                        <a href="{{ route('client.pickup-addresses.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            </svg>
+                            <span>Adresses de Collecte</span>
+                        </a>
                     </div>
-                </a>
+                </div>
 
-
-                <a href="{{ route('client.tickets.index') }}"
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.tickets.*') ? 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 shadow-sm' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span class="font-medium">Support Tickets</span>
-                    <div class="ml-auto" x-show="stats.unread_tickets > 0">
-                        <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.unread_tickets"></span>
+                <!-- Finances -->
+                <div class="nav-dropdown" x-data="{ open: {{ request()->routeIs('client.wallet.*', 'client.bank-accounts.*', 'client.withdrawals*') ? 'true' : 'false' }} }">
+                    <div class="nav-item-modern interactive-element {{ request()->routeIs('client.wallet.*', 'client.bank-accounts.*', 'client.withdrawals*') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700 cursor-pointer" @click="open = !open">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        <span class="font-medium flex-1">Finances</span>
+                        <div class="flex items-center space-x-2">
+                            <span x-show="stats.pending_withdrawals > 0" class="notification-badge bg-yellow-500 text-white text-xs px-2 py-1 rounded-full" x-text="stats.pending_withdrawals"></span>
+                            <svg class="w-4 h-4 dropdown-arrow transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
-                </a>
-
-                <a href="{{ route('client.notifications.index') }}" 
-                   class="nav-item flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('client.notifications.*') ? 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
-                    </svg>
-                    <span class="font-medium">Notifications</span>
-                    <div class="ml-auto" x-show="notifications.unread_count > 0">
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-bounce" x-text="notifications.unread_count"></span>
+                    <div class="dropdown-content" :class="{ 'open': open }">
+                        <a href="{{ route('client.wallet.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <span>Mon Portefeuille</span>
+                        </a>
+                        <a href="{{ route('client.bank-accounts.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <span>Comptes Bancaires</span>
+                        </a>
+                        <a href="{{ route('client.withdrawals') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                            <span>Mes Retraits</span>
+                        </a>
                     </div>
-                </a>
+                </div>
+
+                <!-- Support -->
+                <div class="nav-dropdown" x-data="{ open: {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'true' : 'false' }} }">
+                    <div class="nav-item-modern interactive-element {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'active' : '' }} flex items-center px-4 py-3 text-gray-700 cursor-pointer" @click="open = !open">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <span class="font-medium flex-1">Support & Notifications</span>
+                        <div class="flex items-center space-x-2">
+                            <span x-show="notifications.unread_count > 0" class="notification-badge bg-red-500 text-white text-xs px-2 py-1 rounded-full" x-text="notifications.unread_count"></span>
+                            <svg class="w-4 h-4 dropdown-arrow transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="dropdown-content" :class="{ 'open': open }">
+                        <a href="{{ route('client.tickets.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Support Tickets</span>
+                        </a>
+                        <a href="{{ route('client.notifications.index') }}" class="dropdown-item flex items-center text-gray-600 hover:text-purple-600">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
+                            </svg>
+                            <span>Notifications</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
         </div>
 
@@ -633,7 +1081,7 @@
     <!-- Floating Action Button (Mobile Only) -->
     <div x-show="window.innerWidth <= 768" class="lg:hidden">
         <button onclick="window.location.href='{{ route('client.packages.create') }}'"
-                class="fab"
+                class="floating-button rounded-full w-14 h-14 flex items-center justify-center fixed bottom-6 right-6 z-40"
                 x-data="{ showTooltip: false }"
                 @mouseenter="showTooltip = true"
                 @mouseleave="showTooltip = false"
@@ -722,17 +1170,25 @@
                 notifications: {
                     unread_count: 0
                 },
+                wallet: {
+                    balance: null,
+                    advance_balance: null,
+                    total_available_for_return_fees: null,
+                    currency: 'DT'
+                },
                 notificationsList: '<p class="p-4 text-gray-500 text-center">Chargement...</p>',
 
                 init() {
                     this.loadStats();
                     this.loadNotifications();
+                    this.loadWalletBalance();
 
                     // Auto-refresh every 60 seconds (only when online)
                     setInterval(() => {
                         if (this.isOnline) {
                             this.loadStats();
                             this.loadNotifications();
+                            this.loadWalletBalance();
                         }
                     }, 60000);
 
@@ -745,6 +1201,7 @@
                         this.isOnline = true;
                         this.loadStats();
                         this.loadNotifications();
+                        this.loadWalletBalance();
                     });
 
                     window.addEventListener('offline', () => {
@@ -849,6 +1306,7 @@
                     this.showToast('Actualisation...', 'info');
                     this.loadStats();
                     this.loadNotifications();
+                    this.loadWalletBalance();
 
                     // Refresh the current page data
                     if (typeof window.refreshPageData === 'function') {
@@ -866,6 +1324,78 @@
                         }
                     } catch (error) {
                         console.error('Erreur chargement stats:', error);
+                    }
+                },
+
+                async loadWalletBalance() {
+                    const previousBalance = this.wallet.balance;
+                    const previousAdvanceBalance = this.wallet.advance_balance;
+                    try {
+                        const response = await fetch('/client/api/wallet-balance');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.wallet.balance = data.balance;
+                            this.wallet.advance_balance = data.advance_balance || 0;
+                            this.wallet.total_available_for_return_fees = data.total_available_for_return_fees || 0;
+                            this.wallet.currency = data.currency || 'DT';
+
+                            // Vérifier si le solde est faible et afficher une notification
+                            this.checkLowBalance();
+
+                            // Vérifier si le solde a changé et notifier l'utilisateur
+                            this.checkBalanceChange(previousBalance);
+                            this.checkAdvanceBalanceChange(previousAdvanceBalance);
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement solde:', error);
+                        // Fallback - essayer d'obtenir le solde via l'API dashboard
+                        try {
+                            const fallbackResponse = await fetch('/client/api/dashboard-stats');
+                            if (fallbackResponse.ok) {
+                                const fallbackData = await fallbackResponse.json();
+                                this.wallet.balance = fallbackData.wallet_balance || 0;
+                                this.wallet.advance_balance = 0; // Pas disponible dans l'API dashboard
+                                this.checkLowBalance();
+                                this.checkBalanceChange(previousBalance);
+                            }
+                        } catch (fallbackError) {
+                            console.error('Erreur fallback solde:', fallbackError);
+                            this.wallet.balance = 0;
+                            this.wallet.advance_balance = 0;
+                        }
+                    }
+                },
+
+                checkLowBalance() {
+                    if (this.wallet.balance !== null && this.wallet.balance < 50 && this.wallet.balance >= 0) {
+                        // Ne pas afficher la notification plus d'une fois par session
+                        if (!sessionStorage.getItem('lowBalanceWarningShown')) {
+                            this.showToast(`Attention: Votre solde est faible (${this.formatBalance(this.wallet.balance)}). Pensez à recharger votre compte.`, 'warning');
+                            sessionStorage.setItem('lowBalanceWarningShown', 'true');
+                        }
+                    }
+                },
+
+                checkBalanceChange(previousBalance) {
+                    if (previousBalance !== null && this.wallet.balance !== null && previousBalance !== this.wallet.balance) {
+                        const difference = this.wallet.balance - previousBalance;
+                        if (Math.abs(difference) >= 5) { // Seulement si la différence est significative
+                            const changeText = difference > 0 ? 'augmenté' : 'diminué';
+                            const changeAmount = this.formatBalance(Math.abs(difference));
+                            this.showToast(`Votre solde a ${changeText} de ${changeAmount}`, difference > 0 ? 'success' : 'info');
+                        }
+                    }
+                },
+
+                checkAdvanceBalanceChange(previousAdvanceBalance) {
+                    if (previousAdvanceBalance !== null && this.wallet.advance_balance !== null && previousAdvanceBalance !== this.wallet.advance_balance) {
+                        const difference = this.wallet.advance_balance - previousAdvanceBalance;
+                        if (Math.abs(difference) >= 1) { // Seulement si la différence est significative
+                            const changeText = difference > 0 ? 'ajoutée' : 'utilisée/retirée';
+                            const changeAmount = this.formatBalance(Math.abs(difference));
+                            const messageType = difference > 0 ? 'success' : 'info';
+                            this.showToast(`Avance ${changeText}: ${changeAmount}`, messageType);
+                        }
                     }
                 },
 
@@ -944,6 +1474,29 @@
                         hour: '2-digit',
                         minute: '2-digit'
                     });
+                },
+
+                formatBalance(amount) {
+                    if (amount === null || amount === undefined) {
+                        return '---';
+                    }
+                    return new Intl.NumberFormat('fr-FR', {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3
+                    }).format(amount) + ' ' + this.wallet.currency;
+                },
+
+                formatBalanceShort(amount) {
+                    if (amount === null || amount === undefined) {
+                        return '--';
+                    }
+                    if (amount >= 1000) {
+                        return (amount / 1000).toFixed(1) + 'K ' + this.wallet.currency;
+                    }
+                    return new Intl.NumberFormat('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 1
+                    }).format(amount) + ' ' + this.wallet.currency;
                 }
             }
         }
@@ -1005,7 +1558,17 @@
 
         // Expose showToast globally for PWA features
         window.showToast = showToast;
+
+        // Navigation data function for dropdown menus
+        function navigationData() {
+            return {
+                // Navigation state management
+            }
+        }
     </script>
+
+    <!-- Client Offline Manager -->
+    <script src="/js/client-offline.js"></script>
 
     @stack('scripts')
 </body>

@@ -42,6 +42,7 @@ class Package extends Model
         'auto_return_reason',    // Raison automatique du retour
         'est_echange',          // Indique si ce colis est un échange
         'delivered_at',         // Date et heure de livraison
+        'payment_withdrawal_id', // ID de la demande de paiement liée
     ];
 
     protected $casts = [

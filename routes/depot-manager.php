@@ -3,6 +3,7 @@
 use App\Http\Controllers\DepotManager\DepotManagerDashboardController;
 use App\Http\Controllers\DepotManager\DepotManagerDelivererController;
 use App\Http\Controllers\DepotManager\DepotManagerPackageController;
+use App\Http\Controllers\Api\PaymentDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,6 +20,13 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     Route::get('/gouvernorat/{gouvernorat}', [DepotManagerDashboardController::class, 'showGouvernorat'])->name('gouvernorat.show');
     Route::post('/packages/{package}/process-exchange-return', [DepotManagerDashboardController::class, 'processExchangeReturn'])->name('packages.process-exchange-return');
 
+    // ==================== GESTION DES PAIEMENTS ====================
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/to-prep', function () {
+            return view('depot-manager.payments.payments-to-prep');
+        })->name('to-prep');
+    });
+
     // ==================== GESTION DES LIVREURS ====================
     Route::prefix('deliverers')->name('deliverers.')->group(function () {
         Route::get('/', [DepotManagerDelivererController::class, 'index'])->name('index');
@@ -29,6 +37,12 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
         Route::put('/{deliverer}', [DepotManagerDelivererController::class, 'update'])->name('update');
         Route::post('/{deliverer}/toggle-status', [DepotManagerDelivererController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{deliverer}/reassign-packages', [DepotManagerDelivererController::class, 'reassignPackages'])->name('reassign-packages');
+
+        // Wallet Management Routes
+        Route::post('/{deliverer}/wallet/add', [DepotManagerDelivererController::class, 'addFunds'])->name('wallet.add');
+        Route::post('/{deliverer}/wallet/deduct', [DepotManagerDelivererController::class, 'deductFunds'])->name('wallet.deduct');
+        Route::post('/{deliverer}/advance/add', [DepotManagerDelivererController::class, 'addAdvance'])->name('advance.add');
+        Route::post('/{deliverer}/advance/remove', [DepotManagerDelivererController::class, 'removeAdvance'])->name('advance.remove');
     });
 
     // ==================== GESTION DES COLIS ====================
@@ -147,6 +161,12 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
                 return app(\App\Http\Controllers\Commercial\CommercialTicketController::class)->updatePriority($request, $ticket);
             })->name('update-priority');
         });
+    });
+
+    // ==================== API ROUTES PAIEMENTS ====================
+    Route::prefix('api/payments')->name('api.payments.')->group(function () {
+        Route::get('/dashboard', [PaymentDashboardController::class, 'depotDashboard'])->name('dashboard');
+        Route::post('/{withdrawal}/create-package', [PaymentDashboardController::class, 'createPaymentPackage'])->name('create.package');
     });
 
 });

@@ -29,6 +29,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     // ==================== API ROUTES ====================
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/dashboard-stats', [ClientDashboardController::class, 'apiStats'])->name('client.dashboard.stats');
+        Route::get('/wallet-balance', [ClientWalletController::class, 'apiBalance'])->name('wallet.balance');
     });
 
     // ==================== GESTION DES COLIS ====================
@@ -39,7 +40,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::get('/delivered', [ClientPackageController::class, 'delivered'])->name('delivered');
         Route::get('/returned', [ClientPackageController::class, 'returned'])->name('returned');
         Route::get('/create', [ClientPackageController::class, 'create'])->name('create');
+        Route::get('/create-fast', [ClientPackageController::class, 'createFast'])->name('create-fast');
         Route::post('/', [ClientPackageController::class, 'store'])->name('store');
+        Route::post('/store-multiple', [ClientPackageController::class, 'storeMultiple'])->name('store-multiple');
         Route::get('/{package}', [ClientPackageController::class, 'show'])->name('show');
         Route::delete('/{package}', [ClientPackageController::class, 'destroy'])->name('destroy');
         Route::post('/duplicate/{package}', [ClientPackageController::class, 'duplicate'])->name('duplicate');
@@ -161,8 +164,16 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::get('/', [ClientManifestController::class, 'index'])->name('index');
         Route::get('/create', [ClientManifestController::class, 'create'])->name('create');
         Route::post('/generate', [ClientManifestController::class, 'generate'])->name('generate');
+        Route::get('/{manifest}', [ClientManifestController::class, 'show'])->name('show');
+        Route::delete('/{manifest}', [ClientManifestController::class, 'destroy'])->name('destroy');
+        Route::post('/{manifest}/remove-package', [ClientManifestController::class, 'removePackage'])->name('remove-package');
+        Route::post('/{manifest}/add-package', [ClientManifestController::class, 'addPackage'])->name('add-package');
+        Route::get('/{manifest}/details', [ClientManifestController::class, 'getDetails'])->name('details');
+        Route::get('/{manifest}/pdf', [ClientManifestController::class, 'downloadPdf'])->name('download-pdf');
+        Route::get('/{manifest}/print', [ClientManifestController::class, 'printView'])->name('print');
         Route::post('/preview', [ClientManifestController::class, 'preview'])->name('preview');
         Route::get('/packages-by-pickup', [ClientManifestController::class, 'getPackagesByPickup'])->name('packages-by-pickup');
+        Route::get('/api/available-packages', [ClientManifestController::class, 'getAvailablePackages'])->name('api.available-packages');
     });
 
     // ==================== COMPTES BANCAIRES CLIENT ====================

@@ -1,463 +1,599 @@
 @extends('layouts.client')
 
-@section('title', 'Manifestes - Gestion des Colis')
+@section('title', 'Gestion des Manifestes')
+@section('page-title', 'Manifestes')
+@section('page-description', 'Gérez vos lots de colis')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Gestion des Manifestes</h1>
-            <p class="text-gray-600 mt-1">Créez des manifestes pour vos colis en attente de collecte</p>
-        </div>
-        <div class="flex space-x-3">
-            <button onclick="refreshPackages()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Actualiser
-            </button>
+<!-- Main container with proper mobile spacing -->
+<div x-data="manifestsApp()" x-init="init()" class="pb-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Header Section - Mobile Optimized -->
+    <div class="mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div class="flex-1">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+                        📋 Gestion des Manifestes
+                    </h1>
+                    <p class="text-gray-600 text-sm mt-1">Créez des manifestes pour vos colis en attente</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @click="refreshData"
+                            class="inline-flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        🔄 Actualiser
+                    </button>
+                    <button @click="openCreateModal"
+                            class="inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all transform hover:scale-105">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        ➕ Nouveau Manifeste
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    @if($packagesByPickup->count() == 0)
-        <!-- Aucun colis disponible -->
-        <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4-4-4m-6 4l4 4 4-4"></path>
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun colis disponible</h3>
-            <p class="text-gray-600 mb-4">Vous n'avez actuellement aucun colis avec le statut "Disponible" ou "Créé"</p>
-            <a href="{{ route('client.packages.create') }}" class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Créer un nouveau colis
-            </a>
-        </div>
-    @else
-        <!-- Liste des colis groupés par adresse -->
-        <div class="space-y-6">
-            @foreach($packagesByPickup as $pickupKey => $packages)
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <!-- En-tête du groupe -->
-                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
-                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">
-                                        {{ explode(' | ', $pickupKey)[0] }}
-                                    </h3>
-                                    <p class="text-sm text-gray-600">
-                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                                        </svg>
-                                        {{ explode(' | ', $pickupKey)[1] ?? 'Téléphone non spécifié' }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="text-right">
-                                    <div class="text-sm font-medium text-gray-900">{{ $packages->count() }} colis</div>
-                                    <div class="text-xs text-gray-500">{{ number_format($packages->sum('weight'), 1) }} kg</div>
-                                </div>
-                                <button onclick="createManifest('{{ $pickupKey }}', {{ $packages->pluck('id') }})"
-                                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                    </svg>
-                                    Créer Manifeste
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tableau des colis -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <input type="checkbox"
-                                               onchange="toggleGroupSelection('{{ $pickupKey }}', this.checked)"
-                                               class="group-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro de suivi</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destinataire</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adresse de livraison</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poids</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valeur</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COD</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($packages as $package)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <input type="checkbox"
-                                                   data-group="{{ $pickupKey }}"
-                                                   data-package-id="{{ $package->id }}"
-                                                   class="package-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $package->tracking_number }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ $package->recipient_name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $package->recipient_phone }}</div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-900">{{ Str::limit($package->recipient_address, 40) }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ number_format($package->weight, 1) }} kg
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ number_format($package->declared_value, 2) }} TND
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            @if($package->cod_amount > 0)
-                                                <span class="text-green-600 font-medium">{{ number_format($package->cod_amount, 2) }} TND</span>
-                                            @else
-                                                <span class="text-gray-400">Aucun</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full
-                                                {{ $package->status === 'AVAILABLE' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
-                                                {{ $package->status === 'AVAILABLE' ? 'Disponible' : 'Créé' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Actions flottantes -->
-        <div class="fixed bottom-6 right-6">
-            <button onclick="createSelectedManifest()"
-                    id="create-selected-btn"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-200 transform scale-0"
-                    style="display: none;">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                Créer Manifeste (<span id="selected-count">0</span>)
-            </button>
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-start">
+            <svg class="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <p class="text-sm">{{ session('success') }}</p>
         </div>
     @endif
-</div>
 
-<!-- Modal de création de manifeste -->
-<div id="manifest-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Créer un Manifeste</h3>
-                <button onclick="closeManifestModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    @if($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div class="text-sm">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
+        </div>
+    @endif
 
-            <form id="manifest-form" onsubmit="generateManifest(event)">
-                <div class="space-y-4">
-                    <!-- Informations de collecte -->
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="font-medium text-gray-900 mb-3">Informations de Collecte</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de collecte *</label>
-                                <input type="text" name="pickup_address" id="pickup_address" required
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <span class="ml-3 text-gray-600">Chargement...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="manifests.length === 0 && !loading" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div class="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">📋 Aucun manifeste créé</h3>
+        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+            Vous n'avez pas encore créé de manifestes. Créez votre premier manifeste pour organiser vos colis par lots.
+        </p>
+        <button @click="openCreateModal"
+                class="inline-flex items-center bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            ➕ Créer votre premier manifeste
+        </button>
+    </div>
+
+    <!-- Manifests Grid - Mobile-First -->
+    <div x-show="manifests.length > 0 && !loading" class="space-y-4">
+        <template x-for="manifest in manifests" :key="manifest.id">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                <!-- Mobile Header -->
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
-                                <input type="text" name="pickup_contact" required
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900" x-text="manifest.manifest_number"></h3>
+                                <p class="text-sm text-gray-600" x-text="manifest.pickup_address_name"></p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                                <input type="text" name="pickup_phone" id="pickup_phone" required
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date de collecte</label>
-                                <input type="date" name="delivery_date"
-                                       min="{{ date('Y-m-d') }}"
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
+                        </div>
+                        <!-- Status Badge -->
+                        <span :class="getStatusBadgeClass(manifest.status_badge)"
+                              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                              x-text="manifest.status_badge.text"></span>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        <div class="text-center p-3 bg-blue-50 rounded-lg">
+                            <p class="text-2xl font-bold text-blue-600" x-text="manifest.total_packages"></p>
+                            <p class="text-xs text-blue-800">📦 Colis</p>
+                        </div>
+                        <div class="text-center p-3 bg-green-50 rounded-lg">
+                            <p class="text-lg font-bold text-green-600" x-text="formatAmount(manifest.total_cod_amount)"></p>
+                            <p class="text-xs text-green-800">💰 COD Total</p>
+                        </div>
+                        <div class="text-center p-3 bg-purple-50 rounded-lg">
+                            <p class="text-lg font-bold text-purple-600" x-text="formatWeight(manifest.total_weight)"></p>
+                            <p class="text-xs text-purple-800">⚖️ Poids</p>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <p class="text-sm font-medium text-gray-600" x-text="formatDate(manifest.generated_at)"></p>
+                            <p class="text-xs text-gray-500">📅 Créé le</p>
                         </div>
                     </div>
 
-                    <!-- Notes -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
-                        <textarea name="notes" rows="3"
-                                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                  placeholder="Instructions spéciales, horaires de collecte, etc."></textarea>
-                    </div>
+                    <!-- Actions Row -->
+                    <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                        <!-- View Button -->
+                        <a :href="getShowUrl(manifest)"
+                           class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            👁️ Consulter
+                        </a>
 
-                    <!-- Résumé des colis -->
-                    <div class="bg-indigo-50 rounded-lg p-4">
-                        <h4 class="font-medium text-gray-900 mb-3">Résumé des Colis</h4>
-                        <div id="manifest-summary"></div>
+                        <!-- Print Button -->
+                        <a :href="getPrintUrl(manifest)" target="_blank"
+                           class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            </svg>
+                            🖨️ Imprimer
+                        </a>
+
+                        <!-- Delete Button (conditional) -->
+                        <template x-if="canDeleteManifest(manifest)">
+                            <button @click="confirmDelete(manifest)"
+                                    class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                🗑️ Supprimer
+                            </button>
+                        </template>
+
+                        <!-- Delete Button (disabled) -->
+                        <template x-if="!canDeleteManifest(manifest)">
+                            <div class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
+                                 title="Ce manifeste ne peut pas être supprimé">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                🔒 Protégé
+                            </div>
+                        </template>
                     </div>
                 </div>
+            </div>
+        </template>
+    </div>
 
-                <input type="hidden" name="package_ids" id="selected_package_ids">
-
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeManifestModal()"
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors duration-200">
-                        Annuler
-                    </button>
-                    <button type="submit"
-                            class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200">
-                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    <!-- Create Manifest Modal - Mobile Optimized -->
+    <div x-show="showCreateModal" x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4"
+         @click.self="closeCreateModal">
+        <div class="relative top-4 mx-auto border w-full max-w-4xl shadow-lg rounded-xl bg-white">
+            <div class="p-4 sm:p-6">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+                        ➕ Créer un nouveau Manifeste
+                    </h3>
+                    <button @click="closeCreateModal"
+                            class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
-                        Générer le Manifeste
                     </button>
                 </div>
-            </form>
+
+                <!-- Modal Content -->
+                <div class="max-h-96 sm:max-h-screen overflow-y-auto">
+
+                    <!-- No Packages Available -->
+                    <div x-show="availablePackages.length === 0" class="text-center py-12">
+                        <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4-4-4m-6 4l4 4 4-4"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">📦 Aucun colis disponible</h3>
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                            Tous vos colis sont soit déjà dans des manifestes, soit ne sont pas éligibles pour la création de manifestes.
+                        </p>
+                        <a href="{{ route('client.packages.create') }}"
+                           class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Créer des colis
+                        </a>
+                    </div>
+
+                    <!-- Packages Available -->
+                    <div x-show="availablePackages.length > 0" class="space-y-6">
+                        <!-- Pickup Address Selection -->
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-indigo-900 mb-3">
+                                📍 Adresse de collecte *
+                            </label>
+                            <select x-model="selectedPickupAddressId"
+                                    class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Sélectionnez une adresse de collecte</option>
+                                @foreach($clientPickupAddresses as $address)
+                                <option value="{{ $address->id }}">
+                                    {{ $address->name }} - {{ $address->address }}
+                                    @if($address->phone) ({{ $address->phone }}) @endif
+                                    @if($address->is_default) • Par défaut @endif
+                                </option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-indigo-600 mt-2">
+                                💡 Tous les colis sélectionnés seront collectés à cette adresse
+                            </p>
+                        </div>
+
+                        <!-- Mobile-First Package Selection -->
+                        <div class="space-y-4">
+                            <!-- Available Packages -->
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    📦 Colis Disponibles
+                                    <span class="ml-2 text-sm font-normal text-gray-600" x-text="`(${availablePackages.length} disponibles)`">
+                                    </span>
+                                </h4>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                                    <template x-for="pkg in availablePackages" :key="pkg.id">
+                                        <div class="border border-gray-200 rounded-lg p-3 cursor-pointer transition-all"
+                                             :class="selectedPackages.includes(pkg.id) ? 'bg-indigo-50 border-indigo-300' : 'hover:bg-gray-50'"
+                                             @click="togglePackage(pkg.id)">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" :checked="selectedPackages.includes(pkg.id)"
+                                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center justify-between">
+                                                        <p class="text-sm font-medium text-gray-900" x-text="pkg.package_code"></p>
+                                                        <p class="text-sm font-medium text-green-600" x-text="formatAmount(pkg.cod_amount) + ' DT'"></p>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 truncate" x-text="pkg.recipient_name"></p>
+                                                    <p class="text-xs text-gray-500 truncate" x-text="pkg.content_description"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Selected Summary -->
+                            <div x-show="selectedPackages.length > 0" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-green-800 mb-2">
+                                    ✅ Résumé de votre sélection
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-green-700">Colis sélectionnés:</span>
+                                        <span class="font-medium" x-text="selectedPackages.length"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-green-700">Valeur totale:</span>
+                                        <span class="font-medium" x-text="calculateTotalCOD() + ' DT'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Actions -->
+                        <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
+                            <button type="button" @click="closeCreateModal"
+                                    class="flex-1 sm:flex-none px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium">
+                                ❌ Annuler
+                            </button>
+                            <button type="button" @click="createManifest"
+                                    :disabled="selectedPackages.length === 0 || !selectedPickupAddressId || creating"
+                                    class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="creating" class="inline-flex items-center">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    ⏳ Création en cours...
+                                </span>
+                                <span x-show="!creating" class="inline-flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    ✅ Créer le Manifeste
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteModal" x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4"
+         @click.self="closeDeleteModal">
+        <div class="relative top-20 mx-auto border w-full max-w-md shadow-lg rounded-xl bg-white">
+            <div class="p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">🗑️ Supprimer le manifeste</h3>
+                <p class="text-gray-600 mb-6">
+                    Êtes-vous sûr de vouloir supprimer le manifeste
+                    <strong x-text="manifestToDelete?.manifest_number"></strong> ?
+                    Cette action ne peut pas être annulée.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @click="closeDeleteModal"
+                            class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium">
+                        ❌ Annuler
+                    </button>
+                    <button @click="deleteManifest" :disabled="deleting"
+                            class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50">
+                        <span x-show="deleting" class="inline-flex items-center">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            ⏳ Suppression...
+                        </span>
+                        <span x-show="!deleting">🗑️ Supprimer</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+@push('scripts')
 <script>
-let selectedPackages = new Set();
+function manifestsApp() {
+    return {
+        manifests: @json($existingManifests),
+        availablePackages: [],
+        loading: false,
+        showCreateModal: false,
+        showDeleteModal: false,
+        manifestToDelete: null,
+        deleting: false,
+        selectedPackages: [],
+        selectedPickupAddressId: '',
+        creating: false,
 
-// Gestion des sélections
-function toggleGroupSelection(groupKey, checked) {
-    const checkboxes = document.querySelectorAll(`input[data-group="${groupKey}"]`);
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = checked;
-        if (checked) {
-            selectedPackages.add(parseInt(checkbox.dataset.packageId));
-        } else {
-            selectedPackages.delete(parseInt(checkbox.dataset.packageId));
-        }
-    });
-    updateSelectedCount();
-}
+        async init() {
+            // Charger tous les colis disponibles au démarrage
+            await this.loadAvailablePackages();
 
-// Écouter les changements de sélection individuelle
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('package-checkbox')) {
-        const packageId = parseInt(e.target.dataset.packageId);
-        if (e.target.checked) {
-            selectedPackages.add(packageId);
-        } else {
-            selectedPackages.delete(packageId);
-        }
+            // Watcher pour recharger les colis quand l'adresse de pickup change
+            this.$watch('selectedPickupAddressId', async (newValue) => {
+                this.selectedPackages = []; // Réinitialiser la sélection
+                await this.loadAvailablePackages(newValue);
+            });
+        },
 
-        // Vérifier si tous les colis du groupe sont sélectionnés
-        const groupKey = e.target.dataset.group;
-        const groupCheckboxes = document.querySelectorAll(`input[data-group="${groupKey}"]`);
-        const groupCheckbox = document.querySelector(`input[onchange*="${groupKey}"]`);
+        async loadAvailablePackages(pickupAddressId = null) {
+            try {
+                let url = '{{ route("client.manifests.api.available-packages") }}';
+                if (pickupAddressId) {
+                    url += `?pickup_address_id=${pickupAddressId}`;
+                }
 
-        if (groupCheckbox) {
-            const allChecked = Array.from(groupCheckboxes).every(cb => cb.checked);
-            const noneChecked = Array.from(groupCheckboxes).every(cb => !cb.checked);
+                const response = await fetch(url);
+                const data = await response.json();
+                this.availablePackages = data.packages || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des colis:', error);
+                this.availablePackages = [];
+            }
+        },
 
-            if (allChecked) {
-                groupCheckbox.checked = true;
-                groupCheckbox.indeterminate = false;
-            } else if (noneChecked) {
-                groupCheckbox.checked = false;
-                groupCheckbox.indeterminate = false;
+        refreshData() {
+            this.loading = true;
+            window.location.reload();
+        },
+
+        openCreateModal() {
+            this.showCreateModal = true;
+            this.selectedPackages = [];
+            this.selectedPickupAddressId = '';
+            // Charger tous les colis disponibles
+            this.loadAvailablePackages();
+        },
+
+        closeCreateModal() {
+            this.showCreateModal = false;
+        },
+
+        canDeleteManifest(manifest) {
+            return manifest.status_badge.text === 'En préparation';
+        },
+
+        confirmDelete(manifest) {
+            this.manifestToDelete = manifest;
+            this.showDeleteModal = true;
+        },
+
+        closeDeleteModal() {
+            this.showDeleteModal = false;
+            this.manifestToDelete = null;
+        },
+
+        async deleteManifest() {
+            if (!this.manifestToDelete) return;
+
+            this.deleting = true;
+            try {
+                const response = await fetch(`{{ url('client/manifests') }}/${this.manifestToDelete.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    this.closeDeleteModal();
+                    this.showNotification('🗑️ Manifeste supprimé avec succès!', 'success');
+                    setTimeout(() => this.refreshData(), 1000);
+                } else {
+                    this.showNotification('❌ ' + (data.message || 'Erreur lors de la suppression'), 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                this.showNotification('❌ Erreur lors de la suppression du manifeste', 'error');
+            } finally {
+                this.deleting = false;
+            }
+        },
+
+        togglePackage(packageId) {
+            const index = this.selectedPackages.indexOf(packageId);
+            if (index > -1) {
+                this.selectedPackages.splice(index, 1);
             } else {
-                groupCheckbox.checked = false;
-                groupCheckbox.indeterminate = true;
+                this.selectedPackages.push(packageId);
             }
-        }
+        },
 
-        updateSelectedCount();
-    }
-});
+        getPackageById(packageId) {
+            return this.availablePackages.find(pkg => pkg.id === packageId);
+        },
 
-function updateSelectedCount() {
-    const count = selectedPackages.size;
-    const btn = document.getElementById('create-selected-btn');
-    const countSpan = document.getElementById('selected-count');
+        calculateTotalCOD() {
+            return this.selectedPackages.reduce((total, pkgId) => {
+                const pkg = this.getPackageById(pkgId);
+                return total + (pkg ? parseFloat(pkg.cod_amount || 0) : 0);
+            }, 0).toFixed(3);
+        },
 
-    if (count > 0) {
-        btn.style.display = 'block';
-        btn.classList.remove('scale-0');
-        btn.classList.add('scale-100');
-        countSpan.textContent = count;
-    } else {
-        btn.classList.remove('scale-100');
-        btn.classList.add('scale-0');
-        setTimeout(() => {
-            if (selectedPackages.size === 0) {
-                btn.style.display = 'none';
+        async createManifest() {
+            if (this.selectedPackages.length === 0 || !this.selectedPickupAddressId) return;
+
+            this.creating = true;
+            try {
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('pickup_address_id', this.selectedPickupAddressId);
+                this.selectedPackages.forEach(id => {
+                    formData.append('package_ids[]', id);
+                });
+
+                const response = await fetch('{{ route("client.manifests.generate") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+
+                    this.closeCreateModal();
+                    this.showNotification('✅ Manifeste créé avec succès!', 'success');
+                    setTimeout(() => this.refreshData(), 1000);
+                } else {
+                    let errorMessage = 'Erreur lors de la création du manifeste';
+                    try {
+                        const data = await response.json();
+                        errorMessage = data.message || errorMessage;
+                    } catch (e) {
+                        // Si la réponse n'est pas JSON, utiliser le message par défaut
+                    }
+                    this.showNotification('❌ ' + errorMessage, 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                this.showNotification('❌ Erreur lors de la création du manifeste', 'error');
+            } finally {
+                this.creating = false;
             }
-        }, 200);
-    }
-}
+        },
 
-function createManifest(pickupKey, packageIds) {
-    const [address, phone] = pickupKey.split(' | ');
+        getStatusBadgeClass(statusBadge) {
+            const colorMap = {
+                'blue': 'bg-blue-100 text-blue-800 border border-blue-200',
+                'orange': 'bg-orange-100 text-orange-800 border border-orange-200',
+                'green': 'bg-green-100 text-green-800 border border-green-200',
+                'gray': 'bg-gray-100 text-gray-800 border border-gray-200'
+            };
+            return colorMap[statusBadge.color] || 'bg-gray-100 text-gray-800 border border-gray-200';
+        },
 
-    document.getElementById('pickup_address').value = address;
-    document.getElementById('pickup_phone').value = phone || '';
-    document.getElementById('selected_package_ids').value = JSON.stringify(packageIds);
+        getShowUrl(manifest) {
+            return `{{ url('client/manifests') }}/${manifest.id}`;
+        },
 
-    // Charger l'aperçu
-    loadManifestPreview(packageIds);
+        getPrintUrl(manifest) {
+            return `{{ url('client/manifests') }}/${manifest.id}/print`;
+        },
 
-    document.getElementById('manifest-modal').classList.remove('hidden');
-}
+        formatDate(date) {
+            return new Date(date).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
 
-function createSelectedManifest() {
-    if (selectedPackages.size === 0) {
-        alert('Veuillez sélectionner au moins un colis');
-        return;
-    }
+        formatWeight(weight) {
+            return weight ? parseFloat(weight).toFixed(1) + ' kg' : '0 kg';
+        },
 
-    const packageIds = Array.from(selectedPackages);
-    document.getElementById('selected_package_ids').value = JSON.stringify(packageIds);
+        formatAmount(amount) {
+            return parseFloat(amount || 0).toFixed(3);
+        },
 
-    // Réinitialiser les champs
-    document.getElementById('pickup_address').value = '';
-    document.getElementById('pickup_phone').value = '';
+        showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
 
-    // Charger l'aperçu
-    loadManifestPreview(packageIds);
+            document.body.appendChild(notification);
 
-    document.getElementById('manifest-modal').classList.remove('hidden');
-}
-
-function closeManifestModal() {
-    document.getElementById('manifest-modal').classList.add('hidden');
-}
-
-async function loadManifestPreview(packageIds) {
-    try {
-        const response = await fetch('{{ route("client.manifests.preview") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ package_ids: packageIds })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            updateManifestSummary(data.packages, data.summary);
-        }
-    } catch (error) {
-        console.error('Erreur lors du chargement de l\'aperçu:', error);
-    }
-}
-
-function updateManifestSummary(packages, summary) {
-    const summaryDiv = document.getElementById('manifest-summary');
-
-    summaryDiv.innerHTML = `
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div class="text-center">
-                <div class="text-2xl font-bold text-indigo-600">${summary.total_packages}</div>
-                <div class="text-sm text-gray-600">Colis</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-indigo-600">${summary.total_weight} kg</div>
-                <div class="text-sm text-gray-600">Poids Total</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-indigo-600">${summary.total_value.toFixed(2)} TND</div>
-                <div class="text-sm text-gray-600">Valeur Déclarée</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-indigo-600">${summary.total_cod.toFixed(2)} TND</div>
-                <div class="text-sm text-gray-600">COD Total</div>
-            </div>
-        </div>
-        <div class="max-h-40 overflow-y-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-2 py-1 text-left">Numéro</th>
-                        <th class="px-2 py-1 text-left">Destinataire</th>
-                        <th class="px-2 py-1 text-right">Poids</th>
-                        <th class="px-2 py-1 text-right">COD</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${packages.map(pkg => `
-                        <tr class="border-b">
-                            <td class="px-2 py-1">${pkg.tracking_number}</td>
-                            <td class="px-2 py-1">${pkg.recipient_name}</td>
-                            <td class="px-2 py-1 text-right">${pkg.weight} kg</td>
-                            <td class="px-2 py-1 text-right">${pkg.cod_amount > 0 ? pkg.cod_amount.toFixed(2) + ' TND' : '-'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-
-async function generateManifest(event) {
-    event.preventDefault();
-
-    const formData = new FormData(event.target);
-
-    try {
-        const response = await fetch('{{ route("client.manifests.generate") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: formData
-        });
-
-        if (response.ok) {
-            // Télécharger le PDF
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `manifeste-${new Date().toISOString().slice(0, 10)}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            // Fermer le modal et actualiser
-            closeManifestModal();
             setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            alert('Erreur lors de la génération du manifeste');
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
         }
-    } catch (error) {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la génération du manifeste');
     }
-}
-
-function refreshPackages() {
-    window.location.reload();
 }
 </script>
+@endpush
+
+@push('styles')
+<style>
+[x-cloak] {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .pb-6 {
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    }
+}
+</style>
+@endpush
 @endsection

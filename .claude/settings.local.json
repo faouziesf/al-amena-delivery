@@ -6,7 +6,15 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(npm run dev:*)",
-      "Bash(exit)"
+      "Bash(exit)",
+      "Bash(tasklist)",
+      "Bash(findstr:*)",
+      "Bash(move appHttpControllersCommercialClientAdvanceController.php appHttpControllersCommercialClientAdvanceController.php)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(del test_mark_processed.php)"
     ],
     "deny": [],
     "ask": []

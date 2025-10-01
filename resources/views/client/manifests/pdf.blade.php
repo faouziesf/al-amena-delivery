@@ -298,12 +298,8 @@
                 <div class="info-value">{{ $pickup_info['address'] }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Contact sur place :</div>
-                <div class="info-value">{{ $pickup_info['contact'] }}</div>
-            </div>
-            <div class="info-row">
                 <div class="info-label">Téléphone :</div>
-                <div class="info-value">{{ $pickup_info['phone'] }}</div>
+                <div class="info-value">{{ $pickup_info['phone'] ?? 'Non renseigné' }}</div>
             </div>
         </div>
     </div>
@@ -320,11 +316,11 @@
                 <div class="summary-label">Poids Total</div>
             </div>
             <div class="summary-item">
-                <span class="summary-value">{{ number_format($total_value, 2) }} TND</span>
+                <span class="summary-value">{{ number_format($packages->sum('package_value'), 2) }} DT</span>
                 <div class="summary-label">Valeur Déclarée</div>
             </div>
             <div class="summary-item">
-                <span class="summary-value">{{ number_format($total_cod, 2) }} TND</span>
+                <span class="summary-value">{{ number_format($total_cod, 3) }} DT</span>
                 <div class="summary-label">COD Total</div>
             </div>
         </div>
@@ -348,17 +344,17 @@
             <tbody>
                 @foreach($packages as $index => $package)
                 <tr>
-                    <td class="tracking-number">{{ $package->tracking_number }}</td>
+                    <td class="tracking-number">{{ $package->package_code }}</td>
                     <td>
-                        <strong>{{ $package->recipient_name }}</strong><br>
-                        <small>{{ $package->recipient_phone }}</small>
+                        <strong>{{ $package->recipient_data['name'] ?? 'N/A' }}</strong><br>
+                        <small>{{ $package->recipient_data['phone'] ?? 'N/A' }}</small>
                     </td>
-                    <td>{{ $package->recipient_address }}</td>
-                    <td>{{ number_format($package->weight, 1) }} kg</td>
-                    <td>{{ number_format($package->declared_value, 2) }} TND</td>
+                    <td>{{ Str::limit($package->recipient_data['address'] ?? 'N/A', 60) }}</td>
+                    <td>{{ $package->package_weight ? number_format($package->package_weight, 1) . ' kg' : '-' }}</td>
+                    <td>{{ $package->package_value ? number_format($package->package_value, 2) . ' DT' : '-' }}</td>
                     <td>
                         @if($package->cod_amount > 0)
-                            <span class="cod-amount">{{ number_format($package->cod_amount, 2) }} TND</span>
+                            <span class="cod-amount">{{ number_format($package->cod_amount, 3) }} DT</span>
                         @else
                             -
                         @endif

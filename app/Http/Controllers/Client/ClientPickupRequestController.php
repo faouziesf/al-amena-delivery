@@ -9,9 +9,11 @@ use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ClientPickupRequestController extends Controller
 {
+    use AuthorizesRequests;
     public function index()
     {
         $pickupRequests = PickupRequest::where('client_id', Auth::id())
