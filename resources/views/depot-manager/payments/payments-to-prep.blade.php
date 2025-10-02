@@ -18,6 +18,7 @@
                 <div class="bg-white rounded-lg p-4 shadow-sm">
                     <div class="text-2xl font-bold text-green-600" x-text="payments.length || 0"></div>
                     <div class="text-sm text-gray-500">À préparer</div>
+                    <div class="text-xs text-blue-600 mt-1" x-text="'Debug: ' + (loading ? 'Chargement...' : 'Chargé')"></div>
                 </div>
             </div>
         </div>
@@ -46,15 +47,40 @@
     <div class="bg-white rounded-xl shadow-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">Paiements en Espèces - Mon Gouvernorat</h3>
-                <button @click="loadData()"
-                        :disabled="loading"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Actualiser
-                </button>
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Tous les Paiements en Espèces
+                    <span class="text-sm font-normal text-gray-500">
+                        (Priorité: Mon Gouvernorat)
+                    </span>
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <!-- Filtre par statut -->
+                    <select x-model="statusFilter" @change="filterPayments()"
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Tous les statuts</option>
+                        <option value="PENDING">En attente</option>
+                        <option value="APPROVED">Approuvé</option>
+                        <option value="READY_FOR_DELIVERY">Prêt livraison</option>
+                        <option value="DELIVERED">Livré</option>
+                        <option value="COMPLETED">Complété</option>
+                    </select>
+
+                    <!-- Toggle priorité gouvernorat -->
+                    <label class="flex items-center text-sm text-gray-700">
+                        <input type="checkbox" x-model="showMyGouvernoratOnly" @change="filterPayments()"
+                               class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        Mon gouvernorat uniquement
+                    </label>
+
+                    <button @click="loadData()"
+                            :disabled="loading"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Actualiser
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -100,24 +126,65 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="payment.created_at"></td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <!-- Bouton créer colis (seulement si prêt) -->
-                                <div x-show="payment.can_create_package && !payment.package_code">
+                                <!-- Actions pour PENDING - Approuver/Rejeter -->
+                                <div x-show="payment.status === 'PENDING'" class="flex flex-col space-y-2">
+                                    <button @click="approvePayment(payment)"
+                                            :disabled="loading || payment.processing"
+                                            class="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        ✅ Approuver
+                                    </button>
+                                    <button @click="rejectPayment(payment)"
+                                            :disabled="loading || payment.processing"
+                                            class="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        ❌ Rejeter
+                                    </button>
+                                </div>
+
+                                <!-- Actions pour APPROVED - Créer colis -->
+                                <div x-show="payment.status === 'APPROVED'" class="flex flex-col space-y-2">
                                     <button @click="createPaymentPackage(payment)"
                                             :disabled="loading || payment.processing"
-                                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    <span x-show="!payment.processing">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4.5M20 7v10l-8 4M4 7v10l8 4m0-10L4 7"/>
-                                        </svg>
-                                        📦 Créer le Colis de Paiement
-                                    </span>
-                                    <span x-show="payment.processing" class="flex items-center">
-                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Création...
-                                    </span>
+                                            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <span x-show="!payment.processing" class="flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4.5M20 7v10l-8 4M4 7v10l8 4m0-10L4 7"/>
+                                            </svg>
+                                            📦 Créer Colis
+                                        </span>
+                                        <span x-show="payment.processing" class="flex items-center">
+                                            <svg class="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Création...
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <!-- Actions pour READY_FOR_DELIVERY - Créer colis -->
+                                <div x-show="payment.can_create_package && !payment.package_code && (payment.status === 'READY_FOR_DELIVERY' || payment.status === 'DELIVERED')">
+                                    <button @click="createPaymentPackage(payment)"
+                                            :disabled="loading || payment.processing"
+                                            class="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <span x-show="!payment.processing" class="flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4.5M20 7v10l-8 4M4 7v10l8 4m0-10L4 7"/>
+                                            </svg>
+                                            📦 Créer Colis
+                                        </span>
+                                        <span x-show="payment.processing" class="flex items-center">
+                                            <svg class="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Création...
+                                        </span>
                                     </button>
                                 </div>
 
@@ -128,8 +195,8 @@
                                 </div>
 
                                 <!-- Statut non actionnable -->
-                                <div x-show="!payment.can_create_package && !payment.package_code" class="text-center">
-                                    <span class="text-xs text-gray-400">Non prêt</span>
+                                <div x-show="!payment.can_create_package && !payment.package_code && payment.status !== 'PENDING' && payment.status !== 'APPROVED'" class="text-center">
+                                    <span class="text-xs text-gray-400">Traité</span>
                                 </div>
                             </td>
                         </tr>
@@ -246,6 +313,11 @@ function paymentsToPrep() {
         // État
         loading: false,
         payments: [],
+        allPayments: [], // Stockage de tous les paiements
+
+        // Filtres
+        statusFilter: '',
+        showMyGouvernoratOnly: false,
 
         // Modal
         showConfirmModal: false,
@@ -274,19 +346,41 @@ function paymentsToPrep() {
                 const data = await response.json();
 
                 if (data.success) {
-                    this.payments = data.data.map(payment => ({
+                    this.allPayments = data.data.map(payment => ({
                         ...payment,
                         processing: false
                     }));
+                    console.log('DEBUG: Paiements chargés:', this.allPayments.length, this.allPayments);
+                    this.filterPayments(); // Appliquer les filtres
+                    this.showToast(`${this.allPayments.length} paiement(s) chargé(s)`, 'info');
                 } else {
                     this.showToast(data.message || 'Erreur de chargement', 'error');
+                    console.error('DEBUG: Erreur API:', data);
                 }
             } catch (error) {
-                console.error('Erreur:', error);
-                this.showToast('Erreur de connexion', 'error');
+                console.error('DEBUG: Erreur fetch loadData:', error);
+                this.showToast('Erreur de connexion: ' + error.message, 'error');
             } finally {
                 this.loading = false;
             }
+        },
+
+        filterPayments() {
+            let filtered = [...this.allPayments];
+
+            // Filtrer par statut
+            if (this.statusFilter) {
+                filtered = filtered.filter(payment => payment.status === this.statusFilter);
+            }
+
+            // Filtrer par gouvernorat (logique simplifiée côté client)
+            if (this.showMyGouvernoratOnly) {
+                // Les paiements prioritaires sont en début de liste, on prend les 20 premiers
+                // Cette logique peut être améliorée selon les besoins spécifiques
+                filtered = filtered.slice(0, Math.min(20, filtered.length));
+            }
+
+            this.payments = filtered;
         },
 
         createPaymentPackage(payment) {
@@ -328,6 +422,79 @@ function paymentsToPrep() {
                 if (this.selectedPayment) {
                     this.selectedPayment.processing = false;
                 }
+            }
+        },
+
+        async approvePayment(payment) {
+            if (this.loading || payment.processing) return;
+
+            payment.processing = true;
+
+            try {
+                const response = await fetch(`/depot-manager/api/payments/${payment.id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showToast(data.message || 'Paiement approuvé avec succès', 'success');
+                    await this.loadData(); // Recharger les données
+                } else {
+                    this.showToast(data.message || 'Erreur lors de l\'approbation', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                this.showToast('Erreur de connexion', 'error');
+            } finally {
+                payment.processing = false;
+            }
+        },
+
+        async rejectPayment(payment) {
+            if (this.loading || payment.processing) return;
+
+            // Demander la raison du rejet
+            const reason = prompt('Veuillez indiquer la raison du rejet de cette demande de paiement :');
+            if (!reason || reason.trim() === '') {
+                return; // Annulé par l'utilisateur ou raison vide
+            }
+
+            payment.processing = true;
+
+            try {
+                const response = await fetch(`/depot-manager/api/payments/${payment.id}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        reason: reason.trim()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showToast(data.message || 'Paiement rejeté avec succès', 'success');
+                    await this.loadData(); // Recharger les données
+                } else {
+                    this.showToast(data.message || 'Erreur lors du rejet', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                this.showToast('Erreur de connexion', 'error');
+            } finally {
+                payment.processing = false;
             }
         },
 

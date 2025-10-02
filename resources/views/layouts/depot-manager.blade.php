@@ -120,6 +120,7 @@
                         <a href="{{ route('depot-manager.packages.index') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded">Mon Gouvernorat</a>
                         <a href="{{ route('depot-manager.packages.dashboard-actions') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded">Actions Requises</a>
                         <a href="{{ route('depot-manager.packages.all') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded">Tous les Colis</a>
+                        <a href="{{ route('depot-manager.packages.payment-packages') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">💰 Colis de Paiement</a>
                         <a href="{{ route('depot-manager.packages.returns-exchanges') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded">Retours & Échanges</a>
                         <a href="{{ route('depot-manager.packages.batch-scanner') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Scanner Lot</a>
                     </div>
@@ -142,6 +143,26 @@
                     <div x-show="open" x-transition class="ml-8 mt-2 space-y-1">
                         <a href="{{ route('depot-manager.crates.index') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded">Vue d'ensemble</a>
                         <a href="{{ route('depot-manager.crates.box-manager') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Gestionnaire de Boîtes</a>
+                    </div>
+                </div>
+
+                <!-- Gestion des Paiements (déroulant) -->
+                <div x-data="{ open: {{ request()->routeIs('depot-manager.payments.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open"
+                            class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('depot-manager.payments.*') ? 'bg-green-100 text-green-700 shadow-sm' : 'text-gray-700 hover:bg-green-50 hover:text-green-600' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                            <span class="font-medium">Paiements</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition class="ml-8 mt-2 space-y-1">
+                        <a href="{{ route('depot-manager.payments.to-prep') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Demandes Espèce à Traiter</a>
+                        <a href="{{ route('depot-manager.packages.payment-packages') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Colis de Paiement Créés</a>
                     </div>
                 </div>
 
@@ -251,8 +272,17 @@
                                 Boîtes Transit
                             </a>
 
-                            <a href="{{ route('depot-manager.packages.batch-scanner') }}"
+                            <a href="{{ route('depot-manager.payments.to-prep') }}"
                                class="inline-flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                               title="Demandes de paiement espèce à traiter">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                </svg>
+                                Paiements
+                            </a>
+
+                            <a href="{{ route('depot-manager.packages.batch-scanner') }}"
+                               class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                                title="Scanner des lots de colis">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4"/>
@@ -302,8 +332,16 @@
                         Boîtes Transit
                     </a>
 
-                    <a href="{{ route('depot-manager.packages.batch-scanner') }}"
+                    <a href="{{ route('depot-manager.payments.to-prep') }}"
                        class="flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                        Demandes Paiement
+                    </a>
+
+                    <a href="{{ route('depot-manager.packages.batch-scanner') }}"
+                       class="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4"/>
                         </svg>

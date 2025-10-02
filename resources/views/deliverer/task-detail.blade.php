@@ -82,6 +82,21 @@
                 </div>
             </div>
 
+            <!-- Avertissement Échange -->
+            <div x-show="task?.est_echange" class="flex items-start space-x-4 mb-6 p-4 bg-orange-50 border-2 border-orange-200 rounded-lg">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-orange-800 mb-2">⚠️ COLIS D'ÉCHANGE</h3>
+                    <p class="text-orange-700 font-medium leading-relaxed">
+                        Ce colis nécessite un échange. Vous devez <strong>récupérer l'ancien article</strong> lors de la livraison et le rapporter au dépôt.
+                    </p>
+                </div>
+            </div>
+
             <!-- Bouton d'appel -->
             <div class="pt-4 border-t border-gray-200">
                 <button @click="callClient()"
@@ -371,7 +386,8 @@ function taskDetailApp() {
                     notes: 'Appartement 4, 2ème étage. Sonnette de droite.',
                     cod_amount: 45.500,
                     packages_count: 1,
-                    phone: '+216 20 123 456'
+                    phone: '+216 20 123 456',
+                    est_echange: true // Pour tester l'affichage de l'avertissement d'échange
                 };
 
                 // Simuler le scan déjà effectué pour les tests

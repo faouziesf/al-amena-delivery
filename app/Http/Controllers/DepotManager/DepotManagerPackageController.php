@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Package;
 use App\Models\User;
+use App\Models\WithdrawalRequest;
 
 class DepotManagerPackageController extends Controller
 {
@@ -25,12 +26,20 @@ class DepotManagerPackageController extends Controller
         $managedDeliverers = $user->getManagedDeliverers();
         $delivererIds = $managedDeliverers->pluck('id')->toArray();
 
-        $query = Package::whereIn('assigned_deliverer_id', $delivererIds)
-                       ->with(['assignedDeliverer', 'sender', 'delegationFrom', 'delegationTo']);
+        // Inclure les colis assignés aux livreurs gérés ET les colis de paiement
+        $query = Package::where(function($q) use ($delivererIds) {
+                    $q->whereIn('assigned_deliverer_id', $delivererIds)
+                      ->orWhereNotNull('payment_withdrawal_id'); // Inclure les colis de paiement
+                })
+                ->with(['assignedDeliverer', 'sender', 'delegationFrom', 'delegationTo', 'withdrawalRequest']);
 
         // Filtres
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'PAYMENT') {
+                $query->whereNotNull('payment_withdrawal_id');
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         if ($request->filled('gouvernorat')) {
@@ -61,20 +70,31 @@ class DepotManagerPackageController extends Controller
 
         $packages = $query->orderBy('created_at', 'desc')->paginate(25);
 
-        // Statistiques rapides
+        // Statistiques rapides - inclure les colis de paiement
         $stats = [
-            'total' => Package::whereIn('assigned_deliverer_id', $delivererIds)->count(),
-            'in_progress' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                                  ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
-                                  ->count(),
-            'delivered_today' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                                      ->where('status', 'DELIVERED')
-                                      ->whereDate('delivered_at', today())
-                                      ->count(),
-            'urgent' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                             ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
-                             ->where('delivery_attempts', '>=', 3)
-                             ->count()
+            'total' => Package::where(function($q) use ($delivererIds) {
+                        $q->whereIn('assigned_deliverer_id', $delivererIds)
+                          ->orWhereNotNull('payment_withdrawal_id');
+                    })->count(),
+            'in_progress' => Package::where(function($q) use ($delivererIds) {
+                                $q->whereIn('assigned_deliverer_id', $delivererIds)
+                                  ->orWhereNotNull('payment_withdrawal_id');
+                            })
+                            ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                            ->count(),
+            'delivered' => Package::where(function($q) use ($delivererIds) {
+                                $q->whereIn('assigned_deliverer_id', $delivererIds)
+                                  ->orWhereNotNull('payment_withdrawal_id');
+                            })
+                            ->where('status', 'DELIVERED')
+                            ->count(),
+            'urgent' => Package::where(function($q) use ($delivererIds) {
+                             $q->whereIn('assigned_deliverer_id', $delivererIds)
+                               ->orWhereNotNull('payment_withdrawal_id');
+                        })
+                        ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                        ->where('delivery_attempts', '>=', 3)
+                        ->count()
         ];
 
         return view('depot-manager.packages.index', compact('packages', 'stats', 'managedDeliverers', 'user'))
@@ -322,6 +342,55 @@ class DepotManagerPackageController extends Controller
     }
 
     /**
+     * Liste des colis de paiement créés
+     */
+    public function paymentPackages(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            abort(403, 'Accès réservé aux chefs dépôt.');
+        }
+
+        $query = Package::with(['assignedDeliverer', 'sender', 'delegationFrom', 'delegationTo', 'withdrawalRequest'])
+                        ->whereNotNull('payment_withdrawal_id');
+
+        // Filtres
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('package_code', 'LIKE', '%' . $request->search . '%')
+                  ->orWhereHas('withdrawalRequest', function($sq) use ($request) {
+                      $sq->where('request_code', 'LIKE', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $packages = $query->orderBy('created_at', 'desc')->paginate(25);
+
+        // Statistiques des colis de paiement
+        $stats = [
+            'total' => Package::whereNotNull('payment_withdrawal_id')->count(),
+            'available' => Package::whereNotNull('payment_withdrawal_id')->where('status', 'AVAILABLE')->count(),
+            'in_progress' => Package::whereNotNull('payment_withdrawal_id')->whereIn('status', ['ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered' => Package::whereNotNull('payment_withdrawal_id')->where('status', 'DELIVERED')->count(),
+        ];
+
+        return view('depot-manager.packages.payment-packages', compact('packages', 'stats', 'user'));
+    }
+
+    /**
      * Interface dédiée pour les retours et échanges
      */
     public function returnsExchanges(Request $request)
@@ -333,16 +402,7 @@ class DepotManagerPackageController extends Controller
         }
 
         $query = Package::with(['assignedDeliverer', 'sender', 'delegationFrom', 'delegationTo'])
-                        ->whereIn('status', ['RETURNED', 'EXCHANGE_REQUESTED', 'EXCHANGE_PROCESSED']);
-
-        // Filtres
-        if ($request->filled('type')) {
-            if ($request->type === 'returns') {
-                $query->where('status', 'RETURNED');
-            } elseif ($request->type === 'exchanges') {
-                $query->whereIn('status', ['EXCHANGE_REQUESTED', 'EXCHANGE_PROCESSED']);
-            }
-        }
+                        ->where('status', 'RETURNED');
 
         if ($request->filled('gouvernorat')) {
             $query->whereHas('assignedDeliverer', function($q) use ($request) {
@@ -368,12 +428,17 @@ class DepotManagerPackageController extends Controller
 
         $packages = $query->orderBy('returned_at', 'desc')->paginate(25);
 
-        // Statistiques pour retours/échanges
+        // Statistiques pour retours seulement
         $stats = [
             'total_returns' => Package::where('status', 'RETURNED')->count(),
-            'total_exchanges' => Package::whereIn('status', ['EXCHANGE_REQUESTED', 'EXCHANGE_PROCESSED'])->count(),
             'returns_today' => Package::where('status', 'RETURNED')->whereDate('returned_at', today())->count(),
-            'exchanges_pending' => Package::where('status', 'EXCHANGE_REQUESTED')->count()
+            'unprocessed' => Package::where('status', 'RETURNED')
+                                   ->whereNull('return_processed_at')
+                                   ->count(),
+            'processed_today' => Package::where('status', 'RETURNED')
+                                       ->whereNotNull('return_processed_at')
+                                       ->whereDate('return_processed_at', today())
+                                       ->count()
         ];
 
         return view('depot-manager.packages.returns-exchanges', compact('packages', 'stats', 'user'));
@@ -423,32 +488,6 @@ class DepotManagerPackageController extends Controller
         return view('depot-manager.packages.return-receipt', compact('package', 'user'));
     }
 
-    /**
-     * Marquer un échange comme traité
-     */
-    public function processExchange(Request $request, Package $package)
-    {
-        $user = Auth::user();
-
-        if (!$user->isDepotManager()) {
-            abort(403, 'Accès réservé aux chefs dépôt.');
-        }
-
-        $request->validate([
-            'exchange_notes' => 'nullable|string|max:500',
-            'new_package_code' => 'nullable|string|max:50'
-        ]);
-
-        $package->update([
-            'status' => 'EXCHANGE_PROCESSED',
-            'exchange_processed_at' => now(),
-            'exchange_processed_by' => $user->id,
-            'exchange_notes' => $request->exchange_notes,
-            'new_package_code' => $request->new_package_code
-        ]);
-
-        return back()->with('success', 'Échange traité avec succès.');
-    }
 
     /**
      * Interface retours fournisseur - Tous les colis avec statut RETURNED
@@ -650,23 +689,6 @@ class DepotManagerPackageController extends Controller
     /**
      * Bon de livraison pour partie retour des échanges
      */
-    public function printExchangeReturnReceipt(Package $package)
-    {
-        $user = Auth::user();
-
-        if (!$user->isDepotManager()) {
-            abort(403, 'Accès réservé aux chefs dépôt.');
-        }
-
-        if (!in_array($package->status, ['EXCHANGE_REQUESTED', 'EXCHANGE_PROCESSED'])) {
-            abort(404, 'Ce colis n\'est pas un échange.');
-        }
-
-        // Charger les relations pickup
-        $package->load(['pickupAddress', 'pickupDelegation', 'delegationFrom', 'delegationTo', 'sender', 'assignedDeliverer']);
-
-        return view('depot-manager.packages.exchange-return-receipt', compact('package', 'user'));
-    }
 
     /**
      * Tableau de bord des actions requises
@@ -693,83 +715,7 @@ class DepotManagerPackageController extends Controller
         return view('depot-manager.dashboard-actions', compact('pendingReturns', 'user'));
     }
 
-    /**
-     * Rechercher un colis d'échange par code
-     */
-    public function searchExchange(Request $request)
-    {
-        $user = Auth::user();
 
-        if (!$user->isDepotManager()) {
-            return response()->json(['success' => false, 'message' => 'Accès non autorisé']);
-        }
-
-        $request->validate([
-            'package_code' => 'required|string'
-        ]);
-
-        $package = Package::where('package_code', $request->package_code)
-                         ->where('est_echange', true)
-                         ->where('status', 'DELIVERED') // Doit être livré pour pouvoir traiter l'échange
-                         ->with(['sender', 'delegationFrom', 'delegationTo'])
-                         ->first();
-
-        if (!$package) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Colis non trouvé ou non éligible pour échange'
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'package' => [
-                'id' => $package->id,
-                'package_code' => $package->package_code,
-                'content_description' => $package->content_description,
-                'cod_amount' => number_format($package->cod_amount, 3),
-                'recipient_data' => $package->recipient_data,
-                'sender' => $package->sender
-            ]
-        ]);
-    }
-
-    /**
-     * Générer étiquette de retour pour échange
-     */
-    public function generateExchangeLabel(Package $package)
-    {
-        $user = Auth::user();
-
-        if (!$user->isDepotManager()) {
-            abort(403, 'Accès réservé aux chefs dépôt.');
-        }
-
-        if (!$package->est_echange || $package->status !== 'DELIVERED') {
-            abort(404, 'Ce colis n\'est pas éligible pour générer une étiquette d\'échange.');
-        }
-
-        // Créer un nouveau colis de retour pour l'échange
-        $returnPackage = new Package();
-        $returnPackage->package_code = 'EXG-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
-        $returnPackage->sender_id = $package->sender_id;
-        $returnPackage->sender_data = $package->sender_data;
-        $returnPackage->delegation_from = $package->delegation_to; // Inversion pour retour
-        $returnPackage->delegation_to = $package->delegation_from; // Inversion pour retour
-        $returnPackage->recipient_data = $package->sender_data; // Retour à l'expéditeur
-        $returnPackage->content_description = 'RETOUR ÉCHANGE - ' . $package->content_description;
-        $returnPackage->cod_amount = 0; // Pas de COD pour retour d'échange
-        $returnPackage->delivery_fee = $package->return_fee ?? 0;
-        $returnPackage->return_fee = 0;
-        $returnPackage->status = 'CREATED';
-        $returnPackage->est_echange = false; // Le retour n'est plus un échange
-        $returnPackage->notes = 'Retour d\'échange généré depuis: ' . $package->package_code;
-        $returnPackage->original_exchange_id = $package->id;
-        $returnPackage->save();
-
-        // Générer le bon de livraison pour ce retour d'échange
-        return view('depot-manager.packages.exchange-label', compact('returnPackage', 'package', 'user'));
-    }
 
     /**
      * Obtenir les détails d'un colis
@@ -871,31 +817,6 @@ class DepotManagerPackageController extends Controller
         ]);
     }
 
-    /**
-     * Afficher l'étiquette d'échange pour impression
-     */
-    public function printExchangeLabel(Package $returnPackage)
-    {
-        $user = Auth::user();
-
-        if (!$user->isDepotManager()) {
-            abort(403, 'Accès non autorisé');
-        }
-
-        // Vérifier que c'est bien un colis de retour d'échange
-        if ($returnPackage->type !== 'return' || $returnPackage->return_type !== 'exchange') {
-            abort(404, 'Étiquette non trouvée');
-        }
-
-        // Récupérer le colis original
-        $package = Package::find($returnPackage->original_package_id);
-
-        if (!$package) {
-            abort(404, 'Colis original non trouvé');
-        }
-
-        return view('depot-manager.packages.exchange-label', compact('returnPackage', 'package', 'user'));
-    }
 
     // ==================== SYSTÈME BOÎTES DE TRANSIT ====================
 
@@ -1156,6 +1077,223 @@ class DepotManagerPackageController extends Controller
         return response()->json([
             'success' => true,
             'box' => $boxDetails
+        ]);
+    }
+
+    /**
+     * Assigner un livreur à un colis
+     */
+    public function assignDeliverer(Request $request, Package $package)
+    {
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé'
+            ], 403);
+        }
+
+        $request->validate([
+            'deliverer_id' => 'required|exists:users,id',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($package, $request, $user) {
+                $deliverer = User::find($request->deliverer_id);
+
+                // Vérifier que le livreur est géré par ce dépôt manager
+                if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
+                    throw new \Exception('Vous ne pouvez pas assigner ce livreur');
+                }
+
+                // Assigner le livreur
+                $package->update([
+                    'assigned_deliverer_id' => $deliverer->id,
+                    'status' => 'AVAILABLE'
+                ]);
+
+                // Log de l'action
+                app(\App\Services\ActionLogService::class)->log(
+                    'DELIVERER_ASSIGNED',
+                    'Package',
+                    $package->id,
+                    $package->status,
+                    'AVAILABLE',
+                    [
+                        'deliverer_id' => $deliverer->id,
+                        'deliverer_name' => $deliverer->name,
+                        'assigned_by' => $user->id,
+                        'notes' => $request->notes
+                    ]
+                );
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Livreur assigné avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'assignation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Imprimer le bon de livraison
+     */
+    public function deliveryReceipt(Package $package)
+    {
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            abort(403, 'Accès non autorisé');
+        }
+
+        // Préparer les données pour l'impression
+        $recipientData = [
+            'name' => $package->recipient_data['name'] ?? 'N/A',
+            'phone' => $package->recipient_data['phone'] ?? 'N/A',
+            'address' => $package->recipient_data['address'] ?? 'N/A',
+            'city' => $package->recipient_data['city'] ?? 'N/A',
+        ];
+
+        $senderData = [
+            'name' => $package->sender_data['name'] ?? 'N/A',
+            'phone' => $package->sender_data['phone'] ?? 'N/A',
+            'address' => $package->sender_data['address'] ?? 'N/A',
+        ];
+
+        $delegationFrom = $package->delegationFrom->name ?? 'N/A';
+        $delegationTo = $package->delegationTo->name ?? 'N/A';
+
+        return view('depot-manager.packages.delivery-receipt', compact(
+            'package',
+            'recipientData',
+            'senderData',
+            'delegationFrom',
+            'delegationTo'
+        ));
+    }
+
+    /**
+     * Imprimer plusieurs bons de livraison en masse
+     */
+    public function bulkDeliveryReceipts(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            abort(403, 'Accès non autorisé');
+        }
+
+        $request->validate([
+            'packages' => 'required|array|min:1',
+            'packages.*' => 'exists:packages,id'
+        ]);
+
+        $packages = Package::with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'withdrawalRequest'])
+                          ->whereIn('id', $request->packages)
+                          ->get();
+
+        if ($packages->isEmpty()) {
+            abort(404, 'Aucun colis trouvé');
+        }
+
+        // Préparer les données pour chaque colis
+        $packagesData = $packages->map(function ($package) {
+            return [
+                'package' => $package,
+                'recipientData' => [
+                    'name' => $package->recipient_data['name'] ?? 'N/A',
+                    'phone' => $package->recipient_data['phone'] ?? 'N/A',
+                    'address' => $package->recipient_data['address'] ?? 'N/A',
+                    'city' => $package->recipient_data['city'] ?? 'N/A',
+                ],
+                'senderData' => [
+                    'name' => $package->sender_data['name'] ?? 'N/A',
+                    'phone' => $package->sender_data['phone'] ?? 'N/A',
+                    'address' => $package->sender_data['address'] ?? 'N/A',
+                ],
+                'delegationFrom' => $package->delegationFrom->name ?? 'N/A',
+                'delegationTo' => $package->delegationTo->name ?? 'N/A',
+            ];
+        });
+
+        return view('depot-manager.packages.bulk-delivery-receipts', compact('packagesData'));
+    }
+
+    /**
+     * Créer un colis de retour pour un échange traité
+     */
+    public function createReturnPackage(Request $request)
+    {
+        $request->validate([
+            'original_package_code' => 'required|string',
+            'description' => 'required|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            return response()->json(['error' => 'Accès réservé aux chefs dépôt.'], 403);
+        }
+
+        // Trouver le colis d'origine
+        $originalPackage = Package::where('package_code', $request->original_package_code)->first();
+
+        if (!$originalPackage) {
+            return response()->json(['error' => 'Colis d\'origine introuvable.'], 404);
+        }
+
+        // Vérifier que le colis est un échange livré
+        if (!$originalPackage->est_echange || $originalPackage->status !== 'DELIVERED') {
+            return response()->json(['error' => 'Ce colis n\'est pas un échange livré.'], 400);
+        }
+
+        // Générer un nouveau code de colis pour le retour
+        $returnPackageCode = 'RET' . now()->format('ymd') . str_pad(Package::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+
+        // Créer le colis de retour
+        $returnPackage = Package::create([
+            'package_code' => $returnPackageCode,
+            'sender_id' => $originalPackage->recipient_id, // Le destinataire devient l'expéditeur
+            'recipient_name' => $originalPackage->sender->first_name . ' ' . $originalPackage->sender->last_name,
+            'recipient_phone' => $originalPackage->sender->phone,
+            'recipient_address' => $originalPackage->sender_data['address'] ?? 'Adresse du client',
+            'gouvernorat_from' => $originalPackage->gouvernorat_to,
+            'delegation_from' => $originalPackage->delegation_to,
+            'gouvernorat_to' => $originalPackage->gouvernorat_from,
+            'delegation_to' => $originalPackage->delegation_from,
+            'description' => $request->description,
+            'notes' => $request->notes . ' [Retour d\'échange - Colis d\'origine: ' . $originalPackage->package_code . ']',
+            'status' => 'CREATED',
+            'payment_method' => 'NONE', // Pas de COD pour les retours d'échange
+            'cod_amount' => 0,
+            'fragile' => $originalPackage->fragile,
+            'est_echange' => false, // Le retour n'est pas lui-même un échange
+            'signature_obligatoire' => false,
+            'autorisation_ouverture' => false,
+            'original_exchange_package_id' => $originalPackage->id,
+            'created_by_depot_manager' => true,
+        ]);
+
+        // Marquer le colis d'origine comme ayant son retour créé
+        $originalPackage->update([
+            'return_package_created' => true,
+            'return_package_id' => $returnPackage->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Colis de retour créé avec succès.',
+            'return_package_code' => $returnPackageCode,
+            'return_package_id' => $returnPackage->id,
         ]);
     }
 }

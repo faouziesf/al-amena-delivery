@@ -40,8 +40,8 @@ class Package extends Model
         'cancelled_at',          // Date d'annulation
         'cancelled_by',          // ID de l'utilisateur qui a annulé
         'auto_return_reason',    // Raison automatique du retour
-        'est_echange',          // Indique si ce colis est un échange
         'delivered_at',         // Date et heure de livraison
+        'est_echange',          // Indique si ce colis nécessite un échange
         'payment_withdrawal_id', // ID de la demande de paiement liée
     ];
 
@@ -114,6 +114,11 @@ class Package extends Model
     public function statusHistory()
     {
         return $this->hasMany(PackageStatusHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    public function withdrawalRequest()
+    {
+        return $this->belongsTo(WithdrawalRequest::class, 'payment_withdrawal_id');
     }
 
     public function codModifications()

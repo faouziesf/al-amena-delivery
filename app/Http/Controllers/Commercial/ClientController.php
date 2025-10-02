@@ -170,8 +170,8 @@ class ClientController extends Controller
             $client->ensureWallet();
 
             // Log de l'action
-            $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_CREATED',
-                "Compte client créé: {$client->name} ({$client->email})", $client->id);
+            $this->actionLogService->log('CLIENT_ACCOUNT_CREATED',
+                "Compte client créé: {$client->name} ({$client->email})", ['client_id' => $client->id]);
 
             DB::commit();
 
@@ -300,10 +300,15 @@ class ClientController extends Controller
             // Mise à jour profil client
             $client->clientProfile()->updateOrCreate(
                 ['user_id' => $client->id],
-                $request->only([
-                    'shop_name', 'fiscal_number', 'business_sector', 
-                    'identity_document', 'delivery_price', 'return_price', 'internal_notes'
-                ])
+                [
+                    'shop_name' => $validated['shop_name'],
+                    'fiscal_number' => $validated['fiscal_number'],
+                    'business_sector' => $validated['business_sector'],
+                    'identity_document' => $validated['identity_document'],
+                    'offer_delivery_price' => $validated['delivery_price'],
+                    'offer_return_price' => $validated['return_price'],
+                    'internal_notes' => $validated['internal_notes']
+                ]
             );
 
             // Log de l'action
@@ -388,8 +393,8 @@ class ClientController extends Controller
             ]);
 
             // Log de l'action
-            $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_VALIDATED',
-                "Compte client validé: {$client->name} ({$client->email})", $client->id);
+            $this->actionLogService->log('CLIENT_ACCOUNT_VALIDATED',
+                "Compte client validé: {$client->name} ({$client->email})", ['client_id' => $client->id]);
 
             DB::commit();
 
@@ -713,8 +718,8 @@ class ClientController extends Controller
                 ]);
 
                 // Log de l'action
-                $this->actionLogService->logAction(Auth::user(), 'CLIENT_ACCOUNT_VALIDATED_BULK',
-                    "Compte client validé (groupé): {$client->name} ({$client->email})", $client->id);
+                $this->actionLogService->log('CLIENT_ACCOUNT_VALIDATED_BULK',
+                    "Compte client validé (groupé): {$client->name} ({$client->email})", ['client_id' => $client->id]);
 
                 $validatedCount++;
             }

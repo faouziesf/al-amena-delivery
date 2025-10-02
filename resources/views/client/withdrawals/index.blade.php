@@ -4,148 +4,159 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <!-- Header -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
-            <div class="mb-4 lg:mb-0">
-                <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                    📤 Mes demandes de retrait
+    <div class="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+        <!-- Header Mobile-Optimized -->
+        <div class="flex flex-col space-y-4 mb-6 sm:mb-8">
+            <div class="flex flex-col space-y-3">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    📤 Mes retraits
                 </h1>
-                <p class="text-gray-600">Suivez l'état de vos demandes de retrait en temps réel</p>
+                <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    Suivez l'état de vos demandes de retrait en temps réel
+                </p>
             </div>
-            
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('client.wallet.withdrawal') }}" 
-                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+            <!-- Actions Mobile-First -->
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <a href="{{ route('client.wallet.withdrawal') }}"
+                   class="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 sm:px-6 py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base font-medium">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     Nouvelle demande
                 </a>
-                <a href="{{ route('client.wallet.index') }}" 
-                   class="bg-white text-purple-600 border-2 border-purple-200 px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ route('client.wallet.index') }}"
+                   class="w-full sm:w-auto bg-white text-purple-600 border-2 border-purple-200 px-4 sm:px-6 py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base font-medium">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    Retour au portefeuille
+                    <span class="hidden sm:inline">Retour au</span> Portefeuille
                 </a>
             </div>
         </div>
 
-        <!-- Alertes -->
+        <!-- Alertes Mobile-Optimized -->
         @if(session('success'))
-            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
-                <div class="flex items-center">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-4 py-3 rounded-xl mb-4 sm:mb-6 shadow-sm">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    {{ session('success') }}
+                    <span class="text-sm leading-relaxed">{{ session('success') }}</span>
                 </div>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
-                <div class="flex items-center">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-xl mb-4 sm:mb-6 shadow-sm">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    {{ session('error') }}
+                    <span class="text-sm leading-relaxed">{{ session('error') }}</span>
                 </div>
             </div>
         @endif
 
-        <!-- Statistiques des demandes -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Statistiques Mobile-Responsive -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
             <!-- En attente -->
-            <div class="bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl p-6 shadow-lg border border-amber-200 transform hover:scale-105 transition-all duration-300">
-                <div class="flex items-center justify-between">
+            <div class="bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg border border-amber-200 transform hover:scale-105 transition-all duration-300">
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="bg-amber-200 rounded-full p-2 sm:p-3">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <p class="text-amber-700 text-sm font-medium">En attente</p>
-                        <p class="text-3xl font-bold text-amber-800">
+                        <p class="text-amber-700 text-xs sm:text-sm font-medium">En attente</p>
+                        <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-800">
                             {{ $withdrawals->where('status', 'PENDING')->count() }}
                         </p>
-                        <p class="text-amber-600 text-sm mt-1">À traiter</p>
-                    </div>
-                    <div class="bg-amber-200 rounded-full p-3">
-                        <svg class="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+                        <p class="text-amber-600 text-xs sm:text-sm">À traiter</p>
                     </div>
                 </div>
                 @if($withdrawals->where('status', 'PENDING')->count() > 0)
-                    <div class="mt-3 bg-amber-200/50 rounded-lg p-2">
-                        <p class="text-xs text-amber-800 font-medium">⏳ Traitement en cours...</p>
+                    <div class="mt-2 sm:mt-3 bg-amber-200/50 rounded-lg p-2">
+                        <p class="text-xs text-amber-800 font-medium">⏳ Traitement...</p>
                     </div>
                 @endif
             </div>
 
-            <!-- Approuvées/En cours -->
-            <div class="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-6 shadow-lg border border-blue-200 transform hover:scale-105 transition-all duration-300">
-                <div class="flex items-center justify-between">
+            <!-- En cours -->
+            <div class="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg border border-blue-200 transform hover:scale-105 transition-all duration-300">
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="bg-blue-200 rounded-full p-2 sm:p-3">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <p class="text-blue-700 text-sm font-medium">En cours</p>
-                        <p class="text-3xl font-bold text-blue-800">
+                        <p class="text-blue-700 text-xs sm:text-sm font-medium">En cours</p>
+                        <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-800">
                             {{ $withdrawals->whereIn('status', ['APPROVED', 'IN_PROGRESS'])->count() }}
                         </p>
-                        <p class="text-blue-600 text-sm mt-1">Approuvées</p>
-                    </div>
-                    <div class="bg-blue-200 rounded-full p-3">
-                        <svg class="w-8 h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+                        <p class="text-blue-600 text-xs sm:text-sm">Approuvées</p>
                     </div>
                 </div>
                 @if($withdrawals->whereIn('status', ['APPROVED', 'IN_PROGRESS'])->count() > 0)
-                    <div class="mt-3 bg-blue-200/50 rounded-lg p-2">
+                    <div class="mt-2 sm:mt-3 bg-blue-200/50 rounded-lg p-2">
                         <p class="text-xs text-blue-800 font-medium">🚀 En traitement...</p>
                     </div>
                 @endif
             </div>
 
             <!-- Terminées -->
-            <div class="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-6 shadow-lg border border-emerald-200 transform hover:scale-105 transition-all duration-300">
-                <div class="flex items-center justify-between">
+            <div class="bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg border border-emerald-200 transform hover:scale-105 transition-all duration-300">
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="bg-emerald-200 rounded-full p-2 sm:p-3">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <p class="text-emerald-700 text-sm font-medium">Terminées</p>
-                        <p class="text-3xl font-bold text-emerald-800">
+                        <p class="text-emerald-700 text-xs sm:text-sm font-medium">Terminées</p>
+                        <p class="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-800">
                             {{ $withdrawals->where('status', 'COMPLETED')->count() }}
                         </p>
-                        <p class="text-emerald-600 text-sm mt-1">Réussies</p>
-                    </div>
-                    <div class="bg-emerald-200 rounded-full p-3">
-                        <svg class="w-8 h-8 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
+                        <p class="text-emerald-600 text-xs sm:text-sm">Réussies</p>
                     </div>
                 </div>
             </div>
 
             <!-- Montant total -->
-            <div class="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl p-6 shadow-lg border border-purple-200 transform hover:scale-105 transition-all duration-300">
-                <div class="flex items-center justify-between">
+            <div class="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg border border-purple-200 transform hover:scale-105 transition-all duration-300 col-span-2 lg:col-span-1">
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="bg-purple-200 rounded-full p-2 sm:p-3">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                        </div>
+                    </div>
                     <div>
-                        <p class="text-purple-700 text-sm font-medium">Montant total</p>
-                        <p class="text-2xl font-bold text-purple-800">
+                        <p class="text-purple-700 text-xs sm:text-sm font-medium">Montant total</p>
+                        <p class="text-lg sm:text-xl lg:text-2xl font-bold text-purple-800">
                             {{ number_format($withdrawals->sum('amount'), 3) }} DT
                         </p>
-                        <p class="text-purple-600 text-sm mt-1">Toutes demandes</p>
-                    </div>
-                    <div class="bg-purple-200 rounded-full p-3">
-                        <svg class="w-8 h-8 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                        </svg>
+                        <p class="text-purple-600 text-xs sm:text-sm">Toutes demandes</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Liste des demandes de retrait -->
-        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
-            <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2 sm:mb-0 flex items-center">
-                        <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Liste des demandes - Mobile-Optimized -->
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-purple-100 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                         Historique des demandes
@@ -159,173 +170,187 @@
             @if($withdrawals->count() > 0)
                 <div class="divide-y divide-gray-100">
                     @foreach($withdrawals as $withdrawal)
-                        <div class="p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300" 
+                        <div class="p-4 sm:p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300"
                              data-status="{{ $withdrawal->status }}">
-                            <div class="flex flex-col xl:flex-row xl:items-center justify-between">
-                                <!-- Informations principales -->
-                                <div class="flex-1">
-                                    <!-- Header de la demande -->
-                                    <div class="flex flex-wrap items-center gap-3 mb-4">
-                                        <h4 class="text-xl font-bold text-gray-900 flex items-center">
-                                            <span class="mr-2">{{ $withdrawal->method === 'BANK_TRANSFER' ? '🏦' : '💵' }}</span>
-                                            #{{ $withdrawal->request_code }}
-                                        </h4>
-                                        
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $withdrawal->status_color }}">
-                                            {{ $withdrawal->status_display }}
-                                        </span>
 
-                                        <div class="text-2xl font-bold {{ $withdrawal->status === 'COMPLETED' ? 'text-emerald-600' : ($withdrawal->status === 'REJECTED' ? 'text-red-600' : 'text-purple-600') }}">
+                            <!-- Mobile Card Layout -->
+                            <div class="space-y-4">
+                                <!-- Header avec montant et statut -->
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <span class="text-2xl">{{ $withdrawal->method === 'BANK_TRANSFER' ? '🏦' : '💵' }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-lg sm:text-xl font-bold text-gray-900">
+                                                #{{ $withdrawal->request_code }}
+                                            </h4>
+                                            <p class="text-sm text-gray-600">
+                                                {{ $withdrawal->created_at->format('d/m/Y à H:i') }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:items-end space-y-2">
+                                        <div class="text-xl sm:text-2xl font-bold {{ $withdrawal->status === 'COMPLETED' ? 'text-emerald-600' : ($withdrawal->status === 'REJECTED' ? 'text-red-600' : 'text-purple-600') }}">
                                             {{ number_format($withdrawal->amount, 3) }} DT
                                         </div>
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $withdrawal->status_color }} w-fit">
+                                            {{ $withdrawal->status_display }}
+                                        </span>
                                     </div>
-                                    
-                                    <!-- Détails de la demande -->
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                </div>
+
+                                <!-- Informations détaillées -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                                        </svg>
+                                        <span class="font-medium">{{ $withdrawal->method_display }}</span>
+                                    </div>
+
+                                    @if($withdrawal->processed_at)
                                         <div class="flex items-center text-sm text-gray-600">
-                                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                                            <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            <span class="font-medium">{{ $withdrawal->method_display }}</span>
-                                        </div>
-                                        
-                                        <div class="flex items-center text-sm text-gray-600">
-                                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            <span>{{ $withdrawal->created_at->format('d/m/Y à H:i') }}</span>
-                                        </div>
-
-                                        @if($withdrawal->processed_at)
-                                            <div class="flex items-center text-sm text-gray-600">
-                                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                                <span>Traité le {{ $withdrawal->processed_at->format('d/m/Y H:i') }}</span>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <!-- Timeline visuelle simple -->
-                                    <div class="flex items-center space-x-2 mb-4">
-                                        <!-- Étape 1: Créée -->
-                                        <div class="flex items-center">
-                                            <div class="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                            <span class="text-xs text-gray-500 ml-1 mr-3">Créée</span>
-                                        </div>
-                                        
-                                        <!-- Ligne de progression -->
-                                        <div class="flex-1 h-0.5 bg-gray-200 relative">
-                                            @if($withdrawal->processed_at)
-                                                <div class="absolute inset-0 bg-gradient-to-r from-blue-500 {{ $withdrawal->status === 'COMPLETED' ? 'to-green-500' : ($withdrawal->status === 'REJECTED' ? 'to-red-500' : 'to-amber-500') }}"></div>
-                                            @endif
-                                        </div>
-
-                                        @if($withdrawal->processed_at)
-                                            <!-- Étape 2: Traitée -->
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 {{ $withdrawal->status === 'COMPLETED' ? 'bg-green-500' : ($withdrawal->status === 'REJECTED' ? 'bg-red-500' : 'bg-amber-500') }} rounded-full flex-shrink-0"></div>
-                                                <span class="text-xs text-gray-500 ml-1">
-                                                    {{ $withdrawal->status === 'COMPLETED' ? 'Terminée' : ($withdrawal->status === 'REJECTED' ? 'Rejetée' : 'Approuvée') }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="flex items-center">
-                                                <div class="w-4 h-4 bg-gray-300 rounded-full flex-shrink-0 animate-pulse"></div>
-                                                <span class="text-xs text-gray-400 ml-1">En attente</span>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <!-- Informations contextuelles -->
-                                    @if($withdrawal->processing_notes)
-                                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg mb-3">
-                                            <p class="text-sm text-blue-800">
-                                                <span class="font-semibold">💬 Note du commercial:</span>
-                                                {{ $withdrawal->processing_notes }}
-                                            </p>
-                                        </div>
-                                    @endif
-
-                                    @if($withdrawal->rejection_reason)
-                                        <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded-r-lg mb-3">
-                                            <p class="text-sm text-red-800">
-                                                <span class="font-semibold">❌ Motif de rejet:</span>
-                                                {{ $withdrawal->rejection_reason }}
-                                            </p>
-                                        </div>
-                                    @endif
-
-                                    @if($withdrawal->assignedDeliverer)
-                                        <div class="bg-purple-50 border-l-4 border-purple-400 p-3 rounded-r-lg mb-3">
-                                            <p class="text-sm text-purple-800">
-                                                <span class="font-semibold">🚚 Livreur assigné:</span>
-                                                {{ $withdrawal->assignedDeliverer->name }}
-                                                @if($withdrawal->assignedDeliverer->phone)
-                                                    <span class="ml-2">📞 {{ $withdrawal->assignedDeliverer->formatted_phone }}</span>
-                                                @endif
-                                            </p>
-                                        </div>
-                                    @endif
-
-                                    @if($withdrawal->delivery_receipt_code)
-                                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg mb-3">
-                                            <p class="text-sm text-yellow-800">
-                                                <span class="font-semibold">🔑 Code de livraison:</span>
-                                                <span class="font-mono font-bold ml-2 bg-yellow-100 px-2 py-1 rounded">{{ $withdrawal->delivery_receipt_code }}</span>
-                                            </p>
+                                            <span>Traité le {{ $withdrawal->processed_at->format('d/m/Y H:i') }}</span>
                                         </div>
                                     @endif
                                 </div>
 
-                                <!-- Actions et statut spécial -->
-                                <div class="flex flex-col xl:items-end gap-4 mt-4 xl:mt-0 xl:ml-6">
-                                    <!-- Statuts spéciaux avec actions -->
-                                    @if($withdrawal->status === 'IN_PROGRESS' && $withdrawal->method === 'CASH_DELIVERY')
-                                        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 max-w-md">
-                                            <div class="flex items-start">
-                                                <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                                <div class="text-sm text-amber-800">
-                                                    <p class="font-semibold">🚚 Livraison en cours</p>
-                                                    <p class="mt-1">Un livreur vous contactera prochainement pour organiser la remise des espèces.</p>
-                                                </div>
-                                            </div>
+                                <!-- Timeline Mobile -->
+                                <div class="flex items-center space-x-2">
+                                    <!-- Étape 1: Créée -->
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                        <span class="text-xs text-gray-500 ml-1 sm:ml-2">Créée</span>
+                                    </div>
+
+                                    <!-- Ligne de progression -->
+                                    <div class="flex-1 h-0.5 bg-gray-200 relative mx-2">
+                                        @if($withdrawal->processed_at)
+                                            <div class="absolute inset-0 bg-gradient-to-r from-blue-500 {{ $withdrawal->status === 'COMPLETED' ? 'to-green-500' : ($withdrawal->status === 'REJECTED' ? 'to-red-500' : 'to-amber-500') }}"></div>
+                                        @endif
+                                    </div>
+
+                                    @if($withdrawal->processed_at)
+                                        <!-- Étape 2: Traitée -->
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 sm:w-4 sm:h-4 {{ $withdrawal->status === 'COMPLETED' ? 'bg-green-500' : ($withdrawal->status === 'REJECTED' ? 'bg-red-500' : 'bg-amber-500') }} rounded-full flex-shrink-0"></div>
+                                            <span class="text-xs text-gray-500 ml-1 sm:ml-2">
+                                                {{ $withdrawal->status === 'COMPLETED' ? 'Terminée' : ($withdrawal->status === 'REJECTED' ? 'Rejetée' : 'Approuvée') }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 sm:w-4 sm:h-4 bg-gray-300 rounded-full flex-shrink-0 animate-pulse"></div>
+                                            <span class="text-xs text-gray-400 ml-1 sm:ml-2">En attente</span>
                                         </div>
                                     @endif
+                                </div>
 
-                                    @if($withdrawal->status === 'COMPLETED')
-                                        <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4 max-w-md">
-                                            <div class="flex items-center">
-                                                <svg class="w-5 h-5 text-emerald-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                                <div class="text-sm text-emerald-800">
-                                                    <p class="font-semibold">✅ Retrait terminé avec succès</p>
-                                                    <p class="text-xs mt-1">{{ $withdrawal->delivered_at?->format('d/m/Y à H:i') ?? $withdrawal->processed_at?->format('d/m/Y à H:i') }}</p>
-                                                </div>
+                                <!-- Notes et informations contextuelles -->
+                                @if($withdrawal->processing_notes)
+                                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                                        <p class="text-sm text-blue-800">
+                                            <span class="font-semibold">💬 Note du commercial:</span>
+                                            <span class="block mt-1">{{ $withdrawal->processing_notes }}</span>
+                                        </p>
+                                    </div>
+                                @endif
+
+                                @if($withdrawal->rejection_reason)
+                                    <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded-r-lg">
+                                        <p class="text-sm text-red-800">
+                                            <span class="font-semibold">❌ Motif de rejet:</span>
+                                            <span class="block mt-1">{{ $withdrawal->rejection_reason }}</span>
+                                        </p>
+                                    </div>
+                                @endif
+
+                                @if($withdrawal->assignedDeliverer)
+                                    <div class="bg-purple-50 border-l-4 border-purple-400 p-3 rounded-r-lg">
+                                        <p class="text-sm text-purple-800">
+                                            <span class="font-semibold">🚚 Livreur assigné:</span>
+                                            <span class="block mt-1">
+                                                {{ $withdrawal->assignedDeliverer->name }}
+                                                @if($withdrawal->assignedDeliverer->phone)
+                                                    <span class="block sm:inline sm:ml-2">📞 {{ $withdrawal->assignedDeliverer->formatted_phone }}</span>
+                                                @endif
+                                            </span>
+                                        </p>
+                                    </div>
+                                @endif
+
+                                @if($withdrawal->delivery_receipt_code)
+                                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
+                                        <p class="text-sm text-yellow-800">
+                                            <span class="font-semibold">🔑 Code de livraison:</span>
+                                            <span class="font-mono font-bold ml-2 bg-yellow-100 px-2 py-1 rounded text-lg cursor-pointer hover:bg-yellow-200 transition-colors"
+                                                  onclick="copyCode(this)"
+                                                  title="Cliquer pour copier">
+                                                {{ $withdrawal->delivery_receipt_code }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                @endif
+
+                                <!-- Statuts spéciaux -->
+                                @if($withdrawal->status === 'IN_PROGRESS' && $withdrawal->method === 'CASH_DELIVERY')
+                                    <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4">
+                                        <div class="flex items-start">
+                                            <svg class="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <div class="text-sm text-amber-800">
+                                                <p class="font-semibold">🚚 Livraison en cours</p>
+                                                <p class="mt-1">Un livreur vous contactera prochainement pour organiser la remise des espèces.</p>
                                             </div>
                                         </div>
-                                    @endif
+                                    </div>
+                                @endif
 
+                                @if($withdrawal->status === 'COMPLETED')
+                                    <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 text-emerald-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            <div class="text-sm text-emerald-800">
+                                                <p class="font-semibold">✅ Retrait terminé avec succès</p>
+                                                <p class="text-xs mt-1">{{ $withdrawal->delivered_at?->format('d/m/Y à H:i') ?? $withdrawal->processed_at?->format('d/m/Y à H:i') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Actions et temps -->
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 pt-2 border-t border-gray-100">
                                     <!-- Boutons d'action -->
                                     <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('client.wallet.withdrawal.show', $withdrawal) }}" 
-                                           class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 px-4 py-2 rounded-lg hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
-                                            📄 Voir détails
+                                        <a href="{{ route('client.wallet.withdrawal.show', $withdrawal) }}"
+                                           class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 px-3 py-2 rounded-lg hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                            Détails
                                         </a>
 
                                         @if($withdrawal->canBeProcessed())
                                             <button onclick="cancelWithdrawal('{{ $withdrawal->id }}')"
-                                                    class="bg-gradient-to-r from-red-100 to-pink-100 text-red-700 px-4 py-2 rounded-lg hover:from-red-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
-                                                ❌ Annuler
+                                                    class="bg-gradient-to-r from-red-100 to-pink-100 text-red-700 px-3 py-2 rounded-lg hover:from-red-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium flex items-center">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                                Annuler
                                             </button>
                                         @endif
                                     </div>
 
                                     <!-- Temps relatif -->
-                                    <p class="text-xs text-gray-500 text-right">
+                                    <p class="text-xs text-gray-500">
                                         {{ $withdrawal->created_at->diffForHumans() }}
                                     </p>
                                 </div>
@@ -334,39 +359,39 @@
                     @endforeach
                 </div>
 
-                <!-- Pagination -->
+                <!-- Pagination Mobile-Optimized -->
                 @if($withdrawals->hasPages())
-                    <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
+                    <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
                         <div class="flex justify-center">
                             {{ $withdrawals->links('pagination::tailwind') }}
                         </div>
                     </div>
                 @endif
             @else
-                <!-- État vide -->
-                <div class="p-12 text-center">
-                    <div class="w-20 h-20 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- État vide Mobile-Optimized -->
+                <div class="p-8 sm:p-12 text-center">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Aucune demande de retrait</h3>
-                    <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Aucune demande de retrait</h3>
+                    <p class="text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base leading-relaxed">
                         Vous n'avez pas encore fait de demande de retrait. Commencez par faire votre première demande pour retirer vos fonds.
                     </p>
-                    
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <a href="{{ route('client.wallet.withdrawal') }}" 
-                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <div class="flex flex-col sm:flex-row justify-center gap-3">
+                        <a href="{{ route('client.wallet.withdrawal') }}"
+                           class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base font-medium">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
                             Faire ma première demande
                         </a>
-                        
-                        <a href="{{ route('client.wallet.index') }}" 
-                           class="inline-flex items-center px-6 py-3 bg-white text-purple-600 border-2 border-purple-200 rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                        <a href="{{ route('client.wallet.index') }}"
+                           class="inline-flex items-center justify-center px-6 py-3 bg-white text-purple-600 border-2 border-purple-200 rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base font-medium">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                             Voir mon portefeuille
@@ -378,6 +403,9 @@
     </div>
 </div>
 
+<!-- Bottom Spacing for Mobile FAB -->
+<div class="h-20 sm:h-0"></div>
+
 @push('scripts')
 <script>
 // Fonction pour annuler une demande de retrait
@@ -387,17 +415,52 @@ function cancelWithdrawal(withdrawalId) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/client/withdrawals/${withdrawalId}/cancel`;
-        
+
         // Ajouter le token CSRF
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';
         csrfToken.name = '_token';
         csrfToken.value = '{{ csrf_token() }}';
         form.appendChild(csrfToken);
-        
+
         // Soumettre le formulaire
         document.body.appendChild(form);
         form.submit();
+    }
+}
+
+// Fonction pour copier un code
+function copyCode(element) {
+    const text = element.textContent.trim();
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Feedback visuel
+            const original = element.textContent;
+            element.textContent = '✅ Copié!';
+            element.classList.add('bg-green-100', 'text-green-800');
+
+            setTimeout(() => {
+                element.textContent = original;
+                element.classList.remove('bg-green-100', 'text-green-800');
+                element.classList.add('bg-yellow-100');
+            }, 2000);
+        });
+    } else {
+        // Fallback pour les navigateurs plus anciens
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Feedback visuel
+        const original = element.textContent;
+        element.textContent = '✅ Copié!';
+        setTimeout(() => {
+            element.textContent = original;
+        }, 2000);
     }
 }
 
@@ -417,19 +480,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mise en surbrillance des demandes récentes (moins de 1 heure)
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     const withdrawalCards = document.querySelectorAll('[data-status]');
     withdrawalCards.forEach(card => {
         const timeElements = card.querySelectorAll('time, [datetime]');
         timeElements.forEach(element => {
             const dateValue = element.dateTime || element.textContent;
             const cardDate = new Date(dateValue);
-            
+
             if (cardDate > oneHourAgo) {
                 const indicator = document.createElement('span');
                 indicator.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2 animate-bounce';
                 indicator.innerHTML = '🆕 Nouvelle';
-                card.querySelector('h4').appendChild(indicator);
+                const header = card.querySelector('h4');
+                if (header) header.appendChild(indicator);
             }
         });
     });
@@ -444,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
             indicator.className = 'fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm z-50';
             indicator.innerHTML = '🔄 Actualisation...';
             document.body.appendChild(indicator);
-            
+
             setTimeout(() => {
                 location.reload();
             }, 1000);
@@ -463,31 +527,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Amélioration des tooltips pour les codes de livraison
-    const deliveryCodes = document.querySelectorAll('.font-mono.font-bold');
-    deliveryCodes.forEach(code => {
-        code.addEventListener('click', function() {
-            // Copier le code dans le presse-papiers
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(this.textContent).then(() => {
-                    // Feedback visuel
-                    const original = this.textContent;
-                    this.textContent = '✅ Copié!';
-                    this.classList.add('bg-green-100', 'text-green-800');
-                    
-                    setTimeout(() => {
-                        this.textContent = original;
-                        this.classList.remove('bg-green-100', 'text-green-800');
-                    }, 2000);
-                });
-            }
-        });
-        
-        // Ajouter un curseur pointer et un titre
-        code.style.cursor = 'pointer';
-        code.title = 'Cliquer pour copier le code';
-    });
-
     // Gestion des touches clavier
     document.addEventListener('keydown', function(e) {
         // 'N' pour nouvelle demande
@@ -496,13 +535,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = '{{ route("client.wallet.withdrawal") }}';
             }
         }
-        
+
         // 'R' pour rafraîchir
         if (e.key === 'r' || e.key === 'R') {
             if (!e.ctrlKey && !e.metaKey && !e.target.matches('input, textarea')) {
                 location.reload();
             }
         }
+    });
+
+    // Gestion des gestes tactiles pour mobile
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', e => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    document.addEventListener('touchend', e => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeDistance = touchEndY - touchStartY;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(swipeDistance) > minSwipeDistance) {
+            // Swipe vers le bas = rafraîchir
+            if (swipeDistance > 0 && touchStartY < 100) {
+                location.reload();
+            }
+        }
+    }
+
+    // Améliorer l'expérience mobile avec touch feedback
+    const touchElements = document.querySelectorAll('button, a, [onclick], [class*="cursor-pointer"]');
+    touchElements.forEach(element => {
+        element.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.95)';
+        });
+
+        element.addEventListener('touchend', function() {
+            this.style.transform = '';
+        });
     });
 });
 
@@ -558,36 +634,71 @@ document.querySelectorAll('.bg-white').forEach(card => {
     transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* États de hover améliorés */
-.withdrawal-card:hover {
-    box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15);
-}
-
-/* Timeline améliorée */
-.timeline-step {
-    position: relative;
-}
-
-.timeline-step::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    width: 20px;
-    height: 2px;
-    background: linear-gradient(to right, currentColor, transparent);
-    transform: translateY(-50%);
-}
-
-/* Responsive design */
+/* Mobile-specific improvements */
 @media (max-width: 640px) {
-    .grid-cols-4 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Améliorer l'espacement sur mobile */
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
     }
-    
-    .text-3xl {
-        font-size: 1.875rem;
-        line-height: 2.25rem;
+
+    /* Optimiser les cartes statistiques pour mobile */
+    .grid-cols-2 > * {
+        min-height: 120px;
+    }
+
+    /* Améliorer la lisibilité des montants */
+    .text-xl {
+        font-size: 1.5rem;
+    }
+
+    /* Optimiser les boutons pour le tactile */
+    button, a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Améliorer les zones tactiles */
+    [onclick], [class*="cursor-pointer"] {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Très petits écrans */
+    .text-2xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    .text-lg {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    /* Espacement réduit */
+    .space-y-4 > * + * {
+        margin-top: 0.75rem;
+    }
+
+    .space-y-3 > * + * {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Touch feedback */
+.touch-feedback:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* États de hover améliorés pour desktop */
+@media (min-width: 1024px) {
+    .withdrawal-card:hover {
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15);
     }
 }
 
@@ -617,31 +728,40 @@ document.querySelectorAll('.bg-white').forEach(card => {
     100% { transform: rotate(360deg); }
 }
 
-/* Améliorations des modales */
-.modal-backdrop {
-    backdrop-filter: blur(4px);
-    background-color: rgba(0, 0, 0, 0.5);
+/* Amélioration de l'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
-/* États d'erreur et de succès */
-.error-state {
-    animation: shake 0.5s ease-in-out;
+/* Améliorations pour le mode sombre (si supporté) */
+@media (prefers-color-scheme: dark) {
+    .bg-gradient-to-br {
+        background-image: linear-gradient(to bottom right, rgb(88, 28, 135), rgb(0, 0, 0), rgb(55, 48, 163));
+    }
 }
 
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+/* Pull to refresh indicator */
+.pull-to-refresh {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #8B5CF6, #EC4899);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 0 0 20px 20px;
+    font-size: 12px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.success-state {
-    animation: pulse 0.5s ease-in-out;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+.pull-to-refresh.show {
+    opacity: 1;
 }
 </style>
 @endpush

@@ -81,6 +81,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
                 <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                     <option value="">Tous les statuts</option>
+                    <option value="PAYMENT" {{ request('status') == 'PAYMENT' ? 'selected' : '' }}>💰 Colis de Paiement</option>
                     <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Créé</option>
                     <option value="AVAILABLE" {{ request('status') == 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
                     <option value="ACCEPTED" {{ request('status') == 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
@@ -148,24 +149,30 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach($packages as $package)
-                            <tr class="hover:bg-gray-50 {{ $package->est_echange ? 'bg-orange-25' : '' }}">
+                            <tr class="hover:bg-gray-50 {{ $package->payment_withdrawal_id ? 'bg-green-25' : '' }}">
                                 <td class="py-4 px-4">
                                     <div class="flex items-center space-x-3">
-                                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center relative">
-                                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                            </svg>
-                                            @if($package->est_echange)
-                                                <div class="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                                                    <span class="text-white text-xs">🔄</span>
+                                        <div class="w-10 h-10 {{ $package->payment_withdrawal_id ? 'bg-green-100' : 'bg-orange-100' }} rounded-lg flex items-center justify-center relative">
+                                            @if($package->payment_withdrawal_id)
+                                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                </svg>
+                                            @endif
+                                            @if($package->payment_withdrawal_id)
+                                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <span class="text-white text-xs">💰</span>
                                                 </div>
                                             @endif
                                         </div>
                                         <div>
                                             <p class="font-medium text-gray-900">#{{ $package->package_code }}</p>
                                             <p class="text-sm text-gray-500">{{ $package->created_at ? $package->created_at->format('d/m/Y') : 'N/A' }}</p>
-                                            @if($package->est_echange)
-                                                <p class="text-xs text-orange-600 font-medium">Échange</p>
+                                            @if($package->payment_withdrawal_id)
+                                                <p class="text-xs text-green-600 font-medium">💰 Colis de Paiement</p>
                                             @endif
                                         </div>
                                     </div>
@@ -239,15 +246,6 @@
                                         </button>
                                         @endif
 
-                                        @if($package->est_echange && $package->status === 'DELIVERED')
-                                        <button onclick="processExchangeReturn({{ $package->id }})"
-                                                class="text-orange-600 hover:text-orange-800 transition-colors"
-                                                title="Traiter retour échange">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                            </svg>
-                                        </button>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>

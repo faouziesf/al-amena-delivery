@@ -183,6 +183,114 @@
             </div>
         </div>
 
+        <!-- Section Échanges à Traiter (nouveaux échanges livrés) -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 border-b border-orange-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-orange-900">🔄 Échanges à Traiter</h3>
+                        <p class="text-orange-600 text-sm">Colis d'échange livrés nécessitant la création de colis de retour</p>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-200 text-orange-800">
+                        3 en attente
+                    </span>
+                </div>
+            </div>
+
+            <!-- Liste des échanges à traiter -->
+            <div class="divide-y divide-slate-200">
+                <!-- Exemple d'échange à traiter -->
+                <div class="p-6 hover:bg-orange-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 flex-1">
+                            <!-- Icon échange -->
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center text-white">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Informations du colis d'échange -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="text-lg font-semibold text-slate-900">AL240001</h4>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        LIVRÉ (ÉCHANGE)
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm text-slate-500 space-x-4 mb-2">
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        Ahmed Sassi
+                                    </span>
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Mohamed Ben Ali
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm text-slate-500 space-x-4">
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Livré le 02/10/2025 14:30
+                                    </span>
+                                    <span class="flex items-center text-orange-600 font-medium">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                        </svg>
+                                        Ancien article collecté
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                    <p class="text-sm text-orange-700">
+                                        <strong>⚠️ Action requise:</strong> Créer un colis de retour pour l'ancien article collecté lors de cet échange.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button onclick="createReturnPackage('AL240001')"
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Créer Colis de Retour
+                            </button>
+
+                            <a href="#"
+                               class="inline-flex items-center px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message si aucun échange à traiter -->
+                <div class="p-8 text-center text-slate-500 hidden" id="no-exchanges">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                    <p class="text-sm">Aucun échange à traiter pour le moment</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Liste des retours/échanges -->
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
             <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
@@ -432,6 +540,90 @@ function processExchange(packageId) {
 
 function closeProcessExchangeModal() {
     document.getElementById('processExchangeModal').classList.add('hidden');
+}
+
+function createReturnPackage(originalPackageCode) {
+    // Créer un modal pour la création du colis de retour
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Créer Colis de Retour</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Colis d'origine</label>
+                <input type="text" value="${originalPackageCode}" disabled
+                       class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-600">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Description de l'ancien article</label>
+                <textarea placeholder="Décrivez l'ancien article collecté..."
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          rows="3"></textarea>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Notes supplémentaires</label>
+                <textarea placeholder="Notes pour le retour..."
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          rows="2"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeReturnPackageModal()"
+                        class="px-4 py-2 text-slate-600 hover:text-slate-800">Annuler</button>
+                <button onclick="confirmCreateReturnPackage('${originalPackageCode}')"
+                        class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Créer Colis de Retour</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    window.currentReturnModal = modal;
+}
+
+function closeReturnPackageModal() {
+    if (window.currentReturnModal) {
+        document.body.removeChild(window.currentReturnModal);
+        window.currentReturnModal = null;
+    }
+}
+
+function confirmCreateReturnPackage(originalPackageCode) {
+    const modal = window.currentReturnModal;
+    const description = modal.querySelector('textarea[placeholder*="Décrivez"]').value;
+    const notes = modal.querySelector('textarea[placeholder*="Notes"]').value;
+
+    if (!description.trim()) {
+        showNotification('Veuillez décrire l\'ancien article collecté.', 'error');
+        return;
+    }
+
+    // Appel AJAX pour créer le colis de retour
+    fetch('/depot-manager/packages/create-return-package', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            original_package_code: originalPackageCode,
+            description: description,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Colis de retour ${data.return_package_code} créé avec succès!`, 'success');
+            closeReturnPackageModal();
+            // Optionnel: rafraîchir la page ou mettre à jour l'interface
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showNotification(data.error || 'Erreur lors de la création du colis de retour.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur de connexion. Veuillez réessayer.', 'error');
+    });
 }
 
 // Notification de succès

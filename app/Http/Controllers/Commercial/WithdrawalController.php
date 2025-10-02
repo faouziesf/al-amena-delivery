@@ -26,12 +26,39 @@ class WithdrawalController extends Controller
             if (!empty($assignedGouvernorats)) {
                 // Les chefs de dépôt voient seulement les paiements espèces des gouvernorats qu'ils gèrent
                 $query->where('method', 'CASH_DELIVERY')
-                      ->whereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
-                          $subQuery->select('user_id')
-                                   ->from('saved_addresses')
-                                   ->where('type', 'CLIENT')
-                                   ->whereIn('delegation_id', $assignedGouvernorats)
-                                   ->groupBy('user_id');
+                      ->where(function($subQuery) use ($assignedGouvernorats) {
+                          // Méthode 1: Via saved_addresses (adresse par défaut)
+                          $subQuery->whereIn('client_id', function($innerQuery) use ($assignedGouvernorats) {
+                              $innerQuery->select('user_id')
+                                       ->from('saved_addresses')
+                                       ->where('type', 'CLIENT')
+                                       ->where('is_default', true)
+                                       ->whereIn('delegation_id', $assignedGouvernorats);
+                          })
+                          // Méthode 2: Via saved_addresses (n'importe quelle adresse si pas de défaut)
+                          ->orWhereIn('client_id', function($innerQuery) use ($assignedGouvernorats) {
+                              $innerQuery->select('user_id')
+                                       ->from('saved_addresses')
+                                       ->where('type', 'CLIENT')
+                                       ->whereIn('delegation_id', $assignedGouvernorats)
+                                       ->whereNotExists(function($existsQuery) {
+                                           $existsQuery->from('saved_addresses as sa2')
+                                                    ->whereRaw('sa2.user_id = saved_addresses.user_id')
+                                                    ->where('sa2.type', 'CLIENT')
+                                                    ->where('sa2.is_default', true);
+                                       });
+                          })
+                          // Méthode 3: Via packages récents du client
+                          ->orWhereIn('client_id', function($innerQuery) use ($assignedGouvernorats) {
+                              $innerQuery->select('sender_id')
+                                       ->from('packages')
+                                       ->whereIn('delegation_to', $assignedGouvernorats)
+                                       ->whereNotExists(function($existsQuery) {
+                                           $existsQuery->from('saved_addresses as sa3')
+                                                    ->whereRaw('sa3.user_id = packages.sender_id')
+                                                    ->where('sa3.type', 'CLIENT');
+                                       });
+                          });
                       });
             }
         }

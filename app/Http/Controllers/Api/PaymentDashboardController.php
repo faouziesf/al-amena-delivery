@@ -41,12 +41,39 @@ class PaymentDashboardController extends Controller
                 if (!empty($assignedGouvernorats)) {
                     // Les chefs de dépôt voient seulement les paiements espèces des gouvernorats qu'ils gèrent
                     $baseQuery->where('method', 'CASH_DELIVERY')
-                              ->whereIn('client_id', function($query) use ($assignedGouvernorats) {
-                                  $query->select('user_id')
-                                        ->from('saved_addresses')
-                                        ->where('type', 'CLIENT')
-                                        ->whereIn('delegation_id', $assignedGouvernorats)
-                                        ->groupBy('user_id');
+                              ->where(function($query) use ($assignedGouvernorats) {
+                                  // Méthode 1: Via saved_addresses (adresse par défaut)
+                                  $query->whereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                                      $subQuery->select('user_id')
+                                               ->from('saved_addresses')
+                                               ->where('type', 'CLIENT')
+                                               ->where('is_default', true)
+                                               ->whereIn('delegation_id', $assignedGouvernorats);
+                                  })
+                                  // Méthode 2: Via saved_addresses (n'importe quelle adresse si pas de défaut)
+                                  ->orWhereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                                      $subQuery->select('user_id')
+                                               ->from('saved_addresses')
+                                               ->where('type', 'CLIENT')
+                                               ->whereIn('delegation_id', $assignedGouvernorats)
+                                               ->whereNotExists(function($innerQuery) {
+                                                   $innerQuery->from('saved_addresses as sa2')
+                                                            ->whereRaw('sa2.user_id = saved_addresses.user_id')
+                                                            ->where('sa2.type', 'CLIENT')
+                                                            ->where('sa2.is_default', true);
+                                               });
+                                  })
+                                  // Méthode 3: Via packages récents du client
+                                  ->orWhereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                                      $subQuery->select('sender_id')
+                                               ->from('packages')
+                                               ->whereIn('delegation_to', $assignedGouvernorats)
+                                               ->whereNotExists(function($innerQuery) {
+                                                   $innerQuery->from('saved_addresses as sa3')
+                                                            ->whereRaw('sa3.user_id = packages.sender_id')
+                                                            ->where('sa3.type', 'CLIENT');
+                                               });
+                                  });
                               });
                 }
             }
@@ -355,26 +382,73 @@ class PaymentDashboardController extends Controller
                 ? $user->assigned_gouvernorats
                 : json_decode($user->assigned_gouvernorats, true) ?? [];
 
-            if (empty($assignedGouvernorats)) {
-                return response()->json([
-                    'success' => true,
-                    'data' => []
-                ]);
+            // Afficher TOUS les paiements en espèce avec filtrage optionnel par gouvernorat
+            $paymentsQuery = WithdrawalRequest::with(['client', 'assignedDepotManager', 'assignedPackage'])
+                ->where('method', 'CASH_DELIVERY');
+
+            // Si le chef depot a des gouvernorats assignés ET qu'il y a des demandes avec ces gouvernorats,
+            // prioriser l'affichage de ces demandes en premier, puis afficher toutes les autres
+            if (!empty($assignedGouvernorats)) {
+                // Récupérer d'abord les paiements de son gouvernorat
+                $priorityPayments = WithdrawalRequest::with(['client', 'assignedDepotManager', 'assignedPackage'])
+                    ->where('method', 'CASH_DELIVERY')
+                    ->where(function($query) use ($assignedGouvernorats) {
+                        // Méthode 1: Via saved_addresses (adresse par défaut)
+                        $query->whereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                            $subQuery->select('user_id')
+                                     ->from('saved_addresses')
+                                     ->where('type', 'CLIENT')
+                                     ->where('is_default', true)
+                                     ->whereIn('delegation_id', $assignedGouvernorats);
+                        })
+                        // Méthode 2: Via saved_addresses (n'importe quelle adresse si pas de défaut)
+                        ->orWhereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                            $subQuery->select('user_id')
+                                     ->from('saved_addresses')
+                                     ->where('type', 'CLIENT')
+                                     ->whereIn('delegation_id', $assignedGouvernorats)
+                                     ->whereNotExists(function($innerQuery) {
+                                         $innerQuery->from('saved_addresses as sa2')
+                                                  ->whereRaw('sa2.user_id = saved_addresses.user_id')
+                                                  ->where('sa2.type', 'CLIENT')
+                                                  ->where('sa2.is_default', true);
+                                     });
+                        })
+                        // Méthode 3: Via packages récents du client
+                        ->orWhereIn('client_id', function($subQuery) use ($assignedGouvernorats) {
+                            $subQuery->select('sender_id')
+                                     ->from('packages')
+                                     ->whereIn('delegation_to', $assignedGouvernorats)
+                                     ->whereNotExists(function($innerQuery) {
+                                         $innerQuery->from('saved_addresses as sa3')
+                                                  ->whereRaw('sa3.user_id = packages.sender_id')
+                                                  ->where('sa3.type', 'CLIENT');
+                                     });
+                        });
+                    })
+                    ->orderBy('updated_at', 'desc')
+                    ->get();
+
+                // Récupérer tous les autres paiements en espèce
+                $otherPayments = WithdrawalRequest::with(['client', 'assignedDepotManager', 'assignedPackage'])
+                    ->where('method', 'CASH_DELIVERY')
+                    ->whereNotIn('id', $priorityPayments->pluck('id'))
+                    ->orderBy('updated_at', 'desc')
+                    ->limit(50) // Limiter les autres pour éviter la surcharge
+                    ->get();
+
+                // Combiner les résultats : priorité d'abord, puis les autres
+                $paymentsToPrep = $priorityPayments->concat($otherPayments);
+            } else {
+                // Si pas de gouvernorats assignés, afficher tous les paiements en espèce
+                $paymentsToPrep = WithdrawalRequest::with(['client', 'assignedDepotManager', 'assignedPackage'])
+                    ->where('method', 'CASH_DELIVERY')
+                    ->orderBy('updated_at', 'desc')
+                    ->limit(100) // Limiter pour éviter la surcharge
+                    ->get();
             }
 
-            // Paiements en espèce de tous les statuts pour les gouvernorats gérés par ce chef de dépôt
-            $paymentsToPrep = WithdrawalRequest::with(['client', 'assignedDepotManager'])
-                ->where('method', 'CASH_DELIVERY')
-                ->whereIn('client_id', function($query) use ($assignedGouvernorats) {
-                    $query->select('user_id')
-                          ->from('saved_addresses')
-                          ->where('type', 'CLIENT')
-                          ->whereIn('delegation_id', $assignedGouvernorats)
-                          ->groupBy('user_id');
-                })
-                ->orderBy('updated_at', 'desc')
-                ->get()
-                ->map(function ($withdrawal) {
+            $paymentsToPrep = $paymentsToPrep->map(function ($withdrawal) {
                     return [
                         'id' => $withdrawal->id,
                         'request_code' => $withdrawal->request_code,
@@ -389,7 +463,7 @@ class PaymentDashboardController extends Controller
                         'status_color' => $this->getStatusColor($withdrawal->status),
                         'ready_since' => $withdrawal->updated_at->format('d/m/Y H:i'),
                         'created_at' => $withdrawal->created_at->format('d/m/Y H:i'),
-                        'can_create_package' => $withdrawal->status === 'READY_FOR_DELIVERY',
+                        'can_create_package' => in_array($withdrawal->status, ['PENDING', 'APPROVED', 'READY_FOR_DELIVERY', 'DELIVERED', 'COMPLETED']),
                         'package_code' => $withdrawal->assignedPackage ? $withdrawal->assignedPackage->package_code : null,
                         'assigned_depot' => $withdrawal->assignedDepotManager ? [
                             'name' => $withdrawal->assignedDepotManager->name,
@@ -452,7 +526,7 @@ class PaymentDashboardController extends Controller
                         'address' => $withdrawal->client->address,
                         'city' => $withdrawal->client->city ?? 'Non spécifié',
                     ],
-                    'delegation_to' => $withdrawal->client->delegation_id,
+                    'delegation_to' => $withdrawal->client->assigned_delegation ?? 1, // Défaut délégation 1 si non assigné
                     'content_description' => "Paiement Fournisseur #{$withdrawal->request_code}",
                     'notes' => 'Colis de paiement généré automatiquement',
                     'cod_amount' => $withdrawal->amount, // Le montant à payer

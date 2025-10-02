@@ -430,4 +430,50 @@ class DepotManagerDelivererController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * API pour récupérer les livreurs disponibles
+     */
+    public function apiAvailable(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->isDepotManager()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé'
+            ], 403);
+        }
+
+        try {
+            // Obtenir les livreurs gérés par ce dépôt manager
+            $managedDeliverers = $user->getManagedDeliverers();
+
+            // Ajouter le nombre de colis actuels pour chaque livreur
+            $deliverers = $managedDeliverers->map(function ($deliverer) {
+                $packagesCount = Package::where('assigned_deliverer_id', $deliverer->id)
+                    ->whereIn('status', ['ACCEPTED', 'PICKED_UP'])
+                    ->count();
+
+                return [
+                    'id' => $deliverer->id,
+                    'name' => $deliverer->name,
+                    'delegation_name' => $deliverer->delegationName ?? 'N/A',
+                    'packages_count' => $packagesCount,
+                    'status' => $deliverer->account_status
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'deliverers' => $deliverers->values()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des livreurs: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

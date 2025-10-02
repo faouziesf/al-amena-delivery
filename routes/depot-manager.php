@@ -18,7 +18,6 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     Route::get('/dashboard', [DepotManagerDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/api/stats', [DepotManagerDashboardController::class, 'apiStats'])->name('dashboard.api.stats');
     Route::get('/gouvernorat/{gouvernorat}', [DepotManagerDashboardController::class, 'showGouvernorat'])->name('gouvernorat.show');
-    Route::post('/packages/{package}/process-exchange-return', [DepotManagerDashboardController::class, 'processExchangeReturn'])->name('packages.process-exchange-return');
 
     // ==================== GESTION DES PAIEMENTS ====================
     Route::prefix('payments')->name('payments.')->group(function () {
@@ -49,6 +48,7 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     Route::prefix('packages')->name('packages.')->group(function () {
         Route::get('/', [DepotManagerPackageController::class, 'index'])->name('index');
         Route::get('/all', [DepotManagerPackageController::class, 'allPackages'])->name('all');
+        Route::get('/payment-packages', [DepotManagerPackageController::class, 'paymentPackages'])->name('payment-packages');
         Route::get('/returns-exchanges', [DepotManagerPackageController::class, 'returnsExchanges'])->name('returns-exchanges');
         Route::get('/supplier-returns', [DepotManagerPackageController::class, 'supplierReturns'])->name('supplier-returns');
         Route::get('/batch-scanner', [DepotManagerPackageController::class, 'batchScanner'])->name('batch-scanner');
@@ -57,19 +57,17 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
 
         // ==================== ACTIONS REQUISES DASHBOARD ====================
         Route::get('/dashboard-actions', [DepotManagerPackageController::class, 'dashboardActions'])->name('dashboard-actions');
-        Route::post('/search-exchange', [DepotManagerPackageController::class, 'searchExchange'])->name('search-exchange');
         Route::get('/{package}/details', [DepotManagerPackageController::class, 'packageDetails'])->name('details');
-        Route::post('/{package}/generate-exchange-label', [DepotManagerPackageController::class, 'generateExchangeLabel'])->name('generate-exchange-label');
-        Route::get('/{returnPackage}/exchange-label', [DepotManagerPackageController::class, 'printExchangeLabel'])->name('exchange-label');
         Route::post('/process-all-returns', [DepotManagerPackageController::class, 'processAllReturns'])->name('process-all-returns');
 
         Route::get('/{package}', [DepotManagerPackageController::class, 'show'])->name('show');
         Route::post('/{package}/reassign', [DepotManagerPackageController::class, 'reassign'])->name('reassign');
         Route::post('/{package}/process-return', [DepotManagerPackageController::class, 'processReturn'])->name('process-return');
         Route::post('/process-return-dashboard', [DepotManagerPackageController::class, 'processReturnFromDashboard'])->name('process-return-dashboard');
-        Route::post('/{package}/process-exchange', [DepotManagerPackageController::class, 'processExchange'])->name('process-exchange');
         Route::get('/{package}/return-receipt', [DepotManagerPackageController::class, 'printReturnReceipt'])->name('return-receipt');
-        Route::get('/{package}/exchange-return-receipt', [DepotManagerPackageController::class, 'printExchangeReturnReceipt'])->name('exchange-return-receipt');
+        Route::post('/create-return-package', [DepotManagerPackageController::class, 'createReturnPackage'])->name('create-return-package');
+        Route::get('/{package}/delivery-receipt', [DepotManagerPackageController::class, 'deliveryReceipt'])->name('delivery-receipt');
+        Route::get('/bulk-delivery-receipts', [DepotManagerPackageController::class, 'bulkDeliveryReceipts'])->name('bulk-delivery-receipts');
     });
 
     // ==================== SYSTÈME BOÎTES DE TRANSIT ====================
@@ -167,6 +165,18 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     Route::prefix('api/payments')->name('api.payments.')->group(function () {
         Route::get('/dashboard', [PaymentDashboardController::class, 'depotDashboard'])->name('dashboard');
         Route::post('/{withdrawal}/create-package', [PaymentDashboardController::class, 'createPaymentPackage'])->name('create.package');
+        Route::post('/{withdrawal}/approve', [PaymentDashboardController::class, 'approve'])->name('approve');
+        Route::post('/{withdrawal}/reject', [PaymentDashboardController::class, 'reject'])->name('reject');
+    });
+
+    // ==================== API ROUTES LIVREURS ====================
+    Route::prefix('api/deliverers')->name('api.deliverers.')->group(function () {
+        Route::get('/available', [DepotManagerDelivererController::class, 'apiAvailable'])->name('available');
+    });
+
+    // ==================== API ROUTES COLIS ====================
+    Route::prefix('api/packages')->name('api.packages.')->group(function () {
+        Route::post('/{package}/assign', [DepotManagerPackageController::class, 'assignDeliverer'])->name('assign');
     });
 
 });

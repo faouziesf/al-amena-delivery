@@ -30,8 +30,29 @@
         </div>
 
         <div class="flex items-center space-x-3">
+            <!-- Bouton Imprimer Bon de Livraison -->
+            <a href="{{ route('depot-manager.packages.delivery-receipt', $package) }}" target="_blank"
+               class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm font-medium">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Imprimer Bon
+            </a>
+
+            <!-- Bouton Assigner Livreur -->
+            @if($package->status === 'AVAILABLE' || !$package->assignedDeliverer)
+            <button onclick="showAssignDelivererModal({{ $package->id }})"
+                    class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Assigner Livreur
+            </button>
+            @endif
+
+            <!-- Bouton Réassigner -->
             @if($package->assignedDeliverer && in_array($package->status, ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE']))
-            <button onclick="reassignPackage({{ $package->id }})"
+            <button onclick="showAssignDelivererModal({{ $package->id }})"
                     class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium">
                 <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
@@ -347,6 +368,59 @@
 
 </div>
 
+<!-- Modal d'assignation de livreur -->
+<div id="assignDelivererModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAssignDelivererModal()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Assigner un livreur
+                        </h3>
+                        <div class="mt-4">
+                            <div class="mb-4">
+                                <label for="deliverer_select" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Sélectionner un livreur disponible
+                                </label>
+                                <select id="deliverer_select" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <option value="">Chargement des livreurs...</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="assignment_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Notes (optionnel)
+                                </label>
+                                <textarea id="assignment_notes" rows="3"
+                                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500"
+                                         placeholder="Ajouter des notes pour l'assignation..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="confirmAssignDeliverer()" type="button"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                        id="confirmAssignBtn">
+                    Assigner
+                </button>
+                <button onclick="closeAssignDelivererModal()" type="button"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function reassignPackage(packageId) {
     if (confirm('Voulez-vous réassigner ce colis à un autre livreur ?')) {
@@ -395,6 +469,114 @@ function processExchangeReturn(packageId) {
             console.error('Error:', error);
             alert('Erreur lors du traitement');
         });
+    }
+}
+
+let currentPackageId = null;
+
+function showAssignDelivererModal(packageId) {
+    currentPackageId = packageId;
+    const modal = document.getElementById('assignDelivererModal');
+    const select = document.getElementById('deliverer_select');
+
+    // Afficher le modal
+    modal.classList.remove('hidden');
+
+    // Charger la liste des livreurs
+    loadDeliverers();
+}
+
+function closeAssignDelivererModal() {
+    const modal = document.getElementById('assignDelivererModal');
+    modal.classList.add('hidden');
+
+    // Réinitialiser les champs
+    document.getElementById('deliverer_select').innerHTML = '<option value="">Chargement des livreurs...</option>';
+    document.getElementById('assignment_notes').value = '';
+    currentPackageId = null;
+}
+
+async function loadDeliverers() {
+    try {
+        const response = await fetch('/depot-manager/api/deliverers/available', {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        });
+
+        const data = await response.json();
+        const select = document.getElementById('deliverer_select');
+
+        if (data.success) {
+            select.innerHTML = '<option value="">-- Sélectionner un livreur --</option>';
+            data.deliverers.forEach(deliverer => {
+                const option = document.createElement('option');
+                option.value = deliverer.id;
+                option.textContent = `${deliverer.name} (${deliverer.delegation_name || 'N/A'}) - ${deliverer.packages_count || 0} colis`;
+                select.appendChild(option);
+            });
+        } else {
+            select.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    } catch (error) {
+        console.error('Error loading deliverers:', error);
+        const select = document.getElementById('deliverer_select');
+        select.innerHTML = '<option value="">Erreur de chargement</option>';
+    }
+}
+
+async function confirmAssignDeliverer() {
+    const delivererId = document.getElementById('deliverer_select').value;
+    const notes = document.getElementById('assignment_notes').value;
+    const btn = document.getElementById('confirmAssignBtn');
+
+    if (!delivererId) {
+        alert('Veuillez sélectionner un livreur');
+        return;
+    }
+
+    if (!currentPackageId) {
+        alert('Erreur: ID du colis non trouvé');
+        return;
+    }
+
+    // Désactiver le bouton
+    btn.disabled = true;
+    btn.textContent = 'Attribution...';
+
+    try {
+        const response = await fetch(`/depot-manager/packages/${currentPackageId}/assign`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                deliverer_id: delivererId,
+                notes: notes
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Livreur assigné avec succès !');
+            closeAssignDelivererModal();
+            location.reload();
+        } else {
+            alert('Erreur : ' + (data.message || 'Erreur inconnue'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Erreur lors de l\'assignation');
+    } finally {
+        // Réactiver le bouton
+        btn.disabled = false;
+        btn.textContent = 'Assigner';
     }
 }
 </script>

@@ -12,12 +12,13 @@ class ClientProfile extends Model
     protected $fillable = [
         'user_id', 'shop_name', 'fiscal_number', 'business_sector',
         'identity_document', 'offer_delivery_price', 'offer_return_price',
-        'internal_notes'
+        'internal_notes', 'validation_status', 'validated_by', 'validated_at', 'validation_notes'
     ];
 
     protected $casts = [
         'offer_delivery_price' => 'decimal:3',
         'offer_return_price' => 'decimal:3',
+        'validated_at' => 'datetime',
     ];
 
     // Relations
