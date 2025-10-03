@@ -1,5 +1,27 @@
 @extends('layouts.client')
 
+@php
+// Ensure recipient_data is properly decoded as array
+$recipientData = is_array($package->recipient_data) ? $package->recipient_data : json_decode($package->recipient_data, true) ?? [];
+
+// Ensure gouvernorats and delegations are properly formatted for the template
+$gouvernoratsFormatted = [];
+foreach($gouvernorats as $key => $name) {
+    $gouvernoratsFormatted[] = ['key' => $key, 'name' => $name];
+}
+
+$delegationsFormatted = [];
+foreach($delegations as $govKey => $govDelegations) {
+    $delegationsFormatted[$govKey] = [];
+    foreach($govDelegations as $delKey => $delName) {
+        $delegationsFormatted[$govKey][] = ['key' => $delKey, 'name' => $delName];
+    }
+}
+
+// Déterminer si l'adresse de pickup peut être modifiée
+$canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package->status, ['CREATED', 'AVAILABLE']);
+@endphp
+
 @section('title', 'Modifier le Colis')
 @section('page-title', 'Modification de Colis')
 @section('page-description', 'Modifier les informations du colis {{ $package->package_code }}')
@@ -82,34 +104,77 @@
                 </div>
 
                 <div class="bg-white p-4">
-                    <div class="space-y-4">
-                        @if($pickupAddresses->isNotEmpty())
-                            @foreach($pickupAddresses as $address)
-                                <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                                    <input type="radio" name="pickup_address_id" value="{{ $address->id }}"
-                                           class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
-                                           {{ old('pickup_address_id', $package->pickup_address_id) == $address->id ? 'checked' : '' }} required>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-900">{{ $address->name }}</p>
-                                        <p class="text-sm text-gray-500">{{ $address->address }}, {{ $address->city }}</p>
-                                        <p class="text-xs text-gray-400">📞 {{ $address->phone }}</p>
-                                        @if($address->is_default)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mt-1">
-                                                Par défaut
-                                            </span>
-                                        @endif
-                                    </div>
-                                </label>
-                            @endforeach
-                        @else
-                            <div class="text-center py-6">
-                                <p class="text-gray-500">Aucune adresse de collecte configurée.</p>
-                                <a href="{{ route('client.pickup-addresses.create') }}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
-                                    Créer une adresse
-                                </a>
+                    @if(!$canModifyPickup)
+                        <!-- Pickup assigné - Affichage en lecture seule -->
+                        <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-orange-800">Adresse de collecte verrouillée</p>
+                                    <p class="text-xs text-orange-600">Ce colis est assigné et ne peut plus changer d'adresse de collecte</p>
+                                </div>
                             </div>
+                        </div>
+
+                        @if($pickupAddresses->isNotEmpty())
+                            @php $selectedAddress = $pickupAddresses->firstWhere('id', $package->pickup_address_id); @endphp
+                            @if($selectedAddress)
+                                <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                                    <input type="hidden" name="pickup_address_id" value="{{ $selectedAddress->id }}">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="mt-1">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-700">{{ $selectedAddress->name }}</p>
+                                            <p class="text-sm text-gray-500">{{ $selectedAddress->address }}, {{ $selectedAddress->city }}</p>
+                                            <p class="text-xs text-gray-400">📞 {{ $selectedAddress->phone }}</p>
+                                            @if($selectedAddress->is_default)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 mt-1">
+                                                    Par défaut
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
-                    </div>
+                    @else
+                        <!-- Pickup modifiable - Interface normale -->
+                        <div class="space-y-4">
+                            @if($pickupAddresses->isNotEmpty())
+                                @foreach($pickupAddresses as $address)
+                                    <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <input type="radio" name="pickup_address_id" value="{{ $address->id }}"
+                                               class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                                               {{ old('pickup_address_id', $package->pickup_address_id) == $address->id ? 'checked' : '' }} required>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900">{{ $address->name }}</p>
+                                            <p class="text-sm text-gray-500">{{ $address->address }}, {{ $address->city }}</p>
+                                            <p class="text-xs text-gray-400">📞 {{ $address->phone }}</p>
+                                            @if($address->is_default)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+                                                    Par défaut
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </label>
+                                @endforeach
+                            @else
+                                <div class="text-center py-6">
+                                    <p class="text-gray-500">Aucune adresse de collecte configurée.</p>
+                                    <a href="{{ route('client.pickup-addresses.create') }}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                                        Créer une adresse
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -134,7 +199,7 @@
                     <!-- Nom complet -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nom Complet *</label>
-                        <input type="text" name="nom_complet" value="{{ old('nom_complet', $package->recipient_data['name'] ?? '') }}"
+                        <input type="text" name="nom_complet" value="{{ old('nom_complet', $recipientData['name'] ?? '') }}"
                                required maxlength="255"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
                         @error('nom_complet')
@@ -146,7 +211,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone Principal *</label>
-                            <input type="tel" name="telephone_1" value="{{ old('telephone_1', $package->recipient_data['phone'] ?? '') }}"
+                            <input type="tel" name="telephone_1" value="{{ old('telephone_1', $recipientData['phone'] ?? '') }}"
                                    required maxlength="20"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
                             @error('telephone_1')
@@ -155,7 +220,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone Secondaire</label>
-                            <input type="tel" name="telephone_2" value="{{ old('telephone_2', $package->recipient_data['phone2'] ?? '') }}"
+                            <input type="tel" name="telephone_2" value="{{ old('telephone_2', $recipientData['phone2'] ?? '') }}"
                                    maxlength="20"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
                         </div>
@@ -165,7 +230,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Adresse Complète *</label>
                         <textarea name="adresse_complete" required maxlength="500" rows="3"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">{{ old('adresse_complete', $package->recipient_data['address'] ?? '') }}</textarea>
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">{{ old('adresse_complete', $recipientData['address'] ?? '') }}</textarea>
                         @error('adresse_complete')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -178,9 +243,9 @@
                             <select name="gouvernorat" x-model="selectedGouvernorat" @change="updateDelegations()" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
                                 <option value="">Sélectionnez un gouvernorat</option>
-                                @foreach($gouvernorats as $gov)
-                                    <option value="{{ $gov['name'] }}"
-                                            {{ old('gouvernorat', $package->recipient_data['gouvernorat'] ?? '') === $gov['name'] ? 'selected' : '' }}>
+                                @foreach($gouvernoratsFormatted as $gov)
+                                    <option value="{{ $gov['key'] }}"
+                                            {{ old('gouvernorat', $recipientData['gouvernorat'] ?? '') === $gov['key'] ? 'selected' : '' }}>
                                         {{ $gov['name'] }}
                                     </option>
                                 @endforeach
@@ -194,9 +259,9 @@
                             <select name="delegation" x-model="selectedDelegation" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
                                 <option value="">Sélectionnez une délégation</option>
-                                <template x-for="delegation in availableDelegations" :key="delegation">
-                                    <option :value="delegation" x-text="delegation"
-                                            :selected="delegation === '{{ old('delegation', $package->recipient_data['delegation'] ?? '') }}'"></option>
+                                <template x-for="delegation in availableDelegations" :key="delegation.key">
+                                    <option :value="delegation.key" x-text="delegation.name"
+                                            :selected="delegation.key === '{{ old('delegation', $recipientData['delegation'] ?? '') }}'"></option>
                                 </template>
                             </select>
                             @error('delegation')
@@ -259,22 +324,26 @@
                         <label class="block text-sm font-medium text-gray-700 mb-3">Options du Colis</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="fragile" {{ old('fragile', $package->is_fragile) ? 'checked' : '' }}
+                                <input type="hidden" name="fragile" value="false">
+                                <input type="checkbox" name="fragile" value="true" {{ old('fragile', $package->is_fragile) ? 'checked' : '' }}
                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                 <span class="text-sm text-gray-700">🔻 Fragile</span>
                             </label>
                             <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="signature_obligatoire" {{ old('signature_obligatoire', $package->requires_signature) ? 'checked' : '' }}
+                                <input type="hidden" name="signature_obligatoire" value="false">
+                                <input type="checkbox" name="signature_obligatoire" value="true" {{ old('signature_obligatoire', $package->requires_signature) ? 'checked' : '' }}
                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                 <span class="text-sm text-gray-700">✍️ Signature obligatoire</span>
                             </label>
                             <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="autorisation_ouverture" {{ old('autorisation_ouverture', $package->allow_opening) ? 'checked' : '' }}
+                                <input type="hidden" name="autorisation_ouverture" value="false">
+                                <input type="checkbox" name="autorisation_ouverture" value="true" {{ old('autorisation_ouverture', $package->allow_opening) ? 'checked' : '' }}
                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                 <span class="text-sm text-gray-700">📂 Autorisation d'ouverture</span>
                             </label>
                             <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="est_echange" {{ old('est_echange', $package->is_exchange) ? 'checked' : '' }}
+                                <input type="hidden" name="est_echange" value="false">
+                                <input type="checkbox" name="est_echange" value="true" {{ old('est_echange', $package->est_echange) ? 'checked' : '' }}
                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                 <span class="text-sm text-gray-700">🔄 Échange</span>
                             </label>
@@ -335,10 +404,10 @@
 <script>
 function editPackageApp() {
     return {
-        selectedGouvernorat: '{{ old('gouvernorat', $package->recipient_data['gouvernorat'] ?? '') }}',
-        selectedDelegation: '{{ old('delegation', $package->recipient_data['delegation'] ?? '') }}',
+        selectedGouvernorat: '{{ old('gouvernorat', $recipientData['gouvernorat'] ?? '') }}',
+        selectedDelegation: '{{ old('delegation', $recipientData['delegation'] ?? '') }}',
         availableDelegations: [],
-        delegationsData: @json($delegations),
+        delegationsData: @json($delegationsFormatted),
 
         init() {
             this.updateDelegations();

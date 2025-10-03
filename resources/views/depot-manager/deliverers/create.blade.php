@@ -80,6 +80,16 @@
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <!-- Confirmation mot de passe -->
+                <div>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirmer le mot de passe <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" name="password_confirmation" id="password_confirmation" required
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                           placeholder="Confirmer le mot de passe">
+                </div>
             </div>
         </div>
 
@@ -107,18 +117,21 @@
                     <p class="mt-1 text-xs text-gray-500">Le livreur sera affecté à ce gouvernorat</p>
                 </div>
 
-                <!-- Type de livreur -->
+                <!-- Info type de livreur -->
                 <div>
-                    <label for="deliverer_type" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
                         Type de livreur
                     </label>
-                    <select name="deliverer_type" id="deliverer_type"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="NORMAL" {{ old('deliverer_type', 'NORMAL') == 'NORMAL' ? 'selected' : '' }}>Normal</option>
-                        <option value="TRANSIT" {{ old('deliverer_type') == 'TRANSIT' ? 'selected' : '' }}>Transit</option>
-                        <option value="EXPRESS" {{ old('deliverer_type') == 'EXPRESS' ? 'selected' : '' }}>Express</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Type de service que propose ce livreur</p>
+                    <div class="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span>Délégation fixe</span>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Les chefs dépôt ne peuvent créer que des livreurs de délégation fixe</p>
                 </div>
             </div>
 
@@ -136,44 +149,6 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Paramètres du compte</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Statut du compte -->
-                <div>
-                    <label for="account_status" class="block text-sm font-medium text-gray-700 mb-2">
-                        Statut du compte
-                    </label>
-                    <select name="account_status" id="account_status"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="ACTIVE" {{ old('account_status', 'ACTIVE') == 'ACTIVE' ? 'selected' : '' }}>Actif</option>
-                        <option value="PENDING" {{ old('account_status') == 'PENDING' ? 'selected' : '' }}>En attente</option>
-                        <option value="SUSPENDED" {{ old('account_status') == 'SUSPENDED' ? 'selected' : '' }}>Suspendu</option>
-                    </select>
-                </div>
-
-                <!-- Vérification -->
-                <div class="flex items-center">
-                    <input type="checkbox" name="verified" id="verified" value="1" {{ old('verified') ? 'checked' : '' }}
-                           class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
-                    <label for="verified" class="ml-2 text-sm text-gray-700">
-                        Compte vérifié immédiatement
-                    </label>
-                </div>
-            </div>
-
-            <!-- Notes internes -->
-            <div class="mt-6">
-                <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
-                    Notes internes
-                </label>
-                <textarea name="notes" id="notes" rows="3"
-                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="Notes internes sur ce livreur (visible uniquement par les administrateurs)">{{ old('notes') }}</textarea>
-                <p class="mt-1 text-xs text-gray-500">Ces notes ne sont pas visibles par le livreur</p>
-            </div>
-        </div>
 
         <!-- Boutons d'action -->
         <div class="flex items-center justify-end space-x-4">

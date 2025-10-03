@@ -228,10 +228,10 @@ class ClientPackageController extends Controller
             'contenu' => 'required|string|max:255',
             'prix' => 'required|numeric|min:0|max:9999.999',
             'commentaire' => 'nullable|string|max:1000',
-            'fragile' => 'boolean',
-            'signature_obligatoire' => 'boolean',
-            'autorisation_ouverture' => 'boolean',
-            'est_echange' => 'boolean',
+            'fragile' => 'in:true,false,1,0',
+            'signature_obligatoire' => 'in:true,false,1,0',
+            'autorisation_ouverture' => 'in:true,false,1,0',
+            'est_echange' => 'in:true,false,1,0',
             'payment_method' => 'required|in:especes_seulement,cheque_seulement,especes_et_cheques'
         ]);
 
@@ -1304,7 +1304,7 @@ class ClientPackageController extends Controller
         }
 
         // Vérifier que le colis appartient à l'utilisateur
-        if ($package->client_id !== $user->id) {
+        if ($package->sender_id !== $user->id) {
             abort(403, 'Vous ne pouvez pas modifier ce colis.');
         }
 
@@ -1341,7 +1341,7 @@ class ClientPackageController extends Controller
         }
 
         // Vérifier que le colis appartient à l'utilisateur
-        if ($package->client_id !== $user->id) {
+        if ($package->sender_id !== $user->id) {
             abort(403, 'Vous ne pouvez pas modifier ce colis.');
         }
 
@@ -1351,8 +1351,12 @@ class ClientPackageController extends Controller
                 ->with('error', 'Ce colis ne peut plus être modifié car il a déjà été pris en charge.');
         }
 
-        $validated = $request->validate([
-            'pickup_address_id' => 'required|exists:client_pickup_addresses,id',
+        // Déterminer si l'adresse de pickup peut être modifiée
+        $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package->status, ['CREATED', 'AVAILABLE']);
+
+        // Ajuster les règles de validation selon si le pickup peut être modifié
+        $rules = [
+            'pickup_address_id' => $canModifyPickup ? 'required|exists:client_pickup_addresses,id' : 'sometimes|exists:client_pickup_addresses,id',
             'nom_complet' => 'required|string|max:255',
             'telephone_1' => 'required|string|max:20',
             'telephone_2' => 'nullable|string|max:20',
@@ -1362,12 +1366,14 @@ class ClientPackageController extends Controller
             'contenu' => 'required|string|max:255',
             'prix' => 'required|numeric|min:0|max:9999.999',
             'commentaire' => 'nullable|string|max:1000',
-            'fragile' => 'boolean',
-            'signature_obligatoire' => 'boolean',
-            'autorisation_ouverture' => 'boolean',
-            'est_echange' => 'boolean',
+            'fragile' => 'in:true,false,1,0',
+            'signature_obligatoire' => 'in:true,false,1,0',
+            'autorisation_ouverture' => 'in:true,false,1,0',
+            'est_echange' => 'in:true,false,1,0',
             'payment_method' => 'required|in:especes_seulement,cheque_seulement,especes_et_cheques'
-        ]);
+        ];
+
+        $validated = $request->validate($rules);
 
         try {
             DB::beginTransaction();
@@ -1382,19 +1388,26 @@ class ClientPackageController extends Controller
                 'delegation' => $validated['delegation'],
             ];
 
-            // Mettre à jour le colis
-            $package->update([
-                'pickup_address_id' => $validated['pickup_address_id'],
+            // Préparer les données à mettre à jour
+            $updateData = [
                 'recipient_data' => $recipientData,
                 'content_description' => $validated['contenu'],
                 'cod_amount' => $validated['prix'],
                 'notes' => $validated['commentaire'],
-                'is_fragile' => $request->has('fragile'),
-                'requires_signature' => $request->has('signature_obligatoire'),
-                'allow_opening' => $request->has('autorisation_ouverture'),
-                'is_exchange' => $request->has('est_echange'),
+                'is_fragile' => $validated['fragile'] === 'true' || $validated['fragile'] === '1',
+                'requires_signature' => $validated['signature_obligatoire'] === 'true' || $validated['signature_obligatoire'] === '1',
+                'allow_opening' => $validated['autorisation_ouverture'] === 'true' || $validated['autorisation_ouverture'] === '1',
+                'est_echange' => $validated['est_echange'] === 'true' || $validated['est_echange'] === '1',
                 'payment_method' => $validated['payment_method'],
-            ]);
+            ];
+
+            // Ajouter pickup_address_id seulement si modifiable
+            if ($canModifyPickup && isset($validated['pickup_address_id'])) {
+                $updateData['pickup_address_id'] = $validated['pickup_address_id'];
+            }
+
+            // Mettre à jour le colis
+            $package->update($updateData);
 
             DB::commit();
 

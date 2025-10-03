@@ -24,6 +24,7 @@ class DepotManagerDelivererController extends Controller
         }
 
         $query = User::where('role', 'DELIVERER')
+                    ->where('deliverer_type', 'DELEGATION') // Chef dépôt ne gère que les livreurs DELEGATION
                     ->whereIn('assigned_delegation', $user->assigned_gouvernorats_array);
 
         // Filtres
@@ -138,7 +139,6 @@ class DepotManagerDelivererController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'assigned_delegation' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
             'address' => 'nullable|string|max:500',
-            'deliverer_type' => 'required|string|in:STANDARD,EXPRESS,HEAVY',
         ]);
 
         DB::transaction(function () use ($request, $user) {
@@ -150,7 +150,7 @@ class DepotManagerDelivererController extends Controller
                 'role' => 'DELIVERER',
                 'assigned_delegation' => $request->assigned_delegation,
                 'address' => $request->address,
-                'deliverer_type' => $request->deliverer_type,
+                'deliverer_type' => 'DELEGATION', // Chef dépôt ne peut créer que des livreurs DELEGATION
                 'account_status' => 'ACTIVE',
                 'verified_at' => now(),
                 'verified_by' => $user->id,
@@ -176,6 +176,11 @@ class DepotManagerDelivererController extends Controller
             abort(403, 'Vous ne pouvez pas modifier ce livreur.');
         }
 
+        // Chef dépôt ne peut modifier que les livreurs DELEGATION
+        if ($deliverer->deliverer_type !== 'DELEGATION') {
+            abort(403, 'Vous ne pouvez modifier que les livreurs de délégation.');
+        }
+
         return view('depot-manager.deliverers.edit', compact('deliverer', 'user'));
     }
 
@@ -190,13 +195,17 @@ class DepotManagerDelivererController extends Controller
             abort(403, 'Vous ne pouvez pas modifier ce livreur.');
         }
 
+        // Chef dépôt ne peut modifier que les livreurs DELEGATION
+        if ($deliverer->deliverer_type !== 'DELEGATION') {
+            abort(403, 'Vous ne pouvez modifier que les livreurs de délégation.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $deliverer->id,
             'phone' => 'required|string|max:20',
             'assigned_delegation' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
             'address' => 'nullable|string|max:500',
-            'deliverer_type' => 'required|string|in:STANDARD,EXPRESS,HEAVY',
             'account_status' => 'required|string|in:ACTIVE,SUSPENDED',
         ]);
 
@@ -206,8 +215,8 @@ class DepotManagerDelivererController extends Controller
             'phone' => $request->phone,
             'assigned_delegation' => $request->assigned_delegation,
             'address' => $request->address,
-            'deliverer_type' => $request->deliverer_type,
             'account_status' => $request->account_status,
+            // deliverer_type reste DELEGATION et n'est pas modifiable par chef dépôt
         ]);
 
         return redirect()->route('depot-manager.deliverers.show', $deliverer)

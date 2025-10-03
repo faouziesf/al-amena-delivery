@@ -53,7 +53,17 @@
                     </span>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900">{{ $deliverer->name }}</h3>
-                <p class="text-gray-600 text-sm">{{ $deliverer->deliverer_type ?? 'NORMAL' }}</p>
+                <p class="text-gray-600 text-sm">
+                    @if($deliverer->deliverer_type === 'DELEGATION')
+                        Délégation fixe
+                    @elseif($deliverer->deliverer_type === 'JOKER')
+                        Joker (toutes délégations)
+                    @elseif($deliverer->deliverer_type === 'TRANSIT')
+                        Transit (changement uniquement)
+                    @else
+                        {{ $deliverer->deliverer_type }}
+                    @endif
+                </p>
 
                 <div class="mt-4">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium

@@ -524,6 +524,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Vérifier si l'utilisateur peut gérer les clients
+     */
+    public function canManageClients()
+    {
+        return in_array($this->role, ['COMMERCIAL', 'SUPERVISOR']);
+    }
+
+    /**
      * Vérifier si le compte est vérifié
      */
     public function isVerified()
