@@ -1159,18 +1159,43 @@ class ClientPackageController extends Controller
             $user->load('wallet');
 
             $totalEscrowNeeded = 0;
+            $totalDeliveryFeesNeeded = 0; // Pour les colis où COD < frais de livraison (avance ne peut pas être utilisée)
+            $totalReturnFeesNeeded = 0;  // Pour les colis où COD >= frais de livraison (avance peut être utilisée)
+
             foreach ($packagesData as $packageData) {
                 $codAmount = $packageData['prix'];
                 $escrowAmount = $this->calculateEscrowAmount(null, $codAmount, $deliveryFee, $returnFee);
                 $totalEscrowNeeded += $escrowAmount;
+
+                // Séparer selon la règle d'avance
+                if ($codAmount >= $deliveryFee) {
+                    // L'avance peut être utilisée pour les frais de retour
+                    $totalReturnFeesNeeded += $escrowAmount;
+                } else {
+                    // L'avance ne peut PAS être utilisée pour les frais de livraison
+                    $totalDeliveryFeesNeeded += $escrowAmount;
+                }
             }
 
-            // Vérifier le solde disponible
+            // Vérifier le solde disponible selon les règles d'avance
             $availableBalance = $user->wallet->available_balance;
             $advanceBalance = $user->wallet->advance_balance;
 
-            if ($availableBalance < $totalEscrowNeeded) {
-                throw new \Exception("Solde insuffisant. Montant requis: " . number_format($totalEscrowNeeded, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT.");
+            // Vérifier d'abord si le solde normal suffit pour les frais de livraison
+            if ($availableBalance < $totalDeliveryFeesNeeded) {
+                $message = "Solde insuffisant pour les frais de livraison. Montant requis: " . number_format($totalDeliveryFeesNeeded, 3) . " DT, disponible: " . number_format($availableBalance, 3) . " DT.";
+                if ($advanceBalance > 0) {
+                    $message .= " Note: Votre avance (" . number_format($advanceBalance, 3) . " DT) ne peut être utilisée que pour les frais de retour.";
+                }
+                throw new \Exception($message);
+            }
+
+            // Vérifier si le solde restant + avance suffisent pour les frais de retour
+            $remainingBalance = $availableBalance - $totalDeliveryFeesNeeded;
+            $totalAvailableForReturnFees = $remainingBalance + $advanceBalance;
+
+            if ($totalAvailableForReturnFees < $totalReturnFeesNeeded) {
+                throw new \Exception("Solde insuffisant pour les frais de retour. Montant requis: " . number_format($totalReturnFeesNeeded, 3) . " DT, disponible (normal + avance): " . number_format($totalAvailableForReturnFees, 3) . " DT.");
             }
 
             foreach ($packagesData as $packageData) {
@@ -1222,18 +1247,26 @@ class ClientPackageController extends Controller
                 $package->amount_in_escrow = $escrowAmount;
                 $package->save();
 
-                // Transaction financière
-                $this->financialService->processTransaction([
-                    'user_id' => $user->id,
-                    'type' => 'PACKAGE_CREATION_DEBIT',
-                    'amount' => -$escrowAmount,
-                    'package_id' => $package->id,
-                    'description' => "Création colis #{$package->package_code}",
-                    'metadata' => [
-                        'package_code' => $package->package_code,
-                        'escrow_amount' => $escrowAmount
-                    ]
-                ]);
+                // Transaction financière avec gestion de l'avance
+                $canUseAdvance = $codAmount >= $deliveryFee; // Seulement si on retient les frais de retour
+
+                if ($canUseAdvance) {
+                    // Utiliser d'abord l'avance puis le solde normal pour les frais de retour
+                    $user->wallet->deductReturnFees($escrowAmount, $package->package_code, "Création colis #{$package->package_code} - Frais de retour");
+                } else {
+                    // Utiliser uniquement le solde normal pour les frais de livraison
+                    $this->financialService->processTransaction([
+                        'user_id' => $user->id,
+                        'type' => 'PACKAGE_CREATION_DEBIT',
+                        'amount' => -$escrowAmount,
+                        'package_id' => $package->id,
+                        'description' => "Création colis #{$package->package_code} - Frais de livraison",
+                        'metadata' => [
+                            'package_code' => $package->package_code,
+                            'escrow_type' => 'delivery_fee'
+                        ]
+                    ]);
+                }
 
                 // Mettre à jour le statut
                 $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
@@ -1266,7 +1299,7 @@ class ClientPackageController extends Controller
     {
         do {
             $code = 'PKG_' . strtoupper(Str::random(6)) . '_' . now()->format('md');
-        } while (Package::where('code', $code)->exists());
+        } while (Package::where('package_code', $code)->exists());
 
         return $code;
     }

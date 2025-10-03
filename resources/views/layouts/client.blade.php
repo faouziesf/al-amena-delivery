@@ -536,8 +536,8 @@
 
     <!-- Modern Top Navigation Bar -->
     <nav class="navbar-modern fixed top-0 left-0 right-0 z-50 safe-area-top">
-        <div class="container mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-12 sm:h-14 lg:h-16 py-6 sm:py-4 lg:py-4" style="padding-top: 25px; padding-bottom: 15px;">
+        <div class="container mx-auto px-4 sm:px-6 pt-6 pb-4" style="padding-top: 25px; padding-bottom: 15px;">
+            <div class="flex items-center justify-between h-12 sm:h-14 lg:h-16">
                 <!-- Left: Logo & Brand -->
                 <div class="flex items-center space-x-4">
                     <!-- Mobile menu button -->
