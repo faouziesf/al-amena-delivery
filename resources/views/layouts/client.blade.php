@@ -171,6 +171,12 @@
             backdrop-filter: blur(25px);
             border-bottom: 1px solid rgba(139, 92, 246, 0.1);
             box-shadow: 0 1px 20px rgba(139, 92, 246, 0.05);
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+            will-change: transform;
         }
 
         /* Sidebar Modern */
@@ -179,6 +185,7 @@
             backdrop-filter: blur(30px);
             border-right: 1px solid rgba(139, 92, 246, 0.08);
             box-shadow: 4px 0 24px rgba(139, 92, 246, 0.05);
+            padding-top: 4rem;
         }
 
         /* Navigation Items */
@@ -290,6 +297,36 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        /* Desktop layout fixes */
+        .main-content {
+            margin-top: 4rem;
+            min-height: calc(100vh - 4rem);
+        }
+
+        /* Medium screens (tablets) - between mobile and desktop */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .main-content {
+                margin-top: 4.5rem !important;
+                min-height: calc(100vh - 4.5rem) !important;
+                padding-top: 0.75rem !important;
+            }
+
+            .main-content-mobile {
+                margin-top: 4.5rem !important;
+                min-height: calc(100vh - 4.5rem) !important;
+                padding-top: 0.75rem !important;
+            }
+
+            .sidebar-modern {
+                padding-top: 4.5rem !important;
+            }
+
+            /* Ensure content never gets hidden */
+            main {
+                padding-top: 1rem !important;
+            }
+        }
+
         /* Responsive Improvements */
         @media (max-width: 768px) {
             .navbar-modern {
@@ -300,6 +337,7 @@
             .sidebar-modern {
                 background: rgba(255, 255, 255, 0.98);
                 backdrop-filter: blur(25px);
+                padding-top: 3.5rem;
             }
 
             .nav-item-modern {
@@ -345,6 +383,49 @@
                 font-size: 0.8rem;
                 padding: 8px 10px;
             }
+
+            /* Reduce space for very small screens */
+            .main-content-mobile {
+                margin-top: 3rem !important;
+                min-height: calc(100vh - 3rem) !important;
+            }
+
+            .sidebar-modern {
+                padding-top: 3rem !important;
+            }
+        }
+
+        /* For extra small screens (iPhone SE, etc.) */
+        @media (max-width: 375px) {
+            .main-content-mobile {
+                margin-top: 2.8rem !important;
+                min-height: calc(100vh - 2.8rem) !important;
+            }
+
+            .sidebar-modern {
+                padding-top: 2.8rem !important;
+            }
+
+            .navbar-modern .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            .navbar-modern h-12 {
+                height: 2.5rem;
+            }
+        }
+
+        /* For very small screens (width < 320px) */
+        @media (max-width: 320px) {
+            .main-content-mobile {
+                margin-top: 2.5rem !important;
+                min-height: calc(100vh - 2.5rem) !important;
+            }
+
+            .sidebar-modern {
+                padding-top: 2.5rem !important;
+            }
         }
 
         /* Enhanced Safe Area Support for iPhone Notch */
@@ -382,32 +463,19 @@
             }
 
             .navbar-modern {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 9999 !important;
                 padding-top: max(0.25rem, env(safe-area-inset-top));
                 background: rgba(255, 255, 255, 0.98) !important;
                 backdrop-filter: blur(20px) !important;
-                border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-                will-change: transform;
                 contain: layout style paint;
                 transform: translateZ(0);
             }
 
             .main-content-mobile {
-                margin-top: calc(5rem + max(0.25rem, env(safe-area-inset-top))) !important;
-                min-height: calc(100vh - 5rem - max(0.25rem, env(safe-area-inset-top))) !important;
+                margin-top: 3.5rem !important;
+                min-height: calc(100vh - 3.5rem) !important;
                 position: relative;
                 z-index: 1;
                 will-change: scroll-position;
-                contain: layout style paint;
-            }
-
-            .sidebar-mobile-offset {
-                padding-top: calc(5rem + max(0.25rem, env(safe-area-inset-top))) !important;
-                will-change: transform;
                 contain: layout style paint;
             }
 
@@ -450,11 +518,11 @@
             }
 
             .main-content-mobile {
-                margin-top: calc(5rem + max(env(safe-area-inset-top), 0.5rem));
+                margin-top: calc(2.5rem + max(env(safe-area-inset-top), 0.5rem));
             }
 
-            .sidebar-mobile-offset {
-                padding-top: calc(5rem + max(env(safe-area-inset-top), 0.5rem));
+            .sidebar-modern {
+                padding-top: calc(2.5rem + max(env(safe-area-inset-top), 0.5rem)) !important;
             }
         }
 
@@ -534,10 +602,10 @@
       :class="{ 'mobile-layout': isMobile }"
       x-init="window.clientAppInstance = $data">
 
-    <!-- Modern Top Navigation Bar -->
+    <!-- Modern Compact Navigation Bar -->
     <nav class="navbar-modern fixed top-0 left-0 right-0 z-50 safe-area-top">
-        <div class="container mx-auto px-4 sm:px-6 pt-6 pb-4" style="padding-top: 25px; padding-bottom: 15px;">
-            <div class="flex items-center justify-between h-12 sm:h-14 lg:h-16">
+        <div class="container mx-auto px-3 sm:px-4" style="padding-top: env(safe-area-inset-top, 4px); padding-bottom: 4px;">
+            <div class="flex items-center justify-between h-12 sm:h-14">
                 <!-- Left: Logo & Brand -->
                 <div class="flex items-center space-x-4">
                     <!-- Mobile menu button -->
@@ -550,55 +618,55 @@
                     </button>
 
                     <!-- Brand -->
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-glow-purple will-change-transform hover:scale-105 transition-transform duration-300">
-                            <svg class="w-6 h-6 lg:w-7 lg:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg will-change-transform hover:scale-105 transition-transform duration-200">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
                         </div>
                         <div class="hidden sm:block">
-                            <h1 class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <h1 class="text-lg lg:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 Al-Amena
                             </h1>
-                            <p class="text-sm text-gray-600 font-medium">Espace Client</p>
+                            <p class="text-xs text-gray-600 font-medium">Espace Client</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right: Actions -->
-                <div class="flex items-center space-x-3 lg:space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-3">
                     <!-- Wallet Balance -->
-                    <div class="hidden md:flex items-center space-x-3 wallet-modern px-4 py-2.5 will-change-transform"
+                    <div class="hidden lg:flex items-center space-x-2 wallet-modern px-3 py-2 will-change-transform"
                          :class="{ 'animate-pulse-slow': wallet.balance !== null && wallet.balance < 50 }">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg flex items-center justify-center shadow-md">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"/>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-xs text-emerald-700 font-semibold">Solde Actuel</p>
-                                <p class="text-lg font-bold text-emerald-800" x-text="formatBalance(wallet.balance)" x-show="wallet.balance !== null">
+                                <p class="text-xs text-emerald-700 font-semibold">Solde</p>
+                                <p class="text-sm font-bold text-emerald-800" x-text="formatBalance(wallet.balance)" x-show="wallet.balance !== null">
                                     ---
                                 </p>
                                 <div x-show="wallet.balance === null" class="flex items-center space-x-1">
-                                    <div class="w-4 h-4 bg-emerald-200 rounded-full animate-pulse"></div>
-                                    <div class="w-12 h-3 bg-emerald-100 rounded animate-pulse"></div>
+                                    <div class="w-3 h-3 bg-emerald-200 rounded-full animate-pulse"></div>
+                                    <div class="w-10 h-2 bg-emerald-100 rounded animate-pulse"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Mobile Wallet -->
-                    <div class="md:hidden" x-data="{ mobileWalletOpen: false }">
+                    <div class="lg:hidden" x-data="{ mobileWalletOpen: false }">
                         <button @click="mobileWalletOpen = !mobileWalletOpen"
-                                class="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 transition-all duration-300 hover:bg-emerald-100">
-                            <div class="w-7 h-7 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 transition-all duration-300 hover:bg-emerald-100">
+                            <div class="w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-md flex items-center justify-center">
+                                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2"/>
                                 </svg>
                             </div>
-                            <span class="text-sm font-bold text-emerald-700" x-text="formatBalanceShort(wallet.balance)" x-show="wallet.balance !== null">--</span>
+                            <span class="text-xs font-bold text-emerald-700" x-text="formatBalanceShort(wallet.balance)" x-show="wallet.balance !== null">--</span>
                         </button>
 
                         <div x-show="mobileWalletOpen" @click.away="mobileWalletOpen = false" x-transition
@@ -629,12 +697,12 @@
                     <!-- Notifications -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open"
-                                class="p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-300 relative focus-modern will-change-transform">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300 relative focus-modern will-change-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
                             </svg>
                             <span x-show="notifications.unread_count > 0"
-                                  class="absolute -top-1 -right-1 notification-badge-modern text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                                  class="absolute -top-0.5 -right-0.5 notification-badge-modern text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
                                   x-text="notifications.unread_count"></span>
                         </button>
 
@@ -657,15 +725,15 @@
                     <!-- User Profile -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open"
-                                class="flex items-center space-x-3 p-2 rounded-xl hover:bg-purple-50 transition-all duration-300 focus-modern will-change-transform">
-                            <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                                class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-purple-50 transition-all duration-300 focus-modern will-change-transform">
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+                                <span class="text-white font-bold text-xs">{{ substr(auth()->user()->name, 0, 2) }}</span>
                             </div>
                             <div class="hidden lg:block text-left">
-                                <p class="text-sm font-semibold text-gray-900 truncate max-w-32">{{ auth()->user()->name }}</p>
+                                <p class="text-sm font-semibold text-gray-900 truncate max-w-24">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500">Client</p>
                             </div>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3 h-3 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
@@ -724,15 +792,15 @@
     </nav>
 
     <!-- Main Layout -->
-    <div class="flex pt-20 sm:pt-20 lg:pt-20">
+    <div class="flex">
         <!-- Modern Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-40 w-72 sm:w-80 lg:w-72 sidebar-modern transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-12 sm:pt-14 lg:pt-16"
+        <div class="fixed inset-y-0 left-0 z-40 w-72 sm:w-80 lg:w-72 sidebar-modern transform transition-transform duration-300 ease-in-out lg:translate-x-0"
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
              @click.away="if (isMobile) toggleSidebar()"
              x-show="sidebarOpen || !isMobile"
 
             <!-- Navigation Menu -->
-            <nav class="p-4 sm:p-6 space-y-2 h-full overflow-y-auto pb-24 sidebar-mobile-offset">
+            <nav class="p-4 sm:p-6 space-y-2 h-full overflow-y-auto pb-24">
                 <!-- Dashboard -->
                 <a href="{{ route('client.dashboard') }}"
                    class="nav-item-modern {{ request()->routeIs('client.dashboard') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium">
@@ -934,7 +1002,8 @@
 
         <!-- Main Content -->
         <div class="flex-1 lg:ml-72 will-change-contents">
-            <main class="min-h-screen pb-24 safe-area-bottom px-0 sm:px-0 main-content-mobile">
+            <main class="min-h-screen pb-24 safe-area-bottom px-0 sm:px-0"
+                  :class="isMobile ? 'main-content-mobile' : 'main-content'">
                 @yield('content')
             </main>
         </div>

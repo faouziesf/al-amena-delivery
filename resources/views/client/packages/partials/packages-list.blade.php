@@ -31,174 +31,160 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
     </div>
     @endif
 
-    <!-- Packages Grid - Responsive Cards -->
-    <div class="space-y-3">
+    <!-- Packages Grid - Mobile Optimized Compact List -->
+    <div class="space-y-2 sm:space-y-3">
         @foreach($packages as $package)
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
-            <!-- Mobile-First Package Card -->
-            <div class="p-4">
-                <!-- Header Row: Checkbox + Status + Actions -->
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center space-x-3">
+            <!-- Mobile Optimized Package Row -->
+            <div class="p-2 sm:p-3">
+                <div class="flex items-start sm:items-center justify-between">
+                    <!-- Left Section: Checkbox + Package Info -->
+                    <div class="flex items-start sm:items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                         @if($showBulkActions)
                             <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}"
                                    data-status="{{ $package->status }}"
-                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2">
+                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 flex-shrink-0">
                         @endif
 
-                        <!-- Status Badge - Improved Design -->
-                        <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border-2
+                        <!-- Enhanced Status Badge - Mobile Optimized -->
+                        <div class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg border-2 flex-shrink-0 min-w-[70px] sm:min-w-[90px] justify-center
                             {{ match($package->status) {
-                                'CREATED' => 'bg-gray-50 text-gray-700 border-gray-200',
-                                'AVAILABLE' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                'PICKED_UP' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
-                                'DELIVERED' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                'RETURNED' => 'bg-amber-50 text-amber-700 border-amber-200',
-                                'REFUSED' => 'bg-red-50 text-red-700 border-red-200',
-                                default => 'bg-gray-50 text-gray-700 border-gray-200',
+                                'CREATED' => 'bg-gray-100 text-gray-800 border-gray-300 shadow-sm',
+                                'AVAILABLE' => 'bg-blue-100 text-blue-800 border-blue-300 shadow-sm',
+                                'PICKED_UP' => 'bg-indigo-100 text-indigo-800 border-indigo-300 shadow-sm',
+                                'DELIVERED' => 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm',
+                                'RETURNED' => 'bg-amber-100 text-amber-800 border-amber-300 shadow-sm',
+                                'REFUSED' => 'bg-red-100 text-red-800 border-red-300 shadow-sm',
+                                default => 'bg-gray-100 text-gray-800 border-gray-300 shadow-sm',
                             } }}
                         ">
-                            {{ match($package->status) {
-                                'CREATED' => '🆕 Créé',
-                                'AVAILABLE' => '📋 Disponible',
-                                'PICKED_UP' => '🚚 Collecté',
-                                'DELIVERED' => '✅ Livré',
-                                'RETURNED' => '↩️ Retourné',
-                                'REFUSED' => '❌ Refusé',
-                                default => $package->status,
-                            } }}
-                        </span>
-                    </div>
+                            <span class="mr-1 sm:mr-1.5 text-sm">
+                                {{ match($package->status) {
+                                    'CREATED' => '🆕',
+                                    'AVAILABLE' => '📋',
+                                    'PICKED_UP' => '🚚',
+                                    'DELIVERED' => '✅',
+                                    'RETURNED' => '↩️',
+                                    'REFUSED' => '❌',
+                                    default => '📦',
+                                } }}
+                            </span>
+                            <span class="uppercase tracking-wide text-xs sm:text-xs">
+                                {{ match($package->status) {
+                                    'CREATED' => 'Créé',
+                                    'AVAILABLE' => 'Dispo',
+                                    'PICKED_UP' => 'Collecté',
+                                    'DELIVERED' => 'Livré',
+                                    'RETURNED' => 'Retourné',
+                                    'REFUSED' => 'Refusé',
+                                    default => 'Inconnu',
+                                } }}
+                            </span>
+                        </div>
 
-                    <!-- Quick Actions Dropdown -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                            </svg>
-                        </button>
-
-                        <!-- Dropdown Menu -->
-                        <div x-show="open" @click.away="open = false"
-                             x-transition:enter="transition ease-out duration-100"
-                             x-transition:enter-start="transform opacity-0 scale-95"
-                             x-transition:enter-end="transform opacity-100 scale-100"
-                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-
-                            <div class="py-1">
+                        <!-- Package Details - Mobile Optimized -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-1">
                                 <a href="{{ route('client.packages.show', $package) }}"
-                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                    Voir détails
+                                   class="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors mb-1 sm:mb-0">
+                                    {{ $package->package_code }}
                                 </a>
-
-                                <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank"
-                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                <div class="flex items-center text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded self-start">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                                     </svg>
-                                    Suivre colis
-                                </a>
-
-                                <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                    </svg>
-                                    Imprimer étiquette
-                                </a>
-
-                                @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
-                                    <div class="border-t border-gray-100"></div>
-                                    <x-client.package-complaint-button :package="$package" class="flex items-center px-4 py-2 text-sm text-amber-600 hover:bg-amber-50" />
-                                @endif
-
-                                @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
-                                    <div class="border-t border-gray-100"></div>
-                                    <button onclick="deletePackage({{ $package->id }}, '{{ $package->package_code }}')"
-                                            class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        Supprimer
-                                    </button>
-                                @endif
+                                    <span class="font-medium">{{ number_format($package->cod_amount, 2) }} DT</span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Package Information -->
-                <div class="space-y-3">
-                    <!-- Package Code & COD Amount Row -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <a href="{{ route('client.packages.show', $package) }}"
-                               class="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                                {{ $package->package_code }}
-                            </a>
-                        </div>
-                        <div class="text-right">
-                            <div class="inline-flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-lg">
-                                <svg class="w-4 h-4 text-green-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                                </svg>
-                                <span class="text-sm font-bold text-green-700">{{ number_format($package->cod_amount, 2) }} DT</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recipient Information -->
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <div class="flex items-start space-x-3">
-                            <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">
-                                    {{ $package->recipient_data['name'] ?? 'N/A' }}
-                                </p>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 text-xs text-gray-500 space-y-1 sm:space-y-0">
+                                <span class="truncate max-w-[150px] sm:max-w-[120px]">{{ $package->recipient_data['name'] ?? 'N/A' }}</span>
+                                <span class="flex items-center space-x-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     </svg>
-                                    <span class="text-xs text-gray-500 truncate">{{ $package->delegationTo->name ?? 'N/A' }}</span>
-                                </div>
-                                @if(isset($package->recipient_data['phone']))
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                    </svg>
-                                    <span class="text-xs text-gray-500">{{ $package->recipient_data['phone'] }}</span>
-                                </div>
-                                @endif
+                                    <span class="truncate max-w-[80px] sm:max-w-[100px]">{{ $package->delegationTo->name ?? 'N/A' }}</span>
+                                </span>
+                                <span>{{ $package->created_at->format('d/m') }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Date and Progress -->
-                    <div class="flex items-center justify-between text-xs text-gray-500">
-                        <div class="flex items-center space-x-2">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span>Créé {{ $package->created_at->format('d/m/Y H:i') }}</span>
-                        </div>
-
-                        @if($package->updated_at->gt($package->created_at))
-                        <div class="flex items-center space-x-1">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>Maj {{ $package->updated_at->diffForHumans() }}</span>
-                        </div>
+                    <!-- Right Section: Actions - Mobile Optimized -->
+                    <div class="flex items-start sm:items-center space-x-1 ml-2 sm:ml-3">
+                        <!-- Quick Action Buttons for CREATED/AVAILABLE -->
+                        @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                            <a href="{{ route('client.packages.edit', $package) }}"
+                               class="p-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors touch-manipulation"
+                               title="Modifier">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                            <button onclick="deletePackage({{ $package->id }}, '{{ $package->package_code }}')"
+                                    class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors touch-manipulation"
+                                    title="Supprimer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
                         @endif
+
+                        <!-- More Actions Dropdown -->
+                        <div class="relative">
+                            <button onclick="toggleDropdown({{ $package->id }})"
+                                    class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors touch-manipulation"
+                                    title="Plus d'actions"
+                                    id="dropdown-button-{{ $package->id }}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="dropdown-menu-{{ $package->id }}"
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-30 hidden"
+                                 style="display: none;">
+
+                                <div class="py-1">
+                                    <a href="{{ route('client.packages.show', $package) }}"
+                                       class="flex items-center px-3 sm:px-4 py-2.5 sm:py-2 text-sm text-gray-700 hover:bg-gray-100 touch-manipulation">
+                                        <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                        Voir détails
+                                    </a>
+
+                                    <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank"
+                                       class="flex items-center px-3 sm:px-4 py-2.5 sm:py-2 text-sm text-gray-700 hover:bg-gray-100 touch-manipulation">
+                                        <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                        </svg>
+                                        Suivre colis
+                                    </a>
+
+                                    <a href="{{ route('client.packages.print', $package) }}" target="_blank"
+                                       class="flex items-center px-3 sm:px-4 py-2.5 sm:py-2 text-sm text-gray-700 hover:bg-gray-100 touch-manipulation">
+                                        <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Imprimer étiquette
+                                    </a>
+
+                                    @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{{ route('client.complaints.create', $package) }}"
+                                           class="flex items-center px-3 sm:px-4 py-2.5 sm:py-2 text-sm text-amber-600 hover:bg-amber-50 touch-manipulation">
+                                            <svg class="w-4 h-4 mr-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                            </svg>
+                                            Créer réclamation
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

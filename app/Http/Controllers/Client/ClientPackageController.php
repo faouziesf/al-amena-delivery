@@ -1293,6 +1293,123 @@ class ClientPackageController extends Controller
     }
 
     /**
+     * Afficher le formulaire d'édition d'un colis
+     */
+    public function edit(Package $package)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'CLIENT') {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que le colis appartient à l'utilisateur
+        if ($package->client_id !== $user->id) {
+            abort(403, 'Vous ne pouvez pas modifier ce colis.');
+        }
+
+        // Vérifier que le colis peut être modifié
+        if (!in_array($package->status, ['CREATED', 'AVAILABLE'])) {
+            return redirect()->route('client.packages.index')
+                ->with('error', 'Ce colis ne peut plus être modifié car il a déjà été pris en charge.');
+        }
+
+        // Récupérer les adresses de pickup du client
+        $pickupAddresses = ClientPickupAddress::forClient($user->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Récupérer les gouvernorats et délégations depuis la config
+        $gouvernorats = config('tunisia.gouvernorats', []);
+        $delegations = config('tunisia.delegations', []);
+
+        return view('client.packages.edit', compact(
+            'package', 'pickupAddresses', 'gouvernorats', 'delegations'
+        ));
+    }
+
+    /**
+     * Mettre à jour un colis
+     */
+    public function update(Request $request, Package $package)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'CLIENT') {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que le colis appartient à l'utilisateur
+        if ($package->client_id !== $user->id) {
+            abort(403, 'Vous ne pouvez pas modifier ce colis.');
+        }
+
+        // Vérifier que le colis peut être modifié
+        if (!in_array($package->status, ['CREATED', 'AVAILABLE'])) {
+            return redirect()->route('client.packages.index')
+                ->with('error', 'Ce colis ne peut plus être modifié car il a déjà été pris en charge.');
+        }
+
+        $validated = $request->validate([
+            'pickup_address_id' => 'required|exists:client_pickup_addresses,id',
+            'nom_complet' => 'required|string|max:255',
+            'telephone_1' => 'required|string|max:20',
+            'telephone_2' => 'nullable|string|max:20',
+            'adresse_complete' => 'required|string|max:500',
+            'gouvernorat' => 'required|string|max:100',
+            'delegation' => 'required|string|max:100',
+            'contenu' => 'required|string|max:255',
+            'prix' => 'required|numeric|min:0|max:9999.999',
+            'commentaire' => 'nullable|string|max:1000',
+            'fragile' => 'boolean',
+            'signature_obligatoire' => 'boolean',
+            'autorisation_ouverture' => 'boolean',
+            'est_echange' => 'boolean',
+            'payment_method' => 'required|in:especes_seulement,cheque_seulement,especes_et_cheques'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Mettre à jour les données du destinataire
+            $recipientData = [
+                'name' => $validated['nom_complet'],
+                'phone' => $validated['telephone_1'],
+                'phone2' => $validated['telephone_2'] ?? null,
+                'address' => $validated['adresse_complete'],
+                'gouvernorat' => $validated['gouvernorat'],
+                'delegation' => $validated['delegation'],
+            ];
+
+            // Mettre à jour le colis
+            $package->update([
+                'pickup_address_id' => $validated['pickup_address_id'],
+                'recipient_data' => $recipientData,
+                'content_description' => $validated['contenu'],
+                'cod_amount' => $validated['prix'],
+                'notes' => $validated['commentaire'],
+                'is_fragile' => $request->has('fragile'),
+                'requires_signature' => $request->has('signature_obligatoire'),
+                'allow_opening' => $request->has('autorisation_ouverture'),
+                'is_exchange' => $request->has('est_echange'),
+                'payment_method' => $validated['payment_method'],
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('client.packages.index')
+                ->with('success', 'Colis modifié avec succès.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la modification du colis: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Générer un code unique pour le package
      */
     private function generatePackageCode()

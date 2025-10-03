@@ -23,8 +23,11 @@ class Ticket extends Model
         'priority',
         'client_id',
         'assigned_to_id',
+        'assigned_to',
         'complaint_id',
         'package_id',
+        'category',
+        'source',
         'metadata',
         'first_response_at',
         'last_activity_at',
@@ -398,6 +401,38 @@ class Ticket extends Model
     {
         $this->update(['last_activity_at' => now()]);
         return $this;
+    }
+
+    /**
+     * Ajouter une entrée à l'historique du ticket
+     */
+    public function addToHistory($action, $description, $userId = null, $userType = 'SYSTEM')
+    {
+        $metadata = $this->metadata ?? [];
+
+        if (!isset($metadata['history'])) {
+            $metadata['history'] = [];
+        }
+
+        $metadata['history'][] = [
+            'action' => $action,
+            'description' => $description,
+            'user_id' => $userId,
+            'user_type' => $userType,
+            'timestamp' => now()->toISOString()
+        ];
+
+        $this->update(['metadata' => $metadata]);
+
+        return $this;
+    }
+
+    /**
+     * Relation vers les pièces jointes
+     */
+    public function attachments()
+    {
+        return $this->hasMany(\App\Models\TicketAttachment::class);
     }
 
     // ==================== BOOT METHOD ====================

@@ -371,14 +371,21 @@ class SimpleDelivererController extends Controller
                 return response()->json([
                     'success' => true,
                     'type' => 'package',
-                    'data' => [
+                    'message' => 'Colis trouvé et assigné à vous',
+                    'package' => [
                         'id' => $package->id,
-                        'tracking_number' => $package->tracking_number,
-                        'recipient_name' => $package->recipient_name,
-                        'recipient_address' => $package->recipient_address,
+                        'code' => $package->tracking_number,
                         'cod_amount' => $package->cod_amount,
+                        'formatted_cod' => number_format($package->cod_amount, 3) . ' TND',
                         'status' => $package->status
-                    ]
+                    ],
+                    'delivery_info' => [
+                        'name' => $package->recipient_name,
+                        'address' => $package->recipient_address,
+                        'phone' => $package->recipient_phone
+                    ],
+                    'redirect' => route('deliverer.task.detail', $package),
+                    'action' => $this->getPackageAction($package->status)
                 ]);
             }
 
@@ -391,13 +398,21 @@ class SimpleDelivererController extends Controller
                 return response()->json([
                     'success' => true,
                     'type' => 'pickup',
-                    'data' => [
+                    'message' => 'Demande de collecte trouvée',
+                    'package' => [
                         'id' => $pickup->id,
-                        'pickup_address' => $pickup->pickup_address,
-                        'pickup_contact' => $pickup->pickup_contact,
-                        'packages_count' => $pickup->packages()->count(),
+                        'code' => $pickup->pickup_code ?? 'PICKUP_' . $pickup->id,
+                        'cod_amount' => 0,
+                        'formatted_cod' => '0.000 TND',
                         'status' => $pickup->status
-                    ]
+                    ],
+                    'delivery_info' => [
+                        'name' => $pickup->pickup_contact_name ?? $pickup->pickup_contact,
+                        'address' => $pickup->pickup_address,
+                        'phone' => $pickup->pickup_phone
+                    ],
+                    'redirect' => route('deliverer.run.sheet'),
+                    'action' => 'pickup'
                 ]);
             }
 
@@ -700,6 +715,27 @@ class SimpleDelivererController extends Controller
             ->get();
 
         return view('deliverer.withdrawals', compact('withdrawals'));
+    }
+
+    /**
+     * Déterminer l'action appropriée selon le statut du package
+     */
+    private function getPackageAction($status)
+    {
+        switch ($status) {
+            case 'AVAILABLE':
+                return 'accept';
+            case 'ACCEPTED':
+                return 'pickup';
+            case 'PICKED_UP':
+                return 'deliver';
+            case 'DELIVERED':
+                return 'view';
+            case 'RETURNED':
+                return 'view';
+            default:
+                return 'view';
+        }
     }
 
 }

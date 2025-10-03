@@ -44,6 +44,8 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/', [ClientPackageController::class, 'store'])->name('store');
         Route::post('/store-multiple', [ClientPackageController::class, 'storeMultiple'])->name('store-multiple');
         Route::get('/{package}', [ClientPackageController::class, 'show'])->name('show');
+        Route::get('/{package}/edit', [ClientPackageController::class, 'edit'])->name('edit');
+        Route::put('/{package}', [ClientPackageController::class, 'update'])->name('update');
         Route::delete('/{package}', [ClientPackageController::class, 'destroy'])->name('destroy');
         Route::post('/duplicate/{package}', [ClientPackageController::class, 'duplicate'])->name('duplicate');
         Route::post('/bulk-delete', [ClientPackageController::class, 'bulkDestroy'])->name('bulk.destroy');

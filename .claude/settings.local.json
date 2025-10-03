@@ -14,7 +14,9 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(grep:*)",
       "Bash(done)",
-      "Bash(del test_mark_processed.php)"
+      "Bash(del test_mark_processed.php)",
+      "Bash(dir c:UsersDELLDocumentsGitHubal-amena-deliveryresourcesviewsdeliverer)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []
