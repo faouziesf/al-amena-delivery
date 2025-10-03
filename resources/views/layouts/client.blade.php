@@ -545,6 +545,35 @@
             background: rgba(139, 92, 246, 0.3);
         }
 
+        /* Prevent notification black screen on mobile */
+        @media (max-width: 640px) {
+            .toast-modern,
+            [class*="toast"],
+            [id*="toast"] {
+                position: fixed !important;
+                right: 1rem !important;
+                left: 1rem !important;
+                top: max(4rem, calc(env(safe-area-inset-top) + 3rem)) !important;
+                width: auto !important;
+                max-width: none !important;
+                z-index: 10001 !important;
+                pointer-events: auto !important;
+                transform: none !important;
+                backdrop-filter: none !important;
+            }
+
+            /* Ensure notifications don't cover entire screen */
+            .toast-modern::before,
+            [class*="toast"]::before {
+                content: none !important;
+            }
+
+            /* Fix Alpine transitions on mobile */
+            [x-transition] {
+                will-change: opacity, transform !important;
+            }
+        }
+
         /* Offline Indicator */
         .offline::before {
             content: "🔌 Mode hors ligne";
@@ -637,7 +666,7 @@
                 <div class="flex items-center space-x-2 sm:space-x-3">
                     <!-- Wallet Balance -->
                     <div class="hidden lg:flex items-center space-x-2 wallet-modern px-3 py-2 will-change-transform"
-                         :class="{ 'animate-pulse-slow': wallet.balance !== null && wallet.balance < 50 }">
+                         :class="{ 'animate-pulse-slow': wallet.total_available !== null && wallet.total_available < 50 }">
                         <div class="flex items-center space-x-2">
                             <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg flex items-center justify-center shadow-md">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,7 +675,7 @@
                             </div>
                             <div>
                                 <p class="text-xs text-emerald-700 font-semibold">Solde</p>
-                                <p class="text-sm font-bold text-emerald-800" x-text="formatBalance(wallet.balance)" x-show="wallet.balance !== null">
+                                <p class="text-sm font-bold text-emerald-800" x-text="formatBalance(wallet.total_available)" x-show="wallet.total_available !== null && wallet.total_available !== undefined">
                                     ---
                                 </p>
                                 <div x-show="wallet.balance === null" class="flex items-center space-x-1">
@@ -666,7 +695,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2"/>
                                 </svg>
                             </div>
-                            <span class="text-xs font-bold text-emerald-700" x-text="formatBalanceShort(wallet.balance)" x-show="wallet.balance !== null">--</span>
+                            <span class="text-xs font-bold text-emerald-700" x-text="formatBalanceShort(wallet.total_available)" x-show="wallet.total_available !== null && wallet.total_available !== undefined">--</span>
                         </button>
 
                         <div x-show="mobileWalletOpen" @click.away="mobileWalletOpen = false" x-transition
@@ -674,7 +703,7 @@
                             <div class="p-4 border-b bg-gradient-to-r from-emerald-50 to-green-50">
                                 <div class="text-center">
                                     <p class="text-sm text-emerald-600 font-semibold">Solde Actuel</p>
-                                    <p class="text-2xl font-bold text-emerald-700" x-text="formatBalance(wallet.balance)">---</p>
+                                    <p class="text-2xl font-bold text-emerald-700" x-text="formatBalance(wallet.total_available)">---</p>
                                 </div>
                             </div>
                             <div class="p-3 space-y-2">
@@ -800,7 +829,7 @@
              x-show="sidebarOpen || !isMobile"
 
             <!-- Navigation Menu -->
-            <nav class="p-4 sm:p-6 space-y-2 h-full overflow-y-auto pb-24">
+            <nav class="p-4 sm:p-6 space-y-2 h-full overflow-y-auto">
                 <!-- Dashboard -->
                 <a href="{{ route('client.dashboard') }}"
                    class="nav-item-modern {{ request()->routeIs('client.dashboard') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium">
@@ -1002,7 +1031,7 @@
 
         <!-- Main Content -->
         <div class="flex-1 lg:ml-72 will-change-contents">
-            <main class="min-h-screen pb-24 safe-area-bottom px-0 sm:px-0"
+            <main class="min-h-screen safe-area-bottom px-0 sm:px-0"
                   :class="isMobile ? 'main-content-mobile' : 'main-content'">
                 @yield('content')
             </main>
@@ -1029,14 +1058,15 @@
              x-transition:leave="transform transition ease-in duration-200"
              x-transition:leave-start="translate-x-0 opacity-100"
              x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed top-24 right-6 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-4 rounded-2xl shadow-modern-lg z-50 max-w-sm toast-modern">
-            <div class="flex items-center space-x-3">
-                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="fixed right-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm"
+             style="top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem)); max-width: calc(100vw - 2rem);">
+            <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span class="font-medium">{{ session('success') }}</span>
-                <button @click="show = false" class="ml-auto">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="text-sm font-medium">{{ session('success') }}</span>
+                <button @click="show = false" class="ml-auto hover:bg-white hover:bg-opacity-20 rounded p-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -1052,12 +1082,13 @@
              x-transition:leave="transform transition ease-in duration-200"
              x-transition:leave-start="translate-x-0 opacity-100"
              x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed top-24 right-6 bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-4 rounded-2xl shadow-modern-lg z-50 max-w-sm toast-modern">
-            <div class="flex items-start space-x-3">
-                <svg class="w-6 h-6 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="fixed right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm"
+             style="top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem)); max-width: calc(100vw - 2rem);">
+            <div class="flex items-start space-x-2">
+                <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <div class="flex-1 font-medium">
+                <div class="flex-1 text-sm font-medium">
                     @if(session('error'))
                         <span>{{ session('error') }}</span>
                     @endif
@@ -1067,8 +1098,8 @@
                         @endforeach
                     @endif
                 </div>
-                <button @click="show = false" class="ml-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="show = false" class="ml-auto hover:bg-white hover:bg-opacity-20 rounded p-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -1169,12 +1200,17 @@
                             const data = await response.json();
                             this.wallet.balance = data.balance;
                             this.wallet.advance_balance = data.advance_balance || 0;
+                            this.wallet.frozen_amount = data.frozen || 0;
                             this.wallet.currency = data.currency || 'DT';
+                            // Calculer le solde total disponible = avance + solde - montant gelé
+                            this.wallet.total_available = (data.advance_balance || 0) + data.balance - (data.frozen || 0);
                         }
                     } catch (error) {
                         console.error('Erreur chargement solde:', error);
                         this.wallet.balance = 0;
                         this.wallet.advance_balance = 0;
+                        this.wallet.frozen_amount = 0;
+                        this.wallet.total_available = 0;
                     }
                 },
 
@@ -1293,34 +1329,102 @@
         }
 
         function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            let bgClass;
-            switch (type) {
-                case 'success':
-                    bgClass = 'bg-gradient-to-r from-emerald-500 to-green-500';
-                    break;
-                case 'error':
-                    bgClass = 'bg-gradient-to-r from-red-500 to-pink-500';
-                    break;
-                case 'info':
-                    bgClass = 'bg-gradient-to-r from-blue-500 to-cyan-500';
-                    break;
-                case 'warning':
-                    bgClass = 'bg-gradient-to-r from-yellow-500 to-orange-500';
-                    break;
-                default:
-                    bgClass = 'bg-gradient-to-r from-gray-500 to-gray-600';
+            // Sur mobile, si il y a un problème avec les toasts, utiliser alert comme fallback
+            const isMobile = window.innerWidth <= 640;
+
+            try {
+                const toast = document.createElement('div');
+                let bgClass;
+                let icon = '';
+
+                switch (type) {
+                    case 'success':
+                        bgClass = 'bg-gradient-to-r from-emerald-500 to-green-500';
+                        icon = '✅';
+                        break;
+                    case 'error':
+                        bgClass = 'bg-gradient-to-r from-red-500 to-pink-500';
+                        icon = '❌';
+                        break;
+                    case 'info':
+                        bgClass = 'bg-gradient-to-r from-blue-500 to-cyan-500';
+                        icon = 'ℹ️';
+                        break;
+                    case 'warning':
+                        bgClass = 'bg-gradient-to-r from-yellow-500 to-orange-500';
+                        icon = '⚠️';
+                        break;
+                    default:
+                        bgClass = 'bg-gradient-to-r from-gray-500 to-gray-600';
+                        icon = 'ℹ️';
+                }
+
+                // Position top sécurisée pour mobile - plus basse pour éviter la navbar
+                const topPosition = isMobile ? 'calc(env(safe-area-inset-top, 1rem) + 5.5rem)' : '6rem';
+
+                toast.className = `fixed left-4 right-4 ${bgClass} text-white px-4 py-3 rounded-lg shadow-lg z-[10001] transform transition-all duration-300`;
+
+                // Position et taille adaptées
+                toast.style.cssText = `
+                    top: ${topPosition};
+                    max-width: ${isMobile ? 'calc(100vw - 2rem)' : '24rem'};
+                    margin: 0 auto;
+                    pointer-events: auto;
+                    transform: translateY(-100%);
+                    opacity: 0;
+                `;
+
+                toast.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <span class="text-lg flex-shrink-0">${icon}</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium leading-relaxed">${message}</p>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()"
+                                class="flex-shrink-0 ml-2 text-white hover:text-gray-200 rounded-full p-1 hover:bg-white hover:bg-opacity-20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+
+                // Ajouter directement au body pour éviter les problèmes de container
+                document.body.appendChild(toast);
+
+                // Animation d'entrée plus robuste
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateY(0)';
+                    toast.style.opacity = '1';
+                });
+
+                // Auto-suppression avec cleanup
+                const cleanup = () => {
+                    if (toast && toast.parentNode) {
+                        toast.style.transform = 'translateY(-100%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => {
+                            if (toast && toast.parentNode) {
+                                toast.remove();
+                            }
+                        }, 300);
+                    }
+                };
+
+                setTimeout(cleanup, type === 'info' ? 3000 : 5000);
+
+                // Nettoyage au clic
+                toast.addEventListener('click', cleanup);
+
+            } catch (error) {
+                // Fallback pour mobile en cas de problème avec les toasts
+                console.error('Erreur toast:', error);
+                if (isMobile) {
+                    alert(`${type.toUpperCase()}: ${message}`);
+                } else {
+                    console.log(`${type.toUpperCase()}: ${message}`);
+                }
             }
-
-            toast.className = `fixed top-24 right-6 ${bgClass} text-white px-6 py-4 rounded-2xl shadow-modern-lg z-50 transform transition-all duration-300 max-w-sm toast-modern`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.remove(), 300);
-            }, type === 'info' ? 2000 : 4000);
         }
 
         window.showToast = showToast;

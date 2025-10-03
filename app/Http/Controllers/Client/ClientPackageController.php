@@ -368,27 +368,96 @@ class ClientPackageController extends Controller
         }
 
         // Vérifier que le colis peut être supprimé
-        if (!in_array($package->status, ['CREATED', 'AVAILABLE'])) {
+        if (!$package->canBeDeleted()) {
+            $reason = !in_array($package->status, ['CREATED', 'AVAILABLE'])
+                ? 'Statut ne permet pas la suppression: ' . $package->status
+                : 'Colis déjà assigné à un pickup ou manifeste';
+
             return response()->json([
                 'success' => false,
-                'message' => 'Impossible de supprimer ce colis. Statut actuel: ' . $package->status
+                'message' => "Impossible de supprimer ce colis. {$reason}"
             ], 400);
         }
 
         try {
             DB::beginTransaction();
 
-            // Rembourser l'escrow au client
+            // Calculer le montant total à rembourser et déterminer comment rembourser
+            $refundAmount = 0;
+            $refundDetails = [];
+
+            // Vérifier comment les frais de livraison ont été débités lors de la création
+            $escrowDebitTransaction = null;
             if ($package->amount_in_escrow > 0) {
+                // Chercher la transaction de débit originale pour ce colis
+                $escrowDebitTransaction = \App\Models\WalletTransaction::where('user_id', $package->sender_id)
+                    ->where('package_id', $package->id)
+                    ->where('type', 'PACKAGE_CREATION_DEBIT')
+                    ->where('amount', '<', 0)
+                    ->first();
+            }
+
+            // Rembourser les frais de livraison (escrow)
+            if ($package->amount_in_escrow > 0) {
+                $refundAmount += $package->amount_in_escrow;
+                $refundDetails[] = "Frais de livraison: {$package->amount_in_escrow} DT";
+
+                // Rembourser selon la méthode utilisée lors de la création
+                if ($escrowDebitTransaction &&
+                    isset($escrowDebitTransaction->metadata['escrow_type']) &&
+                    $escrowDebitTransaction->metadata['escrow_type'] === 'delivery_fee') {
+
+                    // Les frais ont été débités du solde normal, rembourser au solde normal
+                    $this->financialService->processTransaction([
+                        'user_id' => $package->sender_id,
+                        'type' => 'PACKAGE_DELETION_CREDIT',
+                        'amount' => $package->amount_in_escrow,
+                        'package_id' => $package->id,
+                        'description' => "Remboursement suppression colis #{$package->package_code} - Frais de livraison (solde normal)",
+                        'metadata' => [
+                            'package_code' => $package->package_code,
+                            'original_escrow' => $package->amount_in_escrow,
+                            'refund_type' => 'delivery_fee_normal_balance'
+                        ]
+                    ]);
+                } else {
+                    // Les frais ont probablement été débités via deductReturnFees (avance + solde), rembourser via refundReturnFees
+                    $user = Auth::user();
+                    if (method_exists($user->wallet, 'refundReturnFees')) {
+                        $user->wallet->refundReturnFees($package->amount_in_escrow, $package->package_code, "Remboursement suppression colis #{$package->package_code} - Frais de livraison (avance + solde)");
+                    } else {
+                        // Fallback si la méthode n'existe pas
+                        $this->financialService->processTransaction([
+                            'user_id' => $package->sender_id,
+                            'type' => 'PACKAGE_DELETION_CREDIT',
+                            'amount' => $package->amount_in_escrow,
+                            'package_id' => $package->id,
+                            'description' => "Remboursement suppression colis #{$package->package_code} - Frais de livraison",
+                            'metadata' => [
+                                'package_code' => $package->package_code,
+                                'original_escrow' => $package->amount_in_escrow,
+                                'refund_type' => 'delivery_fee_fallback'
+                            ]
+                        ]);
+                    }
+                }
+            }
+
+            // Rembourser les frais de retour payés lors de la création (toujours au solde normal)
+            if ($package->return_fee > 0) {
+                $refundAmount += $package->return_fee;
+                $refundDetails[] = "Frais de retour: {$package->return_fee} DT";
+
                 $this->financialService->processTransaction([
                     'user_id' => $package->sender_id,
                     'type' => 'PACKAGE_DELETION_CREDIT',
-                    'amount' => $package->amount_in_escrow,
+                    'amount' => $package->return_fee,
                     'package_id' => $package->id,
-                    'description' => "Remboursement suppression colis #{$package->package_code}",
+                    'description' => "Remboursement suppression colis #{$package->package_code} - Frais de retour",
                     'metadata' => [
                         'package_code' => $package->package_code,
-                        'original_escrow' => $package->amount_in_escrow
+                        'return_fee' => $package->return_fee,
+                        'refund_type' => 'return_fee'
                     ]
                 ]);
             }
@@ -402,15 +471,22 @@ class ClientPackageController extends Controller
 
             DB::commit();
 
+            $successMessage = "Colis #{$packageCode} supprimé avec succès.";
+            if ($refundAmount > 0) {
+                $successMessage .= " Remboursement: {$refundAmount} DT";
+            }
+
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Colis #{$packageCode} supprimé avec succès."
+                    'message' => $successMessage,
+                    'refund_amount' => $refundAmount,
+                    'refund_details' => $refundDetails
                 ]);
             }
 
             return redirect()->route('client.packages.index')
-                ->with('success', "Colis #{$packageCode} supprimé avec succès.");
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -439,8 +515,10 @@ class ClientPackageController extends Controller
         $user = Auth::user();
         $packages = Package::whereIn('id', $validated['package_ids'])
             ->where('sender_id', $user->id)
-            ->whereIn('status', ['CREATED', 'AVAILABLE'])
-            ->get();
+            ->get()
+            ->filter(function ($package) {
+                return $package->canBeDeleted();
+            });
 
         if ($packages->count() === 0) {
             return response()->json([
@@ -456,19 +534,33 @@ class ClientPackageController extends Controller
             $totalRefund = 0;
 
             foreach ($packages as $package) {
+                // Calculer le remboursement pour ce colis
+                $packageRefund = 0;
+
                 // Rembourser l'escrow
                 if ($package->amount_in_escrow > 0) {
-                    $totalRefund += $package->amount_in_escrow;
+                    $packageRefund += $package->amount_in_escrow;
+                }
+
+                // Rembourser les frais de retour
+                if ($package->return_fee > 0) {
+                    $packageRefund += $package->return_fee;
+                }
+
+                if ($packageRefund > 0) {
+                    $totalRefund += $packageRefund;
                     $this->financialService->processTransaction([
                         'user_id' => $user->id,
                         'type' => 'PACKAGE_DELETION_CREDIT',
-                        'amount' => $package->amount_in_escrow,
+                        'amount' => $packageRefund,
                         'package_id' => $package->id,
-                        'description' => "Remboursement suppression groupée #{$package->package_code}",
+                        'description' => "Remboursement suppression groupée #{$package->package_code} - Frais livraison: {$package->amount_in_escrow} DT, Frais retour: {$package->return_fee} DT",
                         'metadata' => [
                             'package_code' => $package->package_code,
                             'bulk_deletion' => true,
-                            'original_escrow' => $package->amount_in_escrow
+                            'original_escrow' => $package->amount_in_escrow,
+                            'return_fee' => $package->return_fee,
+                            'total_package_refund' => $packageRefund
                         ]
                     ]);
                 }

@@ -438,6 +438,48 @@ class UserWallet extends Model
         return $this;
     }
 
+    /**
+     * Rembourser les frais de retour en restituant d'abord à l'avance puis au solde normal
+     * (Inverse de deductReturnFees)
+     */
+    public function refundReturnFees($amount, $packageCode = null, $description = 'Remboursement frais de retour')
+    {
+        if ($amount <= 0) {
+            throw new \Exception('Le montant du remboursement doit être positif.');
+        }
+
+        // Pour déterminer la répartition du remboursement, on pourrait vérifier l'historique
+        // Mais pour simplifier, on va rembourser d'abord à l'avance (dans la limite de la capacité d'avance)
+        // puis le reste au solde normal
+
+        $remainingAmount = $amount;
+
+        // Rechercher les transactions de déduction d'avance pour ce colis pour déterminer combien rembourser à l'avance
+        $advanceTransactions = WalletTransaction::where('user_id', $this->user_id)
+            ->where('type', 'ADVANCE_USE_RETURN_FEE')
+            ->where('description', 'like', "%{$packageCode}%")
+            ->where('amount', '<', 0)
+            ->get();
+
+        $totalAdvanceUsed = $advanceTransactions->sum(function($transaction) {
+            return abs($transaction->amount);
+        });
+
+        // Rembourser à l'avance le montant qui avait été déduit de l'avance
+        if ($totalAdvanceUsed > 0 && $remainingAmount > 0) {
+            $advanceRefund = min($totalAdvanceUsed, $remainingAmount);
+            $this->addAdvanceFunds($advanceRefund, $description . ($packageCode ? " - Colis: {$packageCode}" : '') . " (avance)", $packageCode);
+            $remainingAmount -= $advanceRefund;
+        }
+
+        // Rembourser le reste au solde normal
+        if ($remainingAmount > 0) {
+            $this->addFunds($remainingAmount, $description . ($packageCode ? " - Colis: {$packageCode}" : '') . " (solde normal)", $packageCode);
+        }
+
+        return $this;
+    }
+
     // Statistiques
     public function getTransactionsSummary($days = 30)
     {

@@ -360,15 +360,6 @@
                                     Dupliquer
                                 </button>
                                 
-                                @if($client->account_status === 'ACTIVE')
-                                <button @click="suspendClient()" 
-                                        class="flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636"/>
-                                    </svg>
-                                    Suspendre
-                                </button>
-                                @endif
                             </div>
                         </div>
                     </div>

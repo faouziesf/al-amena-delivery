@@ -195,6 +195,49 @@ class Package extends Model
         return $this->cod_modifiable_by_commercial && $this->status !== 'PAID';
     }
 
+    /**
+     * Vérifier si le colis est assigné à un pickup (dans un manifeste ou une demande de pickup)
+     */
+    public function isAssignedToPickup()
+    {
+        // Vérifier si le colis est dans un manifeste
+        $isInManifest = \App\Models\Manifest::where('sender_id', $this->sender_id)
+            ->get()
+            ->contains(function ($manifest) {
+                $packageIds = $manifest->package_ids ?? [];
+                return in_array($this->id, $packageIds);
+            });
+
+        if ($isInManifest) {
+            return true;
+        }
+
+        // Vérifier si le colis est assigné à un livreur ou a un statut avancé
+        if ($this->assigned_deliverer_id || in_array($this->status, ['ACCEPTED', 'PICKED_UP', 'DELIVERED', 'RETURNED', 'PAID'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifier si le colis peut être supprimé
+     */
+    public function canBeDeleted()
+    {
+        // Seulement les colis avec statut CREATED ou AVAILABLE
+        if (!in_array($this->status, ['CREATED', 'AVAILABLE'])) {
+            return false;
+        }
+
+        // Et qui ne sont pas assignés à un pickup
+        if ($this->isAssignedToPickup()) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function hasPendingComplaints()
     {
         return $this->complaints()->where('status', 'PENDING')->exists();

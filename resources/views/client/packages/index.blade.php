@@ -263,7 +263,7 @@
                                                     </svg>
                                                     Imprimer étiquette
                                                 </a>
-                                                @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                                                @if($package->canBeDeleted())
                                                     <div class="border-t border-gray-100"></div>
                                                     <a href="{{ route('client.packages.edit', $package) }}"
                                                        class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
@@ -430,7 +430,7 @@
                                                 </svg>
                                                 Imprimer étiquette
                                             </a>
-                                            @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                                            @if($package->canBeDeleted())
                                                 <div class="border-t border-gray-100"></div>
                                                 <a href="{{ route('client.packages.edit', $package) }}"
                                                    class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
@@ -495,7 +495,7 @@
                                         </svg>
                                     </a>
 
-                                    @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                                    @if($package->canBeDeleted())
                                         <!-- Bouton Modifier -->
                                         <a href="{{ route('client.packages.edit', $package) }}"
                                            class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"

@@ -305,7 +305,7 @@ class ClientManifestController extends Controller
             }),
             'summary' => [
                 'total_packages' => $packages->count(),
-                'total_weight' => $packages->sum('weight'),
+                'total_weight' => $packages->sum('package_weight'),
                 'total_value' => $packages->sum('declared_value'),
                 'total_cod' => $packages->where('cod_amount', '>', 0)->sum('cod_amount'),
             ]
@@ -378,7 +378,7 @@ class ClientManifestController extends Controller
                         ];
                     }),
                     'count' => $packages->count(),
-                    'total_weight' => $packages->sum('weight'),
+                    'total_weight' => $packages->sum('package_weight'),
                     'total_value' => $packages->sum('declared_value'),
                 ];
             })->values()
@@ -442,9 +442,48 @@ class ClientManifestController extends Controller
         try {
             DB::beginTransaction();
 
-            // Supprimer le manifeste
             $manifestNumber = $manifest->manifest_number;
-            $manifest->delete();
+            $packagesCount = 0;
+
+            // Désassigner tous les colis assignés à ce manifeste
+            if (!empty($manifest->package_ids)) {
+                $packages = Package::whereIn('id', $manifest->package_ids)->get();
+                $packagesCount = $packages->count();
+
+                foreach ($packages as $package) {
+                    try {
+                        // Retirer l'assignation du livreur si elle existe
+                        $package->assigned_deliverer_id = null;
+                        $package->assigned_at = null;
+
+                        // Gérer le statut selon l'état actuel
+                        if (in_array($package->status, ['ACCEPTED', 'PICKED_UP'])) {
+                            // Si le colis était accepté/ramassé, le remettre disponible
+                            $package->status = 'AVAILABLE';
+                        }
+                        // Pour les autres statuts (CREATED, AVAILABLE), on les laisse tels quels
+
+                        $package->save();
+
+                        // Ajouter une entrée dans l'historique si la méthode existe
+                        if (method_exists($package, 'statusHistory')) {
+                            $package->statusHistory()->create([
+                                'status' => $package->status,
+                                'user_id' => $user->id,
+                                'notes' => 'Désassigné suite à la suppression du manifeste',
+                                'created_at' => now()
+                            ]);
+                        }
+                    } catch (\Exception $packageError) {
+                        \Log::error('Erreur lors de la désassignation du colis', [
+                            'package_id' => $package->id,
+                            'manifest_id' => $manifestId,
+                            'error' => $packageError->getMessage()
+                        ]);
+                        // Continuer avec les autres colis même si un échoue
+                    }
+                }
+            }
 
             // Annuler la demande de pickup si elle existe
             if ($manifest->pickupRequest) {
@@ -454,17 +493,26 @@ class ClientManifestController extends Controller
                 ]);
             }
 
+            // Supprimer le manifeste
+            $manifest->delete();
+
             DB::commit();
+
+            $successMessage = "Manifeste {$manifestNumber} supprimé avec succès.";
+            if ($packagesCount > 0) {
+                $successMessage .= " {$packagesCount} colis ont été désassignés et remis disponibles.";
+            }
 
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Manifeste {$manifestNumber} supprimé avec succès."
+                    'message' => $successMessage,
+                    'packages_unassigned' => $packagesCount
                 ]);
             }
 
             return redirect()->route('client.manifests.index')
-                ->with('success', "Manifeste {$manifestNumber} supprimé avec succès.");
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -590,12 +638,16 @@ class ClientManifestController extends Controller
      */
     public function addPackage(Request $request, $manifestId)
     {
+        $request->validate([
+            'package_id' => 'required|integer|exists:packages,id'
+        ]);
+
         $user = Auth::user();
         $manifest = Manifest::where('id', $manifestId)
             ->where('sender_id', $user->id)
             ->firstOrFail();
 
-        $packageId = $request->input('package_id');
+        $packageId = (int) $request->input('package_id');
 
         // Vérifier que le colis appartient au client
         $package = Package::where('id', $packageId)
@@ -604,7 +656,8 @@ class ClientManifestController extends Controller
             ->firstOrFail();
 
         // Vérifier que le colis a la même adresse de pickup que le manifeste
-        if ($package->pickup_address_id !== $manifest->pickup_address_id) {
+        if ($package->pickup_address_id && $manifest->pickup_address_id &&
+            $package->pickup_address_id !== $manifest->pickup_address_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ce colis ne peut pas être ajouté car il n\'a pas la même adresse de pickup que le manifeste.'
@@ -623,11 +676,16 @@ class ClientManifestController extends Controller
         }
 
         // Vérifier que le colis n'est pas déjà dans un manifeste
-        $isInManifest = Manifest::where('sender_id', $user->id)
-            ->where(function($query) use ($packageId) {
-                $query->whereRaw('JSON_CONTAINS(package_ids, ?)', [json_encode($packageId)]);
-            })
-            ->exists();
+        $existingManifests = Manifest::where('sender_id', $user->id)->get();
+        $isInManifest = false;
+
+        foreach ($existingManifests as $existingManifest) {
+            $packageIds = $existingManifest->package_ids ?? [];
+            if (in_array($packageId, $packageIds)) {
+                $isInManifest = true;
+                break;
+            }
+        }
 
         if ($isInManifest) {
             return response()->json([
@@ -650,8 +708,11 @@ class ClientManifestController extends Controller
                 'package_ids' => $currentPackageIds,
                 'total_packages' => $allPackages->count(),
                 'total_cod_amount' => $allPackages->sum('cod_amount'),
-                'total_weight' => $allPackages->sum('weight'),
+                'total_weight' => $allPackages->sum('package_weight'),
             ]);
+
+            // Recharger le modèle pour s'assurer des bonnes valeurs
+            $manifest = $manifest->fresh();
 
             DB::commit();
 
@@ -667,9 +728,17 @@ class ClientManifestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Erreur lors de l\'ajout du colis au manifeste', [
+                'manifest_id' => $manifestId,
+                'package_id' => $packageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => 'Erreur lors de l\'ajout du colis: ' . $e->getMessage()
             ], 500);
         }
     }

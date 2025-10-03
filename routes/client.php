@@ -121,6 +121,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
 
     // LISTE DES DEMANDES DE RETRAIT CLIENT
     Route::get('/withdrawals', [ClientWalletController::class, 'withdrawals'])->name('withdrawals');
+    Route::post('/withdrawals/{withdrawal}/cancel', [ClientWalletController::class, 'cancelWithdrawal'])->name('withdrawals.cancel');
 
     // ==================== RÉCLAMATIONS CLIENT ====================
     Route::prefix('complaints')->name('complaints.')->group(function () {

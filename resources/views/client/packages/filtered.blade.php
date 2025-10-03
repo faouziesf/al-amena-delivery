@@ -354,7 +354,7 @@
                                 </form>
 
                                 <!-- Supprimer (si possible) -->
-                                @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
+                                @if($package->canBeDeleted())
                                 <form method="POST" action="{{ route('client.packages.destroy', $package) }}" class="flex-1"
                                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')">
                                     @csrf
