@@ -470,15 +470,29 @@ function manifestShowApp() {
 
                 const data = await response.json();
                 if (data.success) {
-                    // Rediriger vers la liste des manifestes
-                    window.location.href = '{{ route("client.manifests.index") }}';
+                    // Afficher un message de succès avant redirection
+                    if (window.showToast) {
+                        window.showToast(data.message || 'Manifeste supprimé avec succès', 'success');
+                    }
+                    // Rediriger vers la liste des manifestes après un délai
+                    setTimeout(() => {
+                        window.location.href = '{{ route("client.manifests.index") }}';
+                    }, 1500);
                 } else {
-                    alert(data.message || 'Erreur lors de la suppression');
+                    if (window.showToast) {
+                        window.showToast(data.message || 'Erreur lors de la suppression', 'error');
+                    } else {
+                        alert(data.message || 'Erreur lors de la suppression');
+                    }
                     this.closeDeleteModal();
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('Erreur lors de la suppression du manifeste');
+                if (window.showToast) {
+                    window.showToast('Erreur lors de la suppression du manifeste', 'error');
+                } else {
+                    alert('Erreur lors de la suppression du manifeste');
+                }
                 this.closeDeleteModal();
             } finally {
                 this.deleting = false;

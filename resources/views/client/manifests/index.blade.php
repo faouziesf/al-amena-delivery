@@ -329,7 +329,7 @@
     <div x-show="showDeleteModal" x-cloak
          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4"
          @click.self="closeDeleteModal">
-        <div class="relative top-20 mx-auto border w-full max-w-md shadow-lg rounded-xl bg-white">
+        <div class="relative mx-auto mt-[5rem] sm:mt-20 border w-full max-w-md shadow-lg rounded-xl bg-white">
             <div class="p-6 text-center">
                 <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
                     <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -563,11 +563,22 @@ function manifestsApp() {
         },
 
         showNotification(message, type = 'info') {
+            // Utiliser showToast si disponible, sinon utiliser notre méthode locale
+            if (window.showToast) {
+                window.showToast(message, type);
+                return;
+            }
+
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm ${
+            const isMobile = window.innerWidth <= 640;
+            const topPosition = isMobile ? 'calc(env(safe-area-inset-top, 1rem) + 5.5rem)' : '6rem';
+
+            notification.className = `fixed right-4 z-[10001] p-4 rounded-lg shadow-lg text-white max-w-sm ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' : 'bg-blue-500'
             }`;
+            notification.style.top = topPosition;
+            notification.style.maxWidth = isMobile ? 'calc(100vw - 2rem)' : '20rem';
             notification.textContent = message;
 
             document.body.appendChild(notification);
@@ -576,7 +587,7 @@ function manifestsApp() {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 3000);
+            }, 4000);
         }
     }
 }

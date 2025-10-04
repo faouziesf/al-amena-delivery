@@ -80,10 +80,16 @@ class Manifest extends Model
         }
 
         // Vérifier qu'aucun colis n'est passé au statut picked_up
-        $packages = $this->packages()->get();
-        return !$packages->contains(function($package) {
-            return $package->status === 'PICKED_UP';
-        });
+        if (empty($this->package_ids)) {
+            return true; // Manifeste vide peut être supprimé
+        }
+
+        // Vérifier s'il y a des colis PICKED_UP
+        $pickedUpCount = Package::whereIn('id', $this->package_ids)
+            ->where('status', 'PICKED_UP')
+            ->count();
+
+        return $pickedUpCount === 0;
     }
 
     public function canRemovePackage($packageId): bool
