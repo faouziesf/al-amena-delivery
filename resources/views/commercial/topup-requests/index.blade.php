@@ -155,11 +155,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                            <span class="text-orange-800 font-bold text-sm">{{ strtoupper(substr($request->user->name, 0, 2)) }}</span>
+                                            <span class="text-orange-800 font-bold text-sm">{{ $request->user ? strtoupper(substr($request->user->name, 0, 2)) : '??' }}</span>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ $request->user->name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $request->user->email }}</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $request->user->name ?? 'Utilisateur supprimé' }}</div>
+                                            <div class="text-sm text-gray-500">{{ $request->user->email ?? 'N/A' }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -188,13 +188,17 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                             En attente
                                         </span>
-                                    @elseif($request->status === 'APPROVED')
+                                    @elseif($request->status === 'VALIDATED')
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             Approuvé
                                         </span>
-                                    @else
+                                    @elseif($request->status === 'REJECTED')
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                             Rejeté
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            {{ $request->status }}
                                         </span>
                                     @endif
                                 </td>
@@ -204,7 +208,9 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     @if($request->processedBy)
                                         {{ $request->processedBy->name }}
-                                        <div class="text-xs text-gray-400">{{ $request->processed_at->format('d/m/Y H:i') }}</div>
+                                        @if($request->processed_at)
+                                            <div class="text-xs text-gray-400">{{ $request->processed_at->format('d/m/Y H:i') }}</div>
+                                        @endif
                                     @else
                                         -
                                     @endif

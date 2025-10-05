@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
         Route::get('/{client}/wallet', [ClientController::class, 'walletHistory'])->name('wallet.history');
         Route::post('/{client}/wallet/add', [ClientController::class, 'addFunds'])->name('wallet.add');
         Route::post('/{client}/wallet/deduct', [ClientController::class, 'deductFunds'])->name('wallet.deduct');
+        Route::post('/{client}/wallet/recalculate', [ClientController::class, 'recalculateBalance'])->name('wallet.recalculate');
         Route::get('/{client}/wallet/export', [ClientController::class, 'exportWalletHistory'])->name('wallet.export');
         
         // Export

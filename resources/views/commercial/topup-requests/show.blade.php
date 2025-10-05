@@ -35,19 +35,23 @@
                             </svg>
                             En attente
                         </span>
-                    @elseif($topupRequest->status === 'APPROVED')
+                    @elseif($topupRequest->status === 'VALIDATED')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             Approuvé
                         </span>
-                    @else
+                    @elseif($topupRequest->status === 'REJECTED')
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                             Rejeté
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                            {{ $topupRequest->status }}
                         </span>
                     @endif
                 </div>
@@ -161,39 +165,45 @@
             <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Client</h3>
 
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span class="text-orange-800 font-bold">{{ strtoupper(substr($topupRequest->user->name, 0, 2)) }}</span>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ $topupRequest->user->name }}</p>
-                        <p class="text-sm text-gray-500">{{ $topupRequest->user->email }}</p>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-500">Téléphone</span>
-                        <span class="text-sm text-gray-900">{{ $topupRequest->user->phone ?? 'N/A' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-500">Statut</span>
-                        <span class="text-sm text-gray-900">{{ $topupRequest->user->account_status }}</span>
-                    </div>
-                    @if($topupRequest->user->userWallet)
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-500">Solde actuel</span>
-                            <span class="text-sm font-medium text-orange-600">{{ number_format($topupRequest->user->userWallet->balance, 3) }} DT</span>
+                @if($topupRequest->user)
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span class="text-orange-800 font-bold">{{ strtoupper(substr($topupRequest->user->name, 0, 2)) }}</span>
                         </div>
-                    @endif
-                </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ $topupRequest->user->name }}</p>
+                            <p class="text-sm text-gray-500">{{ $topupRequest->user->email }}</p>
+                        </div>
+                    </div>
 
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <a href="{{ route('commercial.clients.show', $topupRequest->user) }}"
-                       class="text-orange-600 hover:text-orange-700 text-sm font-medium">
-                        Voir le profil client →
-                    </a>
-                </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Téléphone</span>
+                            <span class="text-sm text-gray-900">{{ $topupRequest->user->phone ?? 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Statut</span>
+                            <span class="text-sm text-gray-900">{{ $topupRequest->user->account_status }}</span>
+                        </div>
+                        @if($topupRequest->user->userWallet)
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-500">Solde actuel</span>
+                                <span class="text-sm font-medium text-orange-600">{{ number_format($topupRequest->user->userWallet->balance, 3) }} DT</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="{{ route('commercial.clients.show', $topupRequest->user) }}"
+                           class="text-orange-600 hover:text-orange-700 text-sm font-medium">
+                            Voir le profil client →
+                        </a>
+                    </div>
+                @else
+                    <div class="text-center py-4">
+                        <p class="text-gray-500">Utilisateur supprimé</p>
+                    </div>
+                @endif
             </div>
 
             @if($topupRequest->processedBy)

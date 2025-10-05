@@ -11,7 +11,7 @@ class WithdrawalRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'request_code', 'client_id', 'amount', 'method', 'bank_details',
+        'request_code', 'client_id', 'amount', 'method', 'bank_details', 'bank_account_id', 'reason',
         'status', 'processed_by_commercial_id', 'assigned_deliverer_id', 'assigned_depot_manager_id',
         'delivery_receipt_code', 'delivered_at', 'delivery_proof',
         'processing_notes', 'rejection_reason', 'processed_at', 'assigned_package_id'
@@ -49,6 +49,11 @@ class WithdrawalRequest extends Model
     public function assignedPackage()
     {
         return $this->belongsTo(Package::class, 'assigned_package_id');
+    }
+
+    public function bankAccount()
+    {
+        return $this->belongsTo(ClientBankAccount::class, 'bank_account_id');
     }
 
     // Scopes
@@ -379,11 +384,18 @@ class WithdrawalRequest extends Model
             // Maintenant débiter réellement le solde du client et libérer le gel
             $this->client->ensureWallet();
 
-            // Débiter le solde
+            // IMPORTANT: Le montant était déjà "réservé" via frozen_amount lors de la demande
+            // Nous devons maintenant le débiter du solde ET le libérer du frozen
+            // Mais attention: frozen_amount réduit déjà le solde disponible
+            // Donc on DOIT débiter le balance ET libérer le frozen
+            $previousBalance = $this->client->wallet->balance;
+            $previousFrozen = $this->client->wallet->frozen_amount ?? 0;
+
+            // Débiter le solde (retirer l'argent du portefeuille)
             $this->client->wallet->balance -= $this->amount;
 
-            // Libérer le montant gelé
-            $this->client->wallet->frozen_amount = max(0, ($this->client->wallet->frozen_amount ?? 0) - $this->amount);
+            // Libérer le montant gelé (puisqu'il est maintenant débité)
+            $this->client->wallet->frozen_amount = max(0, $previousFrozen - $this->amount);
 
             $this->client->wallet->save();
 

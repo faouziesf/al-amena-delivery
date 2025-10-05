@@ -4,13 +4,13 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
         <!-- Header avec navigation -->
-        <div class="flex items-center mb-6">
+        <div class="flex items-center mb-6 flex-col sm:flex-row">
             <a href="{{ route('client.wallet.index') }}" 
-               class="flex items-center text-purple-600 hover:text-purple-800 transition-all duration-300 mr-6 group">
+               class="flex items-center text-purple-600 hover:text-purple-800 transition-all duration-300 mr-6 group flex-col sm:flex-row">
                 <div class="bg-purple-100 rounded-full p-2 mr-3 group-hover:bg-purple-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </div>
@@ -29,8 +29,8 @@
 
             <!-- Alertes -->
             @if(session('success'))
-                <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 text-purple-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
-                    <div class="flex items-center">
+                <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 text-purple-800 px-4 sm:px-5 lg:px-6 py-4 rounded-2xl mb-6 shadow-md hover:shadow-xl">
+                    <div class="flex items-center flex-col sm:flex-row">
                         <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -40,8 +40,8 @@
             @endif
 
             @if(session('error'))
-                <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
-                    <div class="flex items-center">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-4 sm:px-5 lg:px-6 py-4 rounded-2xl mb-6 shadow-md hover:shadow-xl">
+                    <div class="flex items-center flex-col sm:flex-row">
                         <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -51,9 +51,9 @@
             @endif
 
             @if($errors->any())
-                <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
-                    <div class="flex">
-                        <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-4 sm:px-5 lg:px-6 py-4 rounded-2xl mb-6 shadow-md hover:shadow-xl">
+                    <div class="flex flex-col sm:flex-row">
+                        <svg class="w-6 h-6 mr-3 flex-shrink-0 flex-col sm:flex-row" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <ul class="list-disc list-inside space-y-1">
@@ -66,8 +66,8 @@
             @endif
 
             <!-- Affichage du solde actuel -->
-            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl p-6 mb-8 shadow-xl">
-                <div class="flex items-center justify-between">
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl p-4 sm:p-5 lg:p-6 mb-8 shadow-xl">
+                <div class="flex items-center justify-between flex-col sm:flex-row">
                     <div>
                         <h3 class="text-lg font-semibold text-purple-100 mb-2">💰 Solde actuel</h3>
                         <p class="text-4xl font-bold" id="currentBalance">{{ number_format($user->wallet->balance, 3) }} DT</p>
@@ -81,7 +81,7 @@
                 </div>
                 
                 <!-- Simulateur de nouveau solde -->
-                <div id="newBalancePreview" class="hidden mt-4 p-3 bg-white/20 rounded-lg">
+                <div id="newBalancePreview" class="hidden mt-4 p-3 bg-white/20 rounded-2xl transition-all duration-300 hover:-translate-y-1">
                     <p class="text-purple-100 text-sm">Nouveau solde après rechargement:</p>
                     <p class="text-2xl font-bold" id="newBalanceAmount">0.000 DT</p>
                 </div>
@@ -93,8 +93,8 @@
                 @csrf
 
                 <!-- Montant à recharger -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
-                    <div class="flex items-center mb-6">
+                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center mb-6 flex-col sm:flex-row">
                         <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -103,8 +103,7 @@
                         <h3 class="text-xl font-semibold text-gray-800">Montant à ajouter</h3>
                     </div>
                     
-                    <div class="space-y-4">
-                        <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6"><div>
                             <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
                                 Montant (en DT) *
                             </label>
@@ -116,9 +115,9 @@
                                        min="10" 
                                        max="10000" 
                                        value="{{ old('amount') }}"
-                                       class="block w-full pl-4 pr-16 py-4 text-lg rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50"
+                                       class="block w-full pl-4 pr-16 py-4 text-lg rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 bg-gray-50 min-h-[44px]"
                                        placeholder="0.000" required>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 flex-col sm:flex-row">
                                     <span class="text-gray-500 text-sm font-medium">DT</span>
                                 </div>
                             </div>
@@ -131,11 +130,11 @@
                         <!-- Boutons de montant rapide -->
                         <div>
                             <p class="text-sm font-medium text-gray-700 mb-3">Montants populaires:</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="grid grid-cols-2 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 @foreach([50, 100, 200, 500] as $quickAmount)
                                     <button type="button"
                                             onclick="setAmount({{ $quickAmount }})"
-                                            class="px-4 py-3 text-sm bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 rounded-xl hover:from-purple-200 hover:to-purple-300 transition-all duration-300 transform hover:scale-105 font-semibold border-2 border-transparent hover:border-purple-400">
+                                            class="px-4 py-3 text-sm bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 rounded-2xl hover:from-purple-200 hover:to-purple-300 transition-all duration-300 transform hover:scale-105 font-semibold border-2 border-transparent hover:border-purple-400">
                                         {{ $quickAmount }} DT
                                     </button>
                                 @endforeach
@@ -143,17 +142,17 @@
                         </div>
 
                         <!-- Aperçu des frais -->
-                        <div id="feePreview" class="hidden bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                            <div class="flex justify-between items-center text-sm">
+                        <div id="feePreview" class="hidden bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200">
+                            <div class="flex justify-between items-center text-sm flex-col sm:flex-row">
                                 <span class="text-purple-800">Montant:</span>
                                 <span id="previewAmount" class="font-bold text-purple-900">0.000 DT</span>
                             </div>
-                            <div class="flex justify-between items-center text-sm mt-1">
+                            <div class="flex justify-between items-center text-sm mt-1 flex-col sm:flex-row">
                                 <span class="text-purple-800">Frais:</span>
                                 <span class="font-bold text-purple-900">Gratuit 🎉</span>
                             </div>
                             <hr class="my-2 border-purple-200">
-                            <div class="flex justify-between items-center text-sm">
+                            <div class="flex justify-between items-center text-sm flex-col sm:flex-row">
                                 <span class="text-purple-800 font-semibold">Total à payer:</span>
                                 <span id="totalAmount" class="font-bold text-purple-900 text-lg">0.000 DT</span>
                             </div>
@@ -162,8 +161,8 @@
                 </div>
 
                 <!-- Méthode de paiement -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
-                    <div class="flex items-center mb-6">
+                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center mb-6 flex-col sm:flex-row">
                         <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
@@ -179,35 +178,35 @@
                                    name="method" 
                                    value="BANK_TRANSFER" 
                                    id="bank_transfer"
-                                   class="sr-only peer" 
+                                   class="sr-only peer min-h-[44px]" 
                                    {{ old('method', 'BANK_TRANSFER') === 'BANK_TRANSFER' ? 'checked' : '' }}>
                             <label for="bank_transfer" 
-                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-purple-100 transition-all duration-300">
-                                <div class="flex-shrink-0 mr-4">
+                                   class="flex items-start p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-2xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-purple-100 transition-all duration-300 flex-col sm:flex-row">
+                                <div class="flex-shrink-0 mr-4 flex-col sm:flex-row">
                                     <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-purple-500 peer-checked:bg-purple-500 relative">
-                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block"></div>
+                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block transition-all duration-300 hover:-translate-y-1"></div>
                                     </div>
                                 </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center mb-2">
+                                <div class="flex-1 flex-col sm:flex-row">
+                                    <div class="flex items-center mb-2 flex-col sm:flex-row">
                                         <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
                                         <span class="font-semibold text-gray-900">Virement bancaire</span>
-                                        <span class="ml-3 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">24-48h</span>
+                                        <span class="ml-3 text-sm sm:text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">24-48h</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
                                         Effectuez un virement depuis votre compte bancaire
                                     </p>
-                                    <div class="flex flex-wrap items-center gap-4 text-sm">
-                                        <span class="flex items-center text-green-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-sm flex-col sm:flex-row">
+                                        <span class="flex items-center text-green-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             Sécurisé
                                         </span>
-                                        <span class="flex items-center text-purple-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <span class="flex items-center text-purple-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                             </svg>
                                             Identifiant requis
@@ -223,35 +222,35 @@
                                    name="method" 
                                    value="BANK_DEPOSIT" 
                                    id="bank_deposit"
-                                   class="sr-only peer"
+                                   class="sr-only peer min-h-[44px]"
                                    {{ old('method') === 'BANK_DEPOSIT' ? 'checked' : '' }}>
                             <label for="bank_deposit" 
-                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-green-50 hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-gradient-to-br peer-checked:from-green-50 peer-checked:to-emerald-50 transition-all duration-300">
-                                <div class="flex-shrink-0 mr-4">
+                                   class="flex items-start p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-2xl cursor-pointer hover:bg-green-50 hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-gradient-to-br peer-checked:from-green-50 peer-checked:to-emerald-50 transition-all duration-300 flex-col sm:flex-row">
+                                <div class="flex-shrink-0 mr-4 flex-col sm:flex-row">
                                     <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 relative">
-                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block"></div>
+                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block transition-all duration-300 hover:-translate-y-1"></div>
                                     </div>
                                 </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center mb-2">
+                                <div class="flex-1 flex-col sm:flex-row">
+                                    <div class="flex items-center mb-2 flex-col sm:flex-row">
                                         <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                                         </svg>
                                         <span class="font-semibold text-gray-900">Versement bancaire</span>
-                                        <span class="ml-3 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">24-48h</span>
+                                        <span class="ml-3 text-sm sm:text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">24-48h</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
                                         Déposez de l'argent directement en agence bancaire
                                     </p>
-                                    <div class="flex flex-wrap items-center gap-4 text-sm">
-                                        <span class="flex items-center text-green-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-sm flex-col sm:flex-row">
+                                        <span class="flex items-center text-green-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             En espèces
                                         </span>
-                                        <span class="flex items-center text-purple-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <span class="flex items-center text-purple-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                             </svg>
                                             Identifiant requis
@@ -267,35 +266,35 @@
                                    name="method" 
                                    value="CASH" 
                                    id="cash_payment"
-                                   class="sr-only peer"
+                                   class="sr-only peer min-h-[44px]"
                                    {{ old('method') === 'CASH' ? 'checked' : '' }}>
                             <label for="cash_payment" 
-                                   class="flex items-start p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-pink-50 transition-all duration-300">
-                                <div class="flex-shrink-0 mr-4">
+                                   class="flex items-start p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-2xl cursor-pointer hover:bg-purple-50 hover:border-purple-300 peer-checked:border-purple-500 peer-checked:bg-gradient-to-br peer-checked:from-purple-50 peer-checked:to-pink-50 transition-all duration-300 flex-col sm:flex-row">
+                                <div class="flex-shrink-0 mr-4 flex-col sm:flex-row">
                                     <div class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:border-purple-500 peer-checked:bg-purple-500 relative">
-                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block"></div>
+                                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden peer-checked:block transition-all duration-300 hover:-translate-y-1"></div>
                                     </div>
                                 </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center mb-2">
+                                <div class="flex-1 flex-col sm:flex-row">
+                                    <div class="flex items-center mb-2 flex-col sm:flex-row">
                                         <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                         </svg>
                                         <span class="font-semibold text-gray-900">Paiement espèces</span>
-                                        <span class="ml-3 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">Variable</span>
+                                        <span class="ml-3 text-sm sm:text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">Variable</span>
                                     </div>
                                     <p class="text-gray-600 mb-3">
                                         Remise d'espèces à notre livreur lors de sa visite
                                     </p>
-                                    <div class="flex flex-wrap items-center gap-4 text-sm">
-                                        <span class="flex items-center text-green-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-sm flex-col sm:flex-row">
+                                        <span class="flex items-center text-green-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                             </svg>
                                             Pratique
                                         </span>
-                                        <span class="flex items-center text-amber-600">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <span class="flex items-center text-amber-600 flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             Selon disponibilité
@@ -308,8 +307,8 @@
                 </div>
 
                 <!-- Informations supplémentaires (conditionnelles) -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-6" id="additional-info">
-                    <div class="flex items-center mb-6">
+                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1" id="additional-info">
+                    <div class="flex items-center mb-6 flex-col sm:flex-row">
                         <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -329,11 +328,11 @@
                                        id="bank_transfer_id" 
                                        name="bank_transfer_id" 
                                        value="{{ old('bank_transfer_id') }}"
-                                       class="block w-full pl-4 pr-12 py-3 rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50"
+                                       class="block w-full pl-4 pr-12 py-3 rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-blue-500 focus:ring-blue-500 bg-gray-50 min-h-[44px]"
                                        placeholder="Ex: TX123456789, REF2024001, etc.">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 flex-col sm:flex-row">
                                     <div id="uniqueness-indicator" class="hidden">
-                                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-6 h-6 sm:w-5 sm:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     </div>
@@ -355,7 +354,7 @@
                                        id="proof_document" 
                                        name="proof_document" 
                                        accept=".jpg,.jpeg,.png,.pdf"
-                                       class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                                       class="block w-full px-4 py-3 rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 min-h-[44px]">
                             </div>
                             <p class="mt-2 text-sm text-gray-500">
                                 Formats acceptés: JPG, PNG, PDF (max 5 MB)
@@ -370,7 +369,7 @@
                             <textarea id="notes" 
                                       name="notes" 
                                       rows="3"
-                                      class="block w-full px-4 py-3 rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 resize-none"
+                                      class="block w-full px-4 py-3 rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 bg-gray-50 resize-none"
                                       placeholder="Ajoutez des informations supplémentaires si nécessaire...">{{ old('notes') }}</textarea>
                             <p class="mt-2 text-sm text-gray-500">Maximum 500 caractères</p>
                         </div>
@@ -378,11 +377,10 @@
                 </div>
 
                 <!-- Boutons d'action -->
-                <div class="flex flex-col sm:flex-row gap-4 pt-6">
-                    <button type="submit" 
+                <div class="flex flex-row flex-wrap sm:flex-row gap-2 sm:gap-3 lg:gap-4 pt-6 flex-col sm:flex-row"><button type="submit" 
                             id="submitBtn"
-                            class="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 text-white px-8 py-4 rounded-xl hover:from-purple-600 hover:to-purple-800 focus:ring-4 focus:ring-purple-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span class="flex items-center justify-center">
+                            class="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 text-white px-8 py-4 rounded-2xl hover:from-purple-600 hover:to-purple-800 focus:ring-4 focus:ring-purple-200 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex-col sm:flex-row">
+                        <span class="flex items-center justify-center flex-col sm:flex-row">
                             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
@@ -391,7 +389,7 @@
                     </button>
                     
                     <a href="{{ route('client.wallet.index') }}" 
-                       class="flex-none sm:w-auto bg-white text-purple-600 border-2 border-purple-200 px-8 py-4 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold text-lg text-center shadow-md hover:shadow-lg transform hover:scale-105">
+                       class="flex-none sm:w-auto bg-white text-purple-600 border-2 border-purple-200 px-8 py-4 rounded-2xl hover:bg-purple-50 transition-all duration-300 font-semibold text-lg text-center shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
                         Annuler
                     </a>
                 </div>
@@ -399,8 +397,8 @@
 
             <!-- Demandes récentes -->
             @if($recentRequests && $recentRequests->count() > 0)
-                <div class="mt-12 bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
-                    <div class="flex items-center mb-6">
+                <div class="mt-12 bg-white rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center mb-6 flex-col sm:flex-row">
                         <div class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-full p-3 mr-4">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -409,12 +407,11 @@
                         <h3 class="text-xl font-semibold text-gray-800">Demandes récentes</h3>
                     </div>
                     
-                    <div class="space-y-3">
-                        @foreach($recentRequests as $request)
-                            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg hover:from-purple-50 hover:to-purple-100 transition-all duration-300">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-purple-100 to-purple-200 rounded-full flex items-center justify-center mr-3">
-                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">@foreach($recentRequests as $request)
+                            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-2xl hover:from-purple-50 hover:to-purple-100 transition-all duration-300 flex-col sm:flex-row">
+                                <div class="flex items-center flex-col sm:flex-row">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-purple-100 to-purple-200 rounded-full flex items-center justify-center mr-3 flex-col sm:flex-row">
+                                        <svg class="w-6 h-6 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                                         </svg>
                                     </div>
@@ -431,7 +428,7 @@
                                     <p class="text-lg font-bold text-purple-600">
                                         {{ $request->formatted_amount }}
                                     </p>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $request->status_color }}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm sm:text-xs font-medium {{ $request->status_color }} flex-col sm:flex-row">
                                         {{ $request->status_display }}
                                     </span>
                                 </div>
@@ -580,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             submitBtn.innerHTML = `
-                <span class="flex items-center justify-center">
+                <span class="flex items-center justify-center flex-col sm:flex-row">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
@@ -628,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-75');
         submitBtn.innerHTML = `
-            <span class="flex items-center justify-center">
+            <span class="flex items-center justify-center flex-col sm:flex-row">
                 <svg class="animate-spin w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

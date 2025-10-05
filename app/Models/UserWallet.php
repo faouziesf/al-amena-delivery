@@ -519,4 +519,19 @@ class UserWallet extends Model
     {
         return $query->where('last_transaction_at', '>=', now()->subDays($days));
     }
+
+    /**
+     * Get combined balance display for UI
+     */
+    public function getBalanceDisplayAttribute()
+    {
+        return [
+            'balance' => $this->balance,
+            'balance_formatted' => $this->formatted_balance,
+            'advance' => $this->advance_balance,
+            'advance_formatted' => $this->formatted_advance_balance,
+            'total' => $this->balance + $this->advance_balance,
+            'total_formatted' => number_format($this->balance + $this->advance_balance, 3) . ' DT'
+        ];
+    }
 }

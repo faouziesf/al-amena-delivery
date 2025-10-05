@@ -7,11 +7,11 @@
 
     <!-- En-tête avec indicateurs de statut -->
     <div class="mb-8">
-        <div class="bg-gradient-to-r from-purple-50/80 to-pink-50/80 backdrop-blur-lg rounded-xl border border-purple-200/30 p-6">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-gradient-to-r from-purple-50/80 to-pink-50/80 backdrop-blur-lg rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6">
+            <div class="flex items-center justify-between mb-4 flex-col sm:flex-row">
                 <h1 class="text-2xl font-bold gradient-text">Test Mode Offline</h1>
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-3 flex-col sm:flex-row">
+                    <div class="flex items-center space-x-2 flex-col sm:flex-row">
                         <div data-network-status class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         <span class="text-sm text-gray-600">Statut réseau</span>
                     </div>
@@ -24,13 +24,13 @@
     </div>
 
     <!-- Actions de test -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6 mb-8">
 
         <!-- Test Colis Offline -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/30 p-6 hover:shadow-lg transition-all duration-300">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all duration-300 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-4 flex-col sm:flex-row">
+                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mr-3 flex-col sm:flex-row">
+                    <svg class="w-6 h-6 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                 </div>
@@ -38,16 +38,16 @@
             </div>
             <p class="text-gray-600 mb-4">Créer un colis en mode offline</p>
             <button onclick="testCreatePackage()"
-                    class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all">
+                    class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-2 px-4 rounded-2xl hover:from-purple-600 hover:to-purple-700 transition-all">
                 Tester Création
             </button>
         </div>
 
         <!-- Test Manifeste Offline -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/30 p-6 hover:shadow-lg transition-all duration-300">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all duration-300 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-4 flex-col sm:flex-row">
+                <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-3 flex-col sm:flex-row">
+                    <svg class="w-6 h-6 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
@@ -55,16 +55,16 @@
             </div>
             <p class="text-gray-600 mb-4">Créer un manifeste en mode offline</p>
             <button onclick="testCreateManifest()"
-                    class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all">
+                    class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-2 px-4 rounded-2xl hover:from-indigo-600 hover:to-indigo-700 transition-all">
                 Tester Manifeste
             </button>
         </div>
 
         <!-- Test Recharge Offline -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/30 p-6 hover:shadow-lg transition-all duration-300">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all duration-300 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-4 flex-col sm:flex-row">
+                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-3 flex-col sm:flex-row">
+                    <svg class="w-6 h-6 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                 </div>
@@ -72,17 +72,17 @@
             </div>
             <p class="text-gray-600 mb-4">Demande de recharge offline</p>
             <button onclick="testTopupRequest()"
-                    class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 px-4 rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all">
+                    class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 px-4 rounded-2xl hover:from-emerald-600 hover:to-emerald-700 transition-all">
                 Tester Recharge
             </button>
         </div>
     </div>
 
     <!-- Brouillons sauvegardés -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/30 p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6 mb-8 transition-all duration-300 hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
             <h2 class="text-xl font-bold text-gray-900">Brouillons Offline</h2>
-            <div class="flex space-x-2">
+            <div class="flex space-x-2 flex-col sm:flex-row">
                 <button onclick="loadDrafts()"
                         class="text-purple-600 hover:text-purple-800 text-sm font-medium">
                     Actualiser
@@ -106,28 +106,28 @@
     </div>
 
     <!-- Contrôles de test -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/30 p-6">
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-purple-200/30 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
         <h2 class="text-xl font-bold text-gray-900 mb-6">Contrôles de Test</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
             <button onclick="simulateOffline()"
-                    class="bg-amber-500 hover:bg-amber-600 text-white py-3 px-4 rounded-lg transition-colors">
+                    class="bg-amber-500 hover:bg-amber-600 text-white py-3 px-4 rounded-2xl transition-colors">
                 🔌 Simuler Mode Offline
             </button>
 
             <button onclick="simulateOnline()"
-                    class="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg transition-colors">
+                    class="bg-green-500 hover:bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white py-3 px-4 rounded-2xl transition-colors">
                 📶 Simuler Retour Online
             </button>
 
             <button onclick="triggerSync()"
                     data-requires-online="true"
-                    class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg transition-colors">
+                    class="bg-blue-500 hover:bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-3 px-4 rounded-2xl transition-colors">
                 🔄 Forcer Synchronisation
             </button>
 
             <button onclick="showOfflineStats()"
-                    class="bg-purple-500 hover:bg-purple-600 text-white py-3 px-4 rounded-lg transition-colors">
+                    class="bg-purple-500 hover:bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white py-3 px-4 rounded-2xl transition-colors">
                 📊 Statistiques Offline
             </button>
         </div>

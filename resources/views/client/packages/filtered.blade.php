@@ -4,29 +4,29 @@
 @section('page-description', $page_description)
 
 @section('header-actions')
-<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-3 flex-col sm:flex-row">
     @if($packages->count() > 0)
         <!-- Actions groupées selon le type de filtre -->
         @if($filter_type === 'pending')
             <button onclick="printSelected()" 
-                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
                 Imprimer Bons
             </button>
             
             <button onclick="deleteSelected()" 
-                    class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
                 Supprimer
             </button>
         @elseif($filter_type === 'delivered')
             <a href="{{ route('client.packages.export') }}?{{ request()->getQueryString() }}" 
-               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:bg-blue-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 Exporter CSV
@@ -35,8 +35,8 @@
         
         @if(in_array($filter_type, ['pending', 'in_progress', 'delivered']))
             <button onclick="printSelected()" 
-                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
                 Imprimer Sélection
@@ -46,8 +46,8 @@
     
     <!-- Actions communes -->
     <a href="{{ route('client.packages.create') }}" 
-       class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+       class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+        <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
         </svg>
         Nouveau Colis
@@ -56,37 +56,37 @@
 @endsection
 
 @section('content')
-<div class="p-6" x-data="packagesFilter()">
+<div class="p-4 sm:p-5 lg:p-6" x-data="packagesFilter()">
     
     <!-- Filtres et Recherche -->
-    <div class="bg-white rounded-lg shadow-sm border mb-6 p-6">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border mb-6 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
             <!-- Recherche -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
                 <input type="text" name="search" value="{{ request('search') }}" 
                        placeholder="Code colis, destinataire..."
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 min-h-[44px]">
             </div>
 
             <!-- Date début -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
                 <input type="date" name="date_from" value="{{ request('date_from') }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 min-h-[44px]">
             </div>
 
             <!-- Date fin -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
                 <input type="date" name="date_to" value="{{ request('date_to') }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 min-h-[44px]">
             </div>
 
             <!-- Bouton de recherche -->
-            <div class="flex items-end">
+            <div class="flex items-end flex-col sm:flex-row">
                 <button type="submit" 
-                        class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
+                        class="w-full px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
                     🔍 Filtrer
                 </button>
             </div>
@@ -94,10 +94,10 @@
     </div>
     
     <!-- Statistiques rapides pour ce filtre -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-lg 
+    <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-6">
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center flex-col sm:flex-row">
+                <div class="p-3 rounded-2xl 
                     {{ $filter_type === 'pending' ? 'bg-orange-100' : '' }}
                     {{ $filter_type === 'in_progress' ? 'bg-indigo-100' : '' }}
                     {{ $filter_type === 'delivered' ? 'bg-green-100' : '' }}
@@ -129,9 +129,9 @@
 
         <!-- Stats additionnelles selon le type -->
         @if($filter_type === 'delivered')
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-emerald-100 rounded-lg">
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center flex-col sm:flex-row">
+                <div class="p-3 bg-emerald-100 rounded-2xl">
                     <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                     </svg>
@@ -145,9 +145,9 @@
         @endif
 
         @if($filter_type === 'pending')
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-yellow-100 rounded-lg">
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center flex-col sm:flex-row">
+                <div class="p-3 bg-yellow-100 rounded-2xl">
                     <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.936-.833-2.707 0L3.107 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                     </svg>
@@ -161,9 +161,9 @@
         @endif
 
         <!-- Stats temporelles -->
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-blue-100 rounded-lg">
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center flex-col sm:flex-row">
+                <div class="p-3 bg-blue-100 rounded-2xl">
                     <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
@@ -176,9 +176,9 @@
         </div>
 
         <!-- Montant moyen -->
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-purple-100 rounded-lg">
+        <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center flex-col sm:flex-row">
+                <div class="p-3 bg-purple-100 rounded-2xl">
                     <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
                     </svg>
@@ -195,8 +195,8 @@
 
     <!-- Actions en bloc (si applicable) -->
     <div x-show="selectedPackages.length > 0" x-transition 
-         class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-center justify-between">
-        <div class="flex items-center space-x-4">
+         class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-center justify-between flex-col sm:flex-row">
+        <div class="flex items-center space-x-4 flex-col sm:flex-row">
             <span class="text-blue-700 font-medium">
                 <span x-text="selectedPackages.length"></span> colis sélectionné(s)
             </span>
@@ -206,11 +206,11 @@
             </button>
         </div>
         
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 flex-col sm:flex-row">
             <!-- Impression groupée -->
             <button @click="printSelected()" 
-                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
                 Imprimer bons
@@ -219,8 +219,8 @@
             @if($filter_type === 'pending')
             <!-- Suppression groupée -->
             <button @click="deleteSelected()" 
-                    class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center px-4 sm:px-5 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-2xl transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
                 Supprimer
@@ -231,21 +231,21 @@
 
     <!-- Liste des colis -->
     @if($packages->count() > 0)
-    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border overflow-hidden transition-all duration-300 hover:-translate-y-1">
         <!-- En-tête du tableau -->
-        <div class="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
+        <div class="bg-gray-50 px-4 sm:px-5 lg:px-6 py-4 border-b flex items-center justify-between flex-col sm:flex-row">
             @if($filter_type === 'pending')
-            <div class="flex items-center space-x-4">
-                <label class="flex items-center">
+            <div class="flex items-center space-x-4 flex-col sm:flex-row">
+                <label class="flex items-center flex-col sm:flex-row">
                     <input type="checkbox" @change="toggleSelectAll()" 
                            :checked="allSelected"
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded min-h-[44px]">
                     <span class="ml-2 text-sm font-medium text-gray-700">Tout sélectionner</span>
                 </label>
             </div>
             @endif
             
-            <div class="text-sm text-gray-500 flex items-center space-x-4">
+            <div class="text-sm text-gray-500 flex items-center space-x-4 flex-col sm:flex-row">
                 <span>{{ $packages->total() }} colis - {{ $page_title }}</span>
                 @if($filter_type === 'delivered')
                     <span class="text-emerald-600 font-medium">
@@ -258,8 +258,8 @@
         <!-- Corps du tableau -->
         <div class="divide-y divide-gray-200">
             @foreach($packages as $package)
-            <div class="p-6 hover:bg-gray-50 transition-colors">
-                <div class="flex items-center space-x-4">
+            <div class="p-4 sm:p-5 lg:p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center space-x-4 flex-col sm:flex-row">
                     <!-- Checkbox (seulement pour les colis en attente) -->
                     @if($filter_type === 'pending')
                     <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}"
@@ -267,13 +267,13 @@
                     @endif
                     
                     <!-- Informations principales -->
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-6 items-center">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6 items-center flex-col sm:flex-row">
                         <!-- Code et Date -->
                         <div>
                             <p class="font-bold text-lg text-gray-900">{{ $package->package_code }}</p>
                             <p class="text-sm text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</p>
                             @if($package->isFromImport())
-                                <span class="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full mt-1">
+                                <span class="inline-block px-2 py-1 text-sm sm:text-xs bg-purple-100 text-purple-700 rounded-full mt-1">
                                     Import CSV
                                 </span>
                             @endif
@@ -302,12 +302,12 @@
                         <div>
                             <p class="text-sm text-gray-900 font-medium">{{ $package->content_description }}</p>
                             @if($package->hasSpecialRequirements())
-                                <div class="flex items-center mt-2 space-x-2">
+                                <div class="flex items-center mt-2 space-x-2 flex-col sm:flex-row">
                                     @if($package->is_fragile)
-                                        <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">🔸 Fragile</span>
+                                        <span class="text-sm sm:text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">🔸 Fragile</span>
                                     @endif
                                     @if($package->requires_signature)
-                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">✍️ Signature</span>
+                                        <span class="text-sm sm:text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">✍️ Signature</span>
                                     @endif
                                 </div>
                             @endif
@@ -330,23 +330,23 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex flex-col space-y-2">
+                        <div class="flex flex-col space-y-2 flex-col sm:flex-row">
                             <!-- Voir détails -->
                             <a href="{{ route('client.packages.show', $package) }}" 
-                               class="text-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                               class="text-center px-3 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:bg-blue-700 text-white text-sm font-medium rounded-2xl transition-colors">
                                 Voir Détails
                             </a>
 
                             <!-- Imprimer bon -->
                             <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                               class="text-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
+                               class="text-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-2xl transition-colors">
                                 Imprimer Bon
                             </a>
 
                             <!-- Actions secondaires -->
-                            <div class="flex space-x-2">
+                            <div class="flex space-x-2 flex-col sm:flex-row">
                                 <!-- Dupliquer -->
-                                <form method="POST" action="{{ route('client.packages.duplicate', $package) }}" class="flex-1">
+                                <form method="POST" action="{{ route('client.packages.duplicate', $package) }}" class="flex-1 flex-col sm:flex-row">
                                     @csrf
                                     <button type="submit" class="w-full text-orange-600 hover:text-orange-800 text-sm font-medium">
                                         Dupliquer
@@ -355,7 +355,7 @@
 
                                 <!-- Supprimer (si possible) -->
                                 @if($package->canBeDeleted())
-                                <form method="POST" action="{{ route('client.packages.destroy', $package) }}" class="flex-1"
+                                <form method="POST" action="{{ route('client.packages.destroy', $package) }}" class="flex-1 flex-col sm:flex-row"
                                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')">
                                     @csrf
                                     @method('DELETE')
@@ -374,14 +374,14 @@
 
         <!-- Pagination -->
         @if($packages->hasPages())
-        <div class="px-6 py-4 border-t bg-gray-50">
+        <div class="px-4 sm:px-5 lg:px-6 py-4 border-t bg-gray-50">
             {{ $packages->appends(request()->query())->links() }}
         </div>
         @endif
     </div>
     @else
     <!-- État vide -->
-    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-12 text-center transition-all duration-300 hover:-translate-y-1">
         <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             @if($filter_type === 'pending')
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -400,17 +400,17 @@
             @endif
         </p>
         
-        <div class="flex items-center justify-center space-x-4">
+        <div class="flex items-center justify-center space-x-4 flex-col sm:flex-row">
             @if(request()->hasAny(['search', 'date_from', 'date_to']))
                 <a href="{{ request()->url() }}" 
-                   class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors">
+                   class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-2xl text-sm font-medium transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
                     Effacer les filtres
                 </a>
             @endif
             
             <a href="{{ route('client.packages.create') }}" 
-               class="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-medium transition-colors transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
                 Créer un colis

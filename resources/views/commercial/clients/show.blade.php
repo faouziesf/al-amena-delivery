@@ -647,17 +647,29 @@
                 </div>
                 
                 <form @submit.prevent="submitWalletForm()" class="p-6 space-y-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <div class="text-sm text-gray-600">Solde actuel</div>
-                        <div class="text-2xl font-bold text-gray-900" x-text="formatAmount(stats.wallet_balance)"></div>
+                    <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs text-gray-600">Solde Principal</div>
+                            <div class="text-xl font-bold text-blue-600" x-text="formatAmount(stats.wallet_balance)"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-600">Avances</div>
+                            <div class="text-xl font-bold text-green-600">{{ number_format($client->wallet->advance_balance ?? 0, 3) }} DT</div>
+                        </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type de Transaction</label>
                         <select x-model="walletForm.action" 
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
-                            <option value="add">Ajouter des fonds</option>
-                            <option value="deduct">Déduire des fonds</option>
+                            <optgroup label="💰 Gestion du Solde Principal">
+                                <option value="add">Ajouter des fonds au solde</option>
+                                <option value="deduct">Déduire des fonds du solde</option>
+                            </optgroup>
+                            <optgroup label="💎 Gestion des Avances">
+                                <option value="add_advance">Ajouter une avance</option>
+                                <option value="remove_advance">Retirer une avance</option>
+                            </optgroup>
                         </select>
                     </div>
                     
@@ -678,11 +690,16 @@
                         <button type="submit" 
                                 :disabled="isSubmitting"
                                 :class="isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
-                                class="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-                            <span x-show="!isSubmitting">Confirmer</span>
-                            <span x-show="isSubmitting">Traitement...</span>
+                                class="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                            <svg x-show="isSubmitting" class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-show="!isSubmitting">Confirmer l'Opération</span>
+                            <span x-show="isSubmitting">Traitement en cours...</span>
                         </button>
                         <button type="button" @click="closeWalletModal()" 
+                                :disabled="isSubmitting"
                                 class="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors">
                             Annuler
                         </button>
@@ -818,7 +835,7 @@ function clientProfileApp() {
             };
         },
 
-        // SOLUTION DÉFINITIVE - TRANSACTION WALLET
+        // TRANSACTION WALLET & AVANCES
         async submitWalletForm() {
             // Validation des champs
             if (!this.walletForm.amount || !this.walletForm.description) {
@@ -836,15 +853,21 @@ function clientProfileApp() {
             this.isSubmitting = true;
 
             try {
-                const endpoint = this.walletForm.action === 'add' ? 'add' : 'deduct';
+                let url;
+                const action = this.walletForm.action;
                 
-                console.log('Envoi de la requête:', {
-                    url: `/commercial/clients/${CLIENT_ID}/wallet/${endpoint}`,
-                    amount: this.walletForm.amount,
-                    description: this.walletForm.description
-                });
+                // Déterminer l'URL selon l'action
+                if (action === 'add' || action === 'deduct') {
+                    const endpoint = action === 'add' ? 'add' : 'deduct';
+                    url = `/commercial/clients/${CLIENT_ID}/wallet/${endpoint}`;
+                } else {
+                    const endpoint = action === 'add_advance' ? 'add' : 'remove';
+                    url = `/commercial/client-advances/${CLIENT_ID}/${endpoint}`;
+                }
+                
+                console.log('Envoi de la requête:', { url, action });
 
-                const response = await fetch(`/commercial/clients/${CLIENT_ID}/wallet/${endpoint}`, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -859,38 +882,45 @@ function clientProfileApp() {
 
                 console.log('Réponse reçue:', response.status);
 
+                // Vérifier d'abord le statut HTTP
                 if (response.ok) {
-                    const data = await response.json();
+                    // Essayer de parser le JSON
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (jsonError) {
+                        // Si le parsing échoue mais que response.ok, considérer comme succès
+                        data = { success: true, message: 'Opération réalisée avec succès' };
+                    }
+                    
                     console.log('Données reçues:', data);
                     
                     // Fermer le modal
                     this.closeWalletModal();
                     
                     // Afficher le message de succès
-                    this.showToast('Transaction effectuée avec succès', 'success');
+                    this.showToast(data.message || 'Transaction effectuée avec succès', 'success');
                     
-                    // Recharger les stats
-                    await this.loadStats();
+                    // Recharger la page après un court délai
+                    setTimeout(() => location.reload(), 1500);
                     
                 } else {
                     // Erreur HTTP
-                    let errorMessage = 'Erreur lors de la transaction';
-                    
+                    let errorData;
                     try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.message || errorMessage;
-                    } catch (e) {
-                        console.error('Erreur parsing JSON:', e);
+                        errorData = await response.json();
+                    } catch (jsonError) {
+                        errorData = { message: 'Erreur lors de l\'opération' };
                     }
                     
-                    console.error('Erreur HTTP:', response.status, errorMessage);
-                    this.showToast(errorMessage, 'error');
+                    console.error('Erreur HTTP:', response.status);
+                    this.showToast(errorData.message || 'Erreur lors de l\'opération', 'error');
+                    this.isSubmitting = false;
                 }
 
             } catch (error) {
-                console.error('Erreur réseau ou JavaScript:', error);
-                this.showToast('Erreur de connexion: ' + error.message, 'error');
-            } finally {
+                console.error('Erreur réseau:', error);
+                this.showToast('Erreur réseau. Veuillez vérifier votre connexion.', 'error');
                 this.isSubmitting = false;
             }
         },

@@ -3,18 +3,18 @@
 @section('title', 'Demande de Retrait')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="container mx-auto px-4 py-4 sm:py-5 lg:py-6">
 
     <!-- En-tête -->
     <div class="mb-6 md:mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-col sm:flex-row">
             <div class="mb-4 sm:mb-0">
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Demande de Retrait</h1>
-                <p class="text-gray-600 text-sm md:text-base">Retirez des fonds de votre portefeuille</p>
+                <p class="text-gray-600 text-sm md:text-sm sm:text-base">Retirez des fonds de votre portefeuille</p>
             </div>
             <a href="{{ route('client.wallet.index') }}"
-               class="inline-flex items-center text-purple-600 hover:text-purple-800 transition-colors text-sm md:text-base">
-                <svg class="w-4 h-4 md:w-6 md:h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center text-purple-600 hover:text-purple-800 transition-colors text-sm md:text-sm sm:text-base flex-col sm:flex-row">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 md:w-6 md:h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 Retour
@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6 lg:gap-8">
 
         <!-- Formulaire principal -->
         <div class="lg:col-span-2">
@@ -31,11 +31,10 @@
                 @csrf
 
                 <!-- Informations de base -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 md:p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                     <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6">Montant à retirer</h3>
 
-                    <div class="space-y-4 md:space-y-6">
-                        <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 md:space-y-6"><div>
                             <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
                                 Montant (DT) <span class="text-red-500">*</span>
                             </label>
@@ -50,12 +49,12 @@
                                        x-model="amount"
                                        @input="calculateFees()"
                                        required
-                                       class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base @error('amount') border-red-500 @enderror">
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                       class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('amount') border-red-500 @enderror min-h-[44px]">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none flex-col sm:flex-row">
                                     <span class="text-gray-500 text-sm">DT</span>
                                 </div>
                             </div>
-                            <div class="flex flex-col sm:flex-row sm:justify-between text-xs md:text-sm mt-2 space-y-1 sm:space-y-0">
+                            <div class="flex flex-col sm:flex-row sm:justify-between text-xs md:text-sm mt-2 space-y-1 sm:space-y-0 flex-col sm:flex-row">
                                 <span class="text-gray-500">Minimum: 1.000 DT</span>
                                 <span class="text-gray-500">Maximum: {{ number_format($availableBalance, 3) }} DT</span>
                             </div>
@@ -72,7 +71,7 @@
                                       name="reason"
                                       rows="3"
                                       placeholder="Optionnel - indiquez le motif de votre retrait"
-                                      class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base @error('reason') border-red-500 @enderror">{{ old('reason') }}</textarea>
+                                      class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('reason') border-red-500 @enderror">{{ old('reason') }}</textarea>
                             @error('reason')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -81,20 +80,20 @@
                 </div>
 
                 <!-- Méthode de retrait -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">Méthode de retrait</h3>
 
                     <div class="space-y-4">
                         <!-- Virement bancaire -->
                         <label class="block">
-                            <div class="flex items-center">
+                            <div class="flex items-center flex-col sm:flex-row">
                                 <input type="radio"
                                        x-model="method"
                                        value="BANK_TRANSFER"
                                        name="preferred_method"
-                                       class="w-4 h-4 text-purple-600 focus:ring-purple-500">
-                                <div class="ml-4 flex-1">
-                                    <div class="flex items-center justify-between">
+                                       class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600 focus:ring-purple-500 min-h-[44px]">
+                                <div class="ml-4 flex-1 flex-col sm:flex-row">
+                                    <div class="flex items-center justify-between flex-col sm:flex-row">
                                         <div>
                                             <p class="font-medium text-gray-900">Virement bancaire</p>
                                             <p class="text-sm text-gray-600">Délai: 24-48h ouvrables</p>
@@ -109,14 +108,14 @@
 
                         <!-- Livraison espèces -->
                         <label class="block">
-                            <div class="flex items-center">
+                            <div class="flex items-center flex-col sm:flex-row">
                                 <input type="radio"
                                        x-model="method"
                                        value="CASH_DELIVERY"
                                        name="preferred_method"
-                                       class="w-4 h-4 text-purple-600 focus:ring-purple-500">
-                                <div class="ml-4 flex-1">
-                                    <div class="flex items-center justify-between">
+                                       class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600 focus:ring-purple-500 min-h-[44px]">
+                                <div class="ml-4 flex-1 flex-col sm:flex-row">
+                                    <div class="flex items-center justify-between flex-col sm:flex-row">
                                         <div>
                                             <p class="font-medium text-gray-900">Livraison en espèces</p>
                                             <p class="text-sm text-gray-600">Délai: 2-4h</p>
@@ -134,7 +133,7 @@
                 <!-- Configuration virement bancaire -->
                 <div x-show="method === 'BANK_TRANSFER'"
                      x-transition
-                     class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                     class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">Informations bancaires</h3>
 
                     @if(isset($bankAccounts) && $bankAccounts->count() > 0)
@@ -144,22 +143,22 @@
 
                             @foreach($bankAccounts as $account)
                                 <label class="block">
-                                    <div class="flex items-center p-4 border rounded-xl hover:bg-gray-50 cursor-pointer"
+                                    <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                          :class="selectedBankAccount === {{ $account->id }} ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
                                         <input type="radio"
                                                x-model="selectedBankAccount"
                                                value="{{ $account->id }}"
                                                name="bank_account_id"
-                                               class="w-4 h-4 text-purple-600 focus:ring-purple-500">
-                                        <div class="ml-4 flex-1">
-                                            <div class="flex items-center justify-between">
+                                               class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600 focus:ring-purple-500">
+                                        <div class="ml-4 flex-1 flex-col sm:flex-row">
+                                            <div class="flex items-center justify-between flex-col sm:flex-row">
                                                 <div>
                                                     <p class="font-medium text-gray-900">{{ $account->bank_name }}</p>
                                                     <p class="text-sm text-gray-600">{{ $account->account_holder_name }}</p>
                                                     <p class="text-sm text-gray-500 font-mono">{{ $account->masked_iban }}</p>
                                                 </div>
                                                 @if($account->is_default)
-                                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                                                    <span class="bg-purple-100 text-purple-800 text-sm sm:text-xs px-2 py-1 rounded-full">
                                                         Par défaut
                                                     </span>
                                                 @endif
@@ -171,13 +170,13 @@
 
                             <!-- Option nouveau compte -->
                             <label class="block">
-                                <div class="flex items-center p-4 border rounded-xl hover:bg-gray-50 cursor-pointer"
+                                <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                      :class="selectedBankAccount === 'new' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
                                     <input type="radio"
                                            x-model="selectedBankAccount"
                                            value="new"
-                                           class="w-4 h-4 text-purple-600 focus:ring-purple-500">
-                                    <div class="ml-4 flex-1">
+                                           class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600 focus:ring-purple-500 min-h-[44px]">
+                                    <div class="ml-4 flex-1 flex-col sm:flex-row">
                                         <p class="font-medium text-gray-900">+ Nouveau compte bancaire</p>
                                         <p class="text-sm text-gray-600">Ajouter un nouveau compte</p>
                                     </div>
@@ -191,7 +190,7 @@
                          x-transition
                          class="space-y-6">
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6">
                             <div>
                                 <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-2">
                                     Nom de la banque <span class="text-red-500">*</span>
@@ -199,7 +198,7 @@
                                 <select id="bank_name"
                                         name="bank_name"
                                         x-model="newBankAccount.bank_name"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
                                     <option value="">Sélectionner une banque</option>
 
                                     <!-- Banques commerciales publiques -->
@@ -257,7 +256,7 @@
                                        name="account_holder_name"
                                        x-model="newBankAccount.account_holder_name"
                                        placeholder="Nom complet du titulaire du compte"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
                             </div>
                         </div>
 
@@ -272,7 +271,7 @@
                                    @input="validateIban()"
                                    placeholder="TN59 XXXX XXXX XXXX XXXX XXXX XX"
                                    maxlength="29"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono">
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono min-h-[44px]">
                             <div x-show="ibanValidation.message" class="mt-2">
                                 <p :class="ibanValidation.valid ? 'text-green-600' : 'text-red-600'"
                                    class="text-sm"
@@ -281,11 +280,11 @@
                         </div>
 
                         <div>
-                            <label class="flex items-center">
+                            <label class="flex items-center flex-col sm:flex-row">
                                 <input type="checkbox"
                                        x-model="newBankAccount.save_account"
                                        name="save_account"
-                                       class="w-4 h-4 text-purple-600 focus:ring-purple-500 rounded">
+                                       class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600 focus:ring-purple-500 rounded min-h-[44px]">
                                 <span class="ml-3 text-sm text-gray-700">Enregistrer ce compte pour les prochains retraits</span>
                             </label>
                         </div>
@@ -295,7 +294,7 @@
                 <!-- Configuration livraison espèces -->
                 <div x-show="method === 'CASH_DELIVERY'"
                      x-transition
-                     class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                     class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">Adresse de livraison</h3>
 
                     @if(isset($pickupAddresses) && $pickupAddresses->count() > 0)
@@ -304,15 +303,15 @@
 
                             @foreach($pickupAddresses as $address)
                                 <label class="block">
-                                    <div class="flex items-center p-4 border rounded-xl hover:bg-gray-50 cursor-pointer"
+                                    <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                          :class="selectedDeliveryAddress === {{ $address->id }} ? 'border-orange-500 bg-orange-50' : 'border-gray-200'">
                                         <input type="radio"
                                                x-model="selectedDeliveryAddress"
                                                value="{{ $address->id }}"
                                                name="delivery_address_id"
-                                               class="w-4 h-4 text-orange-600 focus:ring-orange-500">
-                                        <div class="ml-4 flex-1">
-                                            <div class="flex items-center justify-between">
+                                               class="w-5 h-5 sm:w-4 sm:h-4 text-orange-600 focus:ring-orange-500">
+                                        <div class="ml-4 flex-1 flex-col sm:flex-row">
+                                            <div class="flex items-center justify-between flex-col sm:flex-row">
                                                 <div>
                                                     <p class="font-medium text-gray-900">{{ $address->label ?? 'Adresse de pickup' }}</p>
                                                     <p class="text-sm text-gray-600">{{ $address->contact_name }}</p>
@@ -320,7 +319,7 @@
                                                     <p class="text-sm text-gray-500">Tél: {{ $address->phone }}</p>
                                                 </div>
                                                 @if($address->is_default)
-                                                    <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                                                    <span class="bg-orange-100 text-orange-800 text-sm sm:text-xs px-2 py-1 rounded-full">
                                                         Par défaut
                                                     </span>
                                                 @endif
@@ -346,22 +345,22 @@
                 </div>
 
                 <!-- Résumé et validation -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">Résumé de la demande</h3>
 
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center py-2">
+                        <div class="flex justify-between items-center py-2 flex-col sm:flex-row">
                             <span class="text-gray-600">Montant demandé</span>
                             <span class="font-medium" x-text="formatAmount(amount) + ' DT'">0.000 DT</span>
                         </div>
 
-                        <div x-show="method === 'CASH_DELIVERY'" class="flex justify-between items-center py-2">
+                        <div x-show="method === 'CASH_DELIVERY'" class="flex justify-between items-center py-2 flex-col sm:flex-row">
                             <span class="text-gray-600">Frais de livraison</span>
                             <span class="font-medium text-orange-600" x-text="deliveryFee + ' DT'">2.000 DT</span>
                         </div>
 
                         <div class="border-t pt-4">
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center flex-col sm:flex-row">
                                 <span class="text-lg font-semibold text-gray-900">Montant à recevoir</span>
                                 <span class="text-xl font-bold text-green-600" x-text="formatAmount(getFinalAmount()) + ' DT'">0.000 DT</span>
                             </div>
@@ -372,9 +371,9 @@
                         <button type="submit"
                                 :disabled="!isFormValid()"
                                 :class="isFormValid()
-                                       ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                       ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:bg-purple-700 text-white'
                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
-                                class="w-full py-3 px-6 rounded-xl font-medium transition-colors">
+                                class="w-full py-3 px-4 sm:px-5 lg:px-6 rounded-2xl font-medium transition-colors">
                             Confirmer la demande de retrait
                         </button>
                     </div>
@@ -387,21 +386,21 @@
         <div class="space-y-6">
 
             <!-- Solde disponible -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Votre portefeuille</h3>
                 <div class="space-y-3">
-                    <div class="flex justify-between">
+                    <div class="flex justify-between flex-col sm:flex-row">
                         <span class="text-gray-600">Solde total</span>
                         <span class="font-medium">{{ number_format($user->wallet->balance, 3) }} DT</span>
                     </div>
                     @if(($user->wallet->frozen_amount ?? 0) > 0)
-                    <div class="flex justify-between">
+                    <div class="flex justify-between flex-col sm:flex-row">
                         <span class="text-gray-600">Montant gelé</span>
                         <span class="font-medium text-orange-600">{{ number_format($user->wallet->frozen_amount, 3) }} DT</span>
                     </div>
                     @endif
                     <div class="border-t pt-3">
-                        <div class="flex justify-between">
+                        <div class="flex justify-between flex-col sm:flex-row">
                             <span class="font-semibold text-gray-900">Disponible pour retrait</span>
                             <span class="font-bold text-green-600">{{ number_format($availableBalance, 3) }} DT</span>
                         </div>
@@ -410,9 +409,9 @@
             </div>
 
             <!-- Informations -->
-            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-5 lg:p-6">
                 <h3 class="text-lg font-semibold text-blue-900 mb-3">
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 sm:w-5 sm:h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     Informations

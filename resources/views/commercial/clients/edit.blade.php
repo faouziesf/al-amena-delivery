@@ -242,7 +242,7 @@
                                 Prix retour échec (DT) <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
-                                <input x-model.number="form.return_price" type="number" step="0.001" required min="0" max="999.999"
+                                <input x-model.number=\"form.return_price\" type=\"number\" step=\"0.001\" required min=\"0\" max=\"999.999\" placeholder=\"0.000 = Retours gratuits\"
                                        class="w-full border border-red-300 rounded-lg px-4 py-3 pr-12 focus:ring-red-500 focus:border-red-500">
                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-red-600 font-medium">DT</span>
                             </div>
@@ -418,7 +418,7 @@ function editClientApp() {
                    this.form.phone && 
                    this.form.address && 
                    this.form.delivery_price > 0 && 
-                   this.form.return_price > 0;
+                   this.form.return_price >= 0;  // Accepte 0 pour les retours gratuits
         },
 
         resetForm() {

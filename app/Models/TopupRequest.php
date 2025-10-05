@@ -43,6 +43,14 @@ class TopupRequest extends Model
     }
 
     /**
+     * Alias pour client() - compatibilité avec les vues
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'client_id');
+    }
+
+    /**
      * Utilisateur qui a traité la demande (Commercial ou Livreur)
      */
     public function processedBy()

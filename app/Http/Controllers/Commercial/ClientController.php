@@ -307,7 +307,7 @@ class ClientController extends Controller
                     'identity_document' => $validated['identity_document'],
                     'offer_delivery_price' => $validated['delivery_price'],
                     'offer_return_price' => $validated['return_price'],
-                    'internal_notes' => $validated['internal_notes']
+                    'internal_notes' => $validated['internal_notes'] ?? null
                 ]
             );
 
@@ -1060,5 +1060,131 @@ class ClientController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    // ==================== BALANCE RECALCULATION ====================
+
+    /**
+     * Recalculer le solde du portefeuille en se basant sur toutes les transactions
+     * Utile pour corriger les erreurs de calcul
+     */
+    public function recalculateBalance(User $client, Request $request)
+    {
+        if ($client->role !== 'CLIENT') {
+            abort(404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $wallet = $client->ensureWallet();
+            if (!$wallet) {
+                throw new \Exception('Impossible de récupérer le wallet du client.');
+            }
+
+            // Sauvegarder l'ancien solde
+            $oldBalance = $wallet->balance;
+            $oldFrozen = $wallet->frozen_amount ?? 0;
+            $oldPending = $wallet->pending_amount ?? 0;
+
+            // Calculer le solde correct basé sur toutes les transactions COMPLETED
+            $completedTransactions = FinancialTransaction::where('user_id', $client->id)
+                ->where('status', 'COMPLETED')
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            $calculatedBalance = 0;
+            foreach ($completedTransactions as $transaction) {
+                $calculatedBalance += $transaction->amount;
+            }
+
+            // Recalculer frozen_amount basé sur les demandes de retrait en attente
+            $pendingWithdrawals = \App\Models\WithdrawalRequest::where('client_id', $client->id)
+                ->whereIn('status', ['PENDING', 'APPROVED', 'READY_FOR_DELIVERY', 'IN_PROGRESS'])
+                ->get();
+
+            $calculatedFrozen = $pendingWithdrawals->sum('amount');
+
+            // Mettre à jour le wallet
+            $wallet->update([
+                'balance' => $calculatedBalance,
+                'frozen_amount' => $calculatedFrozen,
+                'last_transaction_at' => now()
+            ]);
+
+            // Calculer les différences (sans créer de transaction)
+            $balanceDifference = $calculatedBalance - $oldBalance;
+            $frozenDifference = $calculatedFrozen - $oldFrozen;
+            
+            // PAS de création de transaction - seulement recalcul du solde
+
+            // Log de l'action
+            $this->actionLogService->log(
+                'WALLET_BALANCE_RECALCULATED',
+                'UserWallet',
+                $wallet->id,
+                $oldBalance,
+                $calculatedBalance,
+                [
+                    'old_balance' => $oldBalance,
+                    'new_balance' => $calculatedBalance,
+                    'difference' => $balanceDifference,
+                    'old_frozen' => $oldFrozen,
+                    'new_frozen' => $calculatedFrozen,
+                    'transaction_count' => $completedTransactions->count(),
+                    'recalculated_by' => Auth::user()->name
+                ]
+            );
+
+            DB::commit();
+
+            $message = "Solde recalculé avec succès.\n";
+            $message .= "Ancien solde: " . number_format($oldBalance, 3) . " DT\n";
+            $message .= "Nouveau solde: " . number_format($calculatedBalance, 3) . " DT\n";
+            
+            if (abs($balanceDifference) > 0.001) {
+                $message .= "Différence: " . number_format($balanceDifference, 3) . " DT\n";
+            } else {
+                $message .= "Aucune correction nécessaire (solde exact).\n";
+            }
+
+            $message .= "\nMontant gelé recalculé: " . number_format($calculatedFrozen, 3) . " DT";
+            if (abs($calculatedFrozen - $oldFrozen) > 0.001) {
+                $message .= " (anciennement: " . number_format($oldFrozen, 3) . " DT)";
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'old_balance' => $oldBalance,
+                    'new_balance' => $calculatedBalance,
+                    'difference' => $balanceDifference,
+                    'old_frozen' => $oldFrozen,
+                    'new_frozen' => $calculatedFrozen,
+                    'frozen_difference' => $calculatedFrozen - $oldFrozen
+                ]);
+            }
+
+            return back()->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            Log::error('Erreur recalcul solde:', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors du recalcul: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'Erreur lors du recalcul: ' . $e->getMessage()]);
+        }
     }
 }

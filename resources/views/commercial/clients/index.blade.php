@@ -747,11 +747,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const action = document.getElementById('wallet-action').value;
             const amount = parseFloat(document.getElementById('wallet-amount').value);
             const description = document.getElementById('wallet-description').value;
+            const submitBtn = document.getElementById('wallet-submit-btn');
             
             if (!amount || !description) {
                 showToast('Tous les champs sont requis', 'error');
                 return;
             }
+            
+            // Désactiver le bouton pendant le traitement
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Traitement...';
             
             try {
                 let endpoint, url;
@@ -775,18 +781,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ amount, description })
                 });
 
-                const data = await response.json();
-
-                if (response.ok && data.success) {
+                // Vérifier d'abord le statut HTTP
+                if (response.ok) {
+                    // Essayer de parser le JSON
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (jsonError) {
+                        // Si le parsing échoue mais que response.ok, considérer comme succès
+                        data = { success: true, message: 'Opération réalisée avec succès' };
+                    }
+                    
                     showToast(data.message || 'Opération réalisée avec succès', 'success');
                     closeWalletModal();
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    showToast(data.message || 'Erreur lors de l\'opération', 'error');
+                    // Erreur HTTP
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (jsonError) {
+                        errorData = { message: 'Erreur lors de l\'opération' };
+                    }
+                    showToast(errorData.message || 'Erreur lors de l\'opération', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                showToast('Erreur de connexion', 'error');
+                showToast('Erreur réseau. Veuillez vérifier votre connexion.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }

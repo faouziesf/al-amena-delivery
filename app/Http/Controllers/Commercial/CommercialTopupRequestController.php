@@ -20,7 +20,7 @@ class CommercialTopupRequestController extends Controller
     {
         $user = Auth::user();
 
-        $query = TopupRequest::with(['client', 'processedBy'])
+        $query = TopupRequest::with(['client', 'user', 'processedBy'])
                             ->when($user->role === 'DEPOT_MANAGER', function($q) use ($user) {
                                 // Chef dépôt ne voit que les demandes des clients de son gouvernorat
                                 $assignedGouvernorats = is_array($user->assigned_gouvernorats)
@@ -83,10 +83,14 @@ class CommercialTopupRequestController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('name', 'LIKE', '%' . $request->search . '%')
-                  ->orWhere('email', 'LIKE', '%' . $request->search . '%')
-                  ->orWhere('phone', 'LIKE', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('request_code', 'LIKE', '%' . $search . '%')
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'LIKE', '%' . $search . '%')
+                                ->orWhere('email', 'LIKE', '%' . $search . '%')
+                                ->orWhere('phone', 'LIKE', '%' . $search . '%');
+                  });
             });
         }
 
@@ -180,12 +184,11 @@ class CommercialTopupRequestController extends Controller
             // Obtenir ou créer le wallet
             $wallet = UserWallet::firstOrCreate(
                 ['user_id' => $topupRequest->client_id],
-                ['balance' => 0, 'total_deposited' => 0, 'total_withdrawn' => 0]
+                ['balance' => 0]
             );
 
             // Ajouter les fonds
             $wallet->increment('balance', $topupRequest->amount);
-            $wallet->increment('total_deposited', $topupRequest->amount);
 
             // Créer la transaction
             Transaction::create([

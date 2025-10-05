@@ -3,14 +3,14 @@
 @section('title', "Nouvelle réclamation - Colis {$package->package_code}")
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-2xl">
-    <div class="bg-white rounded-lg shadow-sm border p-6">
+<div class="container mx-auto px-4 py-4 sm:py-5 lg:py-6 max-w-2xl">
+    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
         <!-- En-tête -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Nouvelle réclamation</h1>
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                <div class="flex items-center gap-3 flex-col sm:flex-row">
+                    <div class="w-10 h-10 bg-blue-500 rounded-2xl flex items-center justify-center text-white font-bold flex-col sm:flex-row">
                         📦
                     </div>
                     <div>
@@ -33,7 +33,7 @@
                         Type de réclamation *
                     </label>
                     <select name="type" id="type" required
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        class="w-full px-3 py-2 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]">
                         <option value="">Sélectionnez le type de réclamation</option>
                         <option value="CHANGE_COD">Changement du montant COD</option>
                         <option value="DELIVERY_DELAY">Retard de livraison</option>
@@ -54,9 +54,9 @@
                         Nouveau montant COD (DT) *
                     </label>
                     <input type="number" name="new_cod_amount" id="new_cod_amount" step="0.01" min="0"
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                         placeholder="0.00">
-                    <p class="text-xs text-slate-500 mt-1">Montant actuel: {{ number_format($package->cod_amount, 2) }} DT</p>
+                    <p class="text-sm sm:text-xs text-slate-500 mt-1">Montant actuel: {{ number_format($package->cod_amount, 2) }} DT</p>
                     @error('new_cod_amount')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -70,8 +70,8 @@
                     <input type="date" name="preferred_date" id="preferred_date"
                         min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                         max="{{ date('Y-m-d', strtotime('+7 days')) }}"
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <p class="text-xs text-slate-500 mt-1">Entre demain et dans 7 jours maximum</p>
+                        class="w-full px-3 py-2 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]">
+                    <p class="text-sm sm:text-xs text-slate-500 mt-1">Entre demain et dans 7 jours maximum</p>
                     @error('preferred_date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -83,7 +83,7 @@
                         Description *
                     </label>
                     <textarea name="description" id="description" rows="4" required
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Décrivez votre réclamation en détail...">{{ old('description') }}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -95,9 +95,9 @@
                     <label class="block text-sm font-medium text-slate-700 mb-2">
                         Pièces jointes <span class="text-slate-400">(optionnel)</span>
                     </label>
-                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors">
+                    <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 sm:p-5 lg:p-6 text-center hover:border-slate-400 transition-colors">
                         <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
-                            class="hidden" onchange="updateFileList()">
+                            class="hidden min-h-[44px]" onchange="updateFileList()">
                         <label for="attachments" class="cursor-pointer">
                             <svg class="w-8 h-8 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -113,9 +113,9 @@
                 </div>
 
                 <!-- Urgent -->
-                <div class="flex items-center">
+                <div class="flex items-center flex-col sm:flex-row">
                     <input type="checkbox" name="urgent" id="urgent" value="1"
-                        class="h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded">
+                        class="h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded min-h-[44px]">
                     <label for="urgent" class="ml-2 block text-sm text-slate-700">
                         Marquer comme <span class="font-medium text-red-600">urgent</span>
                     </label>
@@ -123,19 +123,19 @@
             </div>
 
             <!-- Actions -->
-            <div class="mt-8 flex items-center justify-between pt-6 border-t border-slate-200">
+            <div class="mt-8 flex items-center justify-between pt-6 border-t border-slate-200 flex-col sm:flex-row">
                 <a href="{{ route('client.packages.show', $package) }}"
                    class="text-slate-600 hover:text-slate-800 transition-colors">
                     ← Retour au colis
                 </a>
 
-                <div class="flex gap-3">
+                <div class="flex gap-3 flex-col sm:flex-row">
                     <button type="button" onclick="history.back()"
-                        class="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                        class="px-4 sm:px-5 py-2.5 sm:py-3 text-slate-700 bg-white border border-slate-300 rounded-2xl hover:bg-slate-50 transition-colors transition-all duration-300 hover:-translate-y-1">
                         Annuler
                     </button>
                     <button type="submit"
-                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                        class="px-4 sm:px-5 lg:px-6 py-2 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors font-medium">
                         Créer la réclamation
                     </button>
                 </div>
@@ -192,7 +192,7 @@ function updateFileList() {
         for (let i = 0; i < input.files.length; i++) {
             const file = input.files[i];
             const size = (file.size / 1024).toFixed(1);
-            html += `<div class="flex items-center gap-2 text-sm bg-slate-50 rounded px-2 py-1">
+            html += `<div class="flex items-center gap-2 text-sm bg-slate-50 rounded px-2 py-1 flex-col sm:flex-row">
                 <span class="text-slate-600">📎</span>
                 <span class="text-slate-800">${file.name}</span>
                 <span class="text-slate-500">(${size} KB)</span>

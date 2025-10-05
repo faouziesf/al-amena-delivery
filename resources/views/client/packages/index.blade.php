@@ -14,13 +14,20 @@
                     </h1>
                     <p class="mt-2 text-gray-600">Gérez et suivez tous vos envois</p>
                 </div>
-                <div class="mt-4 sm:mt-0">
+                <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
                     <a href="{{ route('client.packages.create') }}"
                        class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         Nouveau Colis
+                    </a>
+                    <a href="{{ route('client.packages.create-fast') }}"
+                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Création Rapide
                     </a>
                 </div>
             </div>
@@ -586,6 +593,8 @@
         </div>
     </div>
 </div>
+
+
 
 @push('styles')
 <style>

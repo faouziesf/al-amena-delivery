@@ -43,6 +43,9 @@ class Package extends Model
         'delivered_at',         // Date et heure de livraison
         'est_echange',          // Indique si ce colis nécessite un échange
         'payment_withdrawal_id', // ID de la demande de paiement liée
+        'advance_used_for_fees', // Montant payé depuis l'avance
+        'balance_used_for_fees', // Montant payé depuis le solde
+        'fee_payment_source',    // Source du paiement ('advance', 'balance', 'mixed')
     ];
 
     protected $casts = [
@@ -66,6 +69,8 @@ class Package extends Model
         'allow_opening' => 'boolean',
         'cancelled_by_client' => 'boolean',
         'est_echange' => 'boolean',
+        'advance_used_for_fees' => 'decimal:3',
+        'balance_used_for_fees' => 'decimal:3',
     ];
 
     // Relations

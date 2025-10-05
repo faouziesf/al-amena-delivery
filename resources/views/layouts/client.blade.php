@@ -126,6 +126,12 @@
 
     <!-- Modern CSS Styles -->
     <style>
+        /* Alpine.js cloak */
+        [x-cloak] {
+            display: none !important;
+        }
+        
+
         :root {
             --primary: #8B5CF6;
             --secondary: #EC4899;
@@ -622,6 +628,36 @@
                 scroll-behavior: auto !important;
             }
         }
+    
+        /* Safe Area Bottom for iPhone */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            main,
+            .main-content,
+            .main-content-mobile {
+                padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
+            }
+        }
+
+        /* Ensure content is not cut off on iPhone */
+        @media (max-width: 640px) {
+            main {
+                padding-bottom: max(env(safe-area-inset-bottom, 0px) + 1rem, 1.5rem) !important;
+            }
+            
+            .main-content-mobile {
+                padding-bottom: max(env(safe-area-inset-bottom, 0px) + 1rem, 1.5rem) !important;
+                min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+            }
+        }
+
+        /* Extra space for iPhone with home indicator */
+        @media (max-width: 640px) and (display-mode: standalone) {
+            main,
+            .main-content-mobile {
+                padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem) !important;
+            }
+        }
+
     </style>
 
     @stack('styles')
@@ -1031,24 +1067,13 @@
 
         <!-- Main Content -->
         <div class="flex-1 lg:ml-72 will-change-contents">
-            <main class="min-h-screen safe-area-bottom px-0 sm:px-0"
+            <main class="min-h-screen pb-0 sm:pb-4 px-0 sm:px-0"
                   :class="isMobile ? 'main-content-mobile' : 'main-content'">
                 @yield('content')
             </main>
         </div>
     </div>
-
-    <!-- Modern Floating Action Button -->
-    <div x-show="isMobile && !sidebarOpen" class="lg:hidden">
-        <button onclick="window.location.href='{{ route('client.packages.create') }}'"
-                class="fab-modern fixed bottom-6 right-6 w-16 h-16 flex items-center justify-center z-30 will-change-transform"
-                title="Créer un nouveau colis">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-        </button>
-    </div>
-
+    
     <!-- Modern Toast Notifications -->
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"

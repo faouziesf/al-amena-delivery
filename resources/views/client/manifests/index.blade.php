@@ -156,27 +156,6 @@
                             🖨️ Imprimer
                         </a>
 
-                        <!-- Delete Button (conditional) -->
-                        <template x-if="canDeleteManifest(manifest)">
-                            <button @click="confirmDelete(manifest)"
-                                    class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm font-medium">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                🗑️ Supprimer
-                            </button>
-                        </template>
-
-                        <!-- Delete Button (disabled) -->
-                        <template x-if="!canDeleteManifest(manifest)">
-                            <div class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
-                                 title="Ce manifeste ne peut pas être supprimé">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                                🔒 Protégé
-                            </div>
-                        </template>
                     </div>
                 </div>
             </div>
@@ -325,40 +304,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div x-show="showDeleteModal" x-cloak
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4"
-         @click.self="closeDeleteModal">
-        <div class="relative mx-auto mt-[5rem] sm:mt-20 border w-full max-w-md shadow-lg rounded-xl bg-white">
-            <div class="p-6 text-center">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                    <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">🗑️ Supprimer le manifeste</h3>
-                <p class="text-gray-600 mb-6">
-                    Êtes-vous sûr de vouloir supprimer le manifeste
-                    <strong x-text="manifestToDelete?.manifest_number"></strong> ?
-                    Cette action ne peut pas être annulée.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button @click="closeDeleteModal"
-                            class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium">
-                        ❌ Annuler
-                    </button>
-                    <button @click="deleteManifest" :disabled="deleting"
-                            class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50">
-                        <span x-show="deleting" class="inline-flex items-center">
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            ⏳ Suppression...
-                        </span>
-                        <span x-show="!deleting">🗑️ Supprimer</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @push('scripts')
@@ -369,9 +314,6 @@ function manifestsApp() {
         availablePackages: [],
         loading: false,
         showCreateModal: false,
-        showDeleteModal: false,
-        manifestToDelete: null,
-        deleting: false,
         selectedPackages: [],
         selectedPickupAddressId: '',
         creating: false,
@@ -418,48 +360,6 @@ function manifestsApp() {
 
         closeCreateModal() {
             this.showCreateModal = false;
-        },
-
-        canDeleteManifest(manifest) {
-            return manifest.status_badge.text === 'En préparation';
-        },
-
-        confirmDelete(manifest) {
-            this.manifestToDelete = manifest;
-            this.showDeleteModal = true;
-        },
-
-        closeDeleteModal() {
-            this.showDeleteModal = false;
-            this.manifestToDelete = null;
-        },
-
-        async deleteManifest() {
-            if (!this.manifestToDelete) return;
-
-            this.deleting = true;
-            try {
-                const response = await fetch(`{{ url('client/manifests') }}/${this.manifestToDelete.id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    this.closeDeleteModal();
-                    this.showNotification('🗑️ Manifeste supprimé avec succès!', 'success');
-                    setTimeout(() => this.refreshData(), 1000);
-                } else {
-                    this.showNotification('❌ ' + (data.message || 'Erreur lors de la suppression'), 'error');
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                this.showNotification('❌ Erreur lors de la suppression du manifeste', 'error');
-            } finally {
-                this.deleting = false;
-            }
         },
 
         togglePackage(packageId) {

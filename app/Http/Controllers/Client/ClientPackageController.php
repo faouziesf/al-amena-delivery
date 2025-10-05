@@ -381,85 +381,75 @@ class ClientPackageController extends Controller
 
         try {
             DB::beginTransaction();
-
             // Calculer le montant total à rembourser et déterminer comment rembourser
             $refundAmount = 0;
             $refundDetails = [];
 
-            // Vérifier comment les frais de livraison ont été débités lors de la création
-            $escrowDebitTransaction = null;
-            if ($package->amount_in_escrow > 0) {
-                // Chercher la transaction de débit originale pour ce colis
-                $escrowDebitTransaction = \App\Models\WalletTransaction::where('user_id', $package->sender_id)
-                    ->where('package_id', $package->id)
-                    ->where('type', 'PACKAGE_CREATION_DEBIT')
-                    ->where('amount', '<', 0)
-                    ->first();
-            }
-
-            // Rembourser les frais de livraison (escrow)
+            // Rembourser les frais selon la source originale de paiement
             if ($package->amount_in_escrow > 0) {
                 $refundAmount += $package->amount_in_escrow;
-                $refundDetails[] = "Frais de livraison: {$package->amount_in_escrow} DT";
+                $refundDetails[] = "Frais: {$package->amount_in_escrow} DT";
 
-                // Rembourser selon la méthode utilisée lors de la création
-                if ($escrowDebitTransaction &&
-                    isset($escrowDebitTransaction->metadata['escrow_type']) &&
-                    $escrowDebitTransaction->metadata['escrow_type'] === 'delivery_fee') {
+                $user = Auth::user();
+                
+                // Vérifier si le package a le tracking des sources de paiement
+                $hasPaymentTracking = !is_null($package->fee_payment_source);
+                
+                if ($hasPaymentTracking) {
+                    // NOUVEAU SYSTÈME: Rembourser selon la source originale tracée
+                    
+                    // Rembourser à l'avance si payé depuis l'avance
+                    if ($package->advance_used_for_fees > 0) {
+                        $user->wallet->advance_balance += $package->advance_used_for_fees;
+                        $user->wallet->save();
+                        
+                        \Log::info("Remboursement avance", [
+                            'package' => $package->package_code,
+                            'amount' => $package->advance_used_for_fees,
+                            'source' => 'advance_tracking'
+                        ]);
+                    }
 
-                    // Les frais ont été débités du solde normal, rembourser au solde normal
+                    // Rembourser au solde si payé depuis le solde
+                    if ($package->balance_used_for_fees > 0) {
+                        $this->financialService->processTransaction([
+                            'user_id' => $package->sender_id,
+                            'type' => 'PACKAGE_DELETION_CREDIT',
+                            'amount' => $package->balance_used_for_fees,
+                            'package_id' => $package->id,
+                            'description' => "Remboursement suppression colis #{$package->package_code} - Frais (solde)",
+                            'metadata' => [
+                                'package_code' => $package->package_code,
+                                'original_escrow' => $package->amount_in_escrow,
+                                'advance_refunded' => $package->advance_used_for_fees,
+                                'balance_refunded' => $package->balance_used_for_fees,
+                                'refund_type' => 'proper_source_refund',
+                                'payment_source' => $package->fee_payment_source
+                            ]
+                        ]);
+                    }
+                } else {
+                    // ANCIEN SYSTÈME (fallback): Rembourser tout au solde normal
                     $this->financialService->processTransaction([
                         'user_id' => $package->sender_id,
                         'type' => 'PACKAGE_DELETION_CREDIT',
                         'amount' => $package->amount_in_escrow,
                         'package_id' => $package->id,
-                        'description' => "Remboursement suppression colis #{$package->package_code} - Frais de livraison (solde normal)",
+                        'description' => "Remboursement suppression colis #{$package->package_code} - Frais (legacy)",
                         'metadata' => [
                             'package_code' => $package->package_code,
                             'original_escrow' => $package->amount_in_escrow,
-                            'refund_type' => 'delivery_fee_normal_balance'
+                            'refund_type' => 'legacy_refund',
+                            'note' => 'Package created before payment tracking system'
                         ]
                     ]);
-                } else {
-                    // Les frais ont probablement été débités via deductReturnFees (avance + solde), rembourser via refundReturnFees
-                    $user = Auth::user();
-                    if (method_exists($user->wallet, 'refundReturnFees')) {
-                        $user->wallet->refundReturnFees($package->amount_in_escrow, $package->package_code, "Remboursement suppression colis #{$package->package_code} - Frais de livraison (avance + solde)");
-                    } else {
-                        // Fallback si la méthode n'existe pas
-                        $this->financialService->processTransaction([
-                            'user_id' => $package->sender_id,
-                            'type' => 'PACKAGE_DELETION_CREDIT',
-                            'amount' => $package->amount_in_escrow,
-                            'package_id' => $package->id,
-                            'description' => "Remboursement suppression colis #{$package->package_code} - Frais de livraison",
-                            'metadata' => [
-                                'package_code' => $package->package_code,
-                                'original_escrow' => $package->amount_in_escrow,
-                                'refund_type' => 'delivery_fee_fallback'
-                            ]
-                        ]);
-                    }
+                    
+                    \Log::info("Remboursement legacy", [
+                        'package' => $package->package_code,
+                        'amount' => $package->amount_in_escrow,
+                        'note' => 'No payment tracking available'
+                    ]);
                 }
-            }
-
-            // Rembourser les frais de retour payés lors de la création (toujours au solde normal)
-            if ($package->return_fee > 0) {
-                $refundAmount += $package->return_fee;
-                $refundDetails[] = "Frais de retour: {$package->return_fee} DT";
-
-                $this->financialService->processTransaction([
-                    'user_id' => $package->sender_id,
-                    'type' => 'PACKAGE_DELETION_CREDIT',
-                    'amount' => $package->return_fee,
-                    'package_id' => $package->id,
-                    'description' => "Remboursement suppression colis #{$package->package_code} - Frais de retour",
-                    'metadata' => [
-                        'package_code' => $package->package_code,
-                        'return_fee' => $package->return_fee,
-                        'refund_type' => 'return_fee'
-                    ]
-                ]);
             }
 
             // Supprimer le colis et son historique
@@ -534,35 +524,54 @@ class ClientPackageController extends Controller
             $totalRefund = 0;
 
             foreach ($packages as $package) {
-                // Calculer le remboursement pour ce colis
-                $packageRefund = 0;
-
-                // Rembourser l'escrow
+                // Rembourser selon la source originale de paiement
                 if ($package->amount_in_escrow > 0) {
-                    $packageRefund += $package->amount_in_escrow;
-                }
+                    $totalRefund += $package->amount_in_escrow;
+                    
+                    $hasPaymentTracking = !is_null($package->fee_payment_source);
+                    
+                    if ($hasPaymentTracking) {
+                        // NOUVEAU SYSTÈME: Rembourser selon source tracée
+                        
+                        // Rembourser à l'avance
+                        if ($package->advance_used_for_fees > 0) {
+                            $user->wallet->advance_balance += $package->advance_used_for_fees;
+                            $user->wallet->save();
+                        }
 
-                // Rembourser les frais de retour
-                if ($package->return_fee > 0) {
-                    $packageRefund += $package->return_fee;
-                }
-
-                if ($packageRefund > 0) {
-                    $totalRefund += $packageRefund;
-                    $this->financialService->processTransaction([
-                        'user_id' => $user->id,
-                        'type' => 'PACKAGE_DELETION_CREDIT',
-                        'amount' => $packageRefund,
-                        'package_id' => $package->id,
-                        'description' => "Remboursement suppression groupée #{$package->package_code} - Frais livraison: {$package->amount_in_escrow} DT, Frais retour: {$package->return_fee} DT",
-                        'metadata' => [
-                            'package_code' => $package->package_code,
-                            'bulk_deletion' => true,
-                            'original_escrow' => $package->amount_in_escrow,
-                            'return_fee' => $package->return_fee,
-                            'total_package_refund' => $packageRefund
-                        ]
-                    ]);
+                        // Rembourser au solde
+                        if ($package->balance_used_for_fees > 0) {
+                            $this->financialService->processTransaction([
+                                'user_id' => $user->id,
+                                'type' => 'PACKAGE_DELETION_CREDIT',
+                                'amount' => $package->balance_used_for_fees,
+                                'package_id' => $package->id,
+                                'description' => "Remboursement suppression groupée #{$package->package_code}",
+                                'metadata' => [
+                                    'package_code' => $package->package_code,
+                                    'bulk_deletion' => true,
+                                    'advance_refunded' => $package->advance_used_for_fees,
+                                    'balance_refunded' => $package->balance_used_for_fees,
+                                    'payment_source' => $package->fee_payment_source
+                                ]
+                            ]);
+                        }
+                    } else {
+                        // ANCIEN SYSTÈME (fallback)
+                        $this->financialService->processTransaction([
+                            'user_id' => $user->id,
+                            'type' => 'PACKAGE_DELETION_CREDIT',
+                            'amount' => $package->amount_in_escrow,
+                            'package_id' => $package->id,
+                            'description' => "Remboursement suppression groupée #{$package->package_code}",
+                            'metadata' => [
+                                'package_code' => $package->package_code,
+                                'bulk_deletion' => true,
+                                'original_escrow' => $package->amount_in_escrow,
+                                'refund_type' => 'legacy_refund'
+                            ]
+                        ]);
+                    }
                 }
 
                 // Supprimer l'historique et le colis
@@ -907,6 +916,24 @@ class ClientPackageController extends Controller
                 ]
             ]);
         }
+
+
+        // CRITICAL: Tracker la source de paiement pour remboursement correct
+        if ($canUseAdvance) {
+            // Calculer combien a été payé depuis l'avance vs solde
+            $advanceUsed = min($escrowAmount, $advanceBalance);
+            $balanceUsed = $escrowAmount - $advanceUsed;
+            
+            $package->advance_used_for_fees = $advanceUsed;
+            $package->balance_used_for_fees = $balanceUsed;
+            $package->fee_payment_source = ($advanceUsed > 0 && $balanceUsed > 0) ? 'mixed' : ($advanceUsed > 0 ? 'advance' : 'balance');
+        } else {
+            // Tout payé avec le solde normal
+            $package->advance_used_for_fees = 0;
+            $package->balance_used_for_fees = $escrowAmount;
+            $package->fee_payment_source = 'balance';
+        }
+        $package->save();
 
         $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
 
@@ -1361,7 +1388,25 @@ class ClientPackageController extends Controller
                 }
 
                 // Mettre à jour le statut
-                $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
+        
+        // CRITICAL: Tracker la source de paiement pour remboursement correct
+        if ($canUseAdvance) {
+            // Calculer combien a été payé depuis l'avance vs solde
+            $advanceUsed = min($escrowAmount, $advanceBalance);
+            $balanceUsed = $escrowAmount - $advanceUsed;
+            
+            $package->advance_used_for_fees = $advanceUsed;
+            $package->balance_used_for_fees = $balanceUsed;
+            $package->fee_payment_source = ($advanceUsed > 0 && $balanceUsed > 0) ? 'mixed' : ($advanceUsed > 0 ? 'advance' : 'balance');
+        } else {
+            // Tout payé avec le solde normal
+            $package->advance_used_for_fees = 0;
+            $package->balance_used_for_fees = $escrowAmount;
+            $package->fee_payment_source = 'balance';
+        }
+        $package->save();
+
+        $package->updateStatus('AVAILABLE', $user, 'Colis créé et disponible pour pickup');
 
                 $createdPackages[] = $package;
             }
