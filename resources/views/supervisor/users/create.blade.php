@@ -1,7 +1,7 @@
 @extends('layouts.supervisor')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div x-data="userCreationWizard()" class="container mx-auto px-4 py-6">
     <!-- En-tête -->
     <div class="mb-6">
         <div class="flex items-center space-x-3">
@@ -12,7 +12,57 @@
             </a>
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Créer un Nouvel Utilisateur</h1>
-                <p class="text-gray-600">Ajouter un nouvel utilisateur au système</p>
+                <p class="text-gray-600">Assistant de création par étapes selon le type de compte</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicateur d'étapes -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Étape 1: Type de compte -->
+                <div class="flex items-center">
+                    <div :class="currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                         class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                        1
+                    </div>
+                    <span class="ml-2 text-sm font-medium" :class="currentStep >= 1 ? 'text-blue-600' : 'text-gray-500'">
+                        Type de compte
+                    </span>
+                </div>
+                
+                <!-- Flèche -->
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                
+                <!-- Étape 2: Informations -->
+                <div class="flex items-center">
+                    <div :class="currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                         class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                        2
+                    </div>
+                    <span class="ml-2 text-sm font-medium" :class="currentStep >= 2 ? 'text-blue-600' : 'text-gray-500'">
+                        Informations
+                    </span>
+                </div>
+                
+                <!-- Flèche -->
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                
+                <!-- Étape 3: Configuration -->
+                <div class="flex items-center">
+                    <div :class="currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                         class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                        3
+                    </div>
+                    <span class="ml-2 text-sm font-medium" :class="currentStep >= 3 ? 'text-blue-600' : 'text-gray-500'">
+                        Configuration
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -20,336 +70,479 @@
     <div class="max-w-4xl mx-auto">
         <!-- Carte principale -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Informations Utilisateur</h2>
-                <p class="text-sm text-gray-600">Remplissez tous les champs requis</p>
+            
+            <!-- ÉTAPE 1: SÉLECTION DU TYPE DE COMPTE -->
+            <div x-show="currentStep === 1" x-transition class="p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quel type de compte voulez-vous créer ?</h2>
+                    <p class="text-gray-600">Choisissez le rôle approprié pour configurer les options nécessaires</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Client -->
+                    <div @click="selectAccountType('CLIENT')" 
+                         :class="form.role === 'CLIENT' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
+                         class="cursor-pointer border-2 border-gray-200 rounded-xl p-6 transition-all">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-2xl">👤</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Client</h3>
+                            <p class="text-sm text-gray-600 mb-4">Expéditeur de colis avec portefeuille</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>• Création de colis</div>
+                                <div>• Gestion du portefeuille</div>
+                                <div>• Suivi des livraisons</div>
+                                <div>• Demandes de recharge</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Livreur -->
+                    <div @click="selectAccountType('DELIVERER')" 
+                         :class="form.role === 'DELIVERER' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
+                         class="cursor-pointer border-2 border-gray-200 rounded-xl p-6 transition-all">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-2xl">🚚</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Livreur</h3>
+                            <p class="text-sm text-gray-600 mb-4">Agent de livraison mobile</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>• Acceptation de colis</div>
+                                <div>• Scan QR codes</div>
+                                <div>• Gestion des livraisons</div>
+                                <div>• Portefeuille livreur</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commercial -->
+                    <div @click="selectAccountType('COMMERCIAL')" 
+                         :class="form.role === 'COMMERCIAL' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
+                         class="cursor-pointer border-2 border-gray-200 rounded-xl p-6 transition-all">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-2xl">💼</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Commercial</h3>
+                            <p class="text-sm text-gray-600 mb-4">Gestionnaire clients et livreurs</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>• Validation des comptes</div>
+                                <div>• Gestion des recharges</div>
+                                <div>• Support client</div>
+                                <div>• Traitement réclamations</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chef Dépôt -->
+                    <div @click="selectAccountType('DEPOT_MANAGER')" 
+                         :class="form.role === 'DEPOT_MANAGER' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
+                         class="cursor-pointer border-2 border-gray-200 rounded-xl p-6 transition-all">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-2xl">🏢</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Chef Dépôt</h3>
+                            <p class="text-sm text-gray-600 mb-4">Responsable régional</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>• Gestion par gouvernorat</div>
+                                <div>• Supervision livreurs</div>
+                                <div>• Rapports régionaux</div>
+                                <div>• Coordination locale</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Superviseur -->
+                    <div @click="selectAccountType('SUPERVISOR')" 
+                         :class="form.role === 'SUPERVISOR' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
+                         class="cursor-pointer border-2 border-gray-200 rounded-xl p-6 transition-all">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-2xl">👨‍💼</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Superviseur</h3>
+                            <p class="text-sm text-gray-600 mb-4">Accès administrateur complet</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>• Gestion complète système</div>
+                                <div>• Création utilisateurs</div>
+                                <div>• Rapports globaux</div>
+                                <div>• Configuration système</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mt-8">
+                    <button @click="nextStep()" :disabled="!form.role"
+                            :class="form.role ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'"
+                            class="px-8 py-3 text-white rounded-lg transition-colors flex items-center">
+                        Continuer
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <form method="POST" action="{{ route('supervisor.users.store') }}" class="p-6 space-y-6">
-                @csrf
+            <!-- ÉTAPE 2: INFORMATIONS PERSONNELLES -->
+            <div x-show="currentStep === 2" x-transition class="p-8">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Informations Personnelles</h2>
+                    <p class="text-gray-600">Saisissez les coordonnées de base de l'utilisateur</p>
+                </div>
 
-                <!-- Affichage des erreurs -->
-                @if($errors->any())
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            👤 Nom Complet *
+                        </label>
+                        <input x-model="form.name" type="text" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            ✉️ Email *
+                        </label>
+                        <input x-model="form.email" type="email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            📱 Téléphone *
+                        </label>
+                        <input x-model="form.phone" type="tel" required placeholder="+216 XX XXX XXX"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            🔐 Mot de Passe *
+                        </label>
+                        <div class="relative">
+                            <input x-model="form.password" :type="showPassword ? 'text' : 'password'" required minlength="8"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-10">
+                            <button @click="showPassword = !showPassword" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                 </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-red-800">Erreurs de validation</h3>
-                                <div class="mt-2 text-sm text-red-700">
-                                    <ul class="list-disc pl-5 space-y-1">
-                                        @foreach($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
+                            </button>
                         </div>
+                        <p class="mt-1 text-sm text-gray-500">Minimum 8 caractères</p>
                     </div>
-                @endif
+                </div>
 
-                <!-- Informations personnelles -->
-                <div class="space-y-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Informations Personnelles</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Champs spécifiques selon le rôle -->
+                <div x-show="form.role === 'CLIENT'" class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h3 class="text-lg font-medium text-green-800 mb-4">👤 Configuration Client</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Nom Complet *
-                            </label>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('name') border-red-500 @enderror">
-                            @error('name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-sm font-medium text-gray-700 mb-2">🏪 Nom de la boutique</label>
+                            <input x-model="form.shop_name" type="text" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                         </div>
-
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                Email *
-                            </label>
-                            <input type="email" name="email" id="email" value="{{ old('email') }}" required
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('email') border-red-500 @enderror">
-                            @error('email')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-sm font-medium text-gray-700 mb-2">📍 Adresse complète *</label>
+                            <textarea x-model="form.address" rows="2" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
                         </div>
-
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-                                Téléphone *
-                            </label>
-                            <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" required
-                                   placeholder="+216 XX XXX XXX"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('phone') border-red-500 @enderror">
-                            @error('phone')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-sm font-medium text-gray-700 mb-2">💰 Frais de livraison (DT) *</label>
+                            <input x-model="form.delivery_price" type="number" step="0.001" min="0.001" max="999.999" required
+                                   placeholder="Ex: 7.500"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Prix facturé pour chaque livraison réussie</p>
                         </div>
-
                         <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                                Mot de Passe *
-                            </label>
-                            <div class="relative">
-                                <input type="password" name="password" id="password" required minlength="8"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('password') border-red-500 @enderror">
-                                <button type="button" onclick="togglePassword('password')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            @error('password')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-sm text-gray-500">Minimum 8 caractères</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">📦 Frais de retour (DT) *</label>
+                            <input x-model="form.return_price" type="number" step="0.001" min="0" max="999.999" required
+                                   placeholder="Ex: 5.000 ou 0.000"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Prix facturé en cas de retour (0.000 = gratuit)</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Configuration du compte -->
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Configuration du Compte</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div x-show="form.role === 'DELIVERER'" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 class="text-lg font-medium text-blue-800 mb-4">🚚 Configuration Livreur</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
-                                Rôle *
-                            </label>
-                            <select name="role" id="role" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('role') border-red-500 @enderror">
-                                <option value="">Sélectionner un rôle</option>
-                                <option value="CLIENT" {{ old('role') == 'CLIENT' ? 'selected' : '' }}>
-                                    👤 Client
-                                </option>
-                                <option value="DELIVERER" {{ old('role') == 'DELIVERER' ? 'selected' : '' }}>
-                                    🚚 Livreur
-                                </option>
-                                <option value="COMMERCIAL" {{ old('role') == 'COMMERCIAL' ? 'selected' : '' }}>
-                                    💼 Commercial
-                                </option>
-                                <option value="DEPOT_MANAGER" {{ old('role') == 'DEPOT_MANAGER' ? 'selected' : '' }}>
-                                    🏢 Chef Dépôt
-                                </option>
-                                <option value="SUPERVISOR" {{ old('role') == 'SUPERVISOR' ? 'selected' : '' }}>
-                                    👨‍💼 Superviseur
-                                </option>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">🚗 Type de véhicule</label>
+                            <select x-model="form.vehicle_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Sélectionner</option>
+                                <option value="MOTO">🏍️ Moto</option>
+                                <option value="VOITURE">🚗 Voiture</option>
+                                <option value="CAMIONNETTE">🚐 Camionnette</option>
                             </select>
-                            @error('role')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
                         </div>
-
                         <div>
-                            <label for="account_status" class="block text-sm font-medium text-gray-700 mb-2">
-                                Statut Initial *
-                            </label>
-                            <select name="account_status" id="account_status" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('account_status') border-red-500 @enderror">
-                                <option value="">Sélectionner un statut</option>
-                                <option value="ACTIVE" {{ old('account_status') == 'ACTIVE' ? 'selected' : '' }}>
-                                    ✅ Actif
-                                </option>
-                                <option value="PENDING" {{ old('account_status') == 'PENDING' ? 'selected' : '' }}>
-                                    ⏳ En attente
-                                </option>
-                                <option value="SUSPENDED" {{ old('account_status') == 'SUSPENDED' ? 'selected' : '' }}>
-                                    ❌ Suspendu
-                                </option>
-                            </select>
-                            @error('account_status')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <label class="block text-sm font-medium text-gray-700 mb-2">🆔 Numéro d'immatriculation</label>
+                            <input x-model="form.vehicle_registration" type="text" 
+                                   placeholder="Ex: 123 TUN 456"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
-
-                        @if(isset($delegations) && count($delegations) > 0)
                         <div class="md:col-span-2">
-                            <label for="delegation_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Délégation
-                            </label>
-                            <select name="delegation_id" id="delegation_id"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors @error('delegation_id') border-red-500 @enderror">
-                                <option value="">Aucune délégation</option>
-                                @foreach($delegations as $key => $name)
-                                <option value="{{ $key }}" {{ old('delegation_id') == $key ? 'selected' : '' }}>
-                                    {{ $name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('delegation_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-sm text-gray-500">Optionnel - Requis pour certains rôles</p>
-                        </div>
-                        @endif
-
-                        <!-- Section Gouvernorats pour Chef Dépôt -->
-                        <div id="gouvernorats-section" class="md:col-span-2 hidden">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Gouvernorats assignés <span class="text-red-500">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
-                                @if(isset($gouvernorats) && count($gouvernorats) > 0)
-                                    @foreach($gouvernorats as $key => $name)
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="assigned_gouvernorats[]" value="{{ $key }}"
-                                               class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
-                                        <span class="ml-2 text-sm text-gray-700">{{ $name }}</span>
-                                    </label>
-                                    @endforeach
-                                @endif
+                            <label class="block text-sm font-medium text-gray-700 mb-2">🚛 Type de livreur *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                                       :class="form.is_transit_deliverer === false ? 'bg-blue-100 border-blue-500' : ''">
+                                    <input type="radio" x-model="form.is_transit_deliverer" :value="false" name="deliverer_type" required
+                                           class="text-blue-600 focus:ring-blue-500">
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">🏠 Livreur Local</div>
+                                        <div class="text-xs text-gray-500">Livre dans sa délégation uniquement</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                                       :class="form.is_transit_deliverer === true ? 'bg-blue-100 border-blue-500' : ''">
+                                    <input type="radio" x-model="form.is_transit_deliverer" :value="true" name="deliverer_type" required
+                                           class="text-blue-600 focus:ring-blue-500">
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">🚛 Livreur Transit</div>
+                                        <div class="text-xs text-gray-500">Transporte entre délégations</div>
+                                    </div>
+                                </label>
                             </div>
-                            @error('assigned_gouvernorats')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-sm text-gray-500">Sélectionnez les gouvernorats que ce chef dépôt pourra gérer</p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <strong>Local:</strong> Accepte et livre les colis dans sa délégation<br>
+                                <strong>Transit:</strong> Transporte les colis d'une délégation à une autre
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Informations sur les rôles -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 class="font-medium text-blue-900 mb-2">Descriptions des Rôles</h4>
-                    <div class="space-y-2 text-sm text-blue-800">
-                        <div><strong>👤 Client:</strong> Peut créer des colis et gérer son portefeuille</div>
-                        <div><strong>🚚 Livreur:</strong> Accepte et livre les colis, scanne les QR codes</div>
-                        <div><strong>💼 Commercial:</strong> Traite les demandes de recharge et réclamations</div>
-                        <div><strong>🏢 Chef Dépôt:</strong> Gère les livreurs et clients de gouvernorats spécifiques</div>
-                        <div><strong>👨‍💼 Superviseur:</strong> Accès complet au système et surveillance</div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                    <a href="{{ route('supervisor.users.index') }}"
-                       class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+                <div class="flex justify-between mt-8">
+                    <button @click="previousStep()" type="button"
+                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
-                        Annuler
-                    </a>
-                    <button type="submit"
-                            class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all flex items-center shadow-lg hover:shadow-xl">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        Précédent
+                    </button>
+                    <button @click="nextStep()" type="button"
+                            :disabled="!canProceedToStep3()"
+                            :class="canProceedToStep3() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'"
+                            class="px-8 py-3 text-white rounded-lg transition-colors flex items-center">
+                        Continuer
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
-                        Créer l'Utilisateur
                     </button>
                 </div>
-            </form>
-        </div>
+            </div>
 
-        <!-- Aide contextuelle -->
-        <div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <div class="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
+            <!-- ÉTAPE 3: CONFIGURATION FINALE -->
+            <div x-show="currentStep === 3" x-transition class="p-8">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Configuration Finale</h2>
+                    <p class="text-gray-600">Paramètres spécifiques au rôle sélectionné</p>
                 </div>
-                <div class="ml-4">
-                    <p class="text-lg font-medium text-blue-900 mb-3">Notes importantes</p>
-                    <div class="space-y-2 text-sm text-blue-800">
-                        <div class="flex items-start">
-                            <svg class="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span>Les clients et livreurs auront automatiquement un portefeuille créé</span>
+
+                <form method="POST" action="{{ route('supervisor.users.store') }}" @submit="submitForm">
+                    @csrf
+                    
+                    <!-- Champs cachés pour les données du formulaire -->
+                    <input type="hidden" name="role" :value="form.role">
+                    <input type="hidden" name="name" :value="form.name">
+                    <input type="hidden" name="email" :value="form.email">
+                    <input type="hidden" name="phone" :value="form.phone">
+                    <input type="hidden" name="password" :value="form.password">
+                    <input type="hidden" name="shop_name" :value="form.shop_name">
+                    <input type="hidden" name="address" :value="form.address">
+                    <input type="hidden" name="delivery_price" :value="form.delivery_price">
+                    <input type="hidden" name="return_price" :value="form.return_price">
+                    <input type="hidden" name="vehicle_type" :value="form.vehicle_type">
+                    <input type="hidden" name="vehicle_registration" :value="form.vehicle_registration">
+                    <input type="hidden" name="is_transit_deliverer" :value="form.is_transit_deliverer">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                ⚡ Statut Initial *
+                            </label>
+                            <select x-model="form.account_status" name="account_status" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="ACTIVE">✅ Actif (peut se connecter immédiatement)</option>
+                                <option value="PENDING">⏳ En attente (nécessite validation)</option>
+                            </select>
                         </div>
-                        <div class="flex items-start">
-                            <svg class="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span>L'utilisateur recevra ses identifiants par email</span>
-                        </div>
-                        <div class="flex items-start">
-                            <svg class="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span>Le mot de passe peut être réinitialisé plus tard</span>
-                        </div>
-                        <div class="flex items-start">
-                            <svg class="w-4 h-4 text-amber-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span>Les utilisateurs "En attente" ne peuvent pas se connecter</span>
+
+                        <div x-show="needsDelegation()">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                📍 Délégation *
+                            </label>
+                            <select x-model="form.delegation_id" name="delegation_id" 
+                                    :required="needsDelegation()"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="">Sélectionner une délégation</option>
+                                @if(isset($delegations))
+                                    @foreach($delegations as $key => $name)
+                                    <option value="{{ $key }}">{{ $name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Configuration spéciale pour Chef Dépôt -->
+                    <div x-show="form.role === 'DEPOT_MANAGER'" class="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <h3 class="text-lg font-medium text-orange-800 mb-4">🏢 Gouvernorats assignés</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                            @if(isset($gouvernorats))
+                                @foreach($gouvernorats as $key => $name)
+                                <label class="flex items-center p-2 hover:bg-orange-100 rounded">
+                                    <input type="checkbox" name="assigned_gouvernorats[]" value="{{ $key }}"
+                                           class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                                    <span class="ml-2 text-sm text-gray-700">{{ $name }}</span>
+                                </label>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Résumé de création -->
+                    <div class="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <h3 class="text-lg font-medium text-blue-800 mb-4">📋 Résumé de création</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div><strong>Rôle:</strong> <span x-text="getRoleDisplay()"></span></div>
+                            <div><strong>Nom:</strong> <span x-text="form.name"></span></div>
+                            <div><strong>Email:</strong> <span x-text="form.email"></span></div>
+                            <div><strong>Téléphone:</strong> <span x-text="form.phone"></span></div>
+                            <div><strong>Statut:</strong> <span x-text="form.account_status === 'ACTIVE' ? '✅ Actif' : '⏳ En attente'"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-8">
+                        <button @click="previousStep()" type="button"
+                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Précédent
+                        </button>
+                        <button type="submit" :disabled="isSubmitting"
+                                :class="isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                                class="px-8 py-3 text-white rounded-lg transition-colors flex items-center">
+                            <svg x-show="!isSubmitting" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            <svg x-show="isSubmitting" class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span x-text="isSubmitting ? 'Création...' : 'Créer l\'Utilisateur'"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function togglePassword(fieldId) {
-    const field = document.getElementById(fieldId);
-    const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
-    field.setAttribute('type', type);
-}
+function userCreationWizard() {
+    return {
+        currentStep: 1,
+        showPassword: false,
+        isSubmitting: false,
+        
+        form: {
+            role: '',
+            name: '',
+            email: '',
+            phone: '',
+            password: '',
+            shop_name: '',
+            address: '',
+            delivery_price: '',
+            return_price: '',
+            vehicle_type: '',
+            vehicle_registration: '',
+            is_transit_deliverer: null,
+            account_status: 'ACTIVE',
+            delegation_id: ''
+        },
 
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const phoneInput = document.getElementById('phone');
-    const roleSelect = document.getElementById('role');
-    const statusSelect = document.getElementById('account_status');
+        selectAccountType(role) {
+            this.form.role = role;
+        },
 
-    // Format du téléphone
-    phoneInput.addEventListener('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length > 0 && !value.startsWith('216')) {
-            if (value.length === 8) {
-                value = '216' + value;
+        nextStep() {
+            if (this.currentStep < 3) {
+                this.currentStep++;
             }
-        }
-        if (value.length > 0) {
-            value = '+' + value;
-        }
-        this.value = value;
-    });
+        },
 
-    // Gestion de l'affichage des sections selon le rôle
-    const gouvernoratsSection = document.getElementById('gouvernorats-section');
+        previousStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+            }
+        },
 
-    function toggleRoleSpecificSections() {
-        const selectedRole = roleSelect.value;
+        canProceedToStep3() {
+            return this.form.name && 
+                   this.form.email && 
+                   this.form.phone && 
+                   this.form.password &&
+                   this.form.password.length >= 8 &&
+                   this.validateRoleSpecificFields();
+        },
 
-        // Masquer toutes les sections spécifiques
-        gouvernoratsSection.classList.add('hidden');
+        validateRoleSpecificFields() {
+            if (this.form.role === 'CLIENT') {
+                return this.form.address && 
+                       this.form.delivery_price && 
+                       this.form.delivery_price > 0 &&
+                       this.form.return_price !== '' && 
+                       this.form.return_price >= 0;
+            }
+            if (this.form.role === 'DELIVERER') {
+                return this.form.is_transit_deliverer !== null;
+            }
+            return true;
+        },
 
-        // Afficher les sections selon le rôle
-        if (selectedRole === 'DEPOT_MANAGER') {
-            gouvernoratsSection.classList.remove('hidden');
+        needsDelegation() {
+            return ['CLIENT', 'DELIVERER'].includes(this.form.role);
+        },
+
+        getRoleDisplay() {
+            const roles = {
+                'CLIENT': '👤 Client',
+                'DELIVERER': '🚚 Livreur',
+                'COMMERCIAL': '💼 Commercial',
+                'DEPOT_MANAGER': '🏢 Chef Dépôt',
+                'SUPERVISOR': '👨‍💼 Superviseur'
+            };
+            return roles[this.form.role] || this.form.role;
+        },
+
+        submitForm(event) {
+            this.isSubmitting = true;
+            // Le formulaire sera soumis normalement
+        },
+
+        init() {
+            // Format du téléphone
+            this.$watch('form.phone', (value) => {
+                if (value) {
+                    let cleaned = value.replace(/\D/g, '');
+                    if (cleaned.length > 0 && !cleaned.startsWith('216')) {
+                        if (cleaned.length === 8) {
+                            cleaned = '216' + cleaned;
+                        }
+                    }
+                    if (cleaned.length > 0) {
+                        this.form.phone = '+' + cleaned;
+                    }
+                }
+            });
         }
     }
-
-    // Auto-sélection du statut actif
-    roleSelect.addEventListener('change', function() {
-        toggleRoleSpecificSections();
-
-        if (this.value && statusSelect.value === '') {
-            statusSelect.value = 'ACTIVE';
-        }
-    });
-
-    // Validation avant soumission
-    form.addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Création...';
-
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>Créer l\'Utilisateur';
-        }, 2000);
-    });
-});
+}
 </script>
 @endsection
