@@ -194,7 +194,7 @@ function scannerQRFinal() {
         searchCode() { if (!this.codeValid || this.searching) return; this.processCode(this.normalizePackageCode(this.manualCode)); },
         useRecentCode(code) { this.manualCode = code; this.validateCode(); this.processCode(code); },
         async processCode(code) { this.searching = true; try { this.addToRecent(code); const response = await fetch('/deliverer/scan/process', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }, body: JSON.stringify({ qr_code: code }) }); const data = await response.json(); this.showResult(data); } catch (error) { this.showResult({ success: false, message: 'Erreur de connexion.' }); } this.searching = false; },
-        showResult(data) { this.result = data; this.resultVisible = true; if (data.success && data.redirect) { setTimeout(() => { this.goToPackage(); }, 5000); } },
+        showResult(data) { this.result = data; if (data.success && data.redirect) { this.closeScanner(); window.location.href = data.redirect; } else { this.resultVisible = true; } },
         closeResult() { this.resultVisible = false; },
         goToPackage() { if (this.result.redirect) { this.closeScanner(); window.location.href = this.result.redirect; } },
         getActionLabel() { const action = this.result.action; switch (action) { case 'accept': return 'Accepter'; case 'pickup': return 'Collecter'; case 'deliver': return 'Livrer'; case 'return': return 'Retourner'; default: return 'Voir'; } },

@@ -149,11 +149,19 @@ class SimpleDelivererController extends Controller
     }
 
     /**
-     * Interface scanner simplifiée
+     * PWA Optimisée: Scanner les collectes
      */
-    public function scanner()
+    public function scanPickups()
     {
-        return view('deliverer.simple-scanner');
+        return view('deliverer.pickups.scan');
+    }
+
+    /**
+     * Interface scanner avec caméra intégrée
+     */
+    public function scanCamera()
+    {
+        return view('deliverer.scan-camera');
     }
 
     /**
@@ -162,6 +170,237 @@ class SimpleDelivererController extends Controller
     public function processScan(Request $request)
     {
         return $this->scanQR($request);
+    }
+
+    /**
+     * Interface de scan multiple
+     */
+    public function multiScanner()
+    {
+        return view('deliverer.multi-scanner');
+    }
+
+    /**
+     * Traitement du scan multiple
+     */
+    public function processMultiScan(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'action' => 'required|in:pickup,delivery',
+            'scanned_ids' => 'nullable|array'
+        ]);
+
+        $user = Auth::user();
+        $code = $this->normalizeCode($request->code);
+        $action = $request->action;
+        $scannedIds = $request->scanned_ids ?? [];
+
+        try {
+            // Rechercher le colis par code
+            $package = $this->findPackageByCode($code);
+
+            if (!$package) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code invalide ou colis non trouvé'
+                ]);
+            }
+
+            // Vérifier si le colis est déjà dans la liste
+            if (in_array($package->id, $scannedIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Colis déjà ajouté à la liste'
+                ]);
+            }
+
+            // Valider le statut selon l'action
+            $validationResult = $this->validatePackageStatus($package, $action);
+            if (!$validationResult['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validationResult['message']
+                ]);
+            }
+
+            // Préparer les données du destinataire
+            $recipientData = is_array($package->recipient_data) ? $package->recipient_data : [];
+            $recipientName = $recipientData['name'] ?? $package->recipient_name ?? 'N/A';
+            $recipientAddress = $recipientData['address'] ?? $package->recipient_address ?? 'N/A';
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Colis valide ajouté',
+                'package' => [
+                    'id' => $package->id,
+                    'tracking_number' => $package->tracking_number ?? $package->package_code,
+                    'recipient_name' => $recipientName,
+                    'recipient_address' => $recipientAddress,
+                    'cod_amount' => $package->cod_amount ?? 0,
+                    'status' => $package->status
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du traitement: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Validation de la liste des colis scannés
+     */
+    public function validateMultiScan(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:pickup,delivery',
+            'package_ids' => 'required|array|min:1',
+            'package_ids.*' => 'exists:packages,id'
+        ]);
+
+        $user = Auth::user();
+        $action = $request->action;
+        $packageIds = $request->package_ids;
+
+        try {
+            DB::beginTransaction();
+
+            $packages = Package::whereIn('id', $packageIds)->get();
+
+            foreach ($packages as $package) {
+                if ($action === 'pickup') {
+                    // Pickup chez fournisseur: changer le statut à PICKED_UP
+                    $package->update([
+                        'status' => 'PICKED_UP',
+                        'picked_up_at' => now(),
+                        'assigned_deliverer_id' => $user->id
+                    ]);
+                } else {
+                    // Prêt pour livraison: changer le statut à PICKED_UP (en cours de livraison)
+                    $package->update([
+                        'status' => 'PICKED_UP',
+                        'picked_up_at' => $package->picked_up_at ?? now(),
+                        'assigned_deliverer_id' => $user->id
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $message = $action === 'pickup' 
+                ? 'Colis collectés avec succès' 
+                : 'Colis prêts pour la livraison';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => count($packageIds)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la validation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Valider le statut du colis selon l'action
+     */
+    private function validatePackageStatus(Package $package, string $action): array
+    {
+        if ($action === 'pickup') {
+            // Pour pickup: accepter AVAILABLE ou CREATED
+            $validStatuses = ['AVAILABLE', 'CREATED'];
+            if (!in_array($package->status, $validStatuses)) {
+                return [
+                    'valid' => false,
+                    'message' => 'Statut erroné. Pour pickup, le colis doit être AVAILABLE ou CREATED (statut actuel: ' . $package->status . ')'
+                ];
+            }
+        } else {
+            // Pour livraison: accepter tous sauf DELIVERED et PAID
+            $invalidStatuses = ['DELIVERED', 'PAID'];
+            if (in_array($package->status, $invalidStatuses)) {
+                return [
+                    'valid' => false,
+                    'message' => 'Statut erroné. Ce colis est déjà livré (statut: ' . $package->status . ')'
+                ];
+            }
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Normaliser le code (QR ou code-barres)
+     */
+    private function normalizeCode(string $code): string
+    {
+        $code = trim($code);
+        
+        // Si c'est une URL de tracking, extraire le code
+        if (preg_match('/\/track\/(.+)$/', $code, $matches)) {
+            return strtoupper($matches[1]);
+        }
+        
+        return strtoupper($code);
+    }
+
+    /**
+     * Trouver un colis par code (tracking_number ou package_code)
+     * Support multiple formats: QR codes, barcodes, avec/sans préfixe
+     */
+    private function findPackageByCode(string $code): ?Package
+    {
+        $cleanCode = strtoupper(trim($code));
+        
+        // Si c'est une URL complète (QR code), extraire le code
+        if (preg_match('/\/track\/(.+)$/i', $cleanCode, $matches)) {
+            $cleanCode = strtoupper($matches[1]);
+        }
+        
+        // Nettoyer les espaces et caractères spéciaux
+        $cleanCode = preg_replace('/[^A-Z0-9_-]/', '', $cleanCode);
+        
+        // Liste des variations possibles du code
+        $codeVariations = [$cleanCode];
+        
+        // Ajouter variation avec PKG_ si pas présent
+        if (!str_starts_with($cleanCode, 'PKG_')) {
+            $codeVariations[] = 'PKG_' . $cleanCode;
+        }
+        
+        // Ajouter variation sans PKG_ si présent
+        if (str_starts_with($cleanCode, 'PKG_')) {
+            $codeVariations[] = substr($cleanCode, 4);
+        }
+        
+        // Chercher dans toutes les variations
+        foreach ($codeVariations as $variation) {
+            // Chercher par tracking_number
+            $package = Package::where('tracking_number', $variation)->first();
+            if ($package) return $package;
+            
+            // Chercher par package_code
+            $package = Package::where('package_code', $variation)->first();
+            if ($package) return $package;
+            
+            // Recherche partielle (fin du code) pour codes longs
+            if (strlen($variation) >= 8) {
+                $package = Package::where('tracking_number', 'LIKE', '%' . substr($variation, -8))
+                    ->orWhere('package_code', 'LIKE', '%' . substr($variation, -8))
+                    ->first();
+                if ($package) return $package;
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -577,6 +816,47 @@ class SimpleDelivererController extends Controller
     public function clientRecharge()
     {
         return view('deliverer.client-recharge');
+    }
+
+    /**
+     * Vue de la liste des collectes
+     */
+    public function pickupsIndex()
+    {
+        // TODO: Créer une vue pour lister les collectes
+        return "<h1>Page des collectes à venir</h1>";
+    }
+
+    /**
+     * Traiter le scan d'un QR code de collecte
+     */
+    public function processPickupScan(Request $request)
+    {
+        $request->validate([
+            'qr_code' => 'required',
+        ]);
+
+        $user = Auth::user();
+        // Le qr-scanner retourne un objet, on prend la donnée brute
+        $qrCodeValue = is_array($request->qr_code) ? $request->qr_code['data'] : $request->qr_code;
+        $qrCode = $this->normalizeCode($qrCodeValue);
+
+        // Recherche de la demande de collecte
+        $pickup = \App\Models\PickupRequest::where('pickup_code', $qrCode)->first();
+
+        if ($pickup) {
+            // Logique de succès
+            return response()->json([
+                'success' => true,
+                'message' => 'Collecte ' . $pickup->pickup_code . ' trouvée.',
+                'redirect_url' => route('deliverer.pickups.index') // Rediriger vers la liste des collectes
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'QR code de collecte non valide ou non trouvé.'
+        ], 404);
     }
 
     /**

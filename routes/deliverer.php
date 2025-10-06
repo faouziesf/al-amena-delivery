@@ -19,15 +19,19 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     Route::get('/wallet-optimized', [SimpleDelivererController::class, 'walletOptimized'])->name('wallet.optimized');
     Route::get('/client-recharge', [SimpleDelivererController::class, 'clientRecharge'])->name('client.recharge');
 
-    // ==================== SIMPLE SCANNER QR ====================
-    Route::get('/scan', [SimpleDelivererController::class, 'scanner'])->name('scan.simple');
+    // ==================== SCANNER AVEC CAMERA ====================
+    Route::get('/scan', [SimpleDelivererController::class, 'scanCamera'])->name('scan.simple');
     Route::post('/scan/process', [SimpleDelivererController::class, 'processScan'])->name('scan.process');
+    
+    // ==================== MULTIPLE SCANNER ====================
+    Route::get('/scan/multi', [SimpleDelivererController::class, 'multiScanner'])->name('scan.multi');
+    Route::post('/scan/multi/process', [SimpleDelivererController::class, 'processMultiScan'])->name('scan.multi.process');
+    Route::post('/scan/multi/validate', [SimpleDelivererController::class, 'validateMultiScan'])->name('scan.multi.validate');
 
     // ==================== SIMPLE ACTIONS ====================
     Route::post('/pickup/{package}', [SimpleDelivererController::class, 'markPickup'])->name('simple.pickup');
     Route::post('/deliver/{package}', [SimpleDelivererController::class, 'markDelivered'])->name('simple.deliver');
     Route::post('/unavailable/{package}', [SimpleDelivererController::class, 'markUnavailable'])->name('simple.unavailable');
-    Route::post('/cancelled/{package}', [SimpleDelivererController::class, 'markCancelled'])->name('simple.cancelled');
     Route::post('/signature/{package}', [SimpleDelivererController::class, 'saveSignature'])->name('simple.signature');
 
     // ==================== IMPRESSION ====================
@@ -37,6 +41,9 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
 
 
     // ==================== PICKUP REQUESTS ====================
+    Route::get('/pickups', [SimpleDelivererController::class, 'pickupsIndex'])->name('pickups.index');
+    Route::get('/pickups/scan', [SimpleDelivererController::class, 'scanPickups'])->name('pickups.scan');
+    Route::post('/pickups/scan/process', [SimpleDelivererController::class, 'processPickupScan'])->name('pickups.scan.process');
     Route::post('/pickup-requests/{pickupRequest}/accept', [SimpleDelivererController::class, 'acceptPickup'])->name('pickup.accept');
     Route::post('/pickup-requests/{pickupRequest}/collected', [SimpleDelivererController::class, 'markPickupCollected'])->name('pickup.collected');
 

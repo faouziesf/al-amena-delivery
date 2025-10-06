@@ -55,7 +55,43 @@
                     }
                 } else if (action === 'export') {
                     console.log('Export de:', this.selectedPackages);
+                } else if (action === 'print') {
+                    this.printMultiple();
                 }
+            },
+            printMultiple() {
+                if (this.selectedPackages.length === 0) {
+                    alert('Veuillez sélectionner au moins un colis pour l\'impression.');
+                    return;
+                }
+                if (this.selectedPackages.length > 50) {
+                    alert('Vous ne pouvez imprimer que 50 bons de livraison à la fois maximum.');
+                    return;
+                }
+                // Créer et soumettre le formulaire
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route('client.packages.print.multiple') }}';
+                form.target = '_blank';
+                
+                const csrfToken = document.querySelector('meta[name=csrf-token]').content;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                this.selectedPackages.forEach(packageId => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'package_ids[]';
+                    input.value = packageId;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
             }
         }">
             <form method="GET" action="{{ route('client.packages.index') }}" class="space-y-4">
@@ -111,14 +147,30 @@
                     <span class="text-sm text-gray-500" x-text="`${selectedPackages.length} sélectionné(s)`"></span>
                 </div>
 
-                <div class="flex space-x-2 mt-2 sm:mt-0">
+                <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                    <button @click="bulkAction('print')"
+                            :disabled="selectedPackages.length === 0"
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span>Imprimer</span>
+                    </button>
                     <button @click="bulkAction('export')"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-                        📊 Exporter
+                            :disabled="selectedPackages.length === 0"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Exporter</span>
                     </button>
                     <button @click="bulkAction('delete')"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
-                        🗑️ Supprimer
+                            :disabled="selectedPackages.length === 0"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        <span>Supprimer</span>
                     </button>
                 </div>
             </div>
