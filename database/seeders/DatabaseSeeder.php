@@ -38,8 +38,9 @@ class DatabaseSeeder extends Seeder
             foreach ($data['delegations'] as $delegation) {
                 DB::table('delegations')->insert([
                     'name' => $delegation['name'],
-                    'gouvernorat' => $delegation['gouvernorat'],
-                    'is_active' => $delegation['is_active'] ?? true,
+                    'zone' => $delegation['gouvernorat'] ?? $delegation['zone'] ?? 'Grand Tunis',
+                    'active' => $delegation['is_active'] ?? $delegation['active'] ?? true,
+                    'created_by' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -48,23 +49,24 @@ class DatabaseSeeder extends Seeder
             // Créer des délégations par défaut si pas d'export
             echo "🔄 Création des délégations par défaut...\n";
             $defaultDelegations = [
-                ['name' => 'Tunis', 'gouvernorat' => 'Tunis'],
-                ['name' => 'Ariana', 'gouvernorat' => 'Ariana'],
-                ['name' => 'Ben Arous', 'gouvernorat' => 'Ben Arous'],
-                ['name' => 'Manouba', 'gouvernorat' => 'Manouba'],
-                ['name' => 'Sfax', 'gouvernorat' => 'Sfax'],
-                ['name' => 'Sousse', 'gouvernorat' => 'Sousse'],
-                ['name' => 'Monastir', 'gouvernorat' => 'Monastir'],
-                ['name' => 'Nabeul', 'gouvernorat' => 'Nabeul'],
-                ['name' => 'Bizerte', 'gouvernorat' => 'Bizerte'],
-                ['name' => 'Gabès', 'gouvernorat' => 'Gabès'],
+                ['name' => 'Tunis', 'zone' => 'Grand Tunis'],
+                ['name' => 'Ariana', 'zone' => 'Grand Tunis'],
+                ['name' => 'Ben Arous', 'zone' => 'Grand Tunis'],
+                ['name' => 'Manouba', 'zone' => 'Grand Tunis'],
+                ['name' => 'Sfax', 'zone' => 'Centre'],
+                ['name' => 'Sousse', 'zone' => 'Centre'],
+                ['name' => 'Monastir', 'zone' => 'Centre'],
+                ['name' => 'Nabeul', 'zone' => 'Nord'],
+                ['name' => 'Bizerte', 'zone' => 'Nord'],
+                ['name' => 'Gabès', 'zone' => 'Sud'],
             ];
             
             foreach ($defaultDelegations as $del) {
                 DB::table('delegations')->insert([
                     'name' => $del['name'],
-                    'gouvernorat' => $del['gouvernorat'],
-                    'is_active' => true,
+                    'zone' => $del['zone'],
+                    'active' => true,
+                    'created_by' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
