@@ -1,0 +1,5434 @@
+{
+    "action_logs": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "user_role",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "action_type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "target_type",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "target_id",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "old_value",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "new_value",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "ip_address",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "user_agent",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "additional_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "action_logs_created_at_action_type_index",
+                "unique": 0,
+                "columns": [
+                    "created_at",
+                    "action_type"
+                ]
+            },
+            {
+                "name": "action_logs_user_id_action_type_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "action_type"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "cache": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "key",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "value",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "expiration",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "sqlite_autoindex_cache_1",
+                "unique": 1,
+                "columns": [
+                    "key"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "cache_locks": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "key",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "owner",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "expiration",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "sqlite_autoindex_cache_locks_1",
+                "unique": 1,
+                "columns": [
+                    "key"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "client_bank_accounts": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "bank_name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "account_holder_name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "iban",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "is_default",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "last_used_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "client_bank_accounts_iban_unique",
+                "unique": 1,
+                "columns": [
+                    "iban"
+                ]
+            },
+            {
+                "name": "client_bank_accounts_client_id_last_used_at_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "last_used_at"
+                ]
+            },
+            {
+                "name": "client_bank_accounts_client_id_is_default_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "is_default"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "client_pickup_addresses": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "address",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "phone",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "contact_name",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "delegation",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "is_default",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "gouvernorat",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "tel2",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "client_pickup_addresses_client_id_is_default_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "is_default"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "client_profiles": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "shop_name",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "fiscal_number",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "business_sector",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "identity_document",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "offer_delivery_price",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "offer_return_price",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "internal_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "validation_status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "validated_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "validated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "validation_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "client_profiles_user_id_unique",
+                "unique": 1,
+                "columns": [
+                    "user_id"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "validated_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "cod_modifications": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "package_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "old_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "new_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "modified_by_commercial_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "reason",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "client_complaint_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "modification_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "context_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "ip_address",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "emergency_modification",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "cod_modifications_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "cod_modifications_modified_by_commercial_id_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "modified_by_commercial_id",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "cod_modifications_package_id_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "package_id",
+                    "created_at"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "client_complaint_id",
+                "referenced_table": "complaints",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "modified_by_commercial_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "package_id",
+                "referenced_table": "packages",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "complaints": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "complaint_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "package_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "description",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "additional_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "priority",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'NORMAL'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "assigned_commercial_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "resolution_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "resolution_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "resolved_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "ticket_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "complaints_ticket_id_index",
+                "unique": 0,
+                "columns": [
+                    "ticket_id"
+                ]
+            },
+            {
+                "name": "complaints_status_priority_index",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "priority"
+                ]
+            },
+            {
+                "name": "complaints_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "complaints_complaint_code_unique",
+                "unique": 1,
+                "columns": [
+                    "complaint_code"
+                ]
+            },
+            {
+                "name": "complaints_client_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "complaints_assigned_commercial_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "assigned_commercial_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "ticket_id",
+                "referenced_table": "tickets",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "package_id",
+                "referenced_table": "packages",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_commercial_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "delegations": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "zone",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "active",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'1'",
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "created_by",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "delegations_active_zone_index",
+                "unique": 0,
+                "columns": [
+                    "active",
+                    "zone"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "created_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "deliverer_wallet_emptyings": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "deliverer_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "commercial_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "wallet_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "physical_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "discrepancy_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "emptying_date",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "receipt_generated",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "receipt_path",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "emptying_details",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "deliverer_acknowledged",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "deliverer_acknowledged_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "deliverer_wallet_emptyings_emptying_date_index",
+                "unique": 0,
+                "columns": [
+                    "emptying_date"
+                ]
+            },
+            {
+                "name": "deliverer_wallet_emptyings_commercial_id_emptying_date_index",
+                "unique": 0,
+                "columns": [
+                    "commercial_id",
+                    "emptying_date"
+                ]
+            },
+            {
+                "name": "deliverer_wallet_emptyings_deliverer_id_emptying_date_index",
+                "unique": 0,
+                "columns": [
+                    "deliverer_id",
+                    "emptying_date"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "commercial_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "deliverer_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "failed_jobs": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "uuid",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "connection",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "queue",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "payload",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "exception",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "failed_at",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": "CURRENT_TIMESTAMP",
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "failed_jobs_uuid_unique",
+                "unique": 1,
+                "columns": [
+                    "uuid"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "financial_transactions": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "transaction_id",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "package_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "description",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "sequence_number",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "wallet_balance_before",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "wallet_balance_after",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "checksum",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "metadata",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "reference",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "completed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "financial_transactions_transaction_id_unique",
+                "unique": 1,
+                "columns": [
+                    "transaction_id"
+                ]
+            },
+            {
+                "name": "financial_transactions_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "financial_transactions_status_index",
+                "unique": 0,
+                "columns": [
+                    "status"
+                ]
+            },
+            {
+                "name": "financial_transactions_type_index",
+                "unique": 0,
+                "columns": [
+                    "type"
+                ]
+            },
+            {
+                "name": "financial_transactions_user_id_index",
+                "unique": 0,
+                "columns": [
+                    "user_id"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "import_batches": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "batch_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "filename",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "total_rows",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "processed_rows",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "successful_rows",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "failed_rows",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "started_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "completed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "errors",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "summary",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "file_path",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "import_batches_batch_code_unique",
+                "unique": 1,
+                "columns": [
+                    "batch_code"
+                ]
+            },
+            {
+                "name": "import_batches_batch_code_index",
+                "unique": 0,
+                "columns": [
+                    "batch_code"
+                ]
+            },
+            {
+                "name": "import_batches_status_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "import_batches_user_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "job_batches": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "total_jobs",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "pending_jobs",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "failed_jobs",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "failed_job_ids",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "options",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "cancelled_at",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "created_at",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "finished_at",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "sqlite_autoindex_job_batches_1",
+                "unique": 1,
+                "columns": [
+                    "id"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "jobs": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "queue",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "payload",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "attempts",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "reserved_at",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "available_at",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "created_at",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "jobs_queue_index",
+                "unique": 0,
+                "columns": [
+                    "queue"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "manifests": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "manifest_number",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "sender_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "package_ids",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "pickup_address_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "pickup_address_name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "pickup_phone",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "total_packages",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "total_cod_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "total_weight",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "pickup_request_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'CREATED'",
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "generated_at",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "manifests_manifest_number_unique",
+                "unique": 1,
+                "columns": [
+                    "manifest_number"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "pickup_request_id",
+                "referenced_table": "pickup_requests",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "pickup_address_id",
+                "referenced_table": "client_pickup_addresses",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "sender_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "notifications": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "title",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "message",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "priority",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'NORMAL'",
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "read",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "read_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "expires_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "action_url",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "related_type",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "related_id",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "notifications_expires_at_index",
+                "unique": 0,
+                "columns": [
+                    "expires_at"
+                ]
+            },
+            {
+                "name": "notifications_related_type_related_id_index",
+                "unique": 0,
+                "columns": [
+                    "related_type",
+                    "related_id"
+                ]
+            },
+            {
+                "name": "notifications_type_priority_index",
+                "unique": 0,
+                "columns": [
+                    "type",
+                    "priority"
+                ]
+            },
+            {
+                "name": "notifications_user_id_read_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "read",
+                    "created_at"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "package_status_histories": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "package_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "previous_status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "new_status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "changed_by",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "changed_by_role",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "additional_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "ip_address",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "user_agent",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "package_status_histories_new_status_index",
+                "unique": 0,
+                "columns": [
+                    "new_status"
+                ]
+            },
+            {
+                "name": "package_status_histories_changed_by_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "changed_by",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "package_status_histories_package_id_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "package_id",
+                    "created_at"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "changed_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "package_id",
+                "referenced_table": "packages",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "packages": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "package_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "sender_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "sender_data",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "supplier_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "delegation_from",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "pickup_delegation_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "pickup_address",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "pickup_phone",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "pickup_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "recipient_data",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "delegation_to",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "content_description",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "cod_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "package_weight",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "package_dimensions",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 17,
+                "name": "package_value",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 18,
+                "name": "delivery_fee",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 19,
+                "name": "return_fee",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 20,
+                "name": "special_instructions",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 21,
+                "name": "is_fragile",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 22,
+                "name": "requires_signature",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 23,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'CREATED'",
+                "pk": 0
+            },
+            {
+                "cid": 24,
+                "name": "assigned_deliverer_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 25,
+                "name": "assigned_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 26,
+                "name": "delivery_attempts",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 27,
+                "name": "cod_modifiable_by_commercial",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'1'",
+                "pk": 0
+            },
+            {
+                "cid": 28,
+                "name": "amount_in_escrow",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 29,
+                "name": "import_batch_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 30,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 31,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 32,
+                "name": "pickup_request_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 33,
+                "name": "advance_used_for_fees",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 34,
+                "name": "balance_used_for_fees",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 35,
+                "name": "fee_payment_source",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 36,
+                "name": "allow_opening",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 37,
+                "name": "payment_method",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'cash_only'",
+                "pk": 0
+            },
+            {
+                "cid": 38,
+                "name": "pickup_address_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 39,
+                "name": "reassigned_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 40,
+                "name": "reassignment_reason",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 41,
+                "name": "cancelled_by_client",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 42,
+                "name": "cancellation_reason",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 43,
+                "name": "cancelled_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 44,
+                "name": "cancelled_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 45,
+                "name": "auto_return_reason",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 46,
+                "name": "delivered_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 47,
+                "name": "payment_withdrawal_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 48,
+                "name": "est_echange",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "packages_status_assigned_deliverer_id_index",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "assigned_deliverer_id"
+                ]
+            },
+            {
+                "name": "packages_sender_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "sender_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "packages_sender_id_import_batch_id_index",
+                "unique": 0,
+                "columns": [
+                    "sender_id",
+                    "import_batch_id"
+                ]
+            },
+            {
+                "name": "packages_pickup_request_id_index",
+                "unique": 0,
+                "columns": [
+                    "pickup_request_id"
+                ]
+            },
+            {
+                "name": "packages_pickup_delegation_id_index",
+                "unique": 0,
+                "columns": [
+                    "pickup_delegation_id"
+                ]
+            },
+            {
+                "name": "packages_package_code_unique",
+                "unique": 1,
+                "columns": [
+                    "package_code"
+                ]
+            },
+            {
+                "name": "packages_import_batch_id_index",
+                "unique": 0,
+                "columns": [
+                    "import_batch_id"
+                ]
+            },
+            {
+                "name": "packages_delegation_from_delegation_to_index",
+                "unique": 0,
+                "columns": [
+                    "delegation_from",
+                    "delegation_to"
+                ]
+            },
+            {
+                "name": "packages_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "packages_cancelled_by_index",
+                "unique": 0,
+                "columns": [
+                    "cancelled_by"
+                ]
+            },
+            {
+                "name": "packages_cancelled_by_client_index",
+                "unique": 0,
+                "columns": [
+                    "cancelled_by_client"
+                ]
+            },
+            {
+                "name": "packages_cancelled_at_index",
+                "unique": 0,
+                "columns": [
+                    "cancelled_at"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "payment_withdrawal_id",
+                "referenced_table": "withdrawal_requests",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "pickup_address_id",
+                "referenced_table": "client_pickup_addresses",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "sender_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "delegation_from",
+                "referenced_table": "delegations",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "pickup_delegation_id",
+                "referenced_table": "delegations",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "delegation_to",
+                "referenced_table": "delegations",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_deliverer_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "import_batch_id",
+                "referenced_table": "import_batches",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "cancelled_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "password_reset_tokens": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "email",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "token",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "sqlite_autoindex_password_reset_tokens_1",
+                "unique": 1,
+                "columns": [
+                    "email"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "personal_access_tokens": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "tokenable_type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "tokenable_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "name",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "token",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "abilities",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "last_used_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "expires_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "personal_access_tokens_expires_at_index",
+                "unique": 0,
+                "columns": [
+                    "expires_at"
+                ]
+            },
+            {
+                "name": "personal_access_tokens_token_unique",
+                "unique": 1,
+                "columns": [
+                    "token"
+                ]
+            },
+            {
+                "name": "personal_access_tokens_tokenable_type_tokenable_id_index",
+                "unique": 0,
+                "columns": [
+                    "tokenable_type",
+                    "tokenable_id"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "pickup_requests": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "pickup_address",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "pickup_phone",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "pickup_contact_name",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "pickup_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "delegation_from",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "requested_pickup_date",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'pending'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "assigned_deliverer_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "assigned_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "picked_up_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "pickup_requests_delegation_from_status_index",
+                "unique": 0,
+                "columns": [
+                    "delegation_from",
+                    "status"
+                ]
+            },
+            {
+                "name": "pickup_requests_assigned_deliverer_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "assigned_deliverer_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "pickup_requests_client_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "assigned_deliverer_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "run_sheets": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "sheet_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "deliverer_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "delegation_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "date",
+                "type": "date",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "package_types",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "sort_criteria",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'address'",
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "include_cod_summary",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "packages_data",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "packages_count",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "total_cod_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "printed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "started_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "completed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "preparation_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "completion_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 17,
+                "name": "completion_stats",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 18,
+                "name": "route_optimization",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 19,
+                "name": "estimated_distance",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 20,
+                "name": "estimated_duration",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 21,
+                "name": "pdf_path",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 22,
+                "name": "print_count",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 23,
+                "name": "export_formats",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 24,
+                "name": "metadata",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 25,
+                "name": "ip_address",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 26,
+                "name": "user_agent",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 27,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 28,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "run_sheets_sheet_code_unique",
+                "unique": 1,
+                "columns": [
+                    "sheet_code"
+                ]
+            },
+            {
+                "name": "idx_runsheets_created",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "idx_runsheets_code",
+                "unique": 0,
+                "columns": [
+                    "sheet_code"
+                ]
+            },
+            {
+                "name": "idx_runsheets_date",
+                "unique": 0,
+                "columns": [
+                    "date"
+                ]
+            },
+            {
+                "name": "idx_runsheets_deliverer_status",
+                "unique": 0,
+                "columns": [
+                    "deliverer_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "idx_runsheets_status_date",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "date"
+                ]
+            },
+            {
+                "name": "idx_runsheets_delegation_date",
+                "unique": 0,
+                "columns": [
+                    "delegation_id",
+                    "date"
+                ]
+            },
+            {
+                "name": "idx_runsheets_deliverer_date",
+                "unique": 0,
+                "columns": [
+                    "deliverer_id",
+                    "date"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "delegation_id",
+                "referenced_table": "delegations",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "deliverer_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "saved_addresses": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'CLIENT'",
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "label",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "phone",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "address",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "delegation_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "is_default",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "usage_count",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "last_used_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "saved_addresses_user_id_type_is_default_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "type",
+                    "is_default"
+                ]
+            },
+            {
+                "name": "saved_addresses_user_id_is_default_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "is_default"
+                ]
+            },
+            {
+                "name": "saved_addresses_user_id_type_index",
+                "unique": 0,
+                "columns": [
+                    "user_id",
+                    "type"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "delegation_id",
+                "referenced_table": "delegations",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "sessions": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "ip_address",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "user_agent",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "payload",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "last_activity",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "sessions_last_activity_index",
+                "unique": 0,
+                "columns": [
+                    "last_activity"
+                ]
+            },
+            {
+                "name": "sessions_user_id_index",
+                "unique": 0,
+                "columns": [
+                    "user_id"
+                ]
+            },
+            {
+                "name": "sqlite_autoindex_sessions_1",
+                "unique": 1,
+                "columns": [
+                    "id"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "ticket_attachments": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "ticket_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "filename",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "original_filename",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "path",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "url",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "size",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "mime_type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "uploaded_by",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "uploaded_at",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "ticket_attachments_ticket_id_uploaded_by_index",
+                "unique": 0,
+                "columns": [
+                    "ticket_id",
+                    "uploaded_by"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "uploaded_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "ticket_id",
+                "referenced_table": "tickets",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "ticket_messages": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "ticket_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "sender_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "sender_type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "message",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "attachments",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "is_internal",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "read_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "metadata",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "ticket_messages_is_internal_index",
+                "unique": 0,
+                "columns": [
+                    "is_internal"
+                ]
+            },
+            {
+                "name": "ticket_messages_sender_type_index",
+                "unique": 0,
+                "columns": [
+                    "sender_type"
+                ]
+            },
+            {
+                "name": "ticket_messages_sender_id_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "sender_id",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "ticket_messages_ticket_id_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "ticket_id",
+                    "created_at"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "sender_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "ticket_id",
+                "referenced_table": "tickets",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "tickets": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "ticket_number",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'QUESTION'",
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "subject",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "description",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'OPEN'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "priority",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'NORMAL'",
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "assigned_to_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "complaint_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "package_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "metadata",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "first_response_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "last_activity_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "resolved_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "closed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 17,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 18,
+                "name": "is_complaint",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 19,
+                "name": "complaint_description",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 20,
+                "name": "complaint_data",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 21,
+                "name": "complaint_type",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 22,
+                "name": "category",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'GENERAL'",
+                "pk": 0
+            },
+            {
+                "cid": 23,
+                "name": "source",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'CLIENT_PORTAL'",
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "tickets_ticket_number_unique",
+                "unique": 1,
+                "columns": [
+                    "ticket_number"
+                ]
+            },
+            {
+                "name": "tickets_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "tickets_type_index",
+                "unique": 0,
+                "columns": [
+                    "type"
+                ]
+            },
+            {
+                "name": "tickets_status_priority_index",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "priority"
+                ]
+            },
+            {
+                "name": "tickets_assigned_to_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "assigned_to_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "tickets_client_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "package_id",
+                "referenced_table": "packages",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "complaint_id",
+                "referenced_table": "complaints",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_to_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "topup_requests": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "request_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "method",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "bank_transfer_id",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "proof_document",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "processed_by_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "processed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "rejection_reason",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "validation_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "metadata",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "topup_requests_bank_transfer_id_unique",
+                "unique": 1,
+                "columns": [
+                    "bank_transfer_id"
+                ]
+            },
+            {
+                "name": "topup_requests_request_code_unique",
+                "unique": 1,
+                "columns": [
+                    "request_code"
+                ]
+            },
+            {
+                "name": "topup_requests_bank_transfer_id_index",
+                "unique": 0,
+                "columns": [
+                    "bank_transfer_id"
+                ]
+            },
+            {
+                "name": "topup_requests_created_at_index",
+                "unique": 0,
+                "columns": [
+                    "created_at"
+                ]
+            },
+            {
+                "name": "topup_requests_processed_by_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "processed_by_id",
+                    "status"
+                ]
+            },
+            {
+                "name": "topup_requests_status_method_index",
+                "unique": 0,
+                "columns": [
+                    "status",
+                    "method"
+                ]
+            },
+            {
+                "name": "topup_requests_client_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "client_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "processed_by_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "transactions_table_alias": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [],
+        "foreign_keys": []
+    },
+    "transit_boxes": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "route_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "destination_governorate",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "packages_count",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "loaded_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "delivered_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "package_ids",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "created_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "transit_boxes_code_unique",
+                "unique": 1,
+                "columns": [
+                    "code"
+                ]
+            },
+            {
+                "name": "transit_boxes_code_index",
+                "unique": 0,
+                "columns": [
+                    "code"
+                ]
+            },
+            {
+                "name": "transit_boxes_destination_governorate_index",
+                "unique": 0,
+                "columns": [
+                    "destination_governorate"
+                ]
+            },
+            {
+                "name": "transit_boxes_route_id_status_index",
+                "unique": 0,
+                "columns": [
+                    "route_id",
+                    "status"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "created_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "route_id",
+                "referenced_table": "transit_routes",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "transit_routes": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "driver_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "origin_depot",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "destination_depot",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "date",
+                "type": "date",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'ASSIGNED'",
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "started_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "completed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "created_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "transit_routes_status_index",
+                "unique": 0,
+                "columns": [
+                    "status"
+                ]
+            },
+            {
+                "name": "transit_routes_driver_id_date_index",
+                "unique": 0,
+                "columns": [
+                    "driver_id",
+                    "date"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "created_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "driver_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "user_wallets": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "user_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "balance",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "pending_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "frozen_amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "last_transaction_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "last_transaction_id",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "advance_balance",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "advance_last_modified_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "advance_last_modified_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "user_wallets_user_id_unique",
+                "unique": 1,
+                "columns": [
+                    "user_id"
+                ]
+            },
+            {
+                "name": "user_wallets_user_id_index",
+                "unique": 0,
+                "columns": [
+                    "user_id"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "advance_last_modified_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "CASCADE",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "users": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "name",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "email",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "email_verified_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "password",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "remember_token",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "role",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "phone",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "address",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "account_status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "verified_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "verified_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "created_by",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "last_login",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "assigned_delegation",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 17,
+                "name": "delegation_latitude",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 18,
+                "name": "delegation_longitude",
+                "type": "numeric",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 19,
+                "name": "delegation_radius_km",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": "'10'",
+                "pk": 0
+            },
+            {
+                "cid": 20,
+                "name": "deliverer_type",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'DELEGATION'",
+                "pk": 0
+            },
+            {
+                "cid": 21,
+                "name": "assigned_gouvernorats",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 22,
+                "name": "depot_name",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 23,
+                "name": "depot_address",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 24,
+                "name": "is_depot_manager",
+                "type": "tinyint(1)",
+                "notnull": 1,
+                "dflt_value": "'0'",
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "users_role_deliverer_type_index",
+                "unique": 0,
+                "columns": [
+                    "role",
+                    "deliverer_type"
+                ]
+            },
+            {
+                "name": "users_assigned_delegation_index",
+                "unique": 0,
+                "columns": [
+                    "assigned_delegation"
+                ]
+            },
+            {
+                "name": "users_role_assigned_delegation_index",
+                "unique": 0,
+                "columns": [
+                    "role",
+                    "assigned_delegation"
+                ]
+            },
+            {
+                "name": "users_email_unique",
+                "unique": 1,
+                "columns": [
+                    "email"
+                ]
+            },
+            {
+                "name": "idx_users_verified_by",
+                "unique": 0,
+                "columns": [
+                    "verified_by"
+                ]
+            },
+            {
+                "name": "idx_users_created_by",
+                "unique": 0,
+                "columns": [
+                    "created_by"
+                ]
+            },
+            {
+                "name": "idx_users_account_status",
+                "unique": 0,
+                "columns": [
+                    "account_status"
+                ]
+            },
+            {
+                "name": "idx_users_role",
+                "unique": 0,
+                "columns": [
+                    "role"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "created_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "verified_by",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            }
+        ]
+    },
+    "wallet_transaction_backups": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "transaction_id",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "snapshot_data",
+                "type": "TEXT",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "backup_at",
+                "type": "datetime",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "wallet_transaction_backups_backup_at_index",
+                "unique": 0,
+                "columns": [
+                    "backup_at"
+                ]
+            },
+            {
+                "name": "wallet_transaction_backups_transaction_id_index",
+                "unique": 0,
+                "columns": [
+                    "transaction_id"
+                ]
+            }
+        ],
+        "foreign_keys": []
+    },
+    "withdrawal_requests": {
+        "columns": [
+            {
+                "cid": 0,
+                "name": "id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 1
+            },
+            {
+                "cid": 1,
+                "name": "request_code",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 2,
+                "name": "client_id",
+                "type": "INTEGER",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 3,
+                "name": "amount",
+                "type": "numeric",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 4,
+                "name": "method",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 5,
+                "name": "bank_details",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 6,
+                "name": "status",
+                "type": "varchar",
+                "notnull": 1,
+                "dflt_value": "'PENDING'",
+                "pk": 0
+            },
+            {
+                "cid": 7,
+                "name": "processed_by_commercial_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 8,
+                "name": "assigned_deliverer_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 9,
+                "name": "delivery_receipt_code",
+                "type": "varchar",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 10,
+                "name": "processing_notes",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 11,
+                "name": "rejection_reason",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 12,
+                "name": "delivered_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 13,
+                "name": "delivery_proof",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 14,
+                "name": "processed_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 15,
+                "name": "created_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 16,
+                "name": "updated_at",
+                "type": "datetime",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 17,
+                "name": "assigned_package_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 18,
+                "name": "assigned_depot_manager_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 19,
+                "name": "bank_account_id",
+                "type": "INTEGER",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            },
+            {
+                "cid": 20,
+                "name": "reason",
+                "type": "TEXT",
+                "notnull": 0,
+                "dflt_value": null,
+                "pk": 0
+            }
+        ],
+        "indexes": [
+            {
+                "name": "withdrawal_requests_request_code_unique",
+                "unique": 1,
+                "columns": [
+                    "request_code"
+                ]
+            },
+            {
+                "name": "withdrawal_requests_assigned_depot_manager_id_index",
+                "unique": 0,
+                "columns": [
+                    "assigned_depot_manager_id"
+                ]
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "bank_account_id",
+                "referenced_table": "client_bank_accounts",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_package_id",
+                "referenced_table": "packages",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "client_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "processed_by_commercial_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_deliverer_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION"
+            },
+            {
+                "column": "assigned_depot_manager_id",
+                "referenced_table": "users",
+                "referenced_column": "id",
+                "on_delete": "SET NULL",
+                "on_update": "NO ACTION"
+            }
+        ]
+    }
+}
