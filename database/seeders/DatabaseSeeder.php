@@ -20,12 +20,16 @@ class DatabaseSeeder extends Seeder
         echo "🔄 Démarrage du seeding...\n";
         echo "🔐 Mot de passe pour TOUS les utilisateurs: 12345678\n\n";
 
-        // Charger les données exportées
+        // Charger les données exportées si disponibles
         $exportFile = base_path('database_export.json');
-        if (file_exists($exportFile)) {
+        $hasExport = file_exists($exportFile);
+        
+        if ($hasExport) {
             $data = json_decode(file_get_contents($exportFile), true);
+            echo "📦 Utilisation des données exportées\n\n";
         } else {
             $data = ['users' => [], 'delegations' => [], 'client_profiles' => []];
+            echo "📦 Création de données par défaut\n\n";
         }
 
         // 1. Créer les délégations
@@ -68,10 +72,10 @@ class DatabaseSeeder extends Seeder
         }
 
         // 2. Créer les utilisateurs
+        $userIds = [];
         if (!empty($data['users'])) {
             echo "🔄 Création des utilisateurs (" . count($data['users']) . ")...\n";
             
-            $userIds = [];
             foreach ($data['users'] as $user) {
                 $userId = DB::table('users')->insertGetId([
                     'name' => $user['name'],
@@ -79,15 +83,22 @@ class DatabaseSeeder extends Seeder
                     'email_verified_at' => now(),
                     'password' => $password, // 12345678 pour tous
                     'role' => $user['role'],
-                    'phone' => $user['phone'],
-                    'address' => $user['address'],
-                    'city' => $user['city'],
-                    'delegation' => $user['delegation'],
-                    'delegation_from' => $user['delegation_from'],
-                    'delegation_to' => $user['delegation_to'],
-                    'deliverer_type' => $user['deliverer_type'],
-                    'assigned_depot_manager_id' => $user['assigned_depot_manager_id'],
-                    'is_active' => $user['is_active'] ?? true,
+                    'phone' => $user['phone'] ?? null,
+                    'address' => $user['address'] ?? null,
+                    'account_status' => 'ACTIVE',
+                    'verified_at' => now(),
+                    'verified_by' => null,
+                    'created_by' => null,
+                    'last_login' => null,
+                    'assigned_delegation' => $user['delegation'] ?? null,
+                    'delegation_latitude' => null,
+                    'delegation_longitude' => null,
+                    'delegation_radius_km' => 10,
+                    'deliverer_type' => $user['deliverer_type'] ?? 'DELEGATION',
+                    'assigned_gouvernorats' => null,
+                    'depot_name' => null,
+                    'depot_address' => null,
+                    'is_depot_manager' => false,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -105,7 +116,21 @@ class DatabaseSeeder extends Seeder
                 'password' => $password,
                 'role' => 'ADMIN',
                 'phone' => '+216 20 000 001',
-                'is_active' => true,
+                'address' => 'Adresse Admin',
+                'account_status' => 'ACTIVE',
+                'verified_at' => now(),
+                'verified_by' => null,
+                'created_by' => null,
+                'last_login' => null,
+                'assigned_delegation' => null,
+                'delegation_latitude' => null,
+                'delegation_longitude' => null,
+                'delegation_radius_km' => 10,
+                'deliverer_type' => 'DELEGATION',
+                'assigned_gouvernorats' => null,
+                'depot_name' => null,
+                'depot_address' => null,
+                'is_depot_manager' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -118,7 +143,21 @@ class DatabaseSeeder extends Seeder
                 'password' => $password,
                 'role' => 'COMMERCIAL',
                 'phone' => '+216 20 000 002',
-                'is_active' => true,
+                'address' => 'Adresse Commercial',
+                'account_status' => 'ACTIVE',
+                'verified_at' => now(),
+                'verified_by' => null,
+                'created_by' => null,
+                'last_login' => null,
+                'assigned_delegation' => null,
+                'delegation_latitude' => null,
+                'delegation_longitude' => null,
+                'delegation_radius_km' => 10,
+                'deliverer_type' => 'DELEGATION',
+                'assigned_gouvernorats' => null,
+                'depot_name' => null,
+                'depot_address' => null,
+                'is_depot_manager' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -131,7 +170,21 @@ class DatabaseSeeder extends Seeder
                 'password' => $password,
                 'role' => 'CLIENT',
                 'phone' => '+216 20 000 003',
-                'is_active' => true,
+                'address' => 'Adresse Client',
+                'account_status' => 'ACTIVE',
+                'verified_at' => now(),
+                'verified_by' => null,
+                'created_by' => null,
+                'last_login' => null,
+                'assigned_delegation' => null,
+                'delegation_latitude' => null,
+                'delegation_longitude' => null,
+                'delegation_radius_km' => 10,
+                'deliverer_type' => 'DELEGATION',
+                'assigned_gouvernorats' => null,
+                'depot_name' => null,
+                'depot_address' => null,
+                'is_depot_manager' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -139,10 +192,17 @@ class DatabaseSeeder extends Seeder
             // Créer profil client
             DB::table('client_profiles')->insert([
                 'user_id' => $clientId,
-                'company_name' => 'Boutique Test',
-                'status' => 'APPROVED',
-                'delivery_fee_rate' => 7.000,
-                'cod_fee_percentage' => 2.00,
+                'shop_name' => 'Boutique Test',
+                'fiscal_number' => '1234567890123',
+                'business_sector' => 'E-commerce',
+                'identity_document' => 'CIN_12345678.pdf',
+                'offer_delivery_price' => 7.000,
+                'offer_return_price' => 5.000,
+                'internal_notes' => 'Client test par défaut',
+                'validation_status' => 'APPROVED',
+                'validated_by' => null,
+                'validated_at' => now(),
+                'validation_notes' => 'Approuvé automatiquement',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -155,9 +215,21 @@ class DatabaseSeeder extends Seeder
                 'password' => $password,
                 'role' => 'DELIVERER',
                 'phone' => '+216 20 000 004',
-                'delegation' => 'Tunis',
+                'address' => 'Adresse Livreur',
+                'account_status' => 'ACTIVE',
+                'verified_at' => now(),
+                'verified_by' => null,
+                'created_by' => null,
+                'last_login' => null,
+                'assigned_delegation' => 'Tunis',
+                'delegation_latitude' => null,
+                'delegation_longitude' => null,
+                'delegation_radius_km' => 10,
                 'deliverer_type' => 'INTERNAL',
-                'is_active' => true,
+                'assigned_gouvernorats' => null,
+                'depot_name' => null,
+                'depot_address' => null,
+                'is_depot_manager' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -170,7 +242,21 @@ class DatabaseSeeder extends Seeder
                 'password' => $password,
                 'role' => 'DEPOT_MANAGER',
                 'phone' => '+216 20 000 005',
-                'is_active' => true,
+                'address' => 'Adresse Depot',
+                'account_status' => 'ACTIVE',
+                'verified_at' => now(),
+                'verified_by' => null,
+                'created_by' => null,
+                'last_login' => null,
+                'assigned_delegation' => null,
+                'delegation_latitude' => null,
+                'delegation_longitude' => null,
+                'delegation_radius_km' => 10,
+                'deliverer_type' => 'DELEGATION',
+                'assigned_gouvernorats' => null,
+                'depot_name' => 'Depot Test',
+                'depot_address' => 'Adresse Depot Principal',
+                'is_depot_manager' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -183,17 +269,17 @@ class DatabaseSeeder extends Seeder
                 if (isset($userIds[$profile['user_id']])) {
                     DB::table('client_profiles')->insert([
                         'user_id' => $userIds[$profile['user_id']],
-                        'company_name' => $profile['company_name'],
-                        'company_type' => $profile['company_type'],
-                        'registration_number' => $profile['registration_number'],
-                        'tax_id' => $profile['tax_id'],
-                        'business_address' => $profile['business_address'],
-                        'business_phone' => $profile['business_phone'],
-                        'website' => $profile['website'],
-                        'business_description' => $profile['business_description'],
-                        'delivery_fee_rate' => $profile['delivery_fee_rate'] ?? 7.000,
-                        'cod_fee_percentage' => $profile['cod_fee_percentage'] ?? 2.00,
-                        'status' => $profile['status'] ?? 'APPROVED',
+                        'shop_name' => $profile['company_name'] ?? $profile['shop_name'] ?? null,
+                        'fiscal_number' => $profile['registration_number'] ?? $profile['fiscal_number'] ?? null,
+                        'business_sector' => $profile['business_sector'] ?? 'E-commerce',
+                        'identity_document' => $profile['identity_document'] ?? null,
+                        'offer_delivery_price' => $profile['delivery_fee_rate'] ?? $profile['offer_delivery_price'] ?? 7.000,
+                        'offer_return_price' => $profile['offer_return_price'] ?? 5.000,
+                        'internal_notes' => $profile['business_description'] ?? $profile['internal_notes'] ?? null,
+                        'validation_status' => $profile['status'] ?? $profile['validation_status'] ?? 'PENDING',
+                        'validated_by' => $profile['validated_by'] ?? null,
+                        'validated_at' => $profile['validated_at'] ?? null,
+                        'validation_notes' => $profile['validation_notes'] ?? null,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
