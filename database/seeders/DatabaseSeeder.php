@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->seedUsers();
         $this->seedDelegations();
         $this->seedClientProfiles();
+        $this->seedWallets();
 
         // Truncate other system tables
         DB::table('password_reset_tokens')->truncate();
@@ -308,6 +309,67 @@ class DatabaseSeeder extends Seeder
             'validation_notes' => null,
             'created_at' => $now,
             'updated_at' => $now
+        ]);
+    }
+
+    private function seedWallets(): void
+    {
+        DB::table('user_wallets')->truncate();
+        
+        $now = now();
+        
+        // Create wallets for all users
+        DB::table('user_wallets')->insert([
+            // Supervisor Wallet
+            [
+                'user_id' => 1,
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+                'advance_balance' => 0.000,
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+            // Commercial Wallet
+            [
+                'user_id' => 2,
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+                'advance_balance' => 0.000,
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+            // Deliverer Wallet
+            [
+                'user_id' => 3,
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+                'advance_balance' => 0.000,
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+            // Client Wallet
+            [
+                'user_id' => 4,
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+                'advance_balance' => 0.000,
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+            // Depot Manager Wallet
+            [
+                'user_id' => 5,
+                'balance' => 0.000,
+                'pending_amount' => 0.000,
+                'frozen_amount' => 0.000,
+                'advance_balance' => 0.000,
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
         ]);
     }
 }
