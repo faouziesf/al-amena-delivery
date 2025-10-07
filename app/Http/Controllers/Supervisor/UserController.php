@@ -62,6 +62,15 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // Debug log pour chef dépôt
+        if ($request->role === 'DEPOT_MANAGER') {
+            \Log::info('Création Chef Dépôt - Données reçues:', [
+                'role' => $request->role,
+                'assigned_gouvernorats' => $request->assigned_gouvernorats,
+                'all_data' => $request->all()
+            ]);
+        }
+
         $validationRules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -71,24 +80,32 @@ class UserController extends Controller
             'account_status' => 'required|in:ACTIVE,PENDING,SUSPENDED',
         ];
 
+        // Validation spéciale pour les clients
+        if ($request->role === 'CLIENT') {
+            $validationRules['address'] = 'required|string|max:500';
+            $validationRules['delivery_price'] = 'required|numeric|min:0.001|max:999.999';
+            $validationRules['return_price'] = 'required|numeric|min:0|max:999.999';
+            $validationRules['shop_name'] = 'nullable|string|max:255';
+            $delegations = array_keys(User::getAvailableDelegations());
+            $validationRules['delegation_id'] = 'required|in:' . implode(',', $delegations);
+        }
+
         // Validation spéciale pour les livreurs
         if ($request->role === 'DELIVERER') {
-            $delivererTypes = array_keys(User::getDelivererTypes());
-            $validationRules['deliverer_type'] = 'required|in:' . implode(',', $delivererTypes);
-
-            // Validation conditionnelle selon le type de livreur
-            if ($request->deliverer_type === 'DELEGATION') {
+            // Déterminer le type de livreur depuis is_transit_deliverer
+            $isTransit = $request->input('is_transit_deliverer');
+            
+            // Pour les livreurs locaux (non transit), la délégation est requise
+            if ($isTransit === 'false' || $isTransit === false) {
                 $delegations = array_keys(User::getAvailableDelegations());
-                $validationRules['assigned_delegation'] = 'required|in:' . implode(',', $delegations);
-            } elseif ($request->deliverer_type === 'JOKER') {
-                $validationRules['assigned_delegation'] = 'nullable';
-            } else { // TRANSIT
-                $validationRules['assigned_delegation'] = 'nullable';
+                $validationRules['delegation_id'] = 'required|in:' . implode(',', $delegations);
+            } else {
+                $validationRules['delegation_id'] = 'nullable';
             }
 
-            $validationRules['delegation_latitude'] = 'nullable|numeric|between:-90,90';
-            $validationRules['delegation_longitude'] = 'nullable|numeric|between:-180,180';
-            $validationRules['delegation_radius_km'] = 'nullable|integer|min:1|max:50';
+            $validationRules['is_transit_deliverer'] = 'required|boolean';
+            $validationRules['vehicle_type'] = 'nullable|in:MOTO,VOITURE,CAMIONNETTE';
+            $validationRules['vehicle_registration'] = 'nullable|string|max:50';
         }
 
         // Validation spéciale pour les chefs dépôt
@@ -98,7 +115,14 @@ class UserController extends Controller
             $validationRules['assigned_gouvernorats.*'] = 'in:' . implode(',', $delegations);
         }
 
-        $request->validate($validationRules);
+        $customMessages = [
+            'assigned_gouvernorats.required' => 'Veuillez sélectionner au moins un gouvernorat pour le chef dépôt.',
+            'assigned_gouvernorats.array' => 'Les gouvernorats doivent être sous forme de liste.',
+            'assigned_gouvernorats.min' => 'Veuillez sélectionner au moins un gouvernorat.',
+            'assigned_gouvernorats.*.in' => 'Un des gouvernorats sélectionnés n\'est pas valide.',
+        ];
+
+        $validated = $request->validate($validationRules, $customMessages);
 
         try {
             DB::transaction(function () use ($request) {
@@ -110,20 +134,38 @@ class UserController extends Controller
                     'role' => $request->role,
                     'account_status' => $request->account_status,
                     'verified_at' => now(),
+                    'email_verified_at' => now(),
                 ];
+
+                // Ajouter les champs spécifiques pour les clients
+                if ($request->role === 'CLIENT') {
+                    $userData['address'] = $request->address;
+                    $userData['assigned_delegation'] = $request->delegation_id;
+                }
 
                 // Ajouter les champs spécifiques pour les livreurs
                 if ($request->role === 'DELIVERER') {
-                    $userData['deliverer_type'] = $request->deliverer_type;
-                    $userData['assigned_delegation'] = $request->assigned_delegation;
-                    $userData['delegation_latitude'] = $request->delegation_latitude;
-                    $userData['delegation_longitude'] = $request->delegation_longitude;
-                    $userData['delegation_radius_km'] = $request->delegation_radius_km ?? 10;
+                    $isTransit = $request->input('is_transit_deliverer');
+                    
+                    // Mapper is_transit_deliverer vers deliverer_type
+                    if ($isTransit === 'true' || $isTransit === true || $isTransit === '1') {
+                        $userData['deliverer_type'] = 'TRANSIT';
+                        $userData['assigned_delegation'] = null;
+                    } else {
+                        // Livreur local = DELEGATION
+                        $userData['deliverer_type'] = 'DELEGATION';
+                        $userData['assigned_delegation'] = $request->delegation_id;
+                    }
+                    
+                    $userData['delegation_latitude'] = null;
+                    $userData['delegation_longitude'] = null;
+                    $userData['delegation_radius_km'] = 10;
                 }
 
                 // Ajouter les champs spécifiques pour les chefs dépôt
                 if ($request->role === 'DEPOT_MANAGER') {
                     $userData['assigned_gouvernorats'] = json_encode($request->assigned_gouvernorats);
+                    $userData['is_depot_manager'] = true;
                 }
 
                 $user = User::create($userData);
@@ -131,6 +173,17 @@ class UserController extends Controller
                 // Créer le wallet si nécessaire
                 if (in_array($user->role, ['CLIENT', 'DELIVERER'])) {
                     $user->ensureWallet();
+                }
+                
+                // Créer le profil client avec les tarifs
+                if ($request->role === 'CLIENT') {
+                    \App\Models\ClientProfile::create([
+                        'user_id' => $user->id,
+                        'shop_name' => $request->shop_name,
+                        'offer_delivery_price' => $request->delivery_price,
+                        'offer_return_price' => $request->return_price,
+                        'validation_status' => 'VALIDATED',
+                    ]);
                 }
             });
 

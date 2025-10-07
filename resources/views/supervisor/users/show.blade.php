@@ -264,7 +264,7 @@
                             Réinitialiser Mot de Passe
                         </button>
 
-                        <form method="POST" action="{{ route('supervisor.users.force-logout', $user) }}" class="w-full">
+                        <form method="POST" action="{{ route('supervisor.users.force.logout', $user) }}" class="w-full">
                             @csrf
                             <button type="submit" onclick="return confirm('Déconnecter cet utilisateur de toutes ses sessions?')"
                                     class="w-full px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all text-sm font-medium flex items-center justify-center">
@@ -374,7 +374,7 @@
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="bg-white rounded-lg max-w-md w-full p-6">
             <h3 class="text-lg font-semibold mb-4">Réinitialiser le Mot de Passe</h3>
-            <form method="POST" action="{{ route('supervisor.users.reset-password', $user) }}">
+            <form method="POST" action="{{ route('supervisor.users.reset.password', $user) }}">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>

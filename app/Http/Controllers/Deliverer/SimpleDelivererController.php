@@ -30,6 +30,72 @@ class SimpleDelivererController extends Controller
     }
 
     /**
+     * Ma Tournée - MVC Direct (sans APIs)
+     */
+    public function tournee()
+    {
+        $user = Auth::user();
+        
+        // Récupérer packages (livraisons)
+        $packages = Package::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Récupérer pickups (ramassages)
+        $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['assigned', 'pending'])
+            ->orderBy('requested_pickup_date', 'asc')
+            ->get();
+        
+        // Fusionner en une seule liste
+        $tasks = collect();
+        
+        foreach ($packages as $pkg) {
+            $tasks->push([
+                'id' => $pkg->id,
+                'type' => 'livraison',
+                'tracking_number' => $pkg->tracking_number,
+                'package_code' => $pkg->package_code,
+                'recipient_name' => $pkg->recipient_name,
+                'recipient_address' => $pkg->recipient_address,
+                'recipient_phone' => $pkg->recipient_phone,
+                'cod_amount' => $pkg->cod_amount ?? 0,
+                'status' => $pkg->status,
+                'est_echange' => $pkg->est_echange ?? false,
+                'date' => $pkg->created_at
+            ]);
+        }
+        
+        foreach ($pickups as $pickup) {
+            $tasks->push([
+                'id' => 'P' . $pickup->id,
+                'type' => 'pickup',
+                'tracking_number' => 'PICKUP-' . $pickup->id,
+                'package_code' => $pickup->pickup_code ?? 'P' . $pickup->id,
+                'recipient_name' => $pickup->pickup_contact_name ?? 'Client',
+                'recipient_address' => $pickup->pickup_address,
+                'recipient_phone' => $pickup->pickup_phone,
+                'cod_amount' => 0,
+                'status' => $pickup->status,
+                'est_echange' => false,
+                'date' => $pickup->requested_pickup_date ?? $pickup->created_at,
+                'pickup_id' => $pickup->id
+            ]);
+        }
+        
+        // Stats
+        $stats = [
+            'total' => $tasks->count(),
+            'livraisons' => $packages->count(),
+            'pickups' => $pickups->count(),
+            'completed' => $packages->where('status', 'DELIVERED')->count()
+        ];
+        
+        return view('deliverer.tournee-direct', compact('tasks', 'stats'));
+    }
+
+    /**
      * PWA Optimisée: Détail d'une tâche
      */
     public function taskDetail(Package $package)
@@ -173,6 +239,115 @@ class SimpleDelivererController extends Controller
     }
 
     /**
+     * Scan Direct - MVC (POST form) - Support Single & Batch
+     */
+    public function scanSubmit(Request $request)
+    {
+        $user = Auth::user();
+        
+        \Log::info('scanSubmit appelé', [
+            'has_batch' => $request->has('batch'),
+            'batch_value' => $request->batch,
+            'request_data' => $request->all()
+        ]);
+        
+        // Support pour scan multiple (batch)
+        if ($request->has('batch') && $request->batch === true) {
+            \Log::info('Appel de scanBatch');
+            return $this->scanBatch($request, $user);
+        }
+        
+        // Scan simple (single)
+        $request->validate([
+            'code' => 'required|string'
+        ]);
+
+        $code = $this->normalizeCode(trim($request->code));
+
+        // Rechercher le colis
+        $package = $this->findPackageByCode($code);
+
+        if ($package) {
+            // Auto-assigner si pas encore assigné
+            if (!$package->assigned_deliverer_id) {
+                $package->update([
+                    'assigned_deliverer_id' => $user->id,
+                    'assigned_at' => now(),
+                    'status' => $package->status === 'CREATED' ? 'ACCEPTED' : $package->status
+                ]);
+            }
+            
+            // Vérifier assignation
+            if ($package->assigned_deliverer_id !== $user->id) {
+                return redirect()->route('deliverer.scan.simple')
+                    ->with('error', 'Ce colis est déjà assigné à un autre livreur');
+            }
+
+            // Sauvegarder en session (historique)
+            $lastScans = session('last_scans', []);
+            array_unshift($lastScans, [
+                'code' => $code,
+                'package_id' => $package->id,
+                'time' => now()->format('H:i')
+            ]);
+            session(['last_scans' => array_slice($lastScans, 0, 5)]);
+
+            // Rediriger vers détail
+            return redirect()->route('deliverer.task.detail', $package)
+                ->with('success', 'Colis trouvé et assigné !');
+        }
+
+        // Rechercher pickup
+        $pickup = PickupRequest::where('pickup_code', $code)->first();
+        if ($pickup) {
+            return redirect()->route('deliverer.tournee')
+                ->with('success', 'Pickup trouvé !');
+        }
+
+        return redirect()->route('deliverer.scan.simple')
+            ->with('error', 'Code non trouvé: ' . $code);
+    }
+
+    /**
+     * Détail Pickup
+     */
+    public function pickupDetail($id)
+    {
+        $user = Auth::user();
+        $pickup = PickupRequest::findOrFail($id);
+        
+        // Vérifier assignation
+        if ($pickup->assigned_deliverer_id !== $user->id) {
+            abort(403, 'Ce ramassage n\'est pas assigné à vous');
+        }
+        
+        return view('deliverer.pickup-detail', compact('pickup'));
+    }
+
+    /**
+     * Marquer pickup comme collecté
+     */
+    public function markPickupCollect($id)
+    {
+        $user = Auth::user();
+        $pickup = PickupRequest::findOrFail($id);
+        
+        // Vérifier assignation
+        if ($pickup->assigned_deliverer_id !== $user->id) {
+            return redirect()->back()
+                ->with('error', 'Ce ramassage n\'est pas assigné à vous');
+        }
+        
+        $pickup->update([
+            'status' => 'picked_up',
+            'picked_up_at' => now()
+        ]);
+        
+        return redirect()->route('deliverer.tournee')
+            ->with('success', 'Ramassage marqué comme effectué !');
+    }
+
+    /**
      * Interface de scan multiple
      */
     public function multiScanner()
@@ -186,15 +361,11 @@ class SimpleDelivererController extends Controller
     public function processMultiScan(Request $request)
     {
         $request->validate([
-            'code' => 'required|string',
-            'action' => 'required|in:pickup,delivery',
-            'scanned_ids' => 'nullable|array'
+            'qr_code' => 'required|string'
         ]);
 
         $user = Auth::user();
-        $code = $this->normalizeCode($request->code);
-        $action = $request->action;
-        $scannedIds = $request->scanned_ids ?? [];
+        $code = $this->normalizeCode($request->qr_code);
 
         try {
             // Rechercher le colis par code
@@ -207,36 +378,14 @@ class SimpleDelivererController extends Controller
                 ]);
             }
 
-            // Vérifier si le colis est déjà dans la liste
-            if (in_array($package->id, $scannedIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Colis déjà ajouté à la liste'
-                ]);
-            }
-
-            // Valider le statut selon l'action
-            $validationResult = $this->validatePackageStatus($package, $action);
-            if (!$validationResult['valid']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validationResult['message']
-                ]);
-            }
-
-            // Préparer les données du destinataire
-            $recipientData = is_array($package->recipient_data) ? $package->recipient_data : [];
-            $recipientName = $recipientData['name'] ?? $package->recipient_name ?? 'N/A';
-            $recipientAddress = $recipientData['address'] ?? $package->recipient_address ?? 'N/A';
-
             return response()->json([
                 'success' => true,
-                'message' => 'Colis valide ajouté',
+                'message' => 'Colis trouvé',
                 'package' => [
                     'id' => $package->id,
-                    'tracking_number' => $package->tracking_number ?? $package->package_code,
-                    'recipient_name' => $recipientName,
-                    'recipient_address' => $recipientAddress,
+                    'package_code' => $package->tracking_number ?? $package->package_code,
+                    'recipient_name' => $package->recipient_name ?? 'N/A',
+                    'recipient_address' => $package->recipient_address ?? 'N/A',
                     'cod_amount' => $package->cod_amount ?? 0,
                     'status' => $package->status
                 ]
@@ -256,14 +405,12 @@ class SimpleDelivererController extends Controller
     public function validateMultiScan(Request $request)
     {
         $request->validate([
-            'action' => 'required|in:pickup,delivery',
-            'package_ids' => 'required|array|min:1',
-            'package_ids.*' => 'exists:packages,id'
+            'packages' => 'required|array|min:1',
+            'packages.*' => 'exists:packages,id'
         ]);
 
         $user = Auth::user();
-        $action = $request->action;
-        $packageIds = $request->package_ids;
+        $packageIds = $request->packages;
 
         try {
             DB::beginTransaction();
@@ -271,32 +418,19 @@ class SimpleDelivererController extends Controller
             $packages = Package::whereIn('id', $packageIds)->get();
 
             foreach ($packages as $package) {
-                if ($action === 'pickup') {
-                    // Pickup chez fournisseur: changer le statut à PICKED_UP
-                    $package->update([
-                        'status' => 'PICKED_UP',
-                        'picked_up_at' => now(),
-                        'assigned_deliverer_id' => $user->id
-                    ]);
-                } else {
-                    // Prêt pour livraison: changer le statut à PICKED_UP (en cours de livraison)
-                    $package->update([
-                        'status' => 'PICKED_UP',
-                        'picked_up_at' => $package->picked_up_at ?? now(),
-                        'assigned_deliverer_id' => $user->id
-                    ]);
-                }
+                // Assigner au livreur et marquer comme PICKED_UP
+                $package->update([
+                    'status' => 'PICKED_UP',
+                    'picked_up_at' => $package->picked_up_at ?? now(),
+                    'assigned_deliverer_id' => $user->id
+                ]);
             }
 
             DB::commit();
 
-            $message = $action === 'pickup' 
-                ? 'Colis collectés avec succès' 
-                : 'Colis prêts pour la livraison';
-
             return response()->json([
                 'success' => true,
-                'message' => $message,
+                'message' => 'Colis validés avec succès',
                 'count' => count($packageIds)
             ]);
 
@@ -401,6 +535,202 @@ class SimpleDelivererController extends Controller
         }
         
         return null;
+    }
+
+    /**
+     * Scan Batch - Pour scanner multiple avec support d'actions
+     */
+    private function scanBatch(Request $request, $user)
+    {
+        \Log::info('scanBatch - Début', [
+            'user_id' => $user->id,
+            'request_data' => $request->all()
+        ]);
+
+        try {
+            $request->validate([
+                'codes' => 'required|array|min:1',
+                'codes.*' => 'required|string',
+                'action' => 'nullable|in:pickup,delivering'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation échouée', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        $codes = $request->codes;
+        $action = $request->action ?? 'pickup';
+        $results = [];
+        $successCount = 0;
+        $errorCount = 0;
+        $invalidStatusCount = 0;
+
+        \Log::info('scanBatch - Traitement', [
+            'codes_count' => count($codes),
+            'action' => $action
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($codes as $code) {
+                $cleanCode = $this->normalizeCode(trim($code));
+                $package = $this->findPackageByCode($cleanCode);
+
+                if (!$package) {
+                    $results[] = [
+                        'code' => $cleanCode,
+                        'status' => 'error',
+                        'error_type' => 'not_found',
+                        'message' => 'Code non trouvé'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Auto-assigner si pas encore assigné
+                if (!$package->assigned_deliverer_id) {
+                    $package->update([
+                        'assigned_deliverer_id' => $user->id,
+                        'assigned_at' => now()
+                    ]);
+                }
+
+                // Vérifier assignation
+                if ($package->assigned_deliverer_id !== $user->id) {
+                    $results[] = [
+                        'code' => $cleanCode,
+                        'status' => 'error',
+                        'error_type' => 'wrong_deliverer',
+                        'message' => 'Déjà assigné à un autre livreur'
+                    ];
+                    $errorCount++;
+                    continue;
+                }
+
+                // Validation du statut selon l'action
+                $statusValidation = $this->validateStatusForAction($package->status, $action);
+                if (!$statusValidation['valid']) {
+                    $results[] = [
+                        'code' => $cleanCode,
+                        'status' => 'error',
+                        'error_type' => 'invalid_status',
+                        'message' => $statusValidation['message'],
+                        'current_status' => $package->status
+                    ];
+                    $invalidStatusCount++;
+                    continue;
+                }
+
+                // Appliquer l'action
+                $updateData = $this->getStatusUpdateForAction($action);
+                $package->update($updateData);
+
+                $results[] = [
+                    'code' => $cleanCode,
+                    'status' => 'success',
+                    'message' => $this->getActionMessage($action),
+                    'package_id' => $package->id
+                ];
+                $successCount++;
+            }
+
+            DB::commit();
+
+            \Log::info('scanBatch - Succès', [
+                'success' => $successCount,
+                'errors' => $errorCount,
+                'invalid_status' => $invalidStatusCount
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "$successCount colis traités, $errorCount erreurs, $invalidStatusCount statuts invalides",
+                'results' => $results,
+                'summary' => [
+                    'total' => count($codes),
+                    'success' => $successCount,
+                    'errors' => $errorCount,
+                    'invalid_status' => $invalidStatusCount,
+                    'action' => $action
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('scanBatch - Erreur', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du traitement: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Valider le statut du colis selon l'action
+     */
+    private function validateStatusForAction(string $currentStatus, string $action): array
+    {
+        if ($action === 'pickup') {
+            // Pour ramassage: accepter uniquement CREATED ou AVAILABLE
+            $validStatuses = ['CREATED', 'AVAILABLE'];
+            if (!in_array($currentStatus, $validStatuses)) {
+                return [
+                    'valid' => false,
+                    'message' => "Statut invalide pour ramassage (actuellement: $currentStatus)"
+                ];
+            }
+        }
+        // Pour delivering: accepter tous les statuts (pas de validation)
+        
+        return ['valid' => true];
+    }
+
+    /**
+     * Obtenir les données de mise à jour selon l'action
+     */
+    private function getStatusUpdateForAction(string $action): array
+    {
+        switch ($action) {
+            case 'pickup':
+                return [
+                    'status' => 'PICKED_UP',
+                    'picked_up_at' => now()
+                ];
+            
+            case 'delivering':
+                return [
+                    'status' => 'IN_TRANSIT',
+                    'in_transit_at' => now()
+                ];
+            
+            default:
+                return [
+                    'status' => 'ACCEPTED'
+                ];
+        }
+    }
+
+    /**
+     * Obtenir le message selon l'action
+     */
+    private function getActionMessage(string $action): string
+    {
+        switch ($action) {
+            case 'pickup':
+                return 'Colis ramassé';
+            case 'delivering':
+                return 'En cours de livraison';
+            default:
+                return 'Colis traité';
+        }
     }
 
     /**
@@ -598,45 +928,53 @@ class SimpleDelivererController extends Controller
         ]);
 
         $user = Auth::user();
-        $qrCode = $request->qr_code;
+        $code = $this->normalizeCode($request->qr_code);
 
         try {
-            // Rechercher le colis par tracking number
-            $package = Package::where('tracking_number', $qrCode)
-                ->where('assigned_deliverer_id', $user->id)
-                ->first();
+            // Rechercher le colis par code (OPTIMISÉ - seulement champs nécessaires)
+            $package = $this->findPackageByCode($code);
 
             if ($package) {
+                // Auto-assigner si pas encore assigné
+                if (!$package->assigned_deliverer_id) {
+                    $package->update([
+                        'assigned_deliverer_id' => $user->id,
+                        'assigned_at' => now(),
+                        'status' => $package->status === 'CREATED' ? 'ACCEPTED' : $package->status
+                    ]);
+                }
+                
+                // Vérifier que le package est assigné au livreur actuel
+                if ($package->assigned_deliverer_id !== $user->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ce colis est déjà assigné à un autre livreur'
+                    ], 403);
+                }
+                
+                // OPTIMISÉ - Réponse minimaliste pour rapidité
                 return response()->json([
                     'success' => true,
-                    'type' => 'package',
-                    'message' => 'Colis trouvé et assigné à vous',
-                    'package' => [
-                        'id' => $package->id,
-                        'code' => $package->tracking_number,
-                        'cod_amount' => $package->cod_amount,
-                        'formatted_cod' => number_format($package->cod_amount, 3) . ' TND',
-                        'status' => $package->status
-                    ],
-                    'delivery_info' => [
-                        'name' => $package->recipient_name,
-                        'address' => $package->recipient_address,
-                        'phone' => $package->recipient_phone
-                    ],
-                    'redirect' => route('deliverer.task.detail', $package),
-                    'action' => $this->getPackageAction($package->status)
+                    'package_id' => $package->id,
+                    'redirect' => route('deliverer.task.detail', $package)
                 ]);
             }
 
             // Rechercher une collecte
-            $pickup = PickupRequest::where('pickup_code', $qrCode)
-                ->where('assigned_deliverer_id', $user->id)
-                ->first();
+            $pickup = PickupRequest::where('pickup_code', $code)->first();
+
+            if (!$pickup) {
+                // Essayer aussi avec l'ID si c'est un nombre
+                if (is_numeric($code)) {
+                    $pickup = PickupRequest::find($code);
+                }
+            }
 
             if ($pickup) {
                 return response()->json([
                     'success' => true,
                     'type' => 'pickup',
+                    'package_id' => $pickup->id,
                     'message' => 'Demande de collecte trouvée',
                     'package' => [
                         'id' => $pickup->id,
@@ -645,25 +983,19 @@ class SimpleDelivererController extends Controller
                         'formatted_cod' => '0.000 TND',
                         'status' => $pickup->status
                     ],
-                    'delivery_info' => [
-                        'name' => $pickup->pickup_contact_name ?? $pickup->pickup_contact,
-                        'address' => $pickup->pickup_address,
-                        'phone' => $pickup->pickup_phone
-                    ],
-                    'redirect' => route('deliverer.run.sheet'),
-                    'action' => 'pickup'
+                    'redirect' => route('deliverer.run.sheet')
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'QR code non trouvé ou non assigné à vous'
+                'message' => 'Code non trouvé: ' . $code
             ], 404);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du scan: ' . $e->getMessage()
+                'message' => 'Erreur serveur: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -674,7 +1006,11 @@ class SimpleDelivererController extends Controller
     public function apiWalletBalance()
     {
         $user = Auth::user();
-        $wallet = UserWallet::where('user_id', $user->id)->first();
+        
+        // OPTIMISÉ - Sélection colonnes seulement
+        $wallet = UserWallet::select(['balance', 'available_balance', 'pending_amount'])
+            ->where('user_id', $user->id)
+            ->first();
 
         return response()->json([
             'balance' => $wallet ? $wallet->balance : 0,
@@ -1015,6 +1351,171 @@ class SimpleDelivererController extends Controller
                 return 'view';
             default:
                 return 'view';
+        }
+    }
+
+    /**
+     * API: Récupérer les packages actifs du livreur
+     */
+    public function apiActivePackages()
+    {
+        $user = Auth::user();
+
+        // OPTIMISÉ - Sélection seulement colonnes nécessaires + limit
+        $packages = Package::select([
+                'id', 'tracking_number', 'package_code', 'recipient_name', 
+                'recipient_address', 'recipient_phone', 'cod_amount', 'status', 
+                'est_echange', 'created_at'
+            ])
+            ->where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])
+            ->orderBy('created_at', 'desc')
+            ->limit(100) // Limiter résultats
+            ->get()
+            ->map(function($package) {
+                return [
+                    'id' => $package->id,
+                    'type' => 'livraison',
+                    'tracking_number' => $package->tracking_number,
+                    'package_code' => $package->package_code,
+                    'recipient_name' => $package->recipient_name,
+                    'recipient_address' => $package->recipient_address,
+                    'recipient_phone' => $package->recipient_phone,
+                    'cod_amount' => $package->cod_amount ?? 0,
+                    'status' => $package->status,
+                    'est_echange' => $package->est_echange ?? false,
+                    'created_at' => $package->created_at?->format('d/m/Y H:i')
+                ];
+            });
+
+        return response()->json($packages);
+    }
+
+    /**
+     * API: Récupérer les packages livrés
+     */
+    public function apiDeliveredPackages()
+    {
+        $user = Auth::user();
+
+        $packages = Package::where('assigned_deliverer_id', $user->id)
+            ->where('status', 'DELIVERED')
+            ->orderBy('delivered_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function($package) {
+                return [
+                    'id' => $package->id,
+                    'tracking_number' => $package->tracking_number,
+                    'package_code' => $package->package_code,
+                    'recipient_name' => $package->recipient_name,
+                    'cod_amount' => $package->cod_amount ?? 0,
+                    'status' => $package->status,
+                    'delivered_at' => $package->delivered_at?->format('d/m/Y H:i')
+                ];
+            });
+
+        return response()->json($packages);
+    }
+
+    /**
+     * API: Détail d'une tâche
+     */
+    public function apiTaskDetail($id)
+    {
+        $package = Package::find($id);
+        
+        if (!$package) {
+            return response()->json(['error' => 'Package non trouvé'], 404);
+        }
+
+        return response()->json([
+            'id' => $package->id,
+            'type' => 'livraison',
+            'tracking_number' => $package->tracking_number,
+            'package_code' => $package->package_code,
+            'recipient_name' => $package->recipient_name,
+            'recipient_phone' => $package->recipient_phone,
+            'recipient_address' => $package->recipient_address,
+            'cod_amount' => $package->cod_amount ?? 0,
+            'status' => $package->status,
+            'est_echange' => $package->est_echange ?? false,
+            'notes' => $package->delivery_notes,
+            'delivery_notes' => $package->delivery_notes
+        ]);
+    }
+
+    /**
+     * API: Rechercher un client par téléphone
+     */
+    public function searchClient(Request $request)
+    {
+        $phone = $request->input('phone');
+        
+        if (!$phone || strlen($phone) < 8) {
+            return response()->json([]);
+        }
+
+        $clients = \App\Models\User::where('role', 'CLIENT')
+            ->where(function($query) use ($phone) {
+                $query->where('phone', 'LIKE', '%' . $phone . '%')
+                      ->orWhere('mobile', 'LIKE', '%' . $phone . '%');
+            })
+            ->limit(10)
+            ->get()
+            ->map(function($client) {
+                $wallet = UserWallet::where('user_id', $client->id)->first();
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'phone' => $client->phone ?? $client->mobile,
+                    'balance' => $wallet ? $wallet->balance : 0
+                ];
+            });
+
+        return response()->json($clients);
+    }
+
+    /**
+     * API: Recharger le compte d'un client
+     */
+    public function rechargeClient(Request $request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:1',
+            'signature' => 'required|string'
+        ]);
+
+        $user = Auth::user();
+        $client = \App\Models\User::find($request->client_id);
+
+        try {
+            DB::beginTransaction();
+
+            // Créer ou mettre à jour le wallet du client
+            $wallet = UserWallet::firstOrCreate(
+                ['user_id' => $client->id],
+                ['balance' => 0, 'available_balance' => 0, 'pending_amount' => 0]
+            );
+
+            $wallet->increment('balance', $request->amount);
+            $wallet->increment('available_balance', $request->amount);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Recharge effectuée avec succès',
+                'new_balance' => $wallet->balance
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la recharge: ' . $e->getMessage()
+            ], 500);
         }
     }
 

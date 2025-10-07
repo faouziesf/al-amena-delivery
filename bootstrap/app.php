@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'ngrok.cors' => \App\Http\Middleware\NgrokCorsMiddleware::class,
         ]);
 
         // Middleware groups for specific roles

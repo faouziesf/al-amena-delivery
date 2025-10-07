@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#2563EB">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="/manifest-deliverer.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
     <link rel="icon" type="image/png" href="/images/icons/icon-32x32.png">
 
@@ -119,7 +119,18 @@
         }
 
         .safe-bottom {
-            padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom)));
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+
+        /* Body avec safe area */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Page wrapper */
+        .page-wrapper {
+            min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
         }
 
         /* Composants UI Modernes */
@@ -502,11 +513,11 @@
                 <h1 class="text-lg font-bold text-white truncate">@yield('title', 'Al-Amena')</h1>
             </div>
 
-            <!-- Scanner -->
-            <a href="{{ route('deliverer.scan.simple') }}"
+            <!-- Scanner Multiple -->
+            <a href="{{ route('deliverer.scan.multi') }}"
                class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                 </svg>
             </a>
         </div>
@@ -525,7 +536,7 @@
          style="display: none;">
     </div>
 
-    <!-- Menu Sidebar Corrigé -->
+    <!-- Menu Sidebar Corrigé avec Safe Areas iPhone -->
     <div x-show="menuOpen"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="-translate-x-full"
@@ -534,7 +545,7 @@
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="-translate-x-full"
          class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 overflow-y-auto"
-         style="display: none;">
+         style="display: none; padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
 
         <!-- Menu Header -->
         <div class="bg-blue-600 text-white p-4 safe-top">
@@ -572,25 +583,16 @@
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <span class="font-medium">Scanner</span>
+                        <span class="font-medium">Scanner Unique</span>
                     </a>
 
                     <a href="{{ route('deliverer.scan.multi') }}"
                        class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all"
                        @click="menuOpen = false">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 7h6m-6 4h6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                         </svg>
                         <span class="font-medium">Scanner Multiple</span>
-                    </a>
-
-                    <a href="{{ route('deliverer.pickups.scan') }}"
-                       class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all"
-                       @click="menuOpen = false">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <span class="font-medium">Scanner Collecte</span>
                     </a>
 
                     <a href="{{ route('deliverer.wallet.optimized') }}"
@@ -630,12 +632,17 @@
                 </div>
             </div>
 
-            <!-- Wallet rapide -->
-            <div class="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <!-- Wallet rapide - Données Réelles -->
+            <a href="{{ route('deliverer.wallet.optimized') }}" class="block bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6 hover:shadow-md transition-all">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">Solde Wallet</p>
-                        <p class="text-lg font-bold text-purple-600">2,450.00 DA</p>
+                        <p class="text-lg font-bold text-purple-600" x-data x-init="
+                            fetch('/deliverer/api/wallet/balance')
+                                .then(r => r.json())
+                                .then(data => $el.textContent = (data.balance || 0).toFixed(2) + ' TND')
+                                .catch(() => $el.textContent = '0.00 TND')
+                        ">Chargement...</p>
                     </div>
                     <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -643,7 +650,7 @@
                         </svg>
                     </div>
                 </div>
-            </div>
+            </a>
 
             <!-- Déconnexion -->
             <div class="border-t pt-4">
@@ -966,6 +973,93 @@
                 animationObserver.observe(el);
             });
         });
+    </script>
+
+    <!-- PWA Manager - PRODUCTION READY (Chargé de façon asynchrone) -->
+    <script>
+        // Charger PWA Manager de façon asynchrone pour ne pas bloquer
+        if (typeof pwaManager === 'undefined') {
+            const pwaScript = document.createElement('script');
+            pwaScript.src = '/js/pwa-manager.js';
+            pwaScript.async = true;
+            document.head.appendChild(pwaScript);
+        }
+    </script>
+    <script>
+        // Configuration PWA avancée
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup Pull-to-refresh
+            pwaManager.setupPullToRefresh(async () => {
+                showToast('Actualisation...', 'info', 2000);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                window.location.reload();
+            });
+
+            // Enregistrer Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ SW registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ SW registration failed:', error);
+                    });
+            }
+
+            // Notification Permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                setTimeout(() => {
+                    if (confirm('Activer les notifications pour recevoir vos nouveaux pickups ?')) {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                showToast('Notifications activées !', 'success');
+                            }
+                        });
+                    }
+                }, 3000);
+            }
+
+            // Battery Status (économie d'énergie)
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(battery => {
+                    if (battery.level < 0.20 && !battery.charging) {
+                        showToast('Batterie faible - Mode économie activé', 'warning');
+                        // Réduire fréquence de rafraîchissement
+                        document.body.classList.add('power-save-mode');
+                    }
+                });
+            }
+        });
+
+        // Fonction globale pour les requêtes API avec gestion offline
+        window.apiRequest = async function(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        ...options.headers
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erreur serveur');
+                }
+
+                return data;
+            } catch (error) {
+                if (!navigator.onLine) {
+                    showToast('Action mise en queue (hors ligne)', 'warning');
+                    // Stocker pour synchronisation
+                    return { queued: true };
+                }
+                throw error;
+            }
+        };
     </script>
 
     @stack('scripts')

@@ -100,6 +100,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relation avec la délégation assignée
+     */
+    public function delegation()
+    {
+        return $this->belongsTo(Delegation::class, 'assigned_delegation', 'name');
+    }
+
+    /**
      * Relation avec le profil client
      */
     public function clientProfile()

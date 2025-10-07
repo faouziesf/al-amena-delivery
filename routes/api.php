@@ -45,3 +45,22 @@ Route::prefix('transit-driver')->name('api.transit-driver.')->group(function () 
         Route::post('/logout', [TransitDriverController::class, 'logout'])->name('logout');
     });
 });
+
+// ==================== Deliverer API Routes ====================
+Route::prefix('deliverer')->name('api.deliverer.')->middleware(['auth:sanctum'])->group(function () {
+    
+    // Wallet & COD
+    Route::get('/wallet/cod-today', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'getCodToday'])->name('wallet.cod-today');
+    Route::get('/wallet/balance', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'getWalletBalance'])->name('wallet.balance');
+    Route::get('/simple/wallet/balance', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'getWalletBalance'])->name('simple.wallet.balance');
+    
+    // Scanner
+    Route::post('/scan/verify', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'verifyScan'])->name('scan.verify');
+    
+    // Dashboard
+    Route::get('/dashboard/stats', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'getDashboardStats'])->name('dashboard.stats');
+    Route::get('/packages/pending', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'getPendingPackages'])->name('packages.pending');
+    
+    // Géolocalisation
+    Route::post('/location/update', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'updateLocation'])->name('location.update');
+});

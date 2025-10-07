@@ -27,6 +27,7 @@ class TicketIntegrationService
             // Créer le ticket de réclamation
             $ticket = Ticket::create([
                 'ticket_number' => $ticketNumber,
+                'type' => 'COMPLAINT', // Type de ticket requis
                 'client_id' => $clientId,
                 'package_id' => $packageId,
                 'subject' => $this->getSubjectByType($type),
@@ -48,13 +49,13 @@ class TicketIntegrationService
                     'package_status_at_creation' => $package->status,
                     'package_current_cod' => $package->cod_amount
                 ],
+                'last_activity_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
 
             // Ajouter une entrée dans l'historique du ticket
             $ticket->addToHistory('CREATED', 'Ticket créé suite à une réclamation client', $clientId, 'CLIENT');
-
             // Créer le premier message avec la description de la réclamation
             $this->createInitialTicketMessage($ticket, $description, $clientId, $attachments);
 
