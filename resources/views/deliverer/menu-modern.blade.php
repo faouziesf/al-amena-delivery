@@ -1,143 +1,131 @@
 @extends('layouts.deliverer-modern')
 
 @section('title', 'Menu Principal')
-
-@push('styles')
-<style>
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .menu-card {
-        background: white;
-        border-radius: 1.5rem;
-        padding: 2rem;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        transition: transform 0.3s ease;
-    }
-    .menu-card:hover {
-        transform: translateY(-5px);
-    }
-    .menu-item {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 1.25rem;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
-    }
-    .menu-item:hover {
-        transform: translateX(10px);
-        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-    .stat-badge {
-        background: rgba(255,255,255,0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-weight: bold;
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="container py-4">
-    <div class="menu-card">
-        <div class="text-center mb-4">
-            <h1 class="h3 fw-bold text-purple mb-2">🚚 Menu Livreur</h1>
-            <p class="text-muted">Bienvenue {{ Auth::user()->name }}</p>
-        </div>
+<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 p-4">
+    <div class="max-w-md mx-auto">
+        <!-- Header Card -->
+        <div class="bg-white rounded-3xl shadow-xl p-6 mb-4">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-1">🚚 Menu Livreur</h1>
+                <p class="text-gray-500">Bienvenue {{ Auth::user()->name }}</p>
+            </div>
 
-        <!-- Stats rapides -->
-        <div class="row mb-4">
-            <div class="col-4">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
                 <div class="text-center">
-                    <div class="h2 fw-bold text-purple">{{ $activeCount }}</div>
-                    <small class="text-muted">Actifs</small>
+                    <div class="text-3xl font-bold text-indigo-600">{{ $activeCount }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Actifs</div>
                 </div>
-            </div>
-            <div class="col-4">
                 <div class="text-center">
-                    <div class="h2 fw-bold text-success">{{ $todayCount }}</div>
-                    <small class="text-muted">Livrés</small>
+                    <div class="text-3xl font-bold text-green-600">{{ $todayCount }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Livrés</div>
                 </div>
-            </div>
-            <div class="col-4">
                 <div class="text-center">
-                    <div class="h2 fw-bold text-info">{{ number_format($balance, 3) }}</div>
-                    <small class="text-muted">DT</small>
+                    <div class="text-3xl font-bold text-cyan-600">{{ number_format($balance, 3) }}</div>
+                    <div class="text-xs text-gray-500 mt-1">DT</div>
                 </div>
             </div>
         </div>
 
         <!-- Menu Items -->
-        <div class="menu-list">
-            <a href="{{ route('deliverer.tournee') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">📦</div>
-                    <div>
-                        <div class="fw-bold">Ma Tournée</div>
-                        <small>Voir mes livraisons</small>
+{{ ... }}
+            <!-- Ma Tournée -->
+            <a href="{{ route('deliverer.tournee') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">📦</span>
+                        <div>
+                            <div class="font-semibold">Ma Tournée</div>
+                            <div class="text-xs opacity-90">Voir mes livraisons</div>
+                        </div>
                     </div>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{{ $activeCount }}</span>
                 </div>
-                <span class="stat-badge">{{ $activeCount }}</span>
             </a>
 
-            <a href="{{ route('deliverer.scan.simple') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">📷</div>
-                    <div>
-                        <div class="fw-bold">Scanner</div>
-                        <small>Scanner un colis</small>
+            <!-- Scanner -->
+            <a href="{{ route('deliverer.scan.simple') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">📷</span>
+                        <div>
+                            <div class="font-semibold">Scanner</div>
+                            <div class="text-xs opacity-90">Scanner un colis</div>
+                        </div>
                     </div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
                 </div>
-                <i class="fas fa-chevron-right"></i>
             </a>
 
-            <a href="{{ route('deliverer.scan.multi') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">📸</div>
-                    <div>
-                        <div class="fw-bold">Scanner Multiple</div>
-                        <small>Scanner plusieurs colis</small>
+            <!-- Scanner Multiple -->
+            <a href="{{ route('deliverer.scan.multi') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">📸</span>
+                        <div>
+                            <div class="font-semibold">Scanner Multiple</div>
+                            <div class="text-xs opacity-90">Scanner plusieurs colis</div>
+                        </div>
                     </div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
                 </div>
-                <i class="fas fa-chevron-right"></i>
             </a>
 
-            <a href="{{ route('deliverer.pickups.available') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">🏪</div>
-                    <div>
-                        <div class="fw-bold">Ramassages</div>
-                        <small>Collectes disponibles</small>
+            <!-- Ramassages -->
+            <a href="{{ route('deliverer.pickups.available') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🏪</span>
+                        <div>
+                            <div class="font-semibold">Ramassages</div>
+                            <div class="text-xs opacity-90">Collectes disponibles</div>
+                        </div>
                     </div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
                 </div>
-                <i class="fas fa-chevron-right"></i>
             </a>
 
-            <a href="{{ route('deliverer.wallet') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">💰</div>
-                    <div>
-                        <div class="fw-bold">Mon Wallet</div>
-                        <small>Solde et transactions</small>
+            <!-- Wallet -->
+            <a href="{{ route('deliverer.wallet') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">💰</span>
+                        <div>
+                            <div class="font-semibold">Mon Wallet</div>
+                            <div class="text-xs opacity-90">Solde et transactions</div>
+                        </div>
                     </div>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{{ number_format($balance, 3) }} DT</span>
                 </div>
-                <span class="stat-badge">{{ number_format($balance, 3) }} DT</span>
             </a>
 
-            <a href="{{ route('deliverer.withdrawals.index') }}" class="menu-item">
-                <div class="d-flex align-items-center">
-                    <div class="me-3" style="font-size: 2rem;">💵</div>
-                    <div>
-                        <div class="fw-bold">Retraits Espèces</div>
-                        <small>Mes retraits assignés</small>
+            <!-- Retraits -->
+            <a href="{{ route('deliverer.withdrawals.index') }}" 
+               class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
+                <div class="flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">💵</span>
+                        <div>
+                            <div class="font-semibold">Retraits Espèces</div>
+                            <div class="text-xs opacity-90">Mes retraits assignés</div>
+                        </div>
                     </div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
                 </div>
-                <i class="fas fa-chevron-right"></i>
             </a>
         </div>
     </div>

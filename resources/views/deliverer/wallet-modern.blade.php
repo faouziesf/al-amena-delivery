@@ -2,71 +2,45 @@
 
 @section('title', 'Mon Wallet')
 
-@push('styles')
-<style>
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .wallet-card {
-        background: white;
-        border-radius: 1.5rem;
-        padding: 2rem;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
-    .balance-display {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 1.25rem;
-        padding: 2rem;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .transaction-item {
-        padding: 1rem;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="container py-4">
-    <div class="wallet-card">
-        <h4 class="text-center mb-4">💰 Mon Wallet</h4>
+<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 p-4">
+    <div class="max-w-md mx-auto">
+        <h4 class="text-white font-bold text-xl mb-4 px-2">💰 Mon Wallet</h4>
 
-        <!-- Balance Display -->
-        <div class="balance-display">
-            <div class="text-white-50 mb-2">Solde Disponible</div>
-            <div class="h1 fw-bold mb-0">0.000 DT</div>
-            <small class="text-white-50">Mis à jour maintenant</small>
+        <!-- Balance Card -->
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl shadow-2xl p-8 mb-4 text-white">
+            <div class="text-center">
+                <div class="text-white/70 text-sm mb-2">Solde Disponible</div>
+                <div class="text-5xl font-bold mb-2">0.000 DT</div>
+                <div class="text-white/60 text-xs">Mis à jour maintenant</div>
+            </div>
         </div>
 
         <!-- Quick Stats -->
-        <div class="row mb-4">
-            <div class="col-6">
-                <div class="text-center p-3 bg-light rounded">
-                    <div class="h5 fw-bold text-success mb-0">0.000 DT</div>
-                    <small class="text-muted">Collecté aujourd'hui</small>
-                </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-white rounded-2xl p-4 text-center shadow-lg">
+                <div class="text-2xl font-bold text-green-600 mb-1">0.000 DT</div>
+                <div class="text-xs text-gray-500">Collecté aujourd'hui</div>
             </div>
-            <div class="col-6">
-                <div class="text-center p-3 bg-light rounded">
-                    <div class="h5 fw-bold text-warning mb-0">0.000 DT</div>
-                    <small class="text-muted">En attente</small>
-                </div>
+            <div class="bg-white rounded-2xl p-4 text-center shadow-lg">
+                <div class="text-2xl font-bold text-amber-600 mb-1">0.000 DT</div>
+                <div class="text-xs text-gray-500">En attente</div>
             </div>
         </div>
 
-        <!-- Transactions -->
-        <h6 class="mb-3">Transactions Récentes</h6>
-        <div class="text-center text-muted py-4">
-            <div style="font-size: 3rem;">📊</div>
-            <p>Aucune transaction récente</p>
+        <!-- Transactions Card -->
+        <div class="bg-white rounded-3xl shadow-xl p-6">
+            <h6 class="font-bold text-gray-800 mb-4">Transactions Récentes</h6>
+            <div class="text-center py-8 text-gray-400">
+                <div class="text-6xl mb-3">📊</div>
+                <p class="text-sm">Aucune transaction récente</p>
+            </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Back Button -->
         <div class="mt-4">
-            <a href="{{ route('deliverer.menu') }}" class="btn btn-outline-secondary w-100">
+            <a href="{{ route('deliverer.menu') }}" 
+               class="block w-full bg-white/20 backdrop-blur-lg text-white text-center py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all">
                 ← Retour au menu
             </a>
         </div>

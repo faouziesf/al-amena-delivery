@@ -2,36 +2,24 @@
 
 @section('title', 'Ramassages Disponibles')
 
-@push('styles')
-<style>
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .pickup-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="container py-4">
-    <h5 class="text-white mb-3">🏪 Ramassages Disponibles</h5>
+<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 p-4">
+    <div class="max-w-md mx-auto">
+        <h5 class="text-white font-bold text-xl mb-4 px-2">🏪 Ramassages Disponibles</h5>
 
-    <div id="pickups-container">
-        <div class="text-center text-white py-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Chargement...</span>
+        <div id="pickups-container">
+            <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-12 text-center text-white">
+                <div class="spinner w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                <p>Chargement des ramassages...</p>
             </div>
-            <p class="mt-3">Chargement des ramassages...</p>
         </div>
-    </div>
 
-    <div class="mt-3">
-        <a href="{{ route('deliverer.menu') }}" class="btn btn-light w-100">
-            ← Retour au menu
-        </a>
+        <div class="mt-4">
+            <a href="{{ route('deliverer.menu') }}" 
+               class="block w-full bg-white/20 backdrop-blur-lg text-white text-center py-4 rounded-2xl font-semibold hover:bg-white/30 transition-all">
+                ← Retour au menu
+            </a>
+        </div>
     </div>
 </div>
 
@@ -49,43 +37,50 @@ function loadPickups() {
             
             if (data.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center text-white py-5">
-                        <div style="font-size: 4rem;">✅</div>
-                        <h4>Aucun ramassage disponible</h4>
-                        <p>Revenez plus tard</p>
+                    <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-12 text-center text-white">
+                        <div class="text-6xl mb-4">✅</div>
+                        <h4 class="text-xl font-bold mb-2">Aucun ramassage disponible</h4>
+                        <p class="text-white/80">Revenez plus tard</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = data.map(pickup => `
-                <div class="pickup-card">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="badge bg-warning">🏪 Ramassage</span>
-                        <small class="text-muted">${pickup.requested_pickup_date || 'Date non définie'}</small>
+            container.innerHTML = `<div class="space-y-3">` + data.map(pickup => `
+                <div class="bg-white rounded-2xl shadow-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">
+                            🏪 Ramassage
+                        </span>
+                        <div class="text-xs text-gray-500">${pickup.requested_pickup_date || 'Date non définie'}</div>
                     </div>
-                    <div class="mb-2">
-                        <div class="text-muted small">📍 Adresse</div>
-                        <div class="fw-bold">${pickup.pickup_address}</div>
+                    <div class="space-y-2 text-sm mb-4">
+                        <div>
+                            <div class="text-xs text-gray-500">📍 Adresse</div>
+                            <div class="font-semibold text-gray-800">${pickup.pickup_address}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">👤 Contact</div>
+                            <div class="text-gray-700">${pickup.pickup_contact_name || 'N/A'}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">📞 Téléphone</div>
+                            <a href="tel:${pickup.pickup_phone}" class="text-indigo-600 font-medium">${pickup.pickup_phone}</a>
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <div class="text-muted small">👤 Contact</div>
-                        <div>${pickup.pickup_contact_name || 'N/A'}</div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="text-muted small">📞 Téléphone</div>
-                        <div><a href="tel:${pickup.pickup_phone}">${pickup.pickup_phone}</a></div>
-                    </div>
-                    <button onclick="acceptPickup(${pickup.id})" class="btn btn-primary w-100">
+                    <button onclick="acceptPickup(${pickup.id})" 
+                            class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95">
                         ✅ Accepter ce ramassage
                     </button>
                 </div>
-            `).join('');
+            `).join('') + `</div>`;
         })
         .catch(error => {
             console.error('Error:', error);
             document.getElementById('pickups-container').innerHTML = `
-                <div class="alert alert-danger">Erreur de chargement</div>
+                <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                    Erreur de chargement
+                </div>
             `;
         });
 }
@@ -103,10 +98,10 @@ function acceptPickup(id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Ramassage accepté !');
+            showToast('Ramassage accepté !', 'success');
             loadPickups();
         } else {
-            alert(data.message || 'Erreur');
+            showToast(data.message || 'Erreur', 'error');
         }
     });
 }
