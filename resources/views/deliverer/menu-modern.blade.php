@@ -2,7 +2,7 @@
 
 @section('title', 'Menu Principal')
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 p-4">
+<div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 px-4 pb-4">
     <div class="max-w-md mx-auto">
         <!-- Header Card -->
         <div class="bg-white rounded-3xl shadow-xl p-6 mb-4">

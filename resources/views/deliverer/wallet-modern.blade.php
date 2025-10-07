@@ -3,7 +3,7 @@
 @section('title', 'Mon Wallet')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 p-4">
+<div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 px-4 pb-4">
     <div class="max-w-md mx-auto">
         <h4 class="text-white font-bold text-xl mb-4 px-2">💰 Mon Wallet</h4>
 

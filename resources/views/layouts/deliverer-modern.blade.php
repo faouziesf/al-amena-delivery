@@ -34,11 +34,22 @@
         }
 
         .safe-top {
-            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-top: max(2rem, env(safe-area-inset-top));
         }
 
         .safe-bottom {
-            padding-bottom: max(env(1rem, env(safe-area-inset-bottom)));
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+
+        .pt-safe {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        /* iPhone specific adjustments */
+        @supports (padding: max(0px)) {
+            .safe-top {
+                padding-top: max(2.5rem, env(safe-area-inset-top));
+            }
         }
 
         /* Animations optimisées */
@@ -120,8 +131,10 @@
     </div>
 
     <!-- Content -->
-    <div class="min-h-screen pb-20">
-        @yield('content')
+    <div class="min-h-screen pb-20 pt-safe">
+        <div class="pt-4 safe-top">
+            @yield('content')
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
