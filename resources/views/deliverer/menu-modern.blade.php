@@ -29,7 +29,7 @@
         </div>
 
         <!-- Menu Items -->
-{{ ... }}
+        <div class="space-y-3">
             <!-- Ma Tournée -->
             <a href="{{ route('deliverer.tournee') }}" 
                class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
