@@ -30,6 +30,27 @@ class SimpleDelivererController extends Controller
     }
 
     /**
+     * Menu Principal Optimisé
+     */
+    public function menu()
+    {
+        $user = Auth::user();
+        
+        // Stats rapides
+        $activeCount = Package::where('assigned_deliverer_id', $user->id)
+            ->whereNotIn('status', ['DELIVERED', 'CANCELLED', 'RETURNED'])
+            ->count();
+            
+        $todayCount = Package::where('assigned_deliverer_id', $user->id)
+            ->whereDate('delivered_at', today())
+            ->count();
+            
+        $balance = UserWallet::where('user_id', $user->id)->value('balance') ?? 0;
+        
+        return view('deliverer.menu-modern', compact('activeCount', 'todayCount', 'balance'));
+    }
+
+    /**
      * Ma Tournée - MVC Direct (sans APIs)
      */
     public function tournee()
@@ -245,15 +266,13 @@ class SimpleDelivererController extends Controller
     {
         $user = Auth::user();
         
-        \Log::info('scanSubmit appelé', [
-            'has_batch' => $request->has('batch'),
-            'batch_value' => $request->batch,
-            'request_data' => $request->all()
-        ]);
+        // Mode vérification uniquement (pour scan temps réel)
+        if ($request->verify_only === true) {
+            return $this->verifyCodeOnly($request, $user);
+        }
         
         // Support pour scan multiple (batch)
         if ($request->has('batch') && $request->batch === true) {
-            \Log::info('Appel de scanBatch');
             return $this->scanBatch($request, $user);
         }
         
@@ -348,11 +367,55 @@ class SimpleDelivererController extends Controller
     }
 
     /**
-     * Interface de scan multiple
+     * Interface de scan multiple avec données OPTIMISÉES pour vérification locale
      */
     public function multiScanner()
     {
-        return view('deliverer.multi-scanner');
+        $user = Auth::user();
+        
+        // CORRECTION: Charger TOUS les colis actifs (PAS de vérification d'assignation)
+        // Le livreur peut scanner n'importe quel colis
+        $packages = Package::whereNotIn('status', ['DELIVERED', 'CANCELLED', 'RETURNED', 'PAID']) // Exclure uniquement les terminés
+            ->select('id', 'package_code', 'status', 'assigned_deliverer_id') // Garder assigned_deliverer_id pour info
+            ->get()
+            ->map(function($pkg) use ($user) {
+                // CORRECTION: Nettoyer le code (enlever espaces, tirets potentiels)
+                $cleanCode = strtoupper(trim(str_replace([' ', '-', '_'], '', $pkg->package_code)));
+                $originalCode = strtoupper(trim($pkg->package_code));
+                
+                return [
+                    'c' => $originalCode, // Code original
+                    'c2' => $cleanCode, // Code nettoyé (pour recherche alternative)
+                    's' => $pkg->status,
+                    'p' => in_array($pkg->status, ['AVAILABLE', 'ACCEPTED', 'CREATED', 'VERIFIED']) ? 1 : 0,
+                    'd' => in_array($pkg->status, ['PICKED_UP', 'OUT_FOR_DELIVERY']) ? 1 : 0,
+                    'id' => $pkg->id, // Pour debug
+                    'assigned' => $pkg->assigned_deliverer_id === $user->id ? 1 : 0 // Info: assigné ou non
+                ];
+            });
+        
+        // Pickups (optimisé)
+        $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['assigned', 'pending'])
+            ->select('id', 'pickup_code')
+            ->get()
+            ->map(function($pickup) {
+                return [
+                    'c' => strtoupper($pickup->pickup_code ?? 'P' . $pickup->id),
+                    's' => 'assigned',
+                    'p' => 1,
+                    'd' => 0
+                ];
+            });
+        
+        // Fusionner
+        $allPackages = $packages->concat($pickups);
+        
+        // OPTIMISATION 4: Passer un flag pour indiquer qu'on utilise le format court
+        return view('deliverer.multi-scanner-production', [
+            'packages' => $allPackages,
+            'packagesCount' => $allPackages->count()
+        ]);
     }
 
     /**
@@ -535,6 +598,59 @@ class SimpleDelivererController extends Controller
         }
         
         return null;
+    }
+
+    /**
+     * Vérifier un code sans l'enregistrer (pour feedback temps réel)
+     */
+    private function verifyCodeOnly(Request $request, $user)
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'action' => 'nullable|in:pickup,delivering'
+        ]);
+
+        $code = $this->normalizeCode(trim($request->code));
+        $action = $request->action ?? 'pickup';
+        
+        // Chercher le colis
+        $package = $this->findPackageByCode($code);
+
+        if (!$package) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Code invalide - Colis introuvable'
+            ]);
+        }
+
+        // Vérifier que le colis est assigné au livreur
+        if ($package->assigned_deliverer_id != $user->id) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Colis non assigné à vous'
+            ]);
+        }
+
+        // Valider le statut
+        $statusCheck = $this->validatePackageStatus($package, $action);
+        if (!$statusCheck['valid']) {
+            return response()->json([
+                'valid' => false,
+                'message' => $statusCheck['message']
+            ]);
+        }
+
+        // Tout est OK
+        return response()->json([
+            'valid' => true,
+            'message' => 'Colis valide',
+            'package' => [
+                'id' => $package->id,
+                'tracking_number' => $package->tracking_number,
+                'recipient_name' => $package->recipient_name,
+                'status' => $package->status
+            ]
+        ]);
     }
 
     /**

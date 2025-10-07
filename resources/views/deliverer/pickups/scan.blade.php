@@ -1,4 +1,4 @@
-@extends('layouts.deliverer')
+﻿@extends('layouts.deliverer')
 
 @section('title', 'Scanner Collecte')
 
@@ -78,7 +78,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center">
-            <a href="{{ route('deliverer.run.sheet') }}" class="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <a href="{{ route('deliverer.tournee') }}" class="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                 <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>

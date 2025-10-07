@@ -22,12 +22,12 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER', 'ngrok.cors'])->prefix(
     Route::get('/pickups/available', function() { return view('deliverer.pickups-available'); })->name('pickups.available');
     Route::get('/pickup/{id}', [SimpleDelivererController::class, 'pickupDetail'])->name('pickup.detail');
     Route::post('/pickup/{id}/collect', [SimpleDelivererController::class, 'markPickupCollect'])->name('pickup.collect');
-    Route::get('/menu', function() { return view('deliverer.menu'); })->name('menu');
+    Route::get('/menu', [SimpleDelivererController::class, 'menu'])->name('menu');
 
     // ==================== SCANNER PRODUCTION ====================
     Route::get('/scan', function() { return view('deliverer.scan-production'); })->name('scan.simple');
     Route::post('/scan/submit', [SimpleDelivererController::class, 'scanSubmit'])->name('scan.submit');
-    Route::get('/scan/multi', function() { return view('deliverer.multi-scanner-production'); })->name('scan.multi');
+    Route::get('/scan/multi', [SimpleDelivererController::class, 'multiScanner'])->name('scan.multi');
 
     // ==================== SIMPLE ACTIONS ====================
     Route::post('/pickup/{package}', [SimpleDelivererController::class, 'markPickup'])->name('simple.pickup');

@@ -1,18 +1,30 @@
 @extends('layouts.deliverer-modern')
 
-@section('title', 'Scanner Multiple')
+@section('title', 'Scanner Multiple Simple')
 
 @push('styles')
 <style>
     body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .modern-card {
+        background: white;
+        border-radius: 1.25rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
     #camera-view {
         position: relative;
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
-        border-radius: 1.5rem;
+        border-radius: 1rem;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     #camera-video {
         width: 100%;
@@ -23,65 +35,34 @@
         top: 50%;
         left: 0;
         right: 0;
-        height: 3px;
+        height: 2px;
         background: linear-gradient(90deg, transparent, #10B981, transparent);
         animation: scan 2s ease-in-out infinite;
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
     }
     @keyframes scan {
-        0%, 100% { opacity: 0.3; transform: translateY(-30px); }
-        50% { opacity: 1; transform: translateY(30px); }
+        0%, 100% { transform: translateY(-20px); }
+        50% { transform: translateY(20px); }
     }
-    .pulse-scan {
-        animation: pulse 0.5s ease-in-out;
-    }
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
-    }
-    .modern-card {
-        background: white;
-        border-radius: 1.25rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    }
-    .modern-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-    }
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    .code-input {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        letter-spacing: 2px;
+        border: 3px solid #667eea;
         border-radius: 1rem;
         padding: 1.5rem;
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
     }
-    .action-button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        border-radius: 1rem;
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s ease;
-    }
-    .action-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
-    }
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+    .code-input:focus {
+        border-color: #10B981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
     }
 </style>
 @endpush
 
 @section('content')
-<div class="min-h-screen bg-gray-50" x-data="multiScannerApp()" x-init="init()">
+<div class="min-h-screen bg-gray-50" x-data="simpleScannerApp()" x-init="init()">
     
-    <!-- Header Moderne avec Gradient -->
+    <!-- Header -->
     <div class="relative safe-top">
         <div class="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600"></div>
         <div class="relative px-6 py-6">
@@ -93,15 +74,13 @@
                         </svg>
                     </a>
                     <div>
-                        <h1 class="text-2xl font-bold text-white flex items-center">
-                            <span class="mr-2">📦</span> Scanner Pro
-                        </h1>
-                        <p class="text-white/80 text-sm font-medium" x-text="statusText">Prêt à scanner</p>
+                        <h1 class="text-2xl font-bold text-white">📦 Scanner Multiple</h1>
+                        <p class="text-white/80 text-sm font-medium" x-text="statusText">Prêt</p>
                     </div>
                 </div>
                 <button @click="toggleCamera()" 
-                        :class="cameraActive ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-white/20'"
-                        class="p-4 rounded-2xl transition-all duration-300 transform hover:scale-110">
+                        :class="cameraActive ? 'bg-green-500' : 'bg-white/20'"
+                        class="p-4 rounded-2xl transition-all">
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -111,25 +90,22 @@
         </div>
     </div>
 
-    <div class="p-4" style="padding-bottom: 180px;">
+    <div class="p-4 pb-32">
         
-        <!-- Stats Modernes -->
-        <div class="mb-6 grid grid-cols-2 gap-4">
-            <div class="stat-card text-center transform hover:scale-105 transition-all">
-                <div class="text-4xl font-black mb-1" x-text="scannedCount">0</div>
-                <div class="text-sm font-semibold opacity-90">📦 Scannés</div>
-            </div>
-            <div class="stat-card text-center transform hover:scale-105 transition-all">
-                <div class="text-4xl font-black mb-1" x-text="totalProcessed">0</div>
-                <div class="text-sm font-semibold opacity-90">✅ Traités</div>
+        <!-- Stats -->
+        <div class="mb-6">
+            <div class="stat-card text-center">
+                <div class="text-4xl font-black mb-1" x-text="scannedCodes.length">0</div>
+                <div class="text-sm font-semibold opacity-90">📦 Codes Scannés</div>
+                <div class="text-xs opacity-75 mt-1">Vérification lors de la validation</div>
             </div>
         </div>
 
-        <!-- Caméra View -->
-        <div x-show="cameraActive" class="mb-6">
-            <div id="camera-view" class="relative">
+        <!-- Caméra -->
+        <div x-show="cameraActive" class="mb-6" x-transition>
+            <div id="camera-view">
                 <video id="camera-video" autoplay playsinline></video>
-                <canvas id="camera-canvas" style="display:none;"></canvas>
+                <canvas id="qr-canvas" style="display:none;"></canvas>
                 <div class="scan-line"></div>
                 <div class="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-semibold">
                     🎥 Caméra Active
@@ -137,76 +113,107 @@
             </div>
         </div>
 
-        <!-- Sélecteur d'action Moderne -->
+        <!-- Action -->
         <div class="mb-6 modern-card p-5">
-            <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
-                <span class="text-2xl mr-2">🎯</span>
-                <span>Action à effectuer</span>
-            </label>
+            <label class="block text-sm font-bold text-gray-800 mb-3">🎯 Action</label>
             <div class="grid grid-cols-2 gap-3">
                 <button @click="scanAction = 'pickup'" 
-                        :class="scanAction === 'pickup' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50' : 'bg-gray-100 text-gray-700'"
-                        class="p-4 rounded-xl font-bold transition-all duration-300 transform hover:scale-105">
-                    <div class="text-3xl mb-1">📦</div>
+                        :class="scanAction === 'pickup' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'"
+                        class="p-4 rounded-xl font-bold">
+                    <div class="text-2xl mb-1">📦</div>
                     <div class="text-sm">Ramassage</div>
                 </button>
                 <button @click="scanAction = 'delivering'" 
-                        :class="scanAction === 'delivering' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50' : 'bg-gray-100 text-gray-700'"
-                        class="p-4 rounded-xl font-bold transition-all duration-300 transform hover:scale-105">
-                    <div class="text-3xl mb-1">🚚</div>
-                    <div class="text-sm">En Livraison</div>
+                        :class="scanAction === 'delivering' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'"
+                        class="p-4 rounded-xl font-bold">
+                    <div class="text-2xl mb-1">🚚</div>
+                    <div class="text-sm">Livraison</div>
                 </button>
             </div>
         </div>
 
-        <!-- Zone de saisie manuelle Moderne -->
+        <!-- CHAMP PRINCIPAL: Saisie manuelle avec validation locale -->
         <div class="mb-6 modern-card p-5">
-            <h3 class="font-bold text-gray-800 mb-3 flex items-center">
-                <span class="text-2xl mr-2">📝</span>
-                <span>Saisie Manuelle</span>
-            </h3>
-            <textarea 
-                x-model="manualCodes"
-                @keydown.enter.prevent="processManual()"
-                placeholder="Saisissez vos codes ici...&#10;(séparés par virgule ou retour ligne)"
-                class="w-full p-4 border-2 border-gray-200 rounded-xl h-24 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all"
-            ></textarea>
-            <button @click="processManual()" class="w-full mt-3 action-button">
-                <span class="text-lg">➕ Ajouter les Codes</span>
+            <h3 class="font-bold text-gray-800 mb-3">📝 Saisir un Code Manuellement</h3>
+            <input 
+                type="text"
+                x-model="currentCode"
+                @input="validateCodeFormat()"
+                @keydown.enter="addCodeManually()"
+                placeholder="Tapez un code puis ENTRÉE..."
+                class="w-full code-input transition-all"
+                :class="getInputClass()"
+            >
+            <div class="mt-2 text-center min-h-6">
+                <span x-show="currentCode.length > 0 && codeStatus === 'checking'" class="text-blue-600 font-semibold text-sm">
+                    🔍 Vérification dans la base...
+                </span>
+                <span x-show="codeStatus === 'valid'" class="text-green-600 font-bold text-sm">
+                    ✅ <span x-text="statusMessage"></span> - Appuyez ENTRÉE
+                </span>
+                <span x-show="codeStatus === 'not_found'" class="text-red-600 font-bold text-sm">
+                    ❌ <span x-text="statusMessage"></span>
+                </span>
+                <span x-show="codeStatus === 'wrong_status'" class="text-orange-600 font-bold text-sm">
+                    ⚠️ <span x-text="statusMessage"></span>
+                </span>
+                <span x-show="codeStatus === 'duplicate'" class="text-orange-600 font-bold text-sm">
+                    ⚠️ <span x-text="statusMessage"></span>
+                </span>
+                <span x-show="codeStatus === 'invalid'" class="text-red-600 font-bold text-sm">
+                    ❌ <span x-text="statusMessage"></span>
+                </span>
+            </div>
+            <button @click="addCodeManually()" 
+                    :disabled="codeStatus !== 'valid'"
+                    class="w-full mt-3 font-bold py-3 rounded-xl transition-all"
+                    :class="codeStatus === 'valid' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
+                <span x-show="codeStatus === 'valid'">✅ Ajouter le Code</span>
+                <span x-show="codeStatus !== 'valid'">➕ Ajouter le Code</span>
             </button>
+            <p class="text-xs text-gray-500 mt-2 text-center">
+                <span x-show="packagesMap && packagesMap.size > 0">
+                    📦 <span x-text="packagesMap ? packagesMap.size : 0"></span> colis chargés (optimisé)
+                </span>
+            </p>
         </div>
 
-        <!-- Liste des colis scannés Moderne -->
-        <div x-show="scannedPackages.length > 0" x-transition class="mb-6">
+        <!-- Liste des codes scannés -->
+        <div x-show="scannedCodes.length > 0" x-transition class="mb-6">
             <div class="modern-card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-800 flex items-center">
-                        <span class="text-2xl mr-2">📋</span>
-                        <span>Colis Scannés</span>
-                    </h3>
-                    <button @click="clearAll()" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-all transform hover:scale-105">
+                    <h3 class="font-bold text-gray-800">📋 Codes Scannés (<span x-text="scannedCodes.length"></span>)</h3>
+                    <button @click="clearAll()" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold">
                         🗑️ Effacer
                     </button>
                 </div>
                 
-                <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                    <template x-for="(pkg, index) in scannedPackages" :key="index">
-                        <div class="p-4 rounded-xl flex items-center justify-between pulse-scan transition-all hover:shadow-lg"
-                             :class="pkg.status === 'success' ? 'bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300' : pkg.status === 'error' ? 'bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300' : 'bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-300'">
-                            <div class="flex items-center space-x-4 flex-1">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md"
-                                     :class="pkg.status === 'success' ? 'bg-green-500 text-white' : pkg.status === 'error' ? 'bg-red-500 text-white' : 'bg-gray-400 text-white'">
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                    <template x-for="(item, index) in scannedCodes" :key="index">
+                        <div class="p-3 rounded-lg flex items-center justify-between"
+                             :class="item.assigned ? 'bg-blue-50 border-2 border-blue-300' : 'bg-amber-50 border-2 border-amber-300'">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+                                     :class="item.assigned ? 'bg-blue-500' : 'bg-amber-500'">
                                     <span x-text="index + 1"></span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="font-bold text-gray-900 text-lg" x-text="pkg.code"></div>
-                                    <div class="text-sm font-medium" 
-                                         :class="pkg.status === 'success' ? 'text-green-700' : pkg.status === 'error' ? 'text-red-700' : 'text-gray-600'" 
-                                         x-text="pkg.message || 'En attente'"></div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-gray-900" x-text="item.code"></span>
+                                        <span x-show="item.assigned" class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full border border-green-300">
+                                            ✓ Assigné
+                                        </span>
+                                        <span x-show="!item.assigned" class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full border border-amber-300">
+                                            ℹ️ Non assigné
+                                        </span>
+                                    </div>
+                                    <div class="text-xs" 
+                                         :class="item.assigned ? 'text-blue-700' : 'text-amber-700'" 
+                                         x-text="item.message"></div>
                                 </div>
                             </div>
-                            <button @click="removePackage(index)" class="ml-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all transform hover:scale-110 shadow-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button @click="removeCode(index)" class="p-2 bg-red-500 text-white rounded-full hover:bg-red-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
@@ -216,70 +223,294 @@
             </div>
         </div>
 
-        <!-- Bouton Validation Moderne Flottant -->
-        <div x-show="scannedPackages.length > 0" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 transform translate-y-4"
-             x-transition:enter-end="opacity-100 transform translate-y-0"
-             class="fixed left-0 right-0 p-4 glass-effect shadow-2xl" 
-             style="bottom: 100px;">
-            <button @click="validateAndSubmit()" 
-                    :disabled="processing || scannedPackages.length === 0"
-                    class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-500/50 hover:shadow-xl hover:shadow-green-500/60 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-300">
-                <span x-show="!processing" class="text-lg flex items-center justify-center">
-                    <span class="text-2xl mr-2">✅</span>
-                    Valider (<span x-text="scannedCount"></span> colis)
-                </span>
-                <span x-show="processing" class="text-lg flex items-center justify-center">
-                    <svg class="animate-spin h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Traitement...
-                </span>
-            </button>
+        <!-- Bouton Validation DIRECT (SANS API) -->
+        <div x-show="scannedCodes.length > 0" 
+             class="fixed left-0 right-0 bottom-20 p-4" style="background: rgba(255,255,255,0.95)">
+            <form id="validation-form" method="POST" action="{{ route('deliverer.scan.submit') }}">
+                @csrf
+                <input type="hidden" name="action" x-model="scanAction">
+                <input type="hidden" name="codes" x-bind:value="JSON.stringify(scannedCodes.map(item => item.code))">
+                
+                <button type="button" @click="submitForm()" 
+                        :disabled="processing"
+                        class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-2xl disabled:opacity-50 shadow-lg">
+                    <span x-show="!processing" class="text-lg">
+                        ✅ Valider <span x-text="scannedCodes.length"></span> colis (<span x-text="scanAction === 'pickup' ? 'Ramassage' : 'Livraison'"></span>)
+                    </span>
+                    <span x-show="processing" class="text-lg">
+                        ⏳ Traitement en cours...
+                    </span>
+                </button>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- ZXing pour scanner QR codes ET codes-barres -->
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+<!-- Quagga pour codes-barres -->
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<!-- jsQR pour QR codes -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
-<!-- Sons de feedback -->
+<!-- Sons -->
 <audio id="scan-success-sound" src="/sounds/success.mp3" preload="auto"></audio>
 <audio id="scan-error-sound" src="/sounds/error.mp3" preload="auto"></audio>
-<audio id="scan-invalid-sound" src="/sounds/error.mp3" preload="auto"></audio>
-<audio id="scan-duplicate-sound" src="/sounds/error.mp3" preload="auto"></audio>
-<script>
-function multiScannerApp() {
-    return {
-        cameraActive: false,
-        manualCodes: '',
-        scannedPackages: [],
-        scannedCount: 0,
-        totalProcessed: 0,
-        processing: false,
-        statusText: 'Prêt à scanner',
-        scanAction: 'pickup', // Par défaut: ramassage
-        codeReader: null,
-        videoInputDevices: [],
-        selectedDeviceId: null,
-        lastScannedCode: null,
-        lastScanTime: 0,
 
-        async init() {
-            console.log('✅ Multi-scanner initialisé');
-            this.updateCounts();
+<script>
+// DONNÉES DES COLIS CHARGÉES DU SERVEUR (une seule fois)
+const PACKAGES_DATA = @json($packages ?? []);
+
+function simpleScannerApp() {
+    return {
+        // États
+        cameraActive: false,
+        currentCode: '',
+        scannedCodes: [],
+        processing: false,
+        statusText: 'Prêt',
+        scanAction: 'pickup',
+        
+        // Base de données locale (Map pour recherche O(1))
+        packagesMap: null,
+        
+        // Validation DB locale (SANS API temps réel)
+        codeStatus: '', // 'checking', 'valid', 'invalid', 'not_found', 'duplicate', 'wrong_status'
+        statusMessage: '',
+        validationTimeout: null,
+        
+        // Scan alternatif
+        scanMode: 'barcode', // 'barcode' ou 'qr'
+        scanCycle: 0,
+        
+        // Caméra
+        videoStream: null,
+        scanInterval: null,
+        lastScanTime: 0,
+        lastScannedCode: '',
+        
+        // ANTI-SPAM pour erreurs
+        errorBuffer: new Map(), // Pour éviter messages répétitifs
+        lastErrorTime: 0,
+
+        init() {
+            console.log('✅ Scanner avec validation DB locale initialisé');
             
-            // Initialiser ZXing avec support multi-formats (QR + Codes-barres)
-            if (typeof ZXing !== 'undefined') {
-                this.codeReader = new ZXing.BrowserMultiFormatReader();
-                console.log('✅ ZXing initialisé - Support QR + Codes-barres');
-            } else {
-                console.error('❌ ZXing non chargé');
+            // CORRECTION: Créer Map avec PLUSIEURS clés par colis
+            // pour gérer différentes variantes du code
+            this.packagesMap = new Map();
+            
+            PACKAGES_DATA.forEach(pkg => {
+                const packageData = {
+                    code: pkg.c,
+                    status: pkg.s,
+                    can_pickup: pkg.p === 1,
+                    can_deliver: pkg.d === 1,
+                    id: pkg.id,
+                    assigned: pkg.assigned === 1 // Info: colis assigné au livreur ou non
+                };
+                
+                // Ajouter avec le code original
+                this.packagesMap.set(pkg.c, packageData);
+                
+                // CORRECTION: Ajouter aussi avec le code nettoyé (sans _, -, espaces)
+                if (pkg.c2 && pkg.c2 !== pkg.c) {
+                    this.packagesMap.set(pkg.c2, packageData);
+                }
+                
+                // CORRECTION: Ajouter variantes courantes
+                // Ex: PKG_ABC_123 → aussi accessible par PKGABC123
+                const noUnderscore = pkg.c.replace(/_/g, '');
+                if (noUnderscore !== pkg.c) {
+                    this.packagesMap.set(noUnderscore, packageData);
+                }
+            });
+            
+            console.log(`📦 ${PACKAGES_DATA.length} colis chargés (${this.packagesMap.size} clés de recherche)`);
+            console.log(`💾 Taille mémoire estimée: ${Math.round(this.packagesMap.size * 0.1)}KB`);
+            
+            // DEBUG: Afficher quelques codes pour vérification
+            if (PACKAGES_DATA.length > 0) {
+                console.log('📋 Exemples de codes chargés:');
+                PACKAGES_DATA.slice(0, 3).forEach(pkg => {
+                    console.log(`  - ${pkg.c} (ID: ${pkg.id}, Statut: ${pkg.s})`);
+                });
+            }
+        },
+        
+        // VALIDATION TEMPS RÉEL avec DB locale (SANS API)
+        validateCodeFormat() {
+            const code = this.currentCode.trim().toUpperCase();
+            
+            // Reset si vide
+            if (!code) {
+                this.codeStatus = '';
+                this.statusMessage = '';
+                return;
+            }
+            
+            // Afficher "Vérification..." brièvement
+            this.codeStatus = 'checking';
+            
+            // Annuler timeout précédent
+            if (this.validationTimeout) {
+                clearTimeout(this.validationTimeout);
+            }
+            
+            // Valider après 300ms (débounce)
+            this.validationTimeout = setTimeout(() => {
+                this.checkCodeInDB(code);
+            }, 300);
+        },
+        
+        // VÉRIFIER CODE DANS DB LOCALE (SANS API) - OPTIMISÉ avec Map
+        checkCodeInDB(code) {
+            console.log('🔍 Vérification:', code);
+            
+            // 1. Vérifier format basique
+            if (code.length < 3) {
+                this.codeStatus = 'invalid';
+                this.statusMessage = 'Code trop court';
+                this.playSound('error');
+                if (navigator.vibrate) navigator.vibrate([100]);
+                return;
+            }
+            
+            // 2. CORRECTION: Vérifier si déjà scanné (avec variantes)
+            const isDuplicate = this.scannedCodes.find(item => {
+                return item.code === code || 
+                       item.code.replace(/[_\-\s]/g, '') === code.replace(/[_\-\s]/g, '');
+            });
+            
+            if (isDuplicate) {
+                this.codeStatus = 'duplicate';
+                this.statusMessage = 'Déjà scanné';
+                this.playSound('error');
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                return;
+            }
+            
+            // 3. CORRECTION: Rechercher avec PLUSIEURS variantes du code
+            let packageData = this.packagesMap.get(code);
+            
+            // Si pas trouvé, essayer sans underscores
+            if (!packageData) {
+                const noUnderscore = code.replace(/_/g, '');
+                packageData = this.packagesMap.get(noUnderscore);
+                if (packageData) {
+                    console.log('✅ Trouvé avec variante sans underscore:', noUnderscore);
+                }
+            }
+            
+            // Si pas trouvé, essayer sans tirets
+            if (!packageData) {
+                const noDash = code.replace(/-/g, '');
+                packageData = this.packagesMap.get(noDash);
+                if (packageData) {
+                    console.log('✅ Trouvé avec variante sans tiret:', noDash);
+                }
+            }
+            
+            // Si pas trouvé, essayer version complètement nettoyée
+            if (!packageData) {
+                const cleaned = code.replace(/[_\-\s]/g, '');
+                packageData = this.packagesMap.get(cleaned);
+                if (packageData) {
+                    console.log('✅ Trouvé avec variante nettoyée:', cleaned);
+                }
+            }
+            
+            if (!packageData) {
+                // ❌ COLIS NON TROUVÉ
+                this.codeStatus = 'not_found';
+                this.statusMessage = 'Colis non trouvé dans vos assignations';
+                this.playSound('error');
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                console.log('❌ Non trouvé:', code);
+                console.log('📋 Nombre de colis chargés:', PACKAGES_DATA.length);
+                return;
+            }
+            
+            console.log('✅ Colis trouvé:', packageData);
+            
+            // 4. Vérifier le statut selon l'action
+            const isValidForAction = this.scanAction === 'pickup' 
+                ? packageData.can_pickup 
+                : packageData.can_deliver;
+            
+            if (!isValidForAction) {
+                // ⚠️ STATUT NON VALIDE
+                this.codeStatus = 'wrong_status';
+                this.statusMessage = `Statut invalide pour ${this.scanAction === 'pickup' ? 'ramassage' : 'livraison'} (${packageData.status})`;
+                this.playSound('error');
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+                console.log('⚠️ Statut invalide:', packageData);
+                return;
+            }
+            
+            // ✅ TOUT EST OK
+            this.codeStatus = 'valid';
+            // Afficher info d'assignation
+            const assignInfo = packageData.assigned ? '✓ Assigné' : 'ℹ️ Non assigné';
+            this.statusMessage = `Colis valide (${packageData.status}) - ${assignInfo}`;
+            this.playSound('success');
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+            console.log('✅ Valide:', packageData);
+        },
+        
+        // CLASS CSS DYNAMIQUE
+        getInputClass() {
+            if (!this.currentCode) return 'border-gray-300';
+            
+            switch(this.codeStatus) {
+                case 'checking':
+                    return 'border-blue-400 ring-4 ring-blue-100';
+                case 'valid':
+                    return 'border-green-500 ring-4 ring-green-100';
+                case 'invalid':
+                case 'not_found':
+                case 'duplicate':
+                case 'wrong_status':
+                    return 'border-red-500 ring-4 ring-red-100';
+                default:
+                    return 'border-gray-300';
             }
         },
 
+        // AJOUTER CODE MANUELLEMENT
+        addCodeManually() {
+            const code = this.currentCode.trim().toUpperCase();
+            
+            if (!code) {
+                showToast('⚠️ Veuillez saisir un code', 'warning');
+                return;
+            }
+            
+            // Vérifier le statut de validation
+            if (this.codeStatus !== 'valid') {
+                showToast('❌ ' + this.statusMessage, 'error');
+                this.playSound('error');
+                return;
+            }
+            
+            // Ajouter le code valide
+            this.scannedCodes.push({
+                code: code,
+                message: 'Saisie manuelle - ' + this.statusMessage,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Reset complet
+            this.currentCode = '';
+            this.codeStatus = '';
+            this.statusMessage = '';
+            
+            showToast('✅ Code ajouté', 'success');
+            this.playSound('success');
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+            
+            this.statusText = `${this.scannedCodes.length} code(s) scanné(s)`;
+        },
+        
+        // CAMÉRA: Toggle
         async toggleCamera() {
             if (this.cameraActive) {
                 this.stopCamera();
@@ -287,295 +518,432 @@ function multiScannerApp() {
                 await this.startCamera();
             }
         },
-
+        
+        // DÉMARRER CAMÉRA
         async startCamera() {
             try {
                 const video = document.getElementById('camera-video');
-                if (!video || !this.codeReader) {
-                    console.error('Éléments manquants pour démarrer la caméra');
+                if (!video) {
+                    console.error('Élément vidéo non trouvé');
                     return;
                 }
 
                 this.statusText = 'Démarrage caméra...';
 
-                // Utiliser ZXing pour décoder depuis la caméra
-                this.codeReader.decodeFromVideoDevice(
-                    undefined, // undefined = caméra par défaut
-                    video,
-                    (result, error) => {
-                        if (result) {
-                            this.handleScannedCode(result.getText());
-                        }
-                        // Les erreurs NotFoundException sont normales (pas de code détecté)
-                        if (error && !(error instanceof ZXing.NotFoundException)) {
-                            console.error('Erreur scan:', error);
-                        }
+                // Démarrer flux vidéo
+                this.videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
                     }
-                );
+                });
+                
+                video.srcObject = this.videoStream;
+                await video.play();
 
                 this.cameraActive = true;
-                this.statusText = '📷 Caméra active - QR + Codes-barres';
+                this.statusText = '📷 Scan actif';
                 
-                showToast('Caméra activée', 'success');
-                this.playSound('success');
-                vibrate([50]);
-
+                // Démarrer scan ALTERNATIF (Quagga puis jsQR)
+                this.startAlternateScanning();
+                
+                showToast('Caméra prête', 'success');
+                
             } catch (error) {
                 console.error('Erreur caméra:', error);
-                showToast('Impossible d\'accéder à la caméra', 'error');
-                this.playSound('error');
+                showToast('Erreur caméra: ' + error.message, 'error');
                 this.statusText = 'Erreur caméra';
-                this.cameraActive = false;
             }
         },
-
-        stopCamera() {
-            if (this.codeReader) {
-                this.codeReader.reset();
-            }
-            this.cameraActive = false;
-            this.statusText = 'Caméra arrêtée';
-            showToast('Caméra désactivée', 'info');
-        },
-
-        playSound(type) {
-            try {
-                const sound = document.getElementById(`scan-${type}-sound`);
-                if (sound) {
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.log('Son désactivé'));
+        
+        // SCAN ALTERNATIF: Barcode 2x puis QR 1x
+        startAlternateScanning() {
+            // Initialiser Quagga pour codes-barres
+            this.initQuagga();
+            
+            // Alterner avec jsQR toutes les 600ms
+            this.scanInterval = setInterval(() => {
+                this.scanCycle++;
+                
+                // 2 cycles barcode, 1 cycle QR
+                if (this.scanCycle % 3 === 0) {
+                    this.scanMode = 'qr';
+                    this.scanQRCode();
+                } else {
+                    this.scanMode = 'barcode';
                 }
-            } catch (e) {
-                console.log('Lecture son échouée');
+            }, 600);
+            
+            console.log('🔄 Scan alternatif démarré');
+        },
+        
+        // INITIALISER QUAGGA (Codes-barres)
+        initQuagga() {
+            if (typeof Quagga === 'undefined') {
+                console.error('❌ Quagga non chargé');
+                return;
+            }
+
+            try {
+                Quagga.init({
+                    inputStream: {
+                        type: "LiveStream",
+                        target: document.getElementById('camera-video'),
+                        constraints: {
+                            width: { min: 640, ideal: 1280, max: 1920 },
+                            height: { min: 480, ideal: 720, max: 1080 },
+                            facingMode: "environment",
+                            aspectRatio: { min: 1, max: 2 }
+                        }
+                    },
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "code_93_reader",
+                            "upc_reader",
+                            "upc_e_reader"
+                        ],
+                        // AMÉLIORATION: Paramètres pour meilleure détection
+                        multiple: false
+                    },
+                    locate: true,
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    // AMÉLIORATION: Filtrer faux positifs
+                    numOfWorkers: navigator.hardwareConcurrency || 4,
+                    frequency: 10
+                }, (err) => {
+                    if (err) {
+                        console.error('Erreur Quagga:', err);
+                        return;
+                    }
+                    Quagga.start();
+                    console.log('✅ Quagga démarré');
+                });
+
+                Quagga.onDetected((result) => {
+                    if (this.scanMode === 'barcode' && result?.codeResult?.code) {
+                        // AMÉLIORATION: Vérifier la qualité du scan
+                        const code = result.codeResult.code.trim();
+                        const errors = result.codeResult.decodedCodes
+                            .filter(x => x.error !== undefined)
+                            .map(x => x.error);
+                        const avgError = errors.length > 0 
+                            ? errors.reduce((a, b) => a + b, 0) / errors.length 
+                            : 0;
+                        
+                        // AMÉLIORATION: Seuil de qualité (0.1 = 10% d'erreur max)
+                        // Plus le seuil est bas, plus on est strict
+                        if (avgError > 0.15) {
+                            console.log('⚠️ Code-barres rejeté (qualité faible):', avgError.toFixed(3));
+                            return;
+                        }
+                        
+                        if (code.length >= 4) {
+                            console.log('✅ Code-barres détecté (qualité:', avgError.toFixed(3), ')');
+                            this.handleScannedCode(code, 'BARCODE');
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur init Quagga:', error);
             }
         },
+        
+        // SCAN QR CODE avec jsQR
+        scanQRCode() {
+            if (typeof jsQR === 'undefined') return;
+            
+            try {
+                const video = document.getElementById('camera-video');
+                const canvas = document.getElementById('qr-canvas');
+                
+                if (!video || !canvas || !video.videoWidth) return;
 
-        playSoundByType(errorType) {
-            switch(errorType) {
-                case 'not_found':
-                    this.playSound('error');
-                    break;
-                case 'invalid_status':
-                    this.playSound('invalid');
-                    break;
-                case 'wrong_deliverer':
-                    this.playSound('error');
-                    break;
-                case 'duplicate':
-                    this.playSound('duplicate');
-                    break;
-                default:
-                    this.playSound('error');
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (qrCode?.data) {
+                    const code = qrCode.data.trim();
+                    if (code) {
+                        this.handleScannedCode(code, 'QR');
+                    }
+                }
+            } catch (error) {
+                // Ignorer erreurs de scan
             }
         },
-
-        handleScannedCode(code) {
+        
+        // EXTRAIRE CODE PROPRE (URL, espaces, etc.)
+        extractCleanCode(rawCode) {
+            let code = rawCode.trim();
+            
+            // 1. Extraire de l'URL de tracking
+            // Formats supportés:
+            //   - http://127.0.0.1:8000/track/PKG_VIHQA1_1006
+            //   - https://al-amena.com/track/PKG_VIHQA1_1006
+            //   - /track/PKG_VIHQA1_1006
+            if (code.includes('/track/')) {
+                const match = code.match(/\/track\/([A-Za-z0-9_-]+)/);
+                if (match && match[1]) {
+                    code = match[1];
+                    console.log('📦 Code extrait de l\'URL:', code);
+                }
+            }
+            
+            // 2. Supprimer paramètres URL si présents
+            if (code.includes('?')) {
+                code = code.split('?')[0];
+            }
+            
+            // 3. Supprimer espaces et convertir en majuscules
+            code = code.toUpperCase().replace(/\s+/g, '');
+            
+            return code;
+        },
+        
+        // AFFICHER ERREUR avec ANTI-SPAM
+        showScanError(code, message, vibratePattern) {
+            const now = Date.now();
+            const errorKey = `${code}_${message}`;
+            
+            // Vérifier si cette erreur a été affichée récemment (< 3 secondes)
+            const lastTime = this.errorBuffer.get(errorKey) || 0;
+            if (now - lastTime < 3000) {
+                console.log('🔇 Erreur ignorée (anti-spam):', message);
+                return; // Ignorer (anti-spam)
+            }
+            
+            // Enregistrer cette erreur
+            this.errorBuffer.set(errorKey, now);
+            
+            // Afficher
+            this.statusText = message;
+            showToast(message, 'error');
+            this.playSound('error');
+            if (navigator.vibrate && vibratePattern) {
+                navigator.vibrate(vibratePattern);
+            }
+        },
+        
+        // GÉRER CODE SCANNÉ avec vérification DB locale (AMÉLIORÉ)
+        handleScannedCode(rawCode, type) {
             const now = Date.now();
             
-            // Éviter les doublons (même code dans les 2 secondes)
-            if (this.lastScannedCode === code && (now - this.lastScanTime) < 2000) {
+            // AMÉLIORATION 1: Extraire code propre (URLs, espaces, etc.)
+            let code = this.extractCleanCode(rawCode);
+            
+            // Validation basique
+            if (!code || code.length < 3) {
+                console.log('❌ Code trop court ignoré:', rawCode);
                 return;
             }
-
+            
+            console.log(`🔍 ${type} scanné:`, code);
+            
+            // Anti-doublon temps (500ms au lieu de 2000ms pour plus de réactivité)
+            if (code === this.lastScannedCode && (now - this.lastScanTime) < 500) {
+                return;
+            }
+            
+            // CORRECTION: Anti-doublon - vérifier avec variantes
+            const isDuplicate = this.scannedCodes.find(item => {
+                // Comparer le code scanné avec le code et toutes les variantes
+                return item.code === code || 
+                       item.code.replace(/[_\-\s]/g, '') === code.replace(/[_\-\s]/g, '');
+            });
+            
+            if (isDuplicate) {
+                // AMÉLIORATION 2: Anti-spam pour erreur "déjà scanné"
+                this.showScanError(code, '⚠️ Déjà scanné', [100, 50, 100]);
+                return;
+            }
+            
             this.lastScannedCode = code;
             this.lastScanTime = now;
-
-            // Vérifier si déjà scanné
-            if (this.scannedPackages.find(pkg => pkg.code === code)) {
-                showToast('⚠️ Colis déjà scanné', 'warning');
-                this.playSoundByType('duplicate');
-                vibrate([100, 50, 100]);
+            
+            // CORRECTION: VÉRIFIER avec PLUSIEURS variantes du code
+            let packageData = this.packagesMap.get(code);
+            let searchVariant = code;
+            
+            // Si pas trouvé, essayer sans underscores
+            if (!packageData) {
+                const noUnderscore = code.replace(/_/g, '');
+                packageData = this.packagesMap.get(noUnderscore);
+                if (packageData) {
+                    searchVariant = noUnderscore;
+                    console.log('✅ Trouvé avec variante sans underscore:', noUnderscore);
+                }
+            }
+            
+            // Si pas trouvé, essayer sans tirets
+            if (!packageData) {
+                const noDash = code.replace(/-/g, '');
+                packageData = this.packagesMap.get(noDash);
+                if (packageData) {
+                    searchVariant = noDash;
+                    console.log('✅ Trouvé avec variante sans tiret:', noDash);
+                }
+            }
+            
+            // Si pas trouvé, essayer version complètement nettoyée
+            if (!packageData) {
+                const cleaned = code.replace(/[_\-\s]/g, '');
+                packageData = this.packagesMap.get(cleaned);
+                if (packageData) {
+                    searchVariant = cleaned;
+                    console.log('✅ Trouvé avec variante nettoyée:', cleaned);
+                }
+            }
+            
+            if (!packageData) {
+                // ❌ COLIS NON TROUVÉ - AMÉLIORATION 3: Anti-spam
+                console.log('❌ Non trouvé:', code);
+                console.log('📋 Colis chargés:', PACKAGES_DATA.length);
+                this.showScanError(code, `❌ ${code} - Non trouvé`, [200, 100, 200]);
+                
+                setTimeout(() => {
+                    if (this.cameraActive) {
+                        this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+                    }
+                }, 1500);
                 return;
             }
-
-            // Ajouter le colis
-            this.scannedPackages.push({
-                code: code,
-                status: 'pending',
-                message: 'Scanné avec succès',
+            
+            console.log('✅ Colis trouvé:', packageData);
+            
+            // Vérifier le statut selon l'action
+            const isValidForAction = this.scanAction === 'pickup' 
+                ? packageData.can_pickup 
+                : packageData.can_deliver;
+            
+            if (!isValidForAction) {
+                // ⚠️ STATUT NON VALIDE - AMÉLIORATION 3: Anti-spam
+                console.log('⚠️ Statut invalide:', packageData);
+                this.showScanError(code, `⚠️ ${code} - Statut invalide (${packageData.status})`, [100, 50, 100, 50, 100]);
+                
+                setTimeout(() => {
+                    if (this.cameraActive) {
+                        this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+                    }
+                }, 1500);
+                return;
+            }
+            
+            // ✅ TOUT EST OK - AJOUTER (utiliser le code original du colis)
+            const assignBadge = packageData.assigned ? '✓' : 'ℹ️';
+            this.scannedCodes.push({
+                code: packageData.code, // Code original du colis
+                scannedAs: code, // Code qui a été scanné
+                message: `${type} - ${packageData.status} ${assignBadge}`,
+                assigned: packageData.assigned,
                 timestamp: new Date().toISOString()
             });
-
-            this.updateCounts();
-            this.statusText = `✅ ${code} scanné !`;
             
-            showToast(`Colis ${code} ajouté`, 'success');
+            console.log(`✅ ${type}: ${code}`, packageData.assigned ? '(Assigné)' : '(Non assigné)');
+            
+            const assignInfo = packageData.assigned ? '' : ' (Non assigné)';
+            this.statusText = `✅ ${code} scanné${assignInfo}`;
+            showToast(`✅ ${code}${assignInfo}`, 'success');
             this.playSound('success');
-            vibrate([50, 30, 50]);
-
-            // Réinitialiser le message après 2s
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+            
             setTimeout(() => {
-                this.statusText = '📷 Caméra active - Scannez vos colis';
-            }, 2000);
-        },
-
-        processManual() {
-            const codes = this.manualCodes
-                .split(/[,\n]+/)
-                .map(code => code.trim())
-                .filter(code => code.length > 0);
-            
-            if (codes.length === 0) {
-                showToast('Veuillez saisir au moins un code', 'warning');
-                return;
-            }
-
-            let added = 0;
-            let duplicates = 0;
-
-            codes.forEach(code => {
-                if (!this.scannedPackages.find(pkg => pkg.code === code)) {
-                    this.scannedPackages.push({
-                        code: code,
-                        status: 'pending',
-                        message: 'Ajouté manuellement',
-                        timestamp: new Date().toISOString()
-                    });
-                    added++;
-                } else {
-                    duplicates++;
+                if (this.cameraActive) {
+                    this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
                 }
-            });
-            
-            this.updateCounts();
-            this.manualCodes = '';
-            
-            if (added > 0) {
-                showToast(`✅ ${added} colis ajouté(s)`, 'success');
-                vibrate([50]);
-            }
-            if (duplicates > 0) {
-                showToast(`⚠️ ${duplicates} doublon(s) ignoré(s)`, 'warning');
+            }, 1500);
+        },
+        
+        // ARRÊTER CAMÉRA
+        stopCamera() {
+            try {
+                // Arrêter interval
+                if (this.scanInterval) {
+                    clearInterval(this.scanInterval);
+                    this.scanInterval = null;
+                }
+                
+                // Arrêter Quagga
+                if (typeof Quagga !== 'undefined') {
+                    try { 
+                        Quagga.stop(); 
+                        console.log('🛑 Quagga arrêté');
+                    } catch(e) {}
+                }
+                
+                // Arrêter flux vidéo
+                if (this.videoStream) {
+                    this.videoStream.getTracks().forEach(track => track.stop());
+                    this.videoStream = null;
+                }
+                
+                const video = document.getElementById('camera-video');
+                if (video) {
+                    video.srcObject = null;
+                }
+                
+                this.cameraActive = false;
+                this.statusText = 'Caméra arrêtée';
+                console.log('🛑 Caméra arrêtée');
+                
+            } catch (error) {
+                console.error('Erreur arrêt caméra:', error);
             }
         },
-
-        async validateAndSubmit() {
-            if (this.scannedPackages.length === 0) {
-                showToast('Aucun colis à valider', 'warning');
+        
+        // VALIDATION FINALE DIRECTE (SANS API - Formulaire classique)
+        submitForm() {
+            if (this.scannedCodes.length === 0) {
+                showToast('⚠️ Aucun code à valider', 'warning');
                 return;
             }
 
             const actionLabel = this.scanAction === 'pickup' ? 'ramasser' : 'mettre en livraison';
-            if (!confirm(`Voulez-vous ${actionLabel} ${this.scannedCount} colis ?`)) {
+            if (!confirm(`Confirmer ${actionLabel} pour ${this.scannedCodes.length} colis ?`)) {
                 return;
             }
 
             this.processing = true;
             this.statusText = 'Traitement en cours...';
-
-            try {
-                const url = '{{ route("deliverer.scan.submit") }}';
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                
-                console.log('=== DÉMARRAGE VALIDATION ===');
-                console.log('URL:', url);
-                console.log('CSRF Token:', csrfToken ? 'Présent' : 'MANQUANT');
-                console.log('Action:', this.scanAction);
-                console.log('Codes:', this.scannedPackages.map(pkg => pkg.code));
-
-                if (!csrfToken) {
-                    throw new Error('Token CSRF manquant. Rechargez la page.');
-                }
-
-                const requestData = {
-                    codes: this.scannedPackages.map(pkg => pkg.code),
-                    batch: true,
-                    action: this.scanAction
-                };
-
-                console.log('Données envoyées:', requestData);
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(requestData),
-                    credentials: 'same-origin'
-                });
-
-                console.log('Réponse reçue - Statut:', response.status, response.statusText);
-
-                const data = await response.json();
-                console.log('Données reçues:', data);
-
-                if (response.ok && data.success) {
-                    // Afficher les résultats détaillés
-                    const summary = data.summary;
-                    
-                    if (summary.success > 0) {
-                        showToast(`✅ ${summary.success} colis traités avec succès`, 'success');
-                        this.playSound('success');
-                    }
-                    
-                    if (summary.invalid_status > 0) {
-                        showToast(`⚠️ ${summary.invalid_status} colis avec statut invalide`, 'warning');
-                        this.playSound('invalid');
-                    }
-                    
-                    if (summary.errors > 0) {
-                        showToast(`❌ ${summary.errors} erreurs`, 'error');
-                        this.playSound('error');
-                    }
-                    
-                    this.totalProcessed += summary.success;
-                    vibrate([100, 50, 100, 50, 100]);
-                    
-                    // Réinitialiser seulement les colis réussis
-                    this.scannedPackages = [];
-                    this.updateCounts();
-                    this.statusText = 'Validation terminée !';
-                    
-                    setTimeout(() => {
-                        this.statusText = 'Prêt à scanner';
-                    }, 3000);
-                } else {
-                    throw new Error(data.message || 'Erreur de validation');
-                }
-
-            } catch (error) {
-                console.error('=== ERREUR VALIDATION ===');
-                console.error('Type:', error.name);
-                console.error('Message:', error.message);
-                console.error('Stack:', error.stack);
-                
-                let errorMessage = 'Erreur inconnue';
-                if (error.message.includes('Failed to fetch') || error.message.includes('load failed')) {
-                    errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
-                } else if (error.message.includes('NetworkError')) {
-                    errorMessage = 'Erreur réseau. Vérifiez votre connexion Internet.';
-                } else {
-                    errorMessage = error.message;
-                }
-                
-                showToast(errorMessage, 'error');
-                this.playSound('error');
-                this.statusText = 'Erreur: ' + errorMessage;
-            } finally {
-                this.processing = false;
-            }
+            
+            // Soumettre le formulaire directement (pas d'API)
+            document.getElementById('validation-form').submit();
         },
-
-        removePackage(index) {
-            const removed = this.scannedPackages.splice(index, 1);
-            this.updateCounts();
-            showToast(`Colis ${removed[0].code} retiré`, 'info');
-            vibrate([30]);
+        
+        removeCode(index) {
+            this.scannedCodes.splice(index, 1);
+            showToast('Code retiré', 'info');
+            this.statusText = `${this.scannedCodes.length} code(s)`;
         },
-
+        
         clearAll() {
-            if (confirm('Effacer tous les colis scannés ?')) {
-                this.scannedPackages = [];
-                this.updateCounts();
+            if (confirm('Effacer tous les codes ?')) {
+                this.scannedCodes = [];
                 showToast('Liste effacée', 'info');
+                this.statusText = 'Prêt';
             }
         },
-
-        updateCounts() {
-            this.scannedCount = this.scannedPackages.length;
+        
+        playSound(type) {
+            try {
+                const sound = document.getElementById(`scan-${type}-sound`);
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(() => {});
+                }
+            } catch (e) {}
         }
     }
 }
