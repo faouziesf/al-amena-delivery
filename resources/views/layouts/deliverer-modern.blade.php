@@ -35,6 +35,7 @@
 
         .safe-top {
             padding-top: max(2rem, env(safe-area-inset-top));
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
         }
 
         .safe-bottom {
@@ -43,13 +44,20 @@
 
         .pt-safe {
             padding-top: env(safe-area-inset-top);
+            background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%);
         }
 
         /* iPhone specific adjustments */
         @supports (padding: max(0px)) {
             .safe-top {
                 padding-top: max(2.5rem, env(safe-area-inset-top));
+                background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 30%, #A855F7 70%, transparent 100%);
             }
+        }
+
+        /* Status bar area styling */
+        .status-bar-bg {
+            background: linear-gradient(135deg, #4338CA 0%, #7C2D12 100%);
         }
 
         /* Animations optimisées */
@@ -100,17 +108,39 @@
 
         /* Loading spinner optimisé */
         .spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid var(--primary);
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Loading states pour boutons */
+        .loading-active {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: loading-shimmer 1.5s infinite;
+        }
+
+        @keyframes loading-shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         /* Optimisation des transitions */
@@ -125,13 +155,20 @@
 
     <!-- Global Loading -->
     <div x-show="loading" 
-         x-transition
-         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div class="spinner"></div>
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gradient-to-br from-indigo-900/80 via-purple-900/80 to-violet-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div class="spinner mb-4"></div>
+        <div class="text-white text-lg font-semibold mb-2">Chargement...</div>
+        <div class="text-white/70 text-sm">Veuillez patienter</div>
     </div>
 
     <!-- Content -->
-    <div class="min-h-screen pb-20 pt-safe">
+    <div class="min-h-screen pb-20 pt-safe bg-gradient-to-b from-indigo-600 via-purple-600 to-transparent">
         <div class="pt-4 safe-top">
             @yield('content')
         </div>
@@ -296,6 +333,33 @@
             }
         };
 
+        // Loading helpers globaux
+        window.showLoading = function() {
+            showPageLoading();
+        };
+
+        window.hideLoading = function() {
+            hidePageLoading();
+        };
+
+        // Helper pour les formulaires avec loading personnalisé
+        window.submitWithLoading = function(form, message = 'Traitement en cours...') {
+            showPageLoading();
+            
+            // Changer le texte du loading si fourni
+            const loadingText = document.querySelector('.fixed.inset-0 .text-lg');
+            if (loadingText && message) {
+                loadingText.textContent = message;
+            }
+            
+            // Soumettre le formulaire
+            if (typeof form === 'string') {
+                document.querySelector(form).submit();
+            } else {
+                form.submit();
+            }
+        };
+
         // Gérer la connexion réseau
         window.addEventListener('online', () => {
             showToast('Connexion rétablie', 'success');
@@ -314,6 +378,66 @@
             }
             lastTouchEnd = now;
         }, false);
+
+        // Loading system pour les boutons et liens
+        function showPageLoading() {
+            const loadingEl = document.querySelector('[x-data]').__x.$data.loading;
+            if (typeof loadingEl !== 'undefined') {
+                document.querySelector('[x-data]').__x.$data.loading = true;
+            }
+        }
+
+        function hidePageLoading() {
+            const loadingEl = document.querySelector('[x-data]').__x.$data.loading;
+            if (typeof loadingEl !== 'undefined') {
+                document.querySelector('[x-data]').__x.$data.loading = false;
+            }
+        }
+
+        // Auto-loading pour tous les liens de navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sélectionner tous les liens et boutons de navigation
+            const navLinks = document.querySelectorAll('a[href]:not([href^="#"]):not([href^="tel:"]):not([href^="mailto:"]), button[type="submit"]');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Éviter le loading pour les liens externes
+                    if (this.hostname && this.hostname !== window.location.hostname) {
+                        return;
+                    }
+                    
+                    // Éviter le loading si c'est un bouton avec confirmation
+                    if (this.onclick && this.onclick.toString().includes('confirm')) {
+                        return;
+                    }
+                    
+                    // Afficher le loading
+                    showPageLoading();
+                    
+                    // Ajouter une classe de loading au bouton cliqué
+                    this.classList.add('loading-active');
+                    this.style.opacity = '0.7';
+                    this.style.pointerEvents = 'none';
+                    
+                    // Si c'est un formulaire, laisser le temps de soumettre
+                    if (this.tagName === 'BUTTON' && this.type === 'submit') {
+                        setTimeout(() => {
+                            hidePageLoading();
+                        }, 3000);
+                    }
+                });
+            });
+
+            // Cacher le loading quand la page est complètement chargée
+            window.addEventListener('load', function() {
+                hidePageLoading();
+            });
+
+            // Cacher le loading si l'utilisateur revient en arrière
+            window.addEventListener('pageshow', function() {
+                hidePageLoading();
+            });
+        });
     </script>
 
     @stack('scripts')

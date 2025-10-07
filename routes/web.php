@@ -94,6 +94,9 @@ require __DIR__.'/depot-manager.php';
 // Routes spécifiques aux livreurs de transit
 require __DIR__.'/transit-driver.php';
 
+// Routes système de scan dépôt
+require __DIR__.'/depot.php';
+
 // Routes d'authentification
 require __DIR__.'/auth.php';
 

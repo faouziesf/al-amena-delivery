@@ -152,6 +152,11 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         Route::get('/performance-report', [SupervisorTicketController::class, 'performanceReport'])->name('performance-report');
     });
 
+    // ==================== SYSTÈME SCAN DÉPÔT ====================
+    Route::get('/depot-scan', function () {
+        return redirect()->route('depot.scan.dashboard');
+    })->name('depot.scan');
+
     // ==================== PARAMÈTRES SYSTÈME ====================
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');

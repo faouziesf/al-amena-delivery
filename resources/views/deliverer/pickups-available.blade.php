@@ -3,7 +3,7 @@
 @section('title', 'Ramassages Disponibles')
 
 @section('content')
-<div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 px-4 pb-4">
+<div class="px-4 pb-4">
     <div class="max-w-md mx-auto">
         <h5 class="text-white font-bold text-xl mb-4 px-2">🏪 Ramassages Disponibles</h5>
 
@@ -88,6 +88,9 @@ function loadPickups() {
 function acceptPickup(id) {
     if (!confirm('Accepter ce ramassage ?')) return;
     
+    // Afficher le loading
+    showLoading();
+    
     fetch(`/deliverer/api/pickups/${id}/accept`, {
         method: 'POST',
         headers: {
@@ -97,12 +100,17 @@ function acceptPickup(id) {
     })
     .then(response => response.json())
     .then(data => {
+        hideLoading();
         if (data.success) {
             showToast('Ramassage accepté !', 'success');
             loadPickups();
         } else {
             showToast(data.message || 'Erreur', 'error');
         }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Erreur de connexion', 'error');
     });
 }
 </script>

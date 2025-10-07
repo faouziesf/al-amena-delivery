@@ -123,6 +123,7 @@
                         <a href="{{ route('depot-manager.packages.payment-packages') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">💰 Colis de Paiement</a>
                         <a href="{{ route('depot-manager.packages.returns-exchanges') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded">Retours & Échanges</a>
                         <a href="{{ route('depot-manager.packages.batch-scanner') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Scanner Lot</a>
+                        <a href="{{ route('depot.scan.dashboard') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded">🏭 Scan Dépôt PC/Téléphone</a>
                     </div>
                 </div>
 
@@ -289,6 +290,15 @@
                                 </svg>
                                 Scanner
                             </a>
+
+                            <a href="{{ route('depot.scan.dashboard') }}"
+                               class="inline-flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
+                               title="Système de scan dépôt PC/Téléphone">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                Scan Dépôt
+                            </a>
                         </div>
 
                         <!-- Menu mobile et heure -->
@@ -346,6 +356,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4"/>
                         </svg>
                         Scanner de Lots
+                    </a>
+
+                    <a href="{{ route('depot.scan.dashboard') }}"
+                       class="flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Scan Dépôt PC/Téléphone
                     </a>
                 </div>
             </header>

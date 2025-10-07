@@ -3,7 +3,7 @@
 @section('title', 'Scanner Colis')
 
 @section('content')
-<div class="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-700 px-4 pb-4">
+<div class="px-4 pb-4">
     <div class="max-w-md mx-auto">
         <div class="bg-white rounded-3xl shadow-xl p-6">
             <div class="text-center mb-6">
@@ -25,7 +25,7 @@
             @endif
 
             <!-- Scan Form -->
-            <form action="{{ route('deliverer.scan.submit') }}" method="POST" class="mb-6">
+            <form action="{{ route('deliverer.scan.submit') }}" method="POST" class="mb-6" onsubmit="submitWithLoading(this, 'Recherche du colis...')">
                 @csrf
                 <div class="mb-6">
                     <input type="text" 
