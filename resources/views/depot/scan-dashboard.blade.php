@@ -4,8 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scan Dépôt - Tableau de Bord</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1f2937',
+                        secondary: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- QRCode Library - Même que compte client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        /* Better button hover effects */
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -45,8 +116,8 @@
                     <h2 class="text-xl font-bold text-gray-900 mb-6">📱 Connexion Téléphone</h2>
                     
                     <!-- QR Code Container -->
-                    <div class="bg-gray-50 rounded-lg p-8 mb-6">
-                        <canvas id="qr-code" class="mx-auto"></canvas>
+                    <div class="bg-gray-50 rounded-lg p-8 mb-6 flex justify-center items-center min-h-[320px]" id="qr-container">
+                        <div id="qrcode" class="mx-auto" style="width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; border: 2px solid #e5e7eb; border-radius: 8px; background: white;"></div>
                     </div>
                     
                     <div class="text-center">
@@ -148,18 +219,70 @@
         let totalScanned = 0;
         let scanTimes = [];
 
-        // Générer le QR Code
+        // Générer le QR Code - Méthode du compte client
         function generateQRCode() {
-            const canvas = document.getElementById('qr-code');
-            QRCode.toCanvas(canvas, scannerUrl, {
-                width: 200,
-                height: 200,
-                margin: 2,
-                color: {
-                    dark: '#1f2937',
-                    light: '#ffffff'
+            try {
+                const qrContainer = document.getElementById('qrcode');
+                if (!qrContainer) {
+                    console.error('QR Container not found');
+                    return;
                 }
-            });
+
+                // Vérifier que la bibliothèque est chargée
+                if (typeof qrcode === 'undefined') {
+                    console.warn('qrcode library not loaded yet, retrying...');
+                    qrContainer.innerHTML = '<div style="text-align: center; color: #6b7280;"><p>Chargement...</p></div>';
+                    setTimeout(generateQRCode, 100);
+                    return;
+                }
+
+                const containerSize = 280; // Taille du QR code
+                const qr = qrcode(0, 'M'); // Type 0, niveau de correction M
+                qr.addData(scannerUrl);
+                qr.make();
+
+                // Calculer la taille optimale
+                const moduleCount = qr.getModuleCount();
+                const moduleSize = Math.max(1, Math.floor(containerSize / moduleCount));
+                
+                // Créer le canvas
+                const qrCanvas = document.createElement('canvas');
+                qrCanvas.width = containerSize;
+                qrCanvas.height = containerSize;
+                const ctx = qrCanvas.getContext('2d');
+
+                // Centrer le QR code
+                const actualQrSize = moduleCount * moduleSize;
+                const offset = (containerSize - actualQrSize) / 2;
+
+                // Dessiner le fond blanc
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, containerSize, containerSize);
+                
+                // Dessiner le QR code
+                ctx.save();
+                ctx.translate(offset, offset);
+                qr.renderTo2dContext(ctx, moduleSize);
+                ctx.restore();
+                
+                // Ajouter au DOM
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(qrCanvas);
+                
+                console.log('✅ QR Code généré avec succès');
+
+            } catch (error) {
+                console.error('Erreur génération QR Code:', error);
+                const qrContainer = document.getElementById('qrcode');
+                if (qrContainer) {
+                    qrContainer.innerHTML = `
+                        <div style="text-align: center; color: #ef4444; padding: 20px;">
+                            <p style="font-weight: bold; margin-bottom: 10px;">❌ Erreur</p>
+                            <p style="font-size: 14px;">Utilisez le lien ci-dessous</p>
+                        </div>
+                    `;
+                }
+            }
         }
 
         // Copier l'URL
