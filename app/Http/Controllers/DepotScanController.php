@@ -30,6 +30,7 @@ class DepotScanController extends Controller
 
     /**
      * Interface téléphone - Scanner après scan du QR code
+     * MÉTHODE DIRECTE - Charge tous les colis pour validation locale
      */
     public function scanner($sessionId)
     {
@@ -37,7 +38,7 @@ class DepotScanController extends Controller
         $session = Cache::get("depot_session_{$sessionId}");
         
         if (!$session) {
-            return redirect()->route('depot.dashboard')
+            return redirect()->route('depot.scan')
                 ->with('error', 'Session expirée ou invalide');
         }
 
@@ -46,7 +47,22 @@ class DepotScanController extends Controller
         $session['connected_at'] = now();
         Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
 
-        return view('depot.phone-scanner', compact('sessionId'));
+        // Charger TOUS les colis valides pour scan dépôt (validation locale)
+        // Statuts acceptés: COLLECTED, IN_TRANSIT (pour arrivée au dépôt)
+        $packages = DB::table('packages')
+            ->whereIn('status', ['COLLECTED', 'IN_TRANSIT', 'PENDING'])
+            ->select('id', 'package_code as c', 'tracking_number as c2', 'status as s')
+            ->get()
+            ->map(function($pkg) {
+                return [
+                    'id' => $pkg->id,
+                    'c' => $pkg->c, // Code principal
+                    'c2' => $pkg->c2, // Code alternatif (tracking_number)
+                    's' => $pkg->s, // Statut
+                ];
+            });
+
+        return view('depot.phone-scanner', compact('sessionId', 'packages'));
     }
 
     /**
@@ -174,6 +190,85 @@ class DepotScanController extends Controller
     }
 
     /**
+     * Soumettre les codes scannés - MÉTHODE DIRECTE (pas d'API)
+     */
+    public function submitScans(Request $request, $sessionId)
+    {
+        $request->validate([
+            'codes' => 'required|string',
+        ]);
+
+        // Décoder les codes JSON
+        $codes = json_decode($request->codes, true);
+        
+        if (!is_array($codes) || empty($codes)) {
+            return redirect()->back()->with('error', 'Aucun code à traiter');
+        }
+
+        $session = Cache::get("depot_session_{$sessionId}");
+        
+        if (!$session) {
+            return redirect()->route('depot.scan')->with('error', 'Session expirée');
+        }
+
+        $scannedPackages = [];
+        $errors = [];
+        $successCount = 0;
+
+        foreach ($codes as $code) {
+            // Rechercher le colis par code ou tracking_number
+            $package = DB::table('packages')
+                ->where(function($query) use ($code) {
+                    $query->where('package_code', $code)
+                          ->orWhere('tracking_number', $code);
+                })
+                ->whereIn('status', ['COLLECTED', 'IN_TRANSIT', 'PENDING'])
+                ->first();
+
+            if ($package) {
+                // Mettre à jour le statut à AT_DEPOT
+                DB::table('packages')
+                    ->where('id', $package->id)
+                    ->update([
+                        'status' => 'AT_DEPOT',
+                        'updated_at' => now()
+                    ]);
+
+                $scannedPackages[] = [
+                    'code' => $code,
+                    'package_code' => $package->package_code,
+                    'tracking_number' => $package->tracking_number,
+                    'old_status' => $package->status,
+                    'new_status' => 'AT_DEPOT',
+                    'scanned_at' => now()->toISOString(),
+                    'scanned_time' => now()->format('H:i:s')
+                ];
+                
+                $successCount++;
+            } else {
+                $errors[] = $code;
+            }
+        }
+
+        // Mettre à jour la session cache
+        $session['scanned_packages'] = array_merge(
+            $session['scanned_packages'] ?? [],
+            $scannedPackages
+        );
+        $session['last_scan'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        // Message de retour
+        $message = "$successCount colis enregistrés au dépôt";
+        if (!empty($errors)) {
+            $message .= " (" . count($errors) . " erreurs)";
+        }
+
+        return redirect()->route('depot.scan.phone', $sessionId)
+            ->with('success', $message);
+    }
+
+    /**
      * Exporter les résultats de scan
      */
     public function exportScan($sessionId)
@@ -201,15 +296,17 @@ class DepotScanController extends Controller
             $file = fopen('php://output', 'w');
             
             // En-têtes CSV
-            fputcsv($file, ['Numéro Colis', 'Code Scanné', 'Statut', 'Heure Scan']);
+            fputcsv($file, ['Code', 'Package Code', 'Tracking', 'Ancien Statut', 'Nouveau Statut', 'Heure Scan']);
             
             // Données
             foreach ($packages as $package) {
                 fputcsv($file, [
-                    $package['tracking_number'],
-                    $package['code'],
-                    $package['status'],
-                    $package['scanned_time']
+                    $package['code'] ?? '',
+                    $package['package_code'] ?? '',
+                    $package['tracking_number'] ?? '',
+                    $package['old_status'] ?? '',
+                    $package['new_status'] ?? 'AT_DEPOT',
+                    $package['scanned_time'] ?? ''
                 ]);
             }
             

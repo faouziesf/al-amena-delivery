@@ -26,7 +26,12 @@ Route::get('/depot/scan/{sessionId}', [DepotScanController::class, 'scanner'])
     ->name('depot.scan.phone')
     ->where('sessionId', '[0-9a-f-]{36}');
 
-// API Routes
+// Soumettre les scans - MÉTHODE DIRECTE
+Route::post('/depot/scan/{sessionId}/submit', [DepotScanController::class, 'submitScans'])
+    ->name('depot.scan.submit')
+    ->where('sessionId', '[0-9a-f-]{36}');
+
+// API Routes (gardées pour compatibilité dashboard)
 Route::prefix('depot/api')->group(function () {
     
     // Statut de la session
