@@ -86,6 +86,36 @@
 </head>
 <body class="min-h-screen" x-data="depotScannerApp()" x-init="init()">
     
+    <!-- Messages de succès/erreur -->
+    @if(session('success'))
+    <div class="bg-green-500 text-white p-4 text-center font-bold" id="success-message">
+        ✅ {{ session('success') }}
+    </div>
+    <script>
+        // Effacer la liste locale après validation réussie
+        setTimeout(() => {
+            const successMsg = document.getElementById('success-message');
+            if (successMsg) {
+                successMsg.style.display = 'none';
+            }
+        }, 3000);
+    </script>
+    @endif
+
+    @if(session('error'))
+    <div class="bg-red-500 text-white p-4 text-center font-bold" id="error-message">
+        ❌ {{ session('error') }}
+    </div>
+    <script>
+        setTimeout(() => {
+            const errorMsg = document.getElementById('error-message');
+            if (errorMsg) {
+                errorMsg.style.display = 'none';
+            }
+        }, 3000);
+    </script>
+    @endif
+
     <!-- Header -->
     <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 shadow-lg">
         <div class="flex items-center justify-between">
@@ -109,18 +139,37 @@
         <!-- Stats -->
         <div class="mb-4 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-6 text-center shadow-lg">
             <div class="text-4xl font-black text-white mb-1" x-text="scannedCodes.length">0</div>
-            <div class="text-sm font-semibold text-white/90">📦 Colis Scannés</div>
+            <div class="text-sm font-semibold text-white/90"> Colis Scannés</div>
             <div class="text-xs text-white/75 mt-1">Arrivée au dépôt</div>
         </div>
 
-        <!-- Caméra -->
-        <div x-show="cameraActive" class="mb-4 rounded-2xl overflow-hidden shadow-xl" x-transition>
-            <div class="relative bg-black">
-                <video id="camera-video" autoplay playsinline></video>
-                <canvas id="qr-canvas" style="display:none;"></canvas>
-                <div class="scan-line"></div>
-                <div class="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-bold">
-                    🎥 Caméra Active
+        <!-- Vidéo caméra -->
+        <div x-show="cameraActive" class="relative bg-black rounded-2xl overflow-hidden mb-4" style="min-height: 50vh;">
+            <video id="scanner-video" 
+                   class="w-full h-full object-cover"
+                   style="max-height: 60vh;"
+                   autoplay 
+                   playsinline
+                   muted>
+            </video>
+            <canvas id="scanner-canvas" class="hidden"></canvas>
+            
+            <!-- Messages Overlay sur Caméra -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="bg-black/80 p-6 rounded-2xl text-center min-w-[80%]">
+                    <p x-show="cameraActive && statusText && !statusText.includes('Prêt')" 
+                       x-text="statusText" 
+                       class="font-black text-3xl leading-tight mb-2"
+                       :class="{
+                           'text-green-400': statusText.includes('✅'),
+                           'text-red-400': statusText.includes('❌'),
+                           'text-orange-400': statusText.includes('⚠️'),
+                           'text-white': statusText.includes('📷')
+                       }">
+                    </p>
+                    <p x-show="cameraActive" class="text-white font-bold text-xl">
+                        <span x-text="scannedCodes.length"></span> colis scanné(s)
+                    </p>
                 </div>
             </div>
         </div>
@@ -137,22 +186,24 @@
                 class="w-full code-input transition-all"
                 :class="getInputClass()"
             >
-            <div class="mt-2 text-center min-h-6">
-                <span x-show="currentCode.length > 0 && codeStatus === 'checking'" class="text-blue-600 font-semibold text-sm">
-                    🔍 Vérification...
-                </span>
-                <span x-show="codeStatus === 'valid'" class="text-green-600 font-bold text-sm">
-                    ✅ <span x-text="statusMessage"></span>
-                </span>
-                <span x-show="codeStatus === 'not_found'" class="text-red-600 font-bold text-sm">
-                    ❌ <span x-text="statusMessage"></span>
-                </span>
-                <span x-show="codeStatus === 'wrong_status'" class="text-orange-600 font-bold text-sm">
-                    ⚠️ <span x-text="statusMessage"></span>
-                </span>
-                <span x-show="codeStatus === 'duplicate'" class="text-orange-600 font-bold text-sm">
-                    ⚠️ Déjà scanné
-                </span>
+            <div class="mt-4 text-center min-h-20 flex items-center justify-center">
+                <div>
+                    <span x-show="currentCode.length > 0 && codeStatus === 'checking'" class="text-blue-600 font-bold text-xl">
+                        🔍 Vérification...
+                    </span>
+                    <span x-show="codeStatus === 'valid'" class="text-green-600 font-black text-2xl">
+                        ✅ <span x-text="statusMessage"></span>
+                    </span>
+                    <span x-show="codeStatus === 'not_found'" class="text-red-600 font-black text-2xl">
+                        ❌ <span x-text="statusMessage"></span>
+                    </span>
+                    <span x-show="codeStatus === 'wrong_status'" class="text-orange-600 font-black text-2xl">
+                        ⚠️ <span x-text="statusMessage"></span>
+                    </span>
+                    <span x-show="codeStatus === 'duplicate'" class="text-orange-600 font-black text-2xl">
+                        ⚠️ Déjà scanné
+                    </span>
+                </div>
             </div>
             <button @click="addCodeManually()" 
                     :disabled="codeStatus !== 'valid'"
@@ -195,21 +246,19 @@
             </div>
         </div>
 
-        <!-- Validation -->
+        <!-- Validation - Identique au PC -->
         <div x-show="scannedCodes.length > 0" 
-             class="fixed left-0 right-0 bottom-0 p-4 bg-white/95 border-t-2 border-purple-200">
-            <form id="validation-form" method="POST" action="{{ route('depot.scan.submit', $sessionId) }}">
+             class="fixed left-0 right-0 bottom-0 p-4 bg-white border-t-2 border-gray-200 shadow-2xl">
+            <form id="validation-form" method="POST" action="{{ route('depot.scan.validate.all', $sessionId) }}" @submit="return confirmValidation()">
                 @csrf
-                <input type="hidden" name="codes" x-bind:value="JSON.stringify(scannedCodes.map(item => item.code))">
-                
-                <button type="button" @click="submitForm()" 
+                <button type="submit" 
                         :disabled="processing"
-                        class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-2xl disabled:opacity-50 shadow-lg">
-                    <span x-show="!processing" class="text-lg">
-                        ✅ Valider <span x-text="scannedCodes.length"></span> colis
+                        class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 disabled:opacity-50 shadow-lg text-lg">
+                    <span x-show="!processing">
+                        ✅ Valider Réception (<span x-text="scannedCodes.length"></span> colis)
                     </span>
-                    <span x-show="processing" class="text-lg">
-                        ⏳ Traitement...
+                    <span x-show="processing">
+                        ⏳ Traitement en cours...
                     </span>
                 </button>
             </form>
@@ -263,22 +312,32 @@ function depotScannerApp() {
                     id: pkg.id
                 };
                 
-                // Ajouter avec code principal
+                // Ajouter avec code principal (exact)
                 this.packagesMap.set(pkg.c, packageData);
                 
-                // Ajouter avec code alternatif
-                if (pkg.c2 && pkg.c2 !== pkg.c) {
-                    this.packagesMap.set(pkg.c2, packageData);
-                }
-                
-                // Ajouter variantes
+                // Ajouter variantes (sans underscore, minuscules)
+                const upperCode = pkg.c.toUpperCase();
                 const noUnderscore = pkg.c.replace(/_/g, '');
+                const noUnderscoreUpper = noUnderscore.toUpperCase();
+                
+                if (upperCode !== pkg.c) {
+                    this.packagesMap.set(upperCode, packageData);
+                }
                 if (noUnderscore !== pkg.c) {
                     this.packagesMap.set(noUnderscore, packageData);
+                }
+                if (noUnderscoreUpper !== pkg.c && noUnderscoreUpper !== noUnderscore) {
+                    this.packagesMap.set(noUnderscoreUpper, packageData);
                 }
             });
             
             console.log(`📦 ${PACKAGES_DATA.length} colis chargés (${this.packagesMap.size} clés)`);
+            
+            // Si validation réussie, vider la liste locale
+            @if(session('success'))
+            this.scannedCodes = [];
+            this.statusText = 'Validation réussie - Prêt pour nouveaux scans';
+            @endif
         },
         
         // Validation temps réel
@@ -353,8 +412,8 @@ function depotScannerApp() {
             
             console.log('✅ Colis trouvé:', packageData);
             
-            // Vérifier statut (COLLECTED, IN_TRANSIT, PENDING)
-            if (!['COLLECTED', 'IN_TRANSIT', 'PENDING'].includes(packageData.status)) {
+            // Vérifier statut (CREATED, UNAVAILABLE, VERIFIED)
+            if (!['CREATED', 'UNAVAILABLE', 'VERIFIED'].includes(packageData.status)) {
                 this.codeStatus = 'wrong_status';
                 this.statusMessage = `Statut invalide: ${packageData.status}`;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
@@ -385,24 +444,46 @@ function depotScannerApp() {
             }
         },
 
-        addCodeManually() {
+        async addCodeManually() {
             const code = this.currentCode.trim().toUpperCase();
             
             if (!code || this.codeStatus !== 'valid') {
                 return;
             }
             
-            this.scannedCodes.push({
-                code: code,
-                message: this.statusMessage,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.currentCode = '';
-            this.codeStatus = '';
-            this.statusMessage = '';
-            this.showFlash('success');
-            this.statusText = `${this.scannedCodes.length} code(s) scanné(s)`;
+            // Envoyer au serveur (mise à jour cache temps réel)
+            try {
+                const response = await fetch(`/depot/scan/{{ $sessionId }}/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Ajouter localement
+                    this.scannedCodes.push({
+                        code: code,
+                        message: this.statusMessage,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    this.currentCode = '';
+                    this.codeStatus = '';
+                    this.statusMessage = '';
+                    this.showFlash('success');
+                    this.statusText = `${this.scannedCodes.length} code(s) scanné(s)`;
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erreur ajout:', error);
+                alert('Erreur de connexion');
+            }
         },
         
         async toggleCamera() {
@@ -415,8 +496,12 @@ function depotScannerApp() {
         
         async startCamera() {
             try {
-                const video = document.getElementById('camera-video');
-                if (!video) return;
+                const video = document.getElementById('scanner-video');
+                if (!video) {
+                    console.error('Video element not found');
+                    alert('Erreur: Élément vidéo introuvable');
+                    return;
+                }
 
                 this.statusText = 'Démarrage caméra...';
 
@@ -451,7 +536,8 @@ function depotScannerApp() {
                         }
                     });
                     
-                    const video = document.getElementById('camera-video');
+                    const video = document.getElementById('scanner-video');
+                    if (!video) return;
                     video.srcObject = this.videoStream;
                     await video.play();
                     
@@ -483,10 +569,13 @@ function depotScannerApp() {
             if (typeof Quagga === 'undefined') return;
 
             try {
+                const videoElement = document.getElementById('scanner-video');
+                if (!videoElement) return;
+                
                 Quagga.init({
                     inputStream: {
                         type: "LiveStream",
-                        target: document.getElementById('camera-video'),
+                        target: videoElement,
                         constraints: {
                             width: { min: 640, ideal: 1280 },
                             height: { min: 480, ideal: 720 },
@@ -530,8 +619,8 @@ function depotScannerApp() {
             if (typeof jsQR === 'undefined') return;
             
             try {
-                const video = document.getElementById('camera-video');
-                const canvas = document.getElementById('qr-canvas');
+                const video = document.getElementById('scanner-video');
+                const canvas = document.getElementById('scanner-canvas');
                 
                 if (!video || !canvas || !video.videoWidth) return;
 
@@ -625,7 +714,7 @@ function depotScannerApp() {
                 return;
             }
             
-            if (!['COLLECTED', 'IN_TRANSIT', 'PENDING'].includes(packageData.status)) {
+            if (!['CREATED', 'UNAVAILABLE', 'VERIFIED'].includes(packageData.status)) {
                 this.statusText = `⚠️ ${code} - Statut invalide`;
                 this.showFlash('error');
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
@@ -637,23 +726,44 @@ function depotScannerApp() {
                 return;
             }
             
-            // Valide - Ajouter
-            this.scannedCodes.push({
-                code: packageData.code,
-                scannedAs: code,
-                message: `${type} - ${packageData.status}`,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.statusText = `✅ ${code} scanné`;
-            this.showFlash('success');
-            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-            
-            setTimeout(() => {
-                if (this.cameraActive) {
-                    this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+            // Valide - Envoyer au serveur puis ajouter localement
+            this.sendCodeToServer(packageData.code, type, packageData.status);
+        },
+        
+        async sendCodeToServer(code, type, status) {
+            try {
+                const response = await fetch(`/depot/scan/{{ $sessionId }}/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Ajouter localement
+                    this.scannedCodes.push({
+                        code: code,
+                        message: `${type} - ${status}`,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    this.statusText = `✅ ${code} scanné`;
+                    this.showFlash('success');
+                    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+                    
+                    setTimeout(() => {
+                        if (this.cameraActive) {
+                            this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+                        }
+                    }, 1500);
                 }
-            }, 1500);
+            } catch (error) {
+                console.error('Erreur envoi serveur:', error);
+            }
         },
         
         stopCamera() {
@@ -672,7 +782,7 @@ function depotScannerApp() {
                     this.videoStream = null;
                 }
                 
-                const video = document.getElementById('camera-video');
+                const video = document.getElementById('scanner-video');
                 if (video) {
                     video.srcObject = null;
                 }
@@ -685,20 +795,13 @@ function depotScannerApp() {
             }
         },
         
-        submitForm() {
+        // Fonction de confirmation (définie globalement pour le formulaire)
+        confirmValidation() {
             if (this.scannedCodes.length === 0) {
                 alert('Aucun code à valider');
-                return;
+                return false;
             }
-
-            if (!confirm(`Confirmer l'arrivée de ${this.scannedCodes.length} colis au dépôt ?`)) {
-                return;
-            }
-
-            this.processing = true;
-            this.statusText = 'Traitement en cours...';
-            
-            document.getElementById('validation-form').submit();
+            return confirm(`Confirmer la réception de ${this.scannedCodes.length} colis au dépôt ?\n\nTous les colis seront marqués comme "AVAILABLE" (disponibles pour livraison).`);
         },
         
         removeCode(index) {

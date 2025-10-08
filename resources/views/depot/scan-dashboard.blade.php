@@ -1,30 +1,14 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scan Dépôt - Tableau de Bord</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1f2937',
-                        secondary: '#3b82f6'
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- QRCode Library - Même que compte client -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    
-    <!-- Custom Styles -->
-    <style>
+@extends('layouts.depot-manager')
+
+@section('title', 'Scan Dépôt')
+@section('page-title', '🏭 Scan Dépôt PC/Téléphone')
+@section('page-description', 'Système de scan en temps réel pour réception des colis au dépôt')
+
+@push('styles')
+<!-- QRCode Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+<style>
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: .5; }
@@ -76,40 +60,30 @@
             background: #555;
         }
     </style>
-    
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">🏭 Scan Dépôt</h1>
-                    <p class="text-gray-600">Système de scan PC/Téléphone</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('depot.scan.help') }}" 
-                       class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                        📖 Guide d'utilisation
-                    </a>
-                    <div id="connection-status" class="flex items-center space-x-2">
-                        <div id="status-indicator" class="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span id="status-text" class="text-sm font-medium text-red-600">En attente</span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-500">Session</div>
-                        <div class="text-xs font-mono text-gray-400">{{ substr($sessionId, 0, 8) }}...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+@endpush
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
+@section('content')
+    <!-- Statut de connexion en haut -->
+    <div class="mb-6 flex items-center justify-between bg-white rounded-xl shadow-lg p-4">
+        <div class="flex items-center space-x-4">
+            <div id="connection-status" class="flex items-center space-x-2">
+                <div id="status-indicator" class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span id="status-text" class="text-sm font-medium text-red-600">En attente</span>
+            </div>
+            <div class="text-sm text-gray-500">Session : <span class="font-mono text-gray-700">{{ substr($sessionId, 0, 8) }}...</span></div>
+        </div>
+        <div>
+            <a href="{{ route('depot.scan.help') }}" 
+               class="text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Guide d'utilisation
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- QR Code Section -->
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <div class="text-center">
@@ -179,6 +153,15 @@
 
                 <!-- Actions -->
                 <div class="mt-6 space-y-2">
+                    <form id="validate-form" method="POST" action="{{ route('depot.scan.validate.all', $sessionId) }}" onsubmit="return confirmValidation()">
+                        @csrf
+                        <button type="submit" 
+                                id="validate-btn"
+                                class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            ✅ Valider Réception au Dépôt
+                        </button>
+                    </form>
                     <button onclick="exportData()" 
                             id="export-btn"
                             class="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -211,7 +194,9 @@
             </div>
         </div>
     </div>
+@endsection
 
+@push('scripts')
     <script>
         const sessionId = '{{ $sessionId }}';
         const scannerUrl = '{{ route("depot.scan.phone", $sessionId) }}';
@@ -387,16 +372,22 @@
                 .then(data => {
                     updateConnectionStatus(data.status);
                     
-                    if (data.scanned_packages) {
-                        const newTotal = data.total_scanned;
-                        if (newTotal > totalScanned) {
-                            scanTimes.push(new Date());
+                    if (data.scanned_packages !== undefined) {
+                        const newTotal = data.scanned_packages.length;
+                        
+                        // Si le total change (augmente ou diminue à 0 après validation)
+                        if (newTotal !== totalScanned) {
+                            if (newTotal > totalScanned) {
+                                scanTimes.push(new Date());
+                                document.getElementById('last-scan').textContent = new Date().toLocaleTimeString();
+                            }
+                            
                             totalScanned = newTotal;
                             
                             // Mettre à jour l'affichage
                             document.getElementById('total-scanned').textContent = totalScanned;
-                            document.getElementById('last-scan').textContent = new Date().toLocaleTimeString();
                             document.getElementById('export-btn').disabled = totalScanned === 0;
+                            document.getElementById('validate-btn').disabled = totalScanned === 0;
                             
                             updateScanRate();
                         }
@@ -413,6 +404,15 @@
         function exportData() {
             if (totalScanned === 0) return;
             window.open(`/depot/scan/${sessionId}/export`, '_blank');
+        }
+
+        // Confirmer la validation
+        function confirmValidation() {
+            if (totalScanned === 0) {
+                alert('Aucun colis à valider');
+                return false;
+            }
+            return confirm(`Confirmer la réception de ${totalScanned} colis au dépôt ?\n\nTous les colis seront marqués comme "AVAILABLE" (disponibles pour livraison).`);
         }
 
         // Nouvelle session
@@ -436,5 +436,4 @@
             pollUpdates();
         });
     </script>
-</body>
-</html>
+@endpush

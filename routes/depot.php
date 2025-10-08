@@ -26,9 +26,14 @@ Route::get('/depot/scan/{sessionId}', [DepotScanController::class, 'scanner'])
     ->name('depot.scan.phone')
     ->where('sessionId', '[0-9a-f-]{36}');
 
-// Soumettre les scans - MÉTHODE DIRECTE
-Route::post('/depot/scan/{sessionId}/submit', [DepotScanController::class, 'submitScans'])
-    ->name('depot.scan.submit')
+// Ajouter un code scanné au cache (temps réel)
+Route::post('/depot/scan/{sessionId}/add', [DepotScanController::class, 'addScannedCode'])
+    ->name('depot.scan.add')
+    ->where('sessionId', '[0-9a-f-]{36}');
+
+// Valider tous les colis depuis PC Dashboard OU Téléphone
+Route::post('/depot/scan/{sessionId}/validate-all', [DepotScanController::class, 'validateAllFromPC'])
+    ->name('depot.scan.validate.all')
     ->where('sessionId', '[0-9a-f-]{36}');
 
 // API Routes (gardées pour compatibilité dashboard)

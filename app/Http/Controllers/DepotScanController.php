@@ -48,16 +48,15 @@ class DepotScanController extends Controller
         Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
 
         // Charger TOUS les colis valides pour scan dépôt (validation locale)
-        // Statuts acceptés: COLLECTED, IN_TRANSIT (pour arrivée au dépôt)
+        // Statuts acceptés: CREATED, UNAVAILABLE, VERIFIED
         $packages = DB::table('packages')
-            ->whereIn('status', ['COLLECTED', 'IN_TRANSIT', 'PENDING'])
-            ->select('id', 'package_code as c', 'tracking_number as c2', 'status as s')
+            ->whereIn('status', ['CREATED', 'UNAVAILABLE', 'VERIFIED'])
+            ->select('id', 'package_code as c', 'status as s')
             ->get()
             ->map(function($pkg) {
                 return [
                     'id' => $pkg->id,
                     'c' => $pkg->c, // Code principal
-                    'c2' => $pkg->c2, // Code alternatif (tracking_number)
                     's' => $pkg->s, // Statut
                 ];
             });
@@ -131,7 +130,7 @@ class DepotScanController extends Controller
         }
 
         // Vérifier le statut du colis
-        if (!in_array($package->status, ['PENDING', 'COLLECTED', 'IN_TRANSIT', 'AT_DEPOT'])) {
+        if (!in_array($package->status, ['CREATED', 'AVAILABLE', 'PICKED_UP', 'DELIVERING', 'OUT_FOR_DELIVERY', 'IN_TRANSIT', 'UNKNOWN'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Statut Invalide',
@@ -190,82 +189,57 @@ class DepotScanController extends Controller
     }
 
     /**
-     * Soumettre les codes scannés - MÉTHODE DIRECTE (pas d'API)
+     * Ajouter un code scanné au cache (SANS mise à jour DB)
      */
-    public function submitScans(Request $request, $sessionId)
+    public function addScannedCode(Request $request, $sessionId)
     {
         $request->validate([
-            'codes' => 'required|string',
+            'code' => 'required|string',
         ]);
-
-        // Décoder les codes JSON
-        $codes = json_decode($request->codes, true);
-        
-        if (!is_array($codes) || empty($codes)) {
-            return redirect()->back()->with('error', 'Aucun code à traiter');
-        }
 
         $session = Cache::get("depot_session_{$sessionId}");
         
         if (!$session) {
-            return redirect()->route('depot.scan')->with('error', 'Session expirée');
+            return response()->json(['error' => 'Session expirée'], 404);
         }
 
-        $scannedPackages = [];
-        $errors = [];
-        $successCount = 0;
+        $code = trim($request->code);
+        
+        // Rechercher le colis
+        $package = DB::table('packages')
+            ->where('package_code', $code)
+            ->whereIn('status', ['CREATED', 'UNAVAILABLE', 'VERIFIED'])
+            ->select('id', 'package_code', 'status')
+            ->first();
 
-        foreach ($codes as $code) {
-            // Rechercher le colis par code ou tracking_number
-            $package = DB::table('packages')
-                ->where(function($query) use ($code) {
-                    $query->where('package_code', $code)
-                          ->orWhere('tracking_number', $code);
-                })
-                ->whereIn('status', ['COLLECTED', 'IN_TRANSIT', 'PENDING'])
-                ->first();
-
-            if ($package) {
-                // Mettre à jour le statut à AT_DEPOT
-                DB::table('packages')
-                    ->where('id', $package->id)
-                    ->update([
-                        'status' => 'AT_DEPOT',
-                        'updated_at' => now()
-                    ]);
-
-                $scannedPackages[] = [
-                    'code' => $code,
-                    'package_code' => $package->package_code,
-                    'tracking_number' => $package->tracking_number,
-                    'old_status' => $package->status,
-                    'new_status' => 'AT_DEPOT',
-                    'scanned_at' => now()->toISOString(),
-                    'scanned_time' => now()->format('H:i:s')
-                ];
-                
-                $successCount++;
-            } else {
-                $errors[] = $code;
-            }
+        if ($package) {
+            // Ajouter au cache (SANS mettre à jour la DB)
+            $scannedPackages = $session['scanned_packages'] ?? [];
+            
+            $scannedPackages[] = [
+                'code' => $code,
+                'package_code' => $package->package_code,
+                'tracking_number' => $package->package_code, // Utiliser package_code
+                'status' => $package->status,
+                'scanned_at' => now()->toISOString(),
+                'scanned_time' => now()->format('H:i:s')
+            ];
+            
+            $session['scanned_packages'] = $scannedPackages;
+            $session['last_scan'] = now();
+            Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+            
+            return response()->json([
+                'success' => true,
+                'code' => $code,
+                'total' => count($scannedPackages)
+            ]);
         }
-
-        // Mettre à jour la session cache
-        $session['scanned_packages'] = array_merge(
-            $session['scanned_packages'] ?? [],
-            $scannedPackages
-        );
-        $session['last_scan'] = now();
-        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
-
-        // Message de retour
-        $message = "$successCount colis enregistrés au dépôt";
-        if (!empty($errors)) {
-            $message .= " (" . count($errors) . " erreurs)";
-        }
-
-        return redirect()->route('depot.scan.phone', $sessionId)
-            ->with('success', $message);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Colis non trouvé'
+        ]);
     }
 
     /**
@@ -314,5 +288,74 @@ class DepotScanController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Valider tous les colis scannés depuis le PC Dashboard (MISE À JOUR DB)
+     */
+    public function validateAllFromPC($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+        
+        if (!$session) {
+            return redirect()->route('depot.scan')->with('error', 'Session introuvable');
+        }
+
+        $scannedPackages = $session['scanned_packages'] ?? [];
+        
+        if (empty($scannedPackages)) {
+            return redirect()->back()->with('error', 'Aucun colis à valider');
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+        $updatedPackages = [];
+
+        foreach ($scannedPackages as $pkg) {
+            // Mettre à jour tous les colis scannés à AT_DEPOT
+            $packageCode = $pkg['package_code'] ?? $pkg['code'];
+            
+            $package = DB::table('packages')
+                ->where('package_code', $packageCode)
+                ->whereIn('status', ['CREATED', 'UNAVAILABLE', 'VERIFIED'])
+                ->first();
+
+            if ($package) {
+                DB::table('packages')
+                    ->where('id', $package->id)
+                    ->update([
+                        'status' => 'AVAILABLE',
+                        'updated_at' => now()
+                    ]);
+                
+                $updatedPackages[] = [
+                    'code' => $packageCode,
+                    'package_code' => $packageCode,
+                    'tracking_number' => $packageCode,
+                    'old_status' => $package->status,
+                    'new_status' => 'AVAILABLE',
+                    'scanned_time' => $pkg['scanned_time'] ?? now()->format('H:i:s')
+                ];
+                
+                $successCount++;
+            } else {
+                $errorCount++;
+            }
+        }
+
+        // RÉINITIALISER la liste après validation (session reste active)
+        $session['scanned_packages'] = []; // Vider la liste pour pouvoir scanner de nouveaux colis
+        $session['last_validated_packages'] = $updatedPackages; // Garder trace des derniers validés
+        $session['validated_at'] = now();
+        $session['validated_count'] = $successCount;
+        $session['total_validated'] = ($session['total_validated'] ?? 0) + $successCount;
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        $message = "✅ {$successCount} colis validés et marqués AVAILABLE (disponibles pour livraison)";
+        if ($errorCount > 0) {
+            $message .= " ({$errorCount} erreurs)";
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 }
