@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ClientComplaintController extends Controller
+class ClientComplaintControllerOld extends Controller
 {
     /**
      * Liste des réclamations du client

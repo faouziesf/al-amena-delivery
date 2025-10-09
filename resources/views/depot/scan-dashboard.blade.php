@@ -423,6 +423,25 @@
             window.location.href = '/depot/scan';
         }
 
+        // Terminer la session quand la page est quittée ou rafraîchie
+        function terminateSession() {
+            // Envoyer requête synchrone pour terminer la session
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/depot/scan/${sessionId}/terminate`, false); // false = synchrone
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
+            xhr.send();
+        }
+
+        // Événements de fermeture de page
+        window.addEventListener('beforeunload', function(e) {
+            terminateSession();
+        });
+
+        window.addEventListener('unload', function(e) {
+            terminateSession();
+        });
+
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             generateQRCode();

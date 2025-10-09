@@ -77,6 +77,8 @@
         .status-available { background: #dbeafe; color: #1e40af; }
         .status-accepted { background: #fce7f3; color: #be185d; }
         .status-picked_up { background: #e0e7ff; color: #3730a3; }
+        .status-at_depot { background: #fef3c7; color: #92400e; }
+        .status-in_transit { background: #e9d5ff; color: #6b21a8; }
         .status-delivered { background: #d1fae5; color: #065f46; }
         .status-paid { background: #d1fae5; color: #065f46; }
         .status-returned { background: #fed7aa; color: #c2410c; }

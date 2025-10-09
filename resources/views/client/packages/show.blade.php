@@ -61,6 +61,8 @@
                             @case('AVAILABLE') 📋 Disponible @break
                             @case('ACCEPTED') ✅ Accepté @break
                             @case('PICKED_UP') 🚚 Collecté @break
+                            @case('AT_DEPOT') 🏭 Au Dépôt @break
+                            @case('IN_TRANSIT') 🚛 En Cours de Livraison @break
                             @case('DELIVERED') 📦 Livré @break
                             @case('PAID') 💰 Payé @break
                             @case('RETURNED') ↩️ Retourné @break
@@ -92,7 +94,9 @@
                         'CREATED' => ['🆕 Créé', 'Colis créé dans le système'],
                         'AVAILABLE' => ['📋 Disponible', 'Prêt pour collecte'],
                         'ACCEPTED' => ['✅ Accepté', 'Pris en charge par le livreur'],
-                        'PICKED_UP' => ['🚚 Collecté', 'En cours de livraison'],
+                        'PICKED_UP' => ['🚚 Collecté', 'Colis récupéré'],
+                        'AT_DEPOT' => ['🏭 Au Dépôt', 'Colis arrivé au dépôt'],
+                        'IN_TRANSIT' => ['🚛 En Cours de Livraison', 'En route vers le destinataire'],
                         'DELIVERED' => ['📦 Livré', 'Remis au destinataire'],
                         'PAID' => ['💰 Payé', 'Transaction finalisée'],
                         'RETURNED' => ['↩️ Retourné', 'Retourné à l\'expéditeur']

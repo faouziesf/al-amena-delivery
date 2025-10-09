@@ -103,6 +103,8 @@
                             <option value="CREATED" {{ request('status') === 'CREATED' ? 'selected' : '' }}>🆕 Créé</option>
                             <option value="AVAILABLE" {{ request('status') === 'AVAILABLE' ? 'selected' : '' }}>📋 Disponible</option>
                             <option value="PICKED_UP" {{ request('status') === 'PICKED_UP' ? 'selected' : '' }}>🚚 Collecté</option>
+                            <option value="AT_DEPOT" {{ request('status') === 'AT_DEPOT' ? 'selected' : '' }}>🏭 Au Dépôt</option>
+                            <option value="IN_TRANSIT" {{ request('status') === 'IN_TRANSIT' ? 'selected' : '' }}>🚛 En Cours de Livraison</option>
                             <option value="DELIVERED" {{ request('status') === 'DELIVERED' ? 'selected' : '' }}>✅ Livré</option>
                             <option value="RETURNED" {{ request('status') === 'RETURNED' ? 'selected' : '' }}>↩️ Retourné</option>
                         </select>
@@ -225,7 +227,9 @@
                                         {{ match($package->status) {
                                             'CREATED' => 'bg-gray-100 text-gray-800',
                                             'AVAILABLE' => 'bg-blue-100 text-blue-800',
-                                            'PICKED_UP' => 'bg-yellow-100 text-yellow-800',
+                                            'PICKED_UP' => 'bg-indigo-100 text-indigo-800',
+                                            'AT_DEPOT' => 'bg-yellow-100 text-yellow-800',
+                                            'IN_TRANSIT' => 'bg-purple-100 text-purple-800',
                                             'DELIVERED' => 'bg-green-100 text-green-800',
                                             'RETURNED' => 'bg-red-100 text-red-800',
                                             default => 'bg-gray-100 text-gray-800',
@@ -234,6 +238,8 @@
                                             'CREATED' => '🆕 Créé',
                                             'AVAILABLE' => '📋 Disponible',
                                             'PICKED_UP' => '🚚 Collecté',
+                                            'AT_DEPOT' => '🏭 Au Dépôt',
+                                            'IN_TRANSIT' => '🚛 En Cours de Livraison',
                                             'DELIVERED' => '✅ Livré',
                                             'RETURNED' => '↩️ Retourné',
                                             default => '📦 Inconnu',
@@ -393,7 +399,9 @@
                                         {{ match($package->status) {
                                             'CREATED' => 'bg-gray-100 text-gray-800 border border-gray-200',
                                             'AVAILABLE' => 'bg-blue-100 text-blue-800 border border-blue-200',
-                                            'PICKED_UP' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                                            'PICKED_UP' => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+                                            'AT_DEPOT' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                                            'IN_TRANSIT' => 'bg-purple-100 text-purple-800 border border-purple-200',
                                             'DELIVERED' => 'bg-green-100 text-green-800 border border-green-200',
                                             'RETURNED' => 'bg-red-100 text-red-800 border border-red-200',
                                             default => 'bg-gray-100 text-gray-800 border border-gray-200',
@@ -402,6 +410,8 @@
                                             'CREATED' => '🆕 Créé',
                                             'AVAILABLE' => '📋 Disponible',
                                             'PICKED_UP' => '🚚 Collecté',
+                                            'AT_DEPOT' => '🏭 Au Dépôt',
+                                            'IN_TRANSIT' => '🚛 En Cours de Livraison',
                                             'DELIVERED' => '✅ Livré',
                                             'RETURNED' => '↩️ Retourné',
                                             default => '📦 Inconnu',

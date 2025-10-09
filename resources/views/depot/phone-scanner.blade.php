@@ -161,9 +161,9 @@
                        x-text="statusText" 
                        class="font-black text-3xl leading-tight mb-2"
                        :class="{
-                           'text-green-400': statusText.includes('✅'),
+                           'text-green-400': statusText.includes('✅') || statusText.includes('Déjà scanné'),
                            'text-red-400': statusText.includes('❌'),
-                           'text-orange-400': statusText.includes('⚠️'),
+                           'text-orange-400': statusText.includes('⚠️') && !statusText.includes('Déjà scanné'),
                            'text-white': statusText.includes('📷')
                        }">
                     </p>
@@ -197,11 +197,14 @@
                     <span x-show="codeStatus === 'not_found'" class="text-red-600 font-black text-2xl">
                         ❌ <span x-text="statusMessage"></span>
                     </span>
-                    <span x-show="codeStatus === 'wrong_status'" class="text-orange-600 font-black text-2xl">
+                    <span x-show="codeStatus === 'wrong_status'" class="text-orange-600 font-black text-2xl" x-cloak>
                         ⚠️ <span x-text="statusMessage"></span>
                     </span>
-                    <span x-show="codeStatus === 'duplicate'" class="text-orange-600 font-black text-2xl">
-                        ⚠️ Déjà scanné
+                    <span x-show="codeStatus === 'invalid'" class="text-red-600 font-black text-2xl" x-cloak>
+                        ❌ <span x-text="statusMessage"></span>
+                    </span>
+                    <span x-show="codeStatus === 'duplicate'" class="text-green-600 font-black text-2xl">
+                        ✅ Déjà scanné
                     </span>
                 </div>
             </div>
@@ -246,22 +249,19 @@
             </div>
         </div>
 
-        <!-- Validation - Identique au PC -->
+        <!-- Validation - Termine la session après -->
         <div x-show="scannedCodes.length > 0" 
              class="fixed left-0 right-0 bottom-0 p-4 bg-white border-t-2 border-gray-200 shadow-2xl">
-            <form id="validation-form" method="POST" action="{{ route('depot.scan.validate.all', $sessionId) }}" @submit="return confirmValidation()">
-                @csrf
-                <button type="submit" 
-                        :disabled="processing"
-                        class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 disabled:opacity-50 shadow-lg text-lg">
-                    <span x-show="!processing">
-                        ✅ Valider Réception (<span x-text="scannedCodes.length"></span> colis)
-                    </span>
-                    <span x-show="processing">
-                        ⏳ Traitement en cours...
-                    </span>
-                </button>
-            </form>
+            <button @click="validateAndFinish()" 
+                    :disabled="processing"
+                    class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 disabled:opacity-50 shadow-lg text-lg">
+                <span x-show="!processing">
+                    ✅ Valider Réception (<span x-text="scannedCodes.length"></span> colis)
+                </span>
+                <span x-show="processing">
+                    ⏳ Traitement en cours...
+                </span>
+            </button>
         </div>
     </div>
 
@@ -275,6 +275,8 @@
     <script>
 // Données des colis chargées du serveur
 const PACKAGES_DATA = @json($packages ?? []);
+console.log('📦 Colis chargés:', PACKAGES_DATA.length);
+console.log('📦 Exemple de colis:', PACKAGES_DATA.slice(0, 3));
 
 function depotScannerApp() {
     return {
@@ -364,6 +366,7 @@ function depotScannerApp() {
         // Vérifier code dans DB locale
         checkCodeInDB(code) {
             console.log('🔍 Vérification:', code);
+            console.log('Nombre de colis en mémoire:', PACKAGES_DATA.length);
             
             if (code.length < 3) {
                 this.codeStatus = 'invalid';
@@ -411,18 +414,25 @@ function depotScannerApp() {
             }
             
             console.log('✅ Colis trouvé:', packageData);
+            console.log('Statut du colis:', packageData.status);
             
-            // Vérifier statut (CREATED, UNAVAILABLE, VERIFIED)
-            if (!['CREATED', 'UNAVAILABLE', 'VERIFIED'].includes(packageData.status)) {
+            // CORRECTION : Vérifier statut - Rejeter seulement DELIVERED, PAID, CANCELLED, etc.
+            const rejectedStatuses = ['DELIVERED', 'PAID', 'CANCELLED', 'RETURNED', 'REFUSED', 'DELIVERED_PAID'];
+            console.log('🔍 Vérification statut:', packageData.status, 'Rejetés:', rejectedStatuses);
+            if (rejectedStatuses.includes(packageData.status)) {
                 this.codeStatus = 'wrong_status';
                 this.statusMessage = `Statut invalide: ${packageData.status}`;
+                console.log('❌ Statut rejeté:', packageData.status);
+                console.log('❌ codeStatus défini à:', this.codeStatus);
+                console.log('❌ statusMessage défini à:', this.statusMessage);
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
                 return;
             }
             
-            // Valide
+            // Valide - Accepter tous les autres statuts
             this.codeStatus = 'valid';
             this.statusMessage = `Colis valide (${packageData.status})`;
+            console.log('✅ Statut accepté:', packageData.status);
             if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
         },
         
@@ -680,9 +690,9 @@ function depotScannerApp() {
             });
             
             if (isDuplicate) {
-                this.statusText = '⚠️ Déjà scanné';
-                this.showFlash('error');
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                this.statusText = '✅ Déjà scanné';
+                this.showFlash('success');
+                if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
                 return;
             }
             
@@ -714,10 +724,13 @@ function depotScannerApp() {
                 return;
             }
             
-            if (!['CREATED', 'UNAVAILABLE', 'VERIFIED'].includes(packageData.status)) {
-                this.statusText = `⚠️ ${code} - Statut invalide`;
+            // CORRECTION : Vérifier statut - Rejeter seulement DELIVERED, PAID, CANCELLED, etc.
+            const rejectedStatuses = ['DELIVERED', 'PAID', 'CANCELLED', 'RETURNED', 'REFUSED', 'DELIVERED_PAID'];
+            if (rejectedStatuses.includes(packageData.status)) {
+                this.statusText = `⚠️ ${code} - Statut: ${packageData.status} (invalide)`;
                 this.showFlash('error');
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+                console.log('📷 Statut rejeté (caméra):', packageData.status);
                 setTimeout(() => {
                     if (this.cameraActive) {
                         this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
@@ -725,6 +738,8 @@ function depotScannerApp() {
                 }, 1500);
                 return;
             }
+            
+            console.log('📷 Statut accepté (caméra):', packageData.status);
             
             // Valide - Envoyer au serveur puis ajouter localement
             this.sendCodeToServer(packageData.code, type, packageData.status);
@@ -795,13 +810,55 @@ function depotScannerApp() {
             }
         },
         
-        // Fonction de confirmation (définie globalement pour le formulaire)
-        confirmValidation() {
+        // Valider et terminer la session
+        async validateAndFinish() {
             if (this.scannedCodes.length === 0) {
                 alert('Aucun code à valider');
-                return false;
+                return;
             }
-            return confirm(`Confirmer la réception de ${this.scannedCodes.length} colis au dépôt ?\n\nTous les colis seront marqués comme "AVAILABLE" (disponibles pour livraison).`);
+            
+            if (!confirm(`Confirmer la réception de ${this.scannedCodes.length} colis au dépôt ?\n\nTous les colis seront marqués comme "AT_DEPOT" (au dépôt).\n\nLa session sera terminée après validation.`)) {
+                return;
+            }
+            
+            this.processing = true;
+            
+            try {
+                // CORRECTION NGROK : Envoyer requête JSON avec headers appropriés
+                const response = await fetch(`/depot/scan/{{ $sessionId }}/validate-all`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Arrêter la caméra
+                    this.stopCamera();
+                    
+                    // Afficher message de succès
+                    this.statusText = `✅ ${data.message}`;
+                    this.scannedCodes = [];
+                    
+                    // Rafraîchir la page après 2 secondes (affichera "Session Expirée")
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    alert('Erreur lors de la validation');
+                    this.processing = false;
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion');
+                this.processing = false;
+            }
         },
         
         removeCode(index) {
