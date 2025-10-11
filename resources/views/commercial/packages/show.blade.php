@@ -389,6 +389,213 @@
             </div>
         </div>
 
+        <!-- Section Gestion des Retours (si applicable) -->
+        @if(in_array($package->status, ['AWAITING_RETURN', 'RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']) || $package->unavailable_attempts >= 3 || $package->return_reason)
+        <div class="bg-white rounded-2xl shadow-xl border-2 border-orange-300 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-orange-600 to-orange-700 px-6 py-4">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/>
+                    </svg>
+                    Gestion des Retours
+                </h2>
+                <p class="text-orange-100 text-sm mt-1">Suivi et actions de retour</p>
+            </div>
+
+            <div class="p-6">
+                <!-- Informations de retour -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Statut du retour -->
+                    <div class="bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-orange-900">Statut Actuel</h3>
+                                <p class="text-sm text-orange-700">{{ $package->status }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Tentatives:</span>
+                                <span class="font-semibold text-orange-900">{{ $package->unavailable_attempts ?? 0 }}/3</span>
+                            </div>
+                            @if($package->return_reason)
+                            <div class="mt-2 p-2 bg-orange-100 rounded">
+                                <span class="font-medium text-orange-900">Raison:</span>
+                                <p class="text-orange-800 text-xs mt-1">{{ $package->return_reason }}</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Dates importantes -->
+                    <div class="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-blue-900">Chronologie</h3>
+                                <p class="text-sm text-blue-700">Dates clés</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            @if($package->awaiting_return_since)
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">En attente depuis:</span>
+                                <span class="font-semibold text-blue-900">{{ $package->awaiting_return_since->diffForHumans() }}</span>
+                            </div>
+                            @endif
+                            @if($package->return_in_progress_since)
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Retour depuis:</span>
+                                <span class="font-semibold text-blue-900">{{ $package->return_in_progress_since->diffForHumans() }}</span>
+                            </div>
+                            @endif
+                            @if($package->returned_to_client_at)
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Retourné le:</span>
+                                <span class="font-semibold text-blue-900">{{ $package->returned_to_client_at->diffForHumans() }}</span>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions commerciales pour les retours -->
+                @if($package->status === 'AWAITING_RETURN')
+                <div class="border-t-2 border-orange-200 pt-6">
+                    <h3 class="font-bold text-orange-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Actions Disponibles
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Bouton 4ème tentative -->
+                        <form action="{{ route('commercial.packages.launch.fourth.attempt', $package) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir lancer une 4ème tentative de livraison ?');">
+                            @csrf
+                            <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Lancer 4ème Tentative
+                            </button>
+                        </form>
+
+                        <!-- Bouton changement manuel de statut -->
+                        <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Changement Manuel
+                        </button>
+                    </div>
+                </div>
+                @elseif(in_array($package->status, ['RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']))
+                <div class="border-t-2 border-orange-200 pt-6">
+                    <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Changement Manuel de Statut
+                    </button>
+                </div>
+                @endif
+
+                <!-- Colis retour associé -->
+                @if($package->returnPackage)
+                <div class="border-t-2 border-orange-200 pt-6 mt-6">
+                    <h3 class="font-bold text-orange-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        Colis Retour Créé
+                    </h3>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium text-slate-700">Code:</span>
+                                <p class="text-slate-900 font-semibold">{{ $package->returnPackage->return_package_code }}</p>
+                            </div>
+                            <div>
+                                <span class="font-medium text-slate-700">Statut:</span>
+                                <p class="text-slate-900 font-semibold">{{ $package->returnPackage->status }}</p>
+                            </div>
+                            @if($package->returnPackage->printed_at)
+                            <div>
+                                <span class="font-medium text-slate-700">Imprimé:</span>
+                                <p class="text-slate-900">{{ $package->returnPackage->printed_at->format('d/m/Y H:i') }}</p>
+                            </div>
+                            @endif
+                            @if($package->returnPackage->delivered_at)
+                            <div>
+                                <span class="font-medium text-slate-700">Livré:</span>
+                                <p class="text-slate-900">{{ $package->returnPackage->delivered_at->format('d/m/Y H:i') }}</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        <!-- Section Actions Universelles (visible pour tous les statuts) -->
+        @if(!in_array($package->status, ['AWAITING_RETURN', 'RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']))
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Actions Commerciales
+                </h2>
+                <p class="text-purple-100 text-sm mt-1">Gestion et modifications du colis</p>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Bouton changement manuel de statut -->
+                    <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Changer le Statut Manuellement
+                    </button>
+
+                    <!-- Bouton rafraîchir -->
+                    <button onclick="refreshPage()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-slate-600 hover:bg-slate-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Actualiser les Informations
+                    </button>
+                </div>
+
+                <!-- Note d'information -->
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-semibold mb-1">À propos du changement de statut</p>
+                            <p>Le changement manuel de statut nécessite une justification obligatoire. Tous les statuts sont disponibles, y compris les statuts de retour comme <strong>RETURN_IN_PROGRESS</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Section historique en pleine largeur en bas -->
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
@@ -592,6 +799,7 @@
 @include('commercial.packages.modals.assign-deliverer', ['package' => $package])
 @include('commercial.packages.modals.modify-cod', ['package' => $package])
 @include('commercial.packages.modals.update-status', ['package' => $package])
+@include('commercial.packages.modals.manual-status-change', ['package' => $package])
 
 <!-- Notifications toast -->
 <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>

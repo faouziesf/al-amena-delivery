@@ -124,8 +124,8 @@ class DepotReturnScanController extends Controller
 
         $depotManagerName = $session['depot_manager_name'] ?? 'Dépôt';
 
-        // Utiliser la MÊME vue que le scan normal
-        return view('depot.phone-scanner', compact('sessionId', 'packages', 'depotManagerName'));
+        // Utiliser la vue SPÉCIFIQUE pour les retours (orange/rouge)
+        return view('depot.phone-scanner-returns', compact('sessionId', 'packages', 'depotManagerName'));
     }
 
     /**
@@ -279,8 +279,30 @@ class DepotReturnScanController extends Controller
         }
 
         return response()->json([
-            'active' => $sessionData['active'] ?? true,
-            'reason' => $sessionData['active'] ? null : 'Session terminée par validation',
+            'active' => ($sessionData['status'] ?? 'waiting') !== 'completed',
+            'reason' => ($sessionData['status'] ?? 'waiting') === 'completed' ? 'Session terminée par validation' : null,
+        ]);
+    }
+
+    /**
+     * API: Mettre à jour l'activité de la session (heartbeat mobile)
+     */
+    public function updateActivity($sessionId)
+    {
+        $sessionData = Cache::get("depot_session_{$sessionId}");
+
+        if (!$sessionData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session introuvable',
+            ], 404);
+        }
+
+        $sessionData['last_activity'] = now();
+        Cache::put("depot_session_{$sessionId}", $sessionData, 8 * 60 * 60);
+
+        return response()->json([
+            'success' => true,
         ]);
     }
 

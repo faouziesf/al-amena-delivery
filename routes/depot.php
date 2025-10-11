@@ -145,6 +145,11 @@ Route::prefix('depot/returns/api')->name('depot.returns.api.')->group(function (
     Route::get('/session/{sessionId}/check-activity', [DepotReturnScanController::class, 'checkSessionActivity'])
         ->name('check-activity')
         ->where('sessionId', '[0-9a-f-]{36}');
+
+    // Mettre à jour l'activité de la session
+    Route::post('/session/{sessionId}/update-activity', [DepotReturnScanController::class, 'updateActivity'])
+        ->name('update-activity')
+        ->where('sessionId', '[0-9a-f-]{36}');
 });
 
 // ==================== ROUTES DE DEBUG (À SUPPRIMER EN PRODUCTION) ====================
