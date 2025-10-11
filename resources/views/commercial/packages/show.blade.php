@@ -468,8 +468,7 @@
                     </div>
                 </div>
 
-                <!-- Actions commerciales pour les retours -->
-                @if($package->status === 'AWAITING_RETURN')
+                <!-- Actions commerciales (dans section retours si applicable) -->
                 <div class="border-t-2 border-orange-200 pt-6">
                     <h3 class="font-bold text-orange-900 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -478,6 +477,7 @@
                         Actions Disponibles
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if($package->status === 'AWAITING_RETURN')
                         <!-- Bouton 4ème tentative -->
                         <form action="{{ route('commercial.packages.launch.fourth.attempt', $package) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir lancer une 4ème tentative de livraison ?');">
                             @csrf
@@ -488,26 +488,17 @@
                                 Lancer 4ème Tentative
                             </button>
                         </form>
+                        @endif
 
                         <!-- Bouton changement manuel de statut -->
                         <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            Changement Manuel
+                            Changer le Statut
                         </button>
                     </div>
                 </div>
-                @elseif(in_array($package->status, ['RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']))
-                <div class="border-t-2 border-orange-200 pt-6">
-                    <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                        Changement Manuel de Statut
-                    </button>
-                </div>
-                @endif
 
                 <!-- Colis retour associé -->
                 @if($package->returnPackage)
@@ -548,7 +539,7 @@
         </div>
         @endif
 
-        <!-- Section Actions Universelles (visible pour tous les statuts) -->
+        <!-- Section Actions Commerciales (visible pour tous les statuts NON retour) -->
         @if(!in_array($package->status, ['AWAITING_RETURN', 'RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']))
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-8">
             <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
@@ -562,23 +553,12 @@
             </div>
 
             <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Bouton changement manuel de statut -->
-                    <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                        Changer le Statut Manuellement
-                    </button>
-
-                    <!-- Bouton rafraîchir -->
-                    <button onclick="refreshPage()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-slate-600 hover:bg-slate-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        Actualiser les Informations
-                    </button>
-                </div>
+                <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Changer le Statut Manuellement
+                </button>
 
                 <!-- Note d'information -->
                 <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

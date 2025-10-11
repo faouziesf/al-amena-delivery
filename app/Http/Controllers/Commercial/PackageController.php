@@ -10,6 +10,7 @@ use App\Models\Delegation;
 use App\Models\CodModification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PackageController extends Controller
 {
@@ -475,5 +476,126 @@ class PackageController extends Controller
                           });
 
         return response()->json($packages);
+    }
+
+    /**
+     * Lancer une 4ème tentative de livraison
+     * (Utilisé quand un colis a 3 tentatives UNAVAILABLE)
+     */
+    public function launchFourthAttempt(Package $package)
+    {
+        // Vérifier que le colis est bien en attente de retour
+        if ($package->status !== 'AWAITING_RETURN') {
+            return back()->with('error', 'Ce colis n\'est pas en attente de retour.');
+        }
+
+        // Vérifier qu'il a bien 3 tentatives
+        if ($package->unavailable_attempts < 3) {
+            return back()->with('error', 'Ce colis n\'a pas atteint 3 tentatives infructueuses.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Réinitialiser à 2 tentatives et passer AT_DEPOT
+            $package->update([
+                'status' => 'AT_DEPOT',
+                'unavailable_attempts' => 2,
+                'awaiting_return_since' => null,
+                'return_reason' => null,
+            ]);
+
+            // Log de l'action
+            \Log::info('4ème tentative lancée par commercial', [
+                'package_id' => $package->id,
+                'package_code' => $package->package_code,
+                'commercial_id' => auth()->id(),
+                'commercial_name' => auth()->user()->name,
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', '4ème tentative lancée avec succès. Le colis est maintenant AT_DEPOT avec 2 tentatives.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur lors du lancement de la 4ème tentative', [
+                'package_id' => $package->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Erreur lors du lancement de la 4ème tentative.');
+        }
+    }
+
+    /**
+     * Changer manuellement le statut d'un colis
+     * (Fonction admin pour le commercial)
+     */
+    public function changeStatus(Request $request, Package $package)
+    {
+        $request->validate([
+            'new_status' => 'required|string|in:CREATED,AVAILABLE,PICKED_UP,AT_DEPOT,IN_TRANSIT,OUT_FOR_DELIVERY,DELIVERED,PAID,REFUSED,UNAVAILABLE,AWAITING_RETURN,RETURN_IN_PROGRESS,RETURNED_TO_CLIENT',
+            'change_reason' => 'required|string|max:500',
+        ]);
+
+        $oldStatus = $package->status;
+        $newStatus = $request->new_status;
+
+        // Empêcher certaines transitions dangereuses
+        if ($oldStatus === 'PAID' && !in_array($newStatus, ['PAID'])) {
+            return back()->with('error', 'Impossible de changer le statut d\'un colis PAID (transaction finalisée).');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Préparer les données de mise à jour
+            $updateData = ['status' => $newStatus];
+
+            // Si passage à AWAITING_RETURN, initialiser la date
+            if ($newStatus === 'AWAITING_RETURN' && $oldStatus !== 'AWAITING_RETURN') {
+                $updateData['awaiting_return_since'] = now();
+                if (!$package->return_reason) {
+                    $updateData['return_reason'] = 'Changement manuel par commercial';
+                }
+            }
+
+            // Si passage à RETURN_IN_PROGRESS, initialiser la date
+            if ($newStatus === 'RETURN_IN_PROGRESS' && $oldStatus !== 'RETURN_IN_PROGRESS') {
+                $updateData['return_in_progress_since'] = now();
+            }
+
+            // Si passage à RETURNED_TO_CLIENT, initialiser la date
+            if ($newStatus === 'RETURNED_TO_CLIENT' && $oldStatus !== 'RETURNED_TO_CLIENT') {
+                $updateData['returned_to_client_at'] = now();
+            }
+
+            $package->update($updateData);
+
+            // Log de l'action
+            \Log::warning('Changement de statut manuel par commercial', [
+                'package_id' => $package->id,
+                'package_code' => $package->package_code,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'reason' => $request->change_reason,
+                'commercial_id' => auth()->id(),
+                'commercial_name' => auth()->user()->name,
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', "Statut changé de {$oldStatus} à {$newStatus} avec succès.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur lors du changement de statut manuel', [
+                'package_id' => $package->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Erreur lors du changement de statut.');
+        }
     }
 }
