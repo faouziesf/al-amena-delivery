@@ -133,7 +133,7 @@
                             <div class="flex items-center justify-center space-x-2">
                                 <input type="text"
                                        id="scanner-url"
-                                       value="{{ $scannerUrl ?? route('depot.scan.phone', $sessionId) }}"
+                                       value="{{ route('depot.scan.phone', $sessionId) }}"
                                        class="text-xs bg-white border rounded px-2 py-1 flex-1 max-w-xs"
                                        readonly>
                                 <button onclick="copyUrl()"
@@ -223,7 +223,7 @@
     <script>
         const sessionId = '{{ $sessionId }}';
         const sessionCode = '{{ $sessionCode }}';
-        const scannerUrl = '{{ $scannerUrl ?? route("depot.scan.phone", $sessionId) }}';
+        const scannerUrl = '{{ route("depot.scan.phone", $sessionId) }}';
         let sessionStartTime = new Date();
         let totalScanned = 0;
         let scanTimes = [];

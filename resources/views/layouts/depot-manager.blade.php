@@ -121,9 +121,10 @@
                         <a href="{{ route('depot-manager.packages.dashboard-actions') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded">Actions Requises</a>
                         <a href="{{ route('depot-manager.packages.all') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded">Tous les Colis</a>
                         <a href="{{ route('depot-manager.packages.payment-packages') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">💰 Colis de Paiement</a>
-                        <a href="{{ route('depot-manager.packages.returns-exchanges') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded">Retours & Échanges</a>
+                        <a href="{{ route('depot.returns.manage') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded">📦 Colis Retours</a>
                         <a href="{{ route('depot-manager.packages.batch-scanner') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded">Scanner Lot</a>
                         <a href="{{ route('depot.scan.dashboard') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded">🏭 Scan Dépôt PC/Téléphone</a>
+                        <a href="{{ route('depot.returns.dashboard') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded">🔄 Scanner Retours</a>
                     </div>
                 </div>
 

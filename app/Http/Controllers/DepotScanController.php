@@ -13,19 +13,59 @@ class DepotScanController extends Controller
     /**
      * Afficher le tableau de bord PC avec QR code
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        // Utiliser le nom de l'utilisateur connecté s'il existe
+        $depotManagerName = null;
+
+        if (auth()->check()) {
+            // Utilisateur connecté - utiliser son nom
+            $user = auth()->user();
+            $depotManagerName = $user->name;
+        } else {
+            // Pas connecté - utiliser le formulaire ou la session
+            $depotManagerName = $request->input('depot_manager_name', session('depot_manager_name'));
+        }
+
+        // Si toujours pas de nom, afficher le formulaire
+        if (!$depotManagerName) {
+            return view('depot.select-manager');
+        }
+
+        // Sauvegarder en session pour la prochaine fois
+        session(['depot_manager_name' => $depotManagerName]);
+
         // Générer un ID de session unique
         $sessionId = Str::uuid();
-        
+
+        // Générer un code de session de 8 chiffres
+        $sessionCode = $this->generateSessionCode();
+
         // Stocker la session en cache pour 8 heures
         Cache::put("depot_session_{$sessionId}", [
             'created_at' => now(),
             'status' => 'waiting',
-            'scanned_packages' => []
+            'scanned_packages' => [],
+            'depot_manager_name' => $depotManagerName,
+            'session_code' => $sessionCode
         ], 8 * 60 * 60);
 
-        return view('depot.scan-dashboard', compact('sessionId'));
+        // Stocker aussi par code pour accès rapide
+        Cache::put("depot_code_{$sessionCode}", $sessionId, 8 * 60 * 60);
+
+        \Log::info("Session créée", [
+            'sessionId' => $sessionId,
+            'sessionCode' => $sessionCode,
+            'depot_manager_name' => $depotManagerName,
+            'cache_keys' => [
+                'session' => "depot_session_{$sessionId}",
+                'code' => "depot_code_{$sessionCode}"
+            ]
+        ]);
+
+        $scannerUrl = route('depot.scan.phone', $sessionId); // URL pour scan normal
+
+        return view('depot.scan-dashboard', compact('sessionId', 'depotManagerName', 'sessionCode', 'scannerUrl'));
     }
 
     /**
@@ -61,20 +101,24 @@ class DepotScanController extends Controller
         Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
 
         // Charger TOUS les colis valides pour scan dépôt (validation locale)
-        // CORRECTION : Accepter TOUS les statuts sauf DELIVERED, PAID, CANCELLED, RETURNED
+        // Statuts REFUSÉS: DELIVERED, PAID, VERIFIED, RETURNED, CANCELLED, REFUSED, DELIVERED_PAID
         $packages = DB::table('packages')
-            ->whereNotIn('status', ['DELIVERED', 'PAID', 'CANCELLED', 'RETURNED', 'REFUSED', 'DELIVERED_PAID'])
-            ->select('id', 'package_code as c', 'status as s')
+            ->whereNotIn('status', ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'])
+            ->select('id', 'package_code as c', 'status as s', 'depot_manager_name as d')
             ->get()
-            ->map(function($pkg) {
+            ->map(function($pkg) use ($session) {
                 return [
                     'id' => $pkg->id,
                     'c' => $pkg->c, // Code principal
                     's' => $pkg->s, // Statut
+                    'd' => $pkg->d, // Nom du chef dépôt (si AT_DEPOT)
+                    'current_depot' => $session['depot_manager_name'] ?? null
                 ];
             });
 
-        return view('depot.phone-scanner', compact('sessionId', 'packages'));
+        $depotManagerName = $session['depot_manager_name'] ?? 'Dépôt';
+
+        return view('depot.phone-scanner', compact('sessionId', 'packages', 'depotManagerName'));
     }
 
     /**
@@ -83,7 +127,7 @@ class DepotScanController extends Controller
     public function getSessionStatus($sessionId)
     {
         $session = Cache::get("depot_session_{$sessionId}");
-        
+
         if (!$session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
@@ -91,7 +135,8 @@ class DepotScanController extends Controller
         return response()->json([
             'status' => $session['status'],
             'scanned_packages' => $session['scanned_packages'] ?? [],
-            'total_scanned' => count($session['scanned_packages'] ?? [])
+            'total_scanned' => count($session['scanned_packages'] ?? []),
+            'last_heartbeat' => $session['last_heartbeat'] ?? null
         ]);
     }
 
@@ -164,8 +209,9 @@ class DepotScanController extends Controller
         // Supprimer les doublons
         $searchVariants = array_unique($searchVariants);
         
-        // CORRECTION CRITIQUE : Accepter TOUS les statuts sauf DELIVERED, PAID, CANCELLED
-        $acceptedStatuses = ['CREATED', 'UNAVAILABLE', 'VERIFIED', 'AVAILABLE', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERING', 'OUT_FOR_DELIVERY'];
+        // Statuts ACCEPTÉS pour scan dépôt (exclusion des statuts finaux)
+        $rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
+        $acceptedStatuses = ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'UNAVAILABLE', 'AT_DEPOT'];
         
         // Rechercher avec TOUTES les variantes
         foreach ($searchVariants as $variant) {
@@ -219,8 +265,53 @@ class DepotScanController extends Controller
             'message' => 'Colis non trouvé dans la base de données',
             'searched_code' => $code,
             'variants_tried' => $searchVariants,
-            'debug' => 'Vérifiez que le colis existe avec statut CREATED, UNAVAILABLE ou VERIFIED'
+            'debug' => 'Vérifiez que le colis existe avec un statut accepté (CREATED, AVAILABLE, ACCEPTED, PICKED_UP, OUT_FOR_DELIVERY, UNAVAILABLE, AT_DEPOT)'
         ], 404);
+    }
+
+    /**
+     * Heartbeat du PC pour indiquer que la session est active
+     */
+    public function heartbeat($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        // Mettre à jour le timestamp du heartbeat
+        $session['last_heartbeat'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Terminer la session (PC fermé/rafraîchi SANS validation)
+     */
+    public function terminateSession($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        // NE TERMINER QUE SI PAS DE COLIS SCANNÉS (éviter perte de données)
+        $scannedCount = count($session['scanned_packages'] ?? []);
+
+        if ($scannedCount > 0) {
+            // Ne pas terminer si des colis sont scannés (attendre validation)
+            return response()->json(['success' => true, 'kept_alive' => true]);
+        }
+
+        // Marquer comme terminée seulement si aucun colis scanné
+        $session['status'] = 'terminated';
+        $session['terminated_at'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        return response()->json(['success' => true, 'kept_alive' => false]);
     }
 
     /**
@@ -294,30 +385,42 @@ class DepotScanController extends Controller
         $updatedPackages = [];
 
         foreach ($scannedPackages as $pkg) {
-            // Mettre à jour tous les colis scannés à AT_DEPOT (pas AVAILABLE)
+            // Mettre à jour tous les colis scannés à AT_DEPOT
             $packageCode = $pkg['package_code'] ?? $pkg['code'];
-            
+
             $package = DB::table('packages')
                 ->where('package_code', $packageCode)
                 ->first();
 
             if ($package) {
+                $depotManagerName = $session['depot_manager_name'] ?? 'Dépôt';
+
+                // CORRECTION : Toujours mettre à jour vers AT_DEPOT avec le nouveau nom de dépôt
                 DB::table('packages')
                     ->where('id', $package->id)
                     ->update([
-                        'status' => 'AT_DEPOT', // CORRECTION : AT_DEPOT au lieu de AVAILABLE
+                        'status' => 'AT_DEPOT',
+                        'depot_manager_name' => $depotManagerName,
                         'updated_at' => now()
                     ]);
-                
+
+                \Log::info("Package updated to AT_DEPOT", [
+                    'package_id' => $package->id,
+                    'package_code' => $packageCode,
+                    'old_status' => $package->status,
+                    'new_status' => 'AT_DEPOT',
+                    'depot_manager_name' => $depotManagerName
+                ]);
+
                 $updatedPackages[] = [
                     'code' => $packageCode,
                     'package_code' => $packageCode,
                     'tracking_number' => $packageCode,
                     'old_status' => $package->status,
-                    'new_status' => 'AT_DEPOT',
+                    'new_status' => "AT_DEPOT ({$depotManagerName})",
                     'scanned_time' => $pkg['scanned_time'] ?? now()->format('H:i:s')
                 ];
-                
+
                 $successCount++;
             } else {
                 $errorCount++;
@@ -336,7 +439,8 @@ class DepotScanController extends Controller
         // Garder en cache 1 heure pour historique, mais session terminée
         Cache::put("depot_session_{$sessionId}", $session, 60);
 
-        $message = "✅ {$successCount} colis validés et marqués AT_DEPOT (au dépôt)";
+        $depotManagerName = $session['depot_manager_name'] ?? 'Dépôt';
+        $message = "✅ {$successCount} colis validés et marqués AT_DEPOT ({$depotManagerName})";
         if ($errorCount > 0) {
             $message .= " ({$errorCount} erreurs)";
         }
@@ -357,25 +461,170 @@ class DepotScanController extends Controller
     }
 
     /**
-     * Terminer la session (quand PC rafraîchi ou quitté)
+     * Générer un code de session unique de 8 chiffres
      */
-    public function terminateSession($sessionId)
+    private function generateSessionCode()
+    {
+        do {
+            $code = str_pad(rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $exists = Cache::has("depot_code_{$code}");
+        } while ($exists);
+
+        return $code;
+    }
+
+    /**
+     * Page de saisie manuelle du code de session (INTERFACE PUBLIQUE)
+     */
+    public function enterCode(Request $request)
+    {
+        return view('depot.enter-code');
+    }
+
+    /**
+     * Valider le code de session via GET (pour ngrok - évite CSRF)
+     */
+    public function validateCodeGet($code)
+    {
+        // Nettoyer le code
+        $code = preg_replace('/[^0-9]/', '', $code);
+
+        if (strlen($code) !== 8) {
+            return redirect()->route('depot.enter.code')->withErrors(['code' => 'Code invalide']);
+        }
+
+        // Récupérer le sessionId à partir du code
+        $sessionId = Cache::get("depot_code_{$code}");
+
+        \Log::info("Code validation GET", [
+            'code' => $code,
+            'sessionId' => $sessionId
+        ]);
+
+        if (!$sessionId) {
+            return redirect()->route('depot.enter.code')->withErrors(['code' => "Code invalide ou expiré (Code: {$code})"]);
+        }
+
+        // Vérifier que la session existe
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return redirect()->route('depot.enter.code')->withErrors(['code' => 'Session expirée']);
+        }
+
+        if (isset($session['status']) && $session['status'] === 'completed') {
+            return redirect()->route('depot.enter.code')->withErrors(['code' => 'Session terminée. Entrez un nouveau code.']);
+        }
+
+        // Rediriger vers le scanner
+        return redirect()->route('depot.scan.phone', ['sessionId' => $sessionId]);
+    }
+
+    /**
+     * Valider le code de session via POST
+     */
+    public function validateCode(Request $request)
+    {
+        $code = $request->input('code');
+
+        // Nettoyer le code (enlever espaces, etc.)
+        $code = preg_replace('/[^0-9]/', '', $code);
+
+        if (strlen($code) !== 8) {
+            return back()->withErrors(['code' => 'Le code doit contenir 8 chiffres'])->withInput();
+        }
+
+        // Récupérer le sessionId à partir du code
+        $sessionId = Cache::get("depot_code_{$code}");
+
+        \Log::info("Code validation", [
+            'code' => $code,
+            'cache_key' => "depot_code_{$code}",
+            'sessionId' => $sessionId
+        ]);
+
+        if (!$sessionId) {
+            return back()->withErrors(['code' => "Code invalide ou expiré (Code: {$code})"])->withInput();
+        }
+
+        // Vérifier que la session existe
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        \Log::info("Session check", [
+            'sessionId' => $sessionId,
+            'session_exists' => !is_null($session),
+            'session_data' => $session
+        ]);
+
+        if (!$session) {
+            return back()->withErrors(['code' => 'Session expirée. Veuillez demander un nouveau code.'])->withInput();
+        }
+
+        // Vérifier que la session n'est pas terminée
+        if (isset($session['status']) && $session['status'] === 'completed') {
+            return back()->withErrors(['code' => 'Cette session a déjà été terminée. Entrez un nouveau code.'])->withInput();
+        }
+
+        // Rediriger vers le scanner avec le sessionId
+        return redirect()->route('depot.scan.phone', ['sessionId' => $sessionId]);
+    }
+
+    /**
+     * Vérifier l'activité de la session (appelé périodiquement)
+     */
+    public function checkActivity($sessionId)
     {
         $session = Cache::get("depot_session_{$sessionId}");
-        
-        if ($session) {
-            // Marquer la session comme terminée
+
+        if (!$session) {
+            return response()->json([
+                'active' => false,
+                'reason' => 'expired'
+            ]);
+        }
+
+        // Vérifier si session terminée
+        if (isset($session['status']) && $session['status'] === 'completed') {
+            return response()->json([
+                'active' => false,
+                'reason' => 'completed'
+            ]);
+        }
+
+        // Vérifier inactivité (30 minutes)
+        $lastActivity = $session['last_activity'] ?? $session['created_at'];
+        if (now()->diffInMinutes($lastActivity) > 30) {
+            // Terminer la session automatiquement
             $session['status'] = 'completed';
-            $session['terminated_at'] = now();
-            $session['terminated_reason'] = 'PC dashboard fermé ou rafraîchi';
-            
-            // Garder en cache 1 heure pour historique
+            $session['completed_reason'] = 'inactivity';
             Cache::put("depot_session_{$sessionId}", $session, 60);
+
+            return response()->json([
+                'active' => false,
+                'reason' => 'inactivity'
+            ]);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Session terminée'
+            'active' => true,
+            'last_activity' => $lastActivity
         ]);
+    }
+
+    /**
+     * Mettre à jour l'activité de la session
+     */
+    public function updateActivity($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if ($session) {
+            $session['last_activity'] = now();
+            Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
     }
 }
