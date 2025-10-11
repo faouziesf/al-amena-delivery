@@ -113,6 +113,32 @@ class Kernel extends ConsoleKernel
         ->everyThirtyMinutes()
         ->name('financial-monitoring')
         ->runInBackground();
+
+        // === SYSTÈME DE RETOURS AUTOMATISÉ ===
+
+        // Traiter les colis en attente de retour (48h) - toutes les heures
+        $schedule->job(new \App\Jobs\ProcessAwaitingReturnsJob)
+            ->hourly()
+            ->name('process-awaiting-returns')
+            ->runInBackground()
+            ->onSuccess(function () {
+                \Log::info('Job ProcessAwaitingReturnsJob exécuté avec succès');
+            })
+            ->onFailure(function () {
+                \Log::error('Échec du job ProcessAwaitingReturnsJob');
+            });
+
+        // Auto-confirmer les retours clients (48h sans action) - toutes les heures
+        $schedule->job(new \App\Jobs\ProcessReturnedPackagesJob)
+            ->hourly()
+            ->name('process-returned-packages')
+            ->runInBackground()
+            ->onSuccess(function () {
+                \Log::info('Job ProcessReturnedPackagesJob exécuté avec succès');
+            })
+            ->onFailure(function () {
+                \Log::error('Échec du job ProcessReturnedPackagesJob');
+            });
     }
 
     protected function commands()

@@ -1,23 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php:*)",
-      "Bash(sqlite3:*)",
-      "Bash(find:*)",
-      "Bash(curl:*)",
-      "Bash(npm run dev:*)",
-      "Bash(exit)",
-      "Bash(tasklist)",
-      "Bash(findstr:*)",
-      "Bash(move appHttpControllersCommercialClientAdvanceController.php appHttpControllersCommercialClientAdvanceController.php)",
-      "Bash(for:*)",
-      "Bash(do echo \"=== $file ===\")",
-      "Bash(grep:*)",
-      "Bash(done)",
-      "Bash(del test_mark_processed.php)",
-      "Bash(dir c:UsersDELLDocumentsGitHubal-amena-deliveryresourcesviewsdeliverer)",
-      "Bash(move:*)",
-      "Bash(del \"C:\\Users\\DELL\\Documents\\GitHub\\al-amena-delivery\\test_manifest_fix.php\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Unifié sections actions + ajouté import DB manquant\n\nCorrections apportées pour éviter la duplication:\n\n1. Page Commercial - Actions Unifiées\n   - Section \"Actions Disponibles\" dans \"Gestion des Retours\"\n   - Bouton \"Changer le Statut\" toujours visible\n   - Bouton \"4ème Tentative\" seulement si AWAITING_RETURN\n   - Section séparée \"Actions Commerciales\" pour statuts normaux\n   - Plus de duplication de boutons\n\n2. PackageController - Import DB\n   - Ajouté: use Illuminate\\Support\\Facades\\DB;\n   - Correction erreur \"Class DB not found\"\n   - Nécessaire pour DB::beginTransaction()\n\nStructure finale:\n├─ Statuts retour → Section orange \"Gestion des Retours\"\n│  └─ Sous-section \"Actions Disponibles\" avec boutons\n│\n└─ Statuts normaux → Section violette \"Actions Commerciales\"\n   └─ Bouton changement de statut\n\nRésultat: ✅ Une seule section d''actions par statut\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

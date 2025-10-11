@@ -1018,6 +1018,22 @@
                     </div>
                 </div>
 
+                <!-- Retours -->
+                <a href="{{ route('client.returns.index') }}"
+                   class="nav-item-modern {{ request()->routeIs('client.returns.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium">
+                    <div class="w-5 h-5 mr-4">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                    <span class="flex-1">Mes Retours</span>
+                    <div class="flex items-center space-x-2">
+                        <span x-show="stats.pending_returns > 0"
+                              class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full"
+                              x-text="stats.pending_returns"></span>
+                    </div>
+                </a>
+
                 <!-- Support -->
                 <div x-data="{ open: {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'true' : 'false' }} }">
                     <div class="nav-item-modern {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"

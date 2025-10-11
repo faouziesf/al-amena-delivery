@@ -26,6 +26,13 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/api/stats', [ClientDashboardController::class, 'apiStats'])->name('dashboard.api.stats');
 
+    // ==================== GESTION RETOURS CLIENT ====================
+    Route::prefix('returns')->name('returns.')->group(function () {
+        Route::get('/', [ClientDashboardController::class, 'returns'])->name('index');
+        Route::post('/{package}/confirm', [ClientDashboardController::class, 'confirmReturn'])->name('confirm');
+        Route::post('/{package}/report-issue', [ClientDashboardController::class, 'reportReturnIssue'])->name('report-issue');
+    });
+
     // ==================== API ROUTES ====================
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/dashboard-stats', [ClientDashboardController::class, 'apiStats'])->name('client.dashboard.stats');

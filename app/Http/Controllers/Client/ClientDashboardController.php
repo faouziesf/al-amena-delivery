@@ -8,6 +8,7 @@ use App\Models\Complaint;
 use App\Models\WithdrawalRequest;
 use App\Models\PickupRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class ClientDashboardController extends Controller
 {
@@ -174,5 +175,112 @@ class ClientDashboardController extends Controller
             ->count();
 
         return round(($deliveredPackages / $totalPackages) * 100, 1);
+    }
+
+    /**
+     * Afficher les colis retournés au client (nouveau système)
+     */
+    public function returns()
+    {
+        $user = Auth::user();
+
+        // Récupérer les colis en RETURNED_TO_CLIENT (en attente de validation client)
+        $packagesAwaitingConfirmation = Package::where('sender_id', $user->id)
+            ->where('status', 'RETURNED_TO_CLIENT')
+            ->with(['returnPackage', 'delegationFrom', 'delegationTo'])
+            ->orderBy('returned_to_client_at', 'desc')
+            ->get();
+
+        // Récupérer les retours confirmés
+        $confirmedReturns = Package::where('sender_id', $user->id)
+            ->where('status', 'RETURN_CONFIRMED')
+            ->with(['returnPackage', 'delegationFrom', 'delegationTo'])
+            ->orderBy('updated_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Récupérer les retours avec problème
+        $issueReturns = Package::where('sender_id', $user->id)
+            ->where('status', 'RETURN_ISSUE')
+            ->with(['returnPackage', 'delegationFrom', 'delegationTo', 'complaints'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('client.returns', compact(
+            'packagesAwaitingConfirmation',
+            'confirmedReturns',
+            'issueReturns'
+        ));
+    }
+
+    /**
+     * Confirmer la réception d'un colis retourné
+     */
+    public function confirmReturn(Package $package)
+    {
+        $user = Auth::user();
+
+        // Vérifier que c'est bien le client propriétaire
+        if ($package->sender_id !== $user->id) {
+            return back()->with('error', 'Vous n\'êtes pas autorisé à confirmer ce retour.');
+        }
+
+        // Vérifier le statut
+        if ($package->status !== 'RETURNED_TO_CLIENT') {
+            return back()->with('error', 'Ce colis ne peut pas être confirmé (statut: ' . $package->status . ').');
+        }
+
+        // Confirmer le retour
+        $package->update(['status' => 'RETURN_CONFIRMED']);
+
+        \Log::info('Retour confirmé par le client', [
+            'package_id' => $package->id,
+            'client_id' => $user->id,
+        ]);
+
+        return back()->with('success', 'Retour confirmé avec succès.');
+    }
+
+    /**
+     * Signaler un problème sur un colis retourné
+     */
+    public function reportReturnIssue(Request $request, Package $package)
+    {
+        $request->validate([
+            'issue_description' => 'required|string|max:1000',
+        ]);
+
+        $user = Auth::user();
+
+        // Vérifier que c'est bien le client propriétaire
+        if ($package->sender_id !== $user->id) {
+            return back()->with('error', 'Vous n\'êtes pas autorisé à signaler un problème pour ce colis.');
+        }
+
+        // Vérifier le statut
+        if ($package->status !== 'RETURNED_TO_CLIENT') {
+            return back()->with('error', 'Ce colis ne peut pas être signalé (statut: ' . $package->status . ').');
+        }
+
+        // Créer une réclamation
+        Complaint::create([
+            'package_id' => $package->id,
+            'client_id' => $user->id,
+            'type' => 'RETURN_ISSUE',
+            'description' => $request->issue_description,
+            'status' => 'PENDING',
+            'priority' => 'HIGH',
+        ]);
+
+        // Changer le statut du colis
+        $package->update(['status' => 'RETURN_ISSUE']);
+
+        \Log::info('Problème signalé sur retour', [
+            'package_id' => $package->id,
+            'client_id' => $user->id,
+            'issue' => $request->issue_description,
+        ]);
+
+        return back()->with('success', 'Problème signalé avec succès. Notre équipe va vous contacter.');
     }
 }

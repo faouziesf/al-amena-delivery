@@ -46,6 +46,13 @@ class Package extends Model
         'advance_used_for_fees', // Montant payé depuis l'avance
         'balance_used_for_fees', // Montant payé depuis le solde
         'fee_payment_source',    // Source du paiement ('advance', 'balance', 'mixed')
+        // Nouveaux champs pour système de retours
+        'unavailable_attempts',
+        'awaiting_return_since',
+        'return_in_progress_since',
+        'returned_to_client_at',
+        'return_reason',
+        'return_package_id',
     ];
 
     protected $casts = [
@@ -71,6 +78,10 @@ class Package extends Model
         'est_echange' => 'boolean',
         'advance_used_for_fees' => 'decimal:3',
         'balance_used_for_fees' => 'decimal:3',
+        // Nouveaux casts pour système de retours
+        'awaiting_return_since' => 'datetime',
+        'return_in_progress_since' => 'datetime',
+        'returned_to_client_at' => 'datetime',
     ];
 
     // Relations
@@ -92,6 +103,11 @@ class Package extends Model
     public function assignedDeliverer()
     {
         return $this->belongsTo(User::class, 'assigned_deliverer_id');
+    }
+
+    public function returnPackage()
+    {
+        return $this->belongsTo(ReturnPackage::class, 'return_package_id');
     }
 
     // Alias relationships for compatibility

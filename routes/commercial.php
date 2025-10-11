@@ -158,17 +158,21 @@ Route::middleware(['auth', 'verified', 'role:COMMERCIAL,SUPERVISOR'])->prefix('c
     Route::prefix('packages')->name('packages.')->group(function () {
         Route::get('/', [PackageController::class, 'index'])->name('index');
         Route::get('/{package}', [PackageController::class, 'show'])->name('show');
-        
+
         // Actions colis
         Route::post('/{package}/update-status', [PackageController::class, 'updateStatus'])->name('update.status');
         Route::post('/{package}/assign-deliverer', [PackageController::class, 'assignDeliverer'])->name('assign.deliverer');
         Route::post('/{package}/modify-cod', [PackageController::class, 'modifyCod'])->name('modify.cod');
         Route::post('/{package}/reset-attempts', [PackageController::class, 'resetDeliveryAttempts'])->name('reset.attempts');
-        
+
+        // Gestion retours (nouveau système)
+        Route::post('/{package}/launch-fourth-attempt', [PackageController::class, 'launchFourthAttempt'])->name('launch.fourth.attempt');
+        Route::patch('/{package}/change-status', [PackageController::class, 'changeStatus'])->name('change.status');
+
         // Actions groupées
         Route::post('/bulk-update-status', [PackageController::class, 'bulkUpdateStatus'])->name('bulk.status');
         Route::post('/bulk-assign-deliverer', [PackageController::class, 'bulkAssignDeliverer'])->name('bulk.assign');
-        
+
         // Documents
         Route::post('/run-sheet', [PackageController::class, 'generateRunSheet'])->name('run.sheet');
     });

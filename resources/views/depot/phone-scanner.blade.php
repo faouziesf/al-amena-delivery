@@ -122,8 +122,9 @@
             <div>
                 <h1 class="text-xl font-bold text-white">🏭 Scanner Dépôt</h1>
                 <p class="text-white/80 text-sm" x-text="statusText">Prêt</p>
+                <p class="text-white/70 text-xs mt-1">👤 Chef: {{ $depotManagerName }}</p>
             </div>
-            <button @click="toggleCamera()" 
+            <button @click="toggleCamera()"
                     :class="cameraActive ? 'bg-green-500' : 'bg-white/20'"
                     class="p-3 rounded-xl transition-all">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,7 +304,16 @@ function depotScannerApp() {
 
         init() {
             console.log('✅ Scanner dépôt initialisé');
-            
+
+            // Vérifier immédiatement au démarrage
+            this.checkSessionActivity();
+
+            // Vérifier l'activité de la session toutes les 3 secondes (plus rapide)
+            setInterval(() => this.checkSessionActivity(), 3000);
+
+            // Mettre à jour l'activité toutes les 10 secondes
+            setInterval(() => this.updateActivity(), 10000);
+
             // Créer Map pour recherche rapide
             this.packagesMap = new Map();
             
@@ -311,7 +321,9 @@ function depotScannerApp() {
                 const packageData = {
                     code: pkg.c,
                     status: pkg.s,
-                    id: pkg.id
+                    id: pkg.id,
+                    d: pkg.d, // Nom du dépôt actuel (si AT_DEPOT)
+                    current_depot: pkg.current_depot // Nom du dépôt qui scanne
                 };
                 
                 // Ajouter avec code principal (exact)
@@ -415,20 +427,45 @@ function depotScannerApp() {
             
             console.log('✅ Colis trouvé:', packageData);
             console.log('Statut du colis:', packageData.status);
-            
-            // CORRECTION : Vérifier statut - Rejeter seulement DELIVERED, PAID, CANCELLED, etc.
-            const rejectedStatuses = ['DELIVERED', 'PAID', 'CANCELLED', 'RETURNED', 'REFUSED', 'DELIVERED_PAID'];
+
+            // Cas spécial: AT_DEPOT - vérifier si même dépôt
+            if (packageData.status === 'AT_DEPOT') {
+                const depotName = packageData.d; // Nom du dépôt actuel du colis
+                const currentDepot = packageData.current_depot; // Nom du dépôt qui scanne
+
+                if (depotName === currentDepot) {
+                    // Même dépôt - rejeter
+                    this.codeStatus = 'wrong_status';
+                    this.statusMessage = `Déjà au dépôt ${depotName}`;
+                    console.log('❌ Même dépôt:', depotName);
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+                    return;
+                }
+                // Dépôt différent - accepter (transfert)
+                console.log('✅ Transfert dépôt:', depotName, '→', currentDepot);
+            }
+
+            // Vérifier statut - Rejeter les colis avec statuts finaux
+            const rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
+            const rejectedMessages = {
+                'DELIVERED': 'Statut invalide: DELIVERED',
+                'PAID': 'Statut invalide: PAID',
+                'VERIFIED': 'Statut invalide: VERIFIED',
+                'RETURNED': 'Statut invalide: RETURNED',
+                'CANCELLED': 'Statut invalide: CANCELLED',
+                'REFUSED': 'Statut invalide: REFUSED',
+                'DELIVERED_PAID': 'Statut invalide: DELIVERED_PAID'
+            };
+
             console.log('🔍 Vérification statut:', packageData.status, 'Rejetés:', rejectedStatuses);
             if (rejectedStatuses.includes(packageData.status)) {
                 this.codeStatus = 'wrong_status';
-                this.statusMessage = `Statut invalide: ${packageData.status}`;
+                this.statusMessage = `Statut non autorisé: ${rejectedMessages[packageData.status] || packageData.status}`;
                 console.log('❌ Statut rejeté:', packageData.status);
-                console.log('❌ codeStatus défini à:', this.codeStatus);
-                console.log('❌ statusMessage défini à:', this.statusMessage);
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
                 return;
             }
-            
+
             // Valide - Accepter tous les autres statuts
             this.codeStatus = 'valid';
             this.statusMessage = `Colis valide (${packageData.status})`;
@@ -724,30 +761,90 @@ function depotScannerApp() {
                 return;
             }
             
-            // CORRECTION : Vérifier statut - Rejeter seulement DELIVERED, PAID, CANCELLED, etc.
-            const rejectedStatuses = ['DELIVERED', 'PAID', 'CANCELLED', 'RETURNED', 'REFUSED', 'DELIVERED_PAID'];
+            // Cas spécial: AT_DEPOT - vérifier si même dépôt (caméra)
+            if (packageData.status === 'AT_DEPOT') {
+                const depotName = packageData.d;
+                const currentDepot = packageData.current_depot;
+
+                if (depotName === currentDepot) {
+                    // Même dépôt - rejeter
+                    this.statusText = `⚠️ ${code} - Déjà au dépôt ${depotName}`;
+                    this.showFlash('error');
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+                    console.log('📷 Même dépôt:', depotName);
+                    setTimeout(() => {
+                        if (this.cameraActive) {
+                            this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+                        }
+                    }, 2000);
+                    return;
+                }
+                // Dépôt différent - accepter (transfert)
+                console.log('📷 Transfert dépôt:', depotName, '→', currentDepot);
+            }
+
+            // Vérifier statut - Rejeter les colis avec statuts finaux
+            const rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
+            const rejectedMessages = {
+                'DELIVERED': 'Statut invalide: DELIVERED',
+                'PAID': 'Statut invalide: PAID',
+                'VERIFIED': 'Statut invalide: VERIFIED',
+                'RETURNED': 'Statut invalide: RETURNED',
+                'CANCELLED': 'Statut invalide: CANCELLED',
+                'REFUSED': 'Statut invalide: REFUSED',
+                'DELIVERED_PAID': 'Statut invalide: DELIVERED_PAID'
+            };
+
             if (rejectedStatuses.includes(packageData.status)) {
-                this.statusText = `⚠️ ${code} - Statut: ${packageData.status} (invalide)`;
+                const message = rejectedMessages[packageData.status] || packageData.status;
+                this.statusText = `⚠️ ${code} - Statut non autorisé: ${message}`;
                 this.showFlash('error');
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
-                console.log('📷 Statut rejeté (caméra):', packageData.status);
+                console.log('📷 Statut rejeté (caméra):', packageData.status, '-', message);
                 setTimeout(() => {
                     if (this.cameraActive) {
                         this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
                     }
-                }, 1500);
+                }, 2000);
                 return;
             }
             
             console.log('📷 Statut accepté (caméra):', packageData.status);
             
-            // Valide - Envoyer au serveur puis ajouter localement
-            this.sendCodeToServer(packageData.code, type, packageData.status);
+            // Valide - Ajouter immédiatement en local (plus rapide)
+            this.addCodeLocally(packageData.code, type, packageData.status);
         },
         
-        async sendCodeToServer(code, type, status) {
+        // Ajout local immédiat (sans attendre le serveur)
+        addCodeLocally(code, type, status) {
+            // Ajouter immédiatement en local
+            this.scannedCodes.push({
+                code: code,
+                message: `${type} - ${status}`,
+                timestamp: new Date().toISOString()
+            });
+
+            this.statusText = `✅ ${code} scanné`;
+            this.showFlash('success');
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+
+            setTimeout(() => {
+                if (this.cameraActive) {
+                    this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
+                }
+            }, 1500);
+
+            // Mettre à jour l'activité
+            this.updateActivity();
+
+            // Envoyer au serveur en arrière-plan (non bloquant)
+            this.syncToServerAsync(code);
+        },
+
+        // Synchronisation serveur en arrière-plan
+        async syncToServerAsync(code) {
             try {
-                const response = await fetch(`/depot/scan/{{ $sessionId }}/add`, {
+                await fetch(`/depot/scan/{{ $sessionId }}/add`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -755,29 +852,9 @@ function depotScannerApp() {
                     },
                     body: JSON.stringify({ code: code })
                 });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Ajouter localement
-                    this.scannedCodes.push({
-                        code: code,
-                        message: `${type} - ${status}`,
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    this.statusText = `✅ ${code} scanné`;
-                    this.showFlash('success');
-                    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-                    
-                    setTimeout(() => {
-                        if (this.cameraActive) {
-                            this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
-                        }
-                    }, 1500);
-                }
             } catch (error) {
-                console.error('Erreur envoi serveur:', error);
+                console.error('Erreur sync serveur:', error);
+                // Ne pas bloquer l'utilisateur
             }
         },
         
@@ -841,15 +918,14 @@ function depotScannerApp() {
                 if (data.success) {
                     // Arrêter la caméra
                     this.stopCamera();
-                    
-                    // Afficher message de succès
-                    this.statusText = `✅ ${data.message}`;
+
+                    // Vider la liste
                     this.scannedCodes = [];
-                    
-                    // Rafraîchir la page après 2 secondes (affichera "Session Expirée")
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
+
+                    // Afficher popup session terminée immédiatement
+                    this.showSessionTerminatedPopup('completed');
+
+                    this.processing = false;
                 } else {
                     alert('Erreur lors de la validation');
                     this.processing = false;
@@ -877,12 +953,100 @@ function depotScannerApp() {
             const flashContainer = document.getElementById('flash-container');
             const flash = document.createElement('div');
             flash.className = type === 'success' ? 'flash-success' : 'flash-error';
-            
+
             flashContainer.appendChild(flash);
-            
+
             setTimeout(() => {
                 flashContainer.removeChild(flash);
             }, 500);
+        },
+
+        // Vérifier le heartbeat du PC
+        async checkSessionActivity() {
+            try {
+                const response = await fetch(`/depot/api/session/{{ $sessionId }}/check-activity`);
+
+                if (!response.ok) {
+                    // Session n'existe plus
+                    this.stopCamera();
+                    this.showSessionTerminatedPopup('expired');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!data.active) {
+                    console.log('🛑 Session terminée - Raison:', data.reason);
+                    this.stopCamera();
+                    this.showSessionTerminatedPopup(data.reason);
+
+                    // Désactiver tous les boutons et inputs
+                    document.querySelectorAll('input, button').forEach(el => {
+                        if (!el.closest('#session-popup')) {
+                            el.disabled = true;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur vérification activité:', error);
+            }
+        },
+
+        async updateActivity() {
+            try {
+                await fetch(`/depot/api/session/{{ $sessionId }}/update-activity`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur mise à jour activité:', error);
+            }
+        },
+
+        showSessionTerminatedPopup(reason) {
+            // Éviter d'afficher plusieurs fois
+            if (document.getElementById('session-popup')) {
+                return;
+            }
+
+            const reasons = {
+                'expired': 'La session a expiré',
+                'completed': 'La validation a été effectuée par le chef de dépôt',
+                'inactivity': 'Session inactive pendant 30 minutes',
+                'pc_closed': 'Le PC a été fermé'
+            };
+
+            const message = reasons[reason] || 'Session terminée';
+
+            console.log('🛑 Affichage popup session terminée:', reason);
+
+            // Créer le popup
+            const popup = document.createElement('div');
+            popup.id = 'session-popup';
+            popup.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 99999; display: flex; align-items: center; justify-center; padding: 20px;">
+                    <div style="background: white; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+                        <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+                        <h2 style="font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #1f2937;">Session Terminée</h2>
+                        <p style="color: #6b7280; margin-bottom: 15px; font-size: 16px; line-height: 1.6;">${message}</p>
+                        <p style="color: #10b981; font-weight: 600; margin-bottom: 30px; font-size: 14px;">Les colis ont été validés avec succès !</p>
+                        <a href="/depot/enter-code"
+                           style="display: block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 35px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;">
+                            🔑 Saisir un Nouveau Code
+                        </a>
+                        <p style="color: #9ca3af; margin-top: 20px; font-size: 12px;">Scannez un nouveau QR code ou saisissez le code à 8 chiffres</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+
+            // Vibration pour alerter l'utilisateur
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 200]);
+            }
         }
     }
 }

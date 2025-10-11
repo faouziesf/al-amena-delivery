@@ -56,11 +56,18 @@
             </p>
         </div>
 
-        <!-- Bouton retour -->
-        <a href="{{ route('depot.scan.dashboard') }}" 
-           class="inline-block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg">
-            🏭 Retour au Dashboard
-        </a>
+        <!-- Boutons d'action -->
+        <div class="space-y-3">
+            <a href="{{ route('depot.enter.code') }}"
+               class="inline-block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg">
+                🔑 Saisir un Nouveau Code
+            </a>
+
+            <a href="{{ route('depot.scan.dashboard') }}"
+               class="inline-block w-full bg-white text-gray-700 font-bold py-3 px-6 rounded-xl hover:bg-gray-50 transition-all border-2 border-gray-300">
+                🏭 Retour au Dashboard PC
+            </a>
+        </div>
 
         <!-- Note -->
         <p class="text-gray-500 text-xs mt-6">
