@@ -63,9 +63,10 @@ class SimpleDelivererController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Récupérer pickups (ramassages)
+        // Récupérer pickups (ramassages) - Filtrer par gouvernorat du livreur
         $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
             ->whereIn('status', ['assigned', 'pending'])
+            ->forDelivererGovernorate($user)
             ->orderBy('requested_pickup_date', 'asc')
             ->get();
         
@@ -879,12 +880,37 @@ class SimpleDelivererController extends Controller
             return response()->json(['success' => false, 'message' => 'Colis non assigné'], 403);
         }
 
-        $package->update([
-            'status' => 'DELIVERED',
-            'delivered_at' => now()
-        ]);
+        DB::beginTransaction();
+        try {
+            // Marquer le colis comme livré
+            $package->update([
+                'status' => 'DELIVERED',
+                'delivered_at' => now()
+            ]);
 
-        return response()->json(['success' => true, 'message' => 'Colis livré']);
+            // Ajouter le montant COD au wallet du livreur
+            if ($package->cod_amount > 0) {
+                $wallet = UserWallet::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['balance' => 0, 'pending_amount' => 0, 'frozen_amount' => 0, 'advance_balance' => 0]
+                );
+
+                $wallet->addFunds(
+                    $package->cod_amount,
+                    "COD collecté - Colis #{$package->package_code}",
+                    "COD_DELIVERY_{$package->id}"
+                );
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true, 
+                'message' => 'Colis livré' . ($package->cod_amount > 0 ? ' - COD ajouté au wallet' : '')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

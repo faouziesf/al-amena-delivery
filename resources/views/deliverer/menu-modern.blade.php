@@ -111,15 +111,15 @@
                 </div>
             </a>
 
-            <!-- Retraits -->
-            <a href="{{ route('deliverer.withdrawals.index') }}" 
+            <!-- Recharge Client -->
+            <a href="{{ route('deliverer.client-topup.index') }}" 
                class="block bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all active:scale-95">
                 <div class="flex items-center justify-between text-white">
                     <div class="flex items-center space-x-3">
-                        <span class="text-3xl">💵</span>
+                        <span class="text-3xl">💳</span>
                         <div>
-                            <div class="font-semibold">Retraits Espèces</div>
-                            <div class="text-xs opacity-90">Mes retraits assignés</div>
+                            <div class="font-semibold">Recharge Client</div>
+                            <div class="text-xs opacity-90">Recharger le solde d'un client</div>
                         </div>
                     </div>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

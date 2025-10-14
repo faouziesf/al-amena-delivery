@@ -3,117 +3,101 @@
 @section('title', 'Mes Colis')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <div class="mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+<div class="min-h-screen bg-gray-50" x-data="packagesApp()">
+    <!-- Mobile Header Actions -->
+    <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-3 space-y-3">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900">📦 Mes Colis</h2>
+            <button @click="showFilters = !showFilters" 
+                    class="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg touch-active transition-smooth">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <span class="text-sm font-medium">Filtres</span>
+            </button>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="flex space-x-2">
+            <a href="{{ route('client.packages.create') }}" 
+               class="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl touch-active transition-smooth shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span class="font-medium">Nouveau</span>
+            </a>
+            <a href="{{ route('client.packages.create-fast') }}" 
+               class="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl touch-active transition-smooth shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="font-medium">Rapide</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Desktop Header -->
+    <div class="hidden lg:block bg-white border-b border-gray-200 px-6 py-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                        📦 Mes Colis
-                    </h1>
-                    <p class="mt-2 text-gray-600">Gérez et suivez tous vos envois</p>
+                    <h1 class="text-2xl font-bold text-gray-900">📦 Mes Colis</h1>
+                    <p class="text-sm text-gray-600 mt-1">Gérez et suivez tous vos envois</p>
                 </div>
-                <div class="mt-4 sm:mt-0 flex flex-wrap gap-3">
-                    <a href="{{ route('client.packages.create') }}"
-                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                <div class="flex space-x-3">
+                    <a href="{{ route('client.packages.create') }}" 
+                       class="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-smooth shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Nouveau Colis
+                        <span class="font-medium">Nouveau Colis</span>
                     </a>
-                    <a href="{{ route('client.packages.create-fast') }}"
-                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('client.packages.create-fast') }}" 
+                       class="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-smooth shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
-                        Création Rapide
+                        <span class="font-medium">Création Rapide</span>
                     </a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Filters and Actions Bar -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6" x-data="{
-            selectedPackages: [],
-            allChecked: false,
-            selectAll() {
-                if (this.allChecked) {
-                    this.selectedPackages = Array.from(document.querySelectorAll('input[data-status]')).map(input => input.value);
-                } else {
-                    this.selectedPackages = [];
-                }
-            },
-            bulkAction(action) {
-                if (this.selectedPackages.length === 0) {
-                    alert('Veuillez sélectionner au moins un colis.');
-                    return;
-                }
-                if (action === 'delete') {
-                    if (confirm('Êtes-vous sûr de vouloir supprimer les colis sélectionnés ?')) {
-                        console.log('Suppression de:', this.selectedPackages);
-                    }
-                } else if (action === 'export') {
-                    console.log('Export de:', this.selectedPackages);
-                } else if (action === 'print') {
-                    this.printMultiple();
-                }
-            },
-            printMultiple() {
-                if (this.selectedPackages.length === 0) {
-                    alert('Veuillez sélectionner au moins un colis pour l\'impression.');
-                    return;
-                }
-                if (this.selectedPackages.length > 50) {
-                    alert('Vous ne pouvez imprimer que 50 bons de livraison à la fois maximum.');
-                    return;
-                }
-                // Créer et soumettre le formulaire
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route('client.packages.print.multiple') }}';
-                form.target = '_blank';
-                
-                const csrfToken = document.querySelector('meta[name=csrf-token]').content;
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
-                
-                this.selectedPackages.forEach(packageId => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'package_ids[]';
-                    input.value = packageId;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
-            }
-        }">
-            <form method="GET" action="{{ route('client.packages.index') }}" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Filters Section -->
+    <div x-show="showFilters" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 -translate-y-2"
+         class="bg-white border-b border-gray-200"
+         style="display: none;">
+        <div class="px-4 lg:px-6 py-4 max-w-7xl lg:mx-auto">
+            <form method="GET" action="{{ route('client.packages.index') }}" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Status Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                        <select name="status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Statut</label>
+                        <select name="status" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                             <option value="">Tous les statuts</option>
                             <option value="CREATED" {{ request('status') === 'CREATED' ? 'selected' : '' }}>🆕 Créé</option>
                             <option value="AVAILABLE" {{ request('status') === 'AVAILABLE' ? 'selected' : '' }}>📋 Disponible</option>
                             <option value="PICKED_UP" {{ request('status') === 'PICKED_UP' ? 'selected' : '' }}>🚚 Collecté</option>
                             <option value="AT_DEPOT" {{ request('status') === 'AT_DEPOT' ? 'selected' : '' }}>🏭 Au Dépôt</option>
-                            <option value="IN_TRANSIT" {{ request('status') === 'IN_TRANSIT' ? 'selected' : '' }}>🚛 En Cours de Livraison</option>
+                            <option value="IN_TRANSIT" {{ request('status') === 'IN_TRANSIT' ? 'selected' : '' }}>🚛 En Transit</option>
                             <option value="DELIVERED" {{ request('status') === 'DELIVERED' ? 'selected' : '' }}>✅ Livré</option>
+                            <option value="PAID" {{ request('status') === 'PAID' ? 'selected' : '' }}>💰 Payé</option>
                             <option value="RETURNED" {{ request('status') === 'RETURNED' ? 'selected' : '' }}>↩️ Retourné</option>
                         </select>
                     </div>
 
+                    <!-- Delegation Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Délégation</label>
-                        <select name="delegation" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">Toutes les délégations</option>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Délégation</label>
+                        <select name="delegation" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">Toutes</option>
                             @foreach(\App\Models\Delegation::all() as $delegation)
                                 <option value="{{ $delegation->id }}" {{ request('delegation') == $delegation->id ? 'selected' : '' }}>
                                     {{ $delegation->name }}
@@ -122,558 +106,279 @@
                         </select>
                     </div>
 
+                    <!-- Search -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Code colis</label>
-                        <input type="text" name="search" value="{{ request('search') }}"
-                               placeholder="Rechercher par code..."
-                               class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Recherche</label>
+                        <input type="text" 
+                               name="search" 
+                               value="{{ request('search') }}"
+                               placeholder="Code colis..."
+                               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     </div>
 
+                    <!-- Submit Button -->
                     <div class="flex items-end">
-                        <button type="submit"
-                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button type="submit" 
+                                class="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-smooth">
                             🔍 Filtrer
                         </button>
                     </div>
                 </div>
+
+                <!-- Bulk Actions -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
+                    <div class="flex items-center space-x-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   x-model="allChecked" 
+                                   @change="toggleSelectAll()"
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">Tout sélectionner</span>
+                        </label>
+                        <span class="text-sm text-gray-500" x-text="`${selectedPackages.length} sélectionné(s)`"></span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <button type="button"
+                                @click="bulkPrint()"
+                                :disabled="selectedPackages.length === 0"
+                                class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            </svg>
+                            <span>Imprimer</span>
+                        </button>
+                        <button type="button"
+                                @click="bulkExport()"
+                                :disabled="selectedPackages.length === 0"
+                                class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Exporter</span>
+                        </button>
+                    </div>
+                </div>
             </form>
-
-            <!-- Bulk Actions -->
-            <div class="flex flex-wrap items-center justify-between mt-6 pt-6 border-t border-gray-200">
-                <div class="flex items-center space-x-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" x-model="allChecked" @change="selectAll()"
-                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2 text-sm text-gray-700">Tout sélectionner</span>
-                    </label>
-                    <span class="text-sm text-gray-500" x-text="`${selectedPackages.length} sélectionné(s)`"></span>
-                </div>
-
-                <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                    <button @click="bulkAction('print')"
-                            :disabled="selectedPackages.length === 0"
-                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                        </svg>
-                        <span>Imprimer</span>
-                    </button>
-                    <button @click="bulkAction('export')"
-                            :disabled="selectedPackages.length === 0"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span>Exporter</span>
-                    </button>
-                    <button @click="bulkAction('delete')"
-                            :disabled="selectedPackages.length === 0"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                        <span>Supprimer</span>
-                    </button>
-                </div>
-            </div>
         </div>
+    </div>
 
-        <!-- Desktop View (Hidden on mobile) -->
-        <div class="hidden lg:block">
-            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <input type="checkbox" x-model="allChecked" @change="selectAll()"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destinataire</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Délégation</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant COD</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($packages as $package)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}"
-                                           data-status="{{ $package->status }}"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <a href="{{ route('client.packages.show', $package) }}"
-                                       class="text-sm font-medium text-blue-600 hover:text-blue-900">
+    <!-- Content Container -->
+    <div class="max-w-7xl lg:mx-auto px-0 lg:px-6 py-4">
+        <!-- Mobile: Card List -->
+        <div class="lg:hidden space-y-3 px-4">
+            @forelse($packages as $package)
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden touch-active transition-smooth">
+                    <div class="p-4">
+                        <!-- Header Row -->
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-start space-x-3 flex-1 min-w-0">
+                                <!-- Checkbox -->
+                                <input type="checkbox" 
+                                       x-model="selectedPackages" 
+                                       value="{{ $package->id }}"
+                                       class="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                
+                                <!-- Package Info -->
+                                <div class="flex-1 min-w-0">
+                                    <a href="{{ route('client.packages.show', $package) }}" 
+                                       class="block text-base font-bold text-indigo-600 hover:text-indigo-800 mb-1">
                                         {{ $package->package_code }}
                                     </a>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $package->recipient_data['name'] ?? 'N/A' }}</div>
-                                    <div class="text-sm text-gray-500">{{ $package->recipient_data['phone'] ?? '' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $package->delegationTo->name ?? 'N/A' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                    {{ number_format($package->cod_amount, 2) }} DT
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ match($package->status) {
-                                            'CREATED' => 'bg-gray-100 text-gray-800',
-                                            'AVAILABLE' => 'bg-blue-100 text-blue-800',
-                                            'PICKED_UP' => 'bg-indigo-100 text-indigo-800',
-                                            'AT_DEPOT' => 'bg-yellow-100 text-yellow-800',
-                                            'IN_TRANSIT' => 'bg-purple-100 text-purple-800',
-                                            'DELIVERED' => 'bg-green-100 text-green-800',
-                                            'RETURNED' => 'bg-red-100 text-red-800',
-                                            default => 'bg-gray-100 text-gray-800',
-                                        } }}">
-                                        {{ match($package->status) {
-                                            'CREATED' => '🆕 Créé',
-                                            'AVAILABLE' => '📋 Disponible',
-                                            'PICKED_UP' => '🚚 Collecté',
-                                            'AT_DEPOT' => '🏭 Au Dépôt',
-                                            'IN_TRANSIT' => '🚛 En Cours de Livraison',
-                                            'DELIVERED' => '✅ Livré',
-                                            'RETURNED' => '↩️ Retourné',
-                                            default => '📦 Inconnu',
-                                        } }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $package->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Desktop 3-dots menu -->
-                                    <div class="relative inline-block text-left" x-data="{
-                                        open: false,
-                                        dropdownId: 'dropdown-desktop-{{ $package->id }}',
-                                        buttonId: 'button-desktop-{{ $package->id }}',
-                                        toggle() {
-                                            this.open = !this.open;
-                                            if (this.open) {
-                                                this.$nextTick(() => this.positionDropdown());
-                                            }
-                                        },
-                                        positionDropdown() {
-                                            const dropdown = document.getElementById(this.dropdownId);
-                                            const button = document.getElementById(this.buttonId);
-                                            if (!dropdown || !button) return;
-
-                                            const rect = button.getBoundingClientRect();
-                                            const viewportWidth = window.innerWidth;
-                                            const viewportHeight = window.innerHeight;
-                                            const dropdownWidth = 224;
-                                            const dropdownHeight = dropdown.offsetHeight || 400;
-
-                                            let left = rect.right - dropdownWidth;
-                                            if (left < 8) left = 8;
-                                            if (left + dropdownWidth > viewportWidth - 8) {
-                                                left = viewportWidth - dropdownWidth - 8;
-                                            }
-
-                                            let top = rect.bottom + 8;
-                                            if (top + dropdownHeight > viewportHeight - 8) {
-                                                top = Math.max(8, rect.top - dropdownHeight - 8);
-                                            }
-
-                                            dropdown.style.left = left + 'px';
-                                            dropdown.style.top = top + 'px';
-                                        }
-                                    }">
-                                        <button type="button" @click="toggle()" :id="buttonId"
-                                                class="inline-flex items-center p-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                                            </svg>
-                                        </button>
-
-                                        <div x-show="open" :id="dropdownId"
-                                             @click.away="open = false"
-                                             @resize.window="open && positionDropdown()"
-                                             @scroll.window="open && positionDropdown()"
-                                             x-transition:enter="transition ease-out duration-100"
-                                             x-transition:enter-start="transform opacity-0 scale-95"
-                                             x-transition:enter-end="transform opacity-100 scale-100"
-                                             x-transition:leave="transition ease-in duration-75"
-                                             x-transition:leave-start="transform opacity-100 scale-100"
-                                             x-transition:leave-end="transform opacity-0 scale-95"
-                                             class="fixed w-56 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-[9999]"
-                                             style="z-index: 9999 !important;">
-                                            <div class="py-1">
-                                                <a href="{{ route('client.packages.show', $package) }}"
-                                                   class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                                                    <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                    </svg>
-                                                    Voir détails
-                                                </a>
-                                                <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank"
-                                                   class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
-                                                    <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                                                    </svg>
-                                                    Suivre colis
-                                                </a>
-                                                <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                                                   class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700">
-                                                    <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                    </svg>
-                                                    Imprimer étiquette
-                                                </a>
-                                                @if($package->canBeDeleted())
-                                                    <div class="border-t border-gray-100"></div>
-                                                    <a href="{{ route('client.packages.edit', $package) }}"
-                                                       class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                                                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                                        </svg>
-                                                        Modifier
-                                                    </a>
-                                                    <form action="{{ route('client.packages.destroy', $package) }}" method="POST" class="block">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')"
-                                                                class="group flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50">
-                                                            <svg class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                            </svg>
-                                                            Supprimer
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                                @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
-                                                    <div class="border-t border-gray-100"></div>
-                                                    <a href="{{ route('client.complaints.create', $package) }}"
-                                                       class="group flex items-center px-4 py-2 text-sm text-amber-700 hover:bg-amber-50">
-                                                        <svg class="mr-3 h-5 w-5 text-amber-400 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                                        </svg>
-                                                        Créer réclamation
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        @include('client.packages.partials.status-badge', ['status' => $package->status])
                                     </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                                </div>
+                            </div>
 
-        <!-- Mobile View (Hidden on desktop) - NOUVELLE SOLUTION DEFINITIVE -->
-        <div class="lg:hidden space-y-3">
-            @foreach($packages as $package)
-            <div class="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-visible">
-                <div class="p-4">
-                    <div class="flex items-start space-x-3">
-                        <!-- Checkbox Mobile -->
-                        <div class="relative mt-1 flex-shrink-0">
-                            <input type="checkbox" x-model="selectedPackages" value="{{ $package->id }}"
-                                   data-status="{{ $package->status }}" class="sr-only">
-                            <div class="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center transition-all duration-200"
-                                 :class="selectedPackages.includes('{{ $package->id }}') ? 'bg-blue-500 border-blue-500' : 'bg-white hover:border-blue-400'">
-                                <svg x-show="selectedPackages.includes('{{ $package->id }}')" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
+                            <!-- Actions Menu -->
+                            <div class="flex-shrink-0 ml-2">
+                                @include('client.packages.partials.actions-menu-mobile', ['package' => $package])
                             </div>
                         </div>
 
-                        <!-- Package Content -->
-                        <div class="flex-1 min-w-0">
-                            <!-- Header: Status + Menu -->
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full
-                                        {{ match($package->status) {
-                                            'CREATED' => 'bg-gray-100 text-gray-800 border border-gray-200',
-                                            'AVAILABLE' => 'bg-blue-100 text-blue-800 border border-blue-200',
-                                            'PICKED_UP' => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-                                            'AT_DEPOT' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-                                            'IN_TRANSIT' => 'bg-purple-100 text-purple-800 border border-purple-200',
-                                            'DELIVERED' => 'bg-green-100 text-green-800 border border-green-200',
-                                            'RETURNED' => 'bg-red-100 text-red-800 border border-red-200',
-                                            default => 'bg-gray-100 text-gray-800 border border-gray-200',
-                                        } }}">
-                                        {{ match($package->status) {
-                                            'CREATED' => '🆕 Créé',
-                                            'AVAILABLE' => '📋 Disponible',
-                                            'PICKED_UP' => '🚚 Collecté',
-                                            'AT_DEPOT' => '🏭 Au Dépôt',
-                                            'IN_TRANSIT' => '🚛 En Cours de Livraison',
-                                            'DELIVERED' => '✅ Livré',
-                                            'RETURNED' => '↩️ Retourné',
-                                            default => '📦 Inconnu',
-                                        } }}
-                                    </span>
-                                </div>
-
-                                <!-- ACTIONS MOBILES - MENU DROPDOWN POUR >= 640px, BOUTONS POUR < 640px -->
-
-                                <!-- Menu 3-points pour écrans >= 640px (sm et plus) -->
-                                <div class="hidden sm:block relative inline-block text-left" x-data="{
-                                    open: false,
-                                    dropdownId: 'dropdown-mobile-{{ $package->id }}',
-                                    buttonId: 'button-mobile-{{ $package->id }}',
-                                    toggle() {
-                                        this.open = !this.open;
-                                        if (this.open) {
-                                            this.$nextTick(() => this.positionDropdown());
-                                        }
-                                    },
-                                    positionDropdown() {
-                                        const dropdown = document.getElementById(this.dropdownId);
-                                        const button = document.getElementById(this.buttonId);
-                                        if (!dropdown || !button) return;
-
-                                        const rect = button.getBoundingClientRect();
-                                        const viewportWidth = window.innerWidth;
-                                        const viewportHeight = window.innerHeight;
-                                        const dropdownWidth = 224;
-                                        const dropdownHeight = dropdown.offsetHeight || 400;
-
-                                        let left = rect.right - dropdownWidth;
-                                        if (left < 8) left = 8;
-                                        if (left + dropdownWidth > viewportWidth - 8) {
-                                            left = viewportWidth - dropdownWidth - 8;
-                                        }
-
-                                        let top = rect.bottom + 8;
-                                        if (top + dropdownHeight > viewportHeight - 8) {
-                                            top = Math.max(8, rect.top - dropdownHeight - 8);
-                                        }
-
-                                        dropdown.style.left = left + 'px';
-                                        dropdown.style.top = top + 'px';
-                                    }
-                                }">
-                                    <button type="button" @click="toggle()" :id="buttonId"
-                                            class="inline-flex items-center p-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                                        </svg>
-                                    </button>
-
-                                    <div x-show="open" :id="dropdownId"
-                                         @click.away="open = false"
-                                         @resize.window="open && positionDropdown()"
-                                         @scroll.window="open && positionDropdown()"
-                                         x-transition:enter="transition ease-out duration-100"
-                                         x-transition:enter-start="transform opacity-0 scale-95"
-                                         x-transition:enter-end="transform opacity-100 scale-100"
-                                         x-transition:leave="transition ease-in duration-75"
-                                         x-transition:leave-start="transform opacity-100 scale-100"
-                                         x-transition:leave-end="transform opacity-0 scale-95"
-                                         class="fixed w-56 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-[9999]"
-                                         style="z-index: 9999 !important;">
-                                        <div class="py-1">
-                                            <a href="{{ route('client.packages.show', $package) }}"
-                                               class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                </svg>
-                                                Voir détails
-                                            </a>
-                                            <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank"
-                                               class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
-                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                                                </svg>
-                                                Suivre colis
-                                            </a>
-                                            <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                                               class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700">
-                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                </svg>
-                                                Imprimer étiquette
-                                            </a>
-                                            @if($package->canBeDeleted())
-                                                <div class="border-t border-gray-100"></div>
-                                                <a href="{{ route('client.packages.edit', $package) }}"
-                                                   class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                                                    <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                                    </svg>
-                                                    Modifier
-                                                </a>
-                                                <form action="{{ route('client.packages.destroy', $package) }}" method="POST" class="block">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')"
-                                                            class="group flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50">
-                                                        <svg class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                        </svg>
-                                                        Supprimer
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
-                                                <div class="border-t border-gray-100"></div>
-                                                <a href="{{ route('client.complaints.create', $package) }}"
-                                                   class="group flex items-center px-4 py-2 text-sm text-amber-700 hover:bg-amber-50">
-                                                    <svg class="mr-3 h-5 w-5 text-amber-400 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                                    </svg>
-                                                    Créer réclamation
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Boutons avec logos pour écrans < 640px -->
-                                <div class="sm:hidden flex items-center space-x-1">
-                                    <!-- Bouton Voir détails -->
-                                    <a href="{{ route('client.packages.show', $package) }}"
-                                       class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                                       title="Voir détails">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
-                                    </a>
-
-                                    <!-- Bouton Suivre colis -->
-                                    <a href="{{ route('public.track.package', $package->package_code) }}" target="_blank"
-                                       class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                                       title="Suivre colis">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                                        </svg>
-                                    </a>
-
-                                    <!-- Bouton Imprimer -->
-                                    <a href="{{ route('client.packages.print', $package) }}" target="_blank"
-                                       class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors"
-                                       title="Imprimer étiquette">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                        </svg>
-                                    </a>
-
-                                    @if($package->canBeDeleted())
-                                        <!-- Bouton Modifier -->
-                                        <a href="{{ route('client.packages.edit', $package) }}"
-                                           class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
-                                           title="Modifier">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-                                        </a>
-
-                                        <!-- Bouton Supprimer -->
-                                        <form action="{{ route('client.packages.destroy', $package) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce colis ?')"
-                                                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                                    title="Supprimer">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    @if(!in_array($package->status, ['PAID', 'DELIVERED_PAID']))
-                                        <!-- Bouton Réclamation -->
-                                        <a href="{{ route('client.complaints.create', $package) }}"
-                                           class="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition-colors"
-                                           title="Créer réclamation">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                            </svg>
-                                        </a>
-                                    @endif
-                                </div>
+                        <!-- Package Details -->
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center text-gray-700">
+                                <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                <span class="font-medium truncate">{{ $package->recipient_data['name'] ?? 'N/A' }}</span>
                             </div>
-
-                            <!-- Package Code -->
-                            <div class="mb-2">
-                                <a href="{{ route('client.packages.show', $package) }}"
-                                   class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                                    {{ $package->package_code }}
-                                </a>
+                            <div class="flex items-center text-gray-600">
+                                <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span class="truncate">{{ $package->delegationTo->name ?? 'N/A' }}</span>
                             </div>
-
-                            <!-- Recipient Info -->
-                            <div class="space-y-1 mb-3">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    <span class="font-medium">{{ $package->recipient_data['name'] ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                    </svg>
-                                    <span>{{ $package->recipient_data['phone'] ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                    <span>{{ $package->delegationTo->name ?? 'N/A' }}</span>
-                                </div>
-                            </div>
-
-                            <!-- COD Amount and Date -->
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <span class="text-lg font-bold text-green-600">{{ number_format($package->cod_amount, 2) }} DT</span>
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    {{ $package->created_at->format('d/m/Y') }}
-                                </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <span class="text-xs text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</span>
+                                <span class="text-lg font-bold text-green-600">{{ number_format($package->cod_amount, 2) }} DT</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            @empty
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                    <div class="text-6xl mb-4">📭</div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun colis trouvé</h3>
+                    <p class="text-gray-600 mb-4">Commencez par créer votre premier colis</p>
+                    <a href="{{ route('client.packages.create') }}" 
+                       class="inline-flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-smooth">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Créer un colis</span>
+                    </a>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Desktop: Table -->
+        <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left w-12">
+                                <input type="checkbox" 
+                                       x-model="allChecked" 
+                                       @change="toggleSelectAll()"
+                                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Destinataire</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Délégation</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">COD</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($packages as $package)
+                        <tr class="hover:bg-gray-50 transition-smooth">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" 
+                                       x-model="selectedPackages" 
+                                       value="{{ $package->id }}"
+                                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            </td>
+                            <td class="px-4 py-3">
+                                <a href="{{ route('client.packages.show', $package) }}"
+                                   class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                                    {{ $package->package_code }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="text-sm font-medium text-gray-900">{{ $package->recipient_data['name'] ?? 'N/A' }}</div>
+                                <div class="text-xs text-gray-500">{{ $package->recipient_data['phone'] ?? '' }}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700">
+                                {{ $package->delegationTo->name ?? 'N/A' }}
+                            </td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">
+                                {{ number_format($package->cod_amount, 2) }} DT
+                            </td>
+                            <td class="px-4 py-3">
+                                @include('client.packages.partials.status-badge', ['status' => $package->status])
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">
+                                {{ $package->created_at->format('d/m/Y') }}
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                @include('client.packages.partials.actions-menu', ['package' => $package])
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="px-4 py-12 text-center">
+                                <div class="text-6xl mb-4">📭</div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun colis trouvé</h3>
+                                <p class="text-gray-600 mb-4">Commencez par créer votre premier colis</p>
+                                <a href="{{ route('client.packages.create') }}" 
+                                   class="inline-flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-smooth">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    <span>Créer un colis</span>
+                                </a>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-            @endforeach
         </div>
 
         <!-- Pagination -->
-        <div class="mt-8 flex justify-center">
+        @if($packages->hasPages())
+        <div class="mt-4 px-4 lg:px-0">
             {{ $packages->links() }}
         </div>
+        @endif
     </div>
 </div>
 
+<script>
+function packagesApp() {
+    return {
+        showFilters: false,
+        selectedPackages: [],
+        allChecked: false,
 
+        toggleSelectAll() {
+            if (this.allChecked) {
+                this.selectedPackages = Array.from(document.querySelectorAll('input[type="checkbox"][value]')).map(input => input.value);
+            } else {
+                this.selectedPackages = [];
+            }
+        },
 
-@push('styles')
-<style>
-    /* Assurer que les dropdowns mobiles s'affichent au-dessus de tout */
-    .z-50 {
-        z-index: 50 !important;
+        bulkPrint() {
+            if (this.selectedPackages.length === 0) {
+                alert('Veuillez sélectionner au moins un colis.');
+                return;
+            }
+
+            if (this.selectedPackages.length > 50) {
+                alert('Vous ne pouvez imprimer que 50 bons maximum à la fois.');
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("client.packages.print.multiple") }}';
+            form.target = '_blank';
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = document.querySelector('meta[name=csrf-token]').content;
+            form.appendChild(csrfInput);
+
+            this.selectedPackages.forEach(packageId => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'package_ids[]';
+                input.value = packageId;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        },
+
+        bulkExport() {
+            if (this.selectedPackages.length === 0) {
+                alert('Veuillez sélectionner au moins un colis.');
+                return;
+            }
+            alert('Fonction d\'export en développement');
+        }
     }
-
-    /* S'assurer que les cartes permettent overflow pour les dropdowns */
-    .overflow-visible {
-        overflow: visible !important;
-    }
-
-    /* Améliorer les zones de toucher sur mobile */
-    .touch-manipulation {
-        touch-action: manipulation;
-    }
-</style>
-@endpush
+}
+</script>
 @endsection

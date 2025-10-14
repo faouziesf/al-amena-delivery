@@ -71,6 +71,21 @@ class PickupRequest extends Model
         return $query->where('created_at', '>=', now()->startOfWeek());
     }
 
+    /**
+     * Filtrer les pickups par gouvernorat/délégation du livreur
+     * Si le livreur a un gouvernorat assigné, ne montrer que les pickups de ce gouvernorat
+     */
+    public function scopeForDelivererGovernorate($query, $deliverer)
+    {
+        // Si le livreur a un gouvernorat/délégation assigné, filtrer
+        if (isset($deliverer->governorate) && !empty($deliverer->governorate)) {
+            return $query->where('delegation_from', $deliverer->governorate);
+        }
+        
+        // Sinon, retourner tous les pickups (pas de restriction)
+        return $query;
+    }
+
     public function isPending()
     {
         return $this->status === 'pending';

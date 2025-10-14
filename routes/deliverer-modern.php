@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Deliverer\SimpleDelivererController;
+use App\Http\Controllers\Deliverer\DelivererClientTopupController;
 use App\Models\Package;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,12 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     Route::post('/pickup/{package}', [SimpleDelivererController::class, 'markPickup'])->name('pickup');
     Route::post('/deliver/{package}', [SimpleDelivererController::class, 'markDelivered'])->name('deliver');
     Route::post('/unavailable/{package}', [SimpleDelivererController::class, 'markUnavailable'])->name('unavailable');
+
+    // ==================== RECHARGE CLIENT ====================
+    Route::get('/client-topup', [DelivererClientTopupController::class, 'index'])->name('client-topup.index');
+    Route::post('/client-topup/search', [DelivererClientTopupController::class, 'searchClient'])->name('client-topup.search');
+    Route::post('/client-topup/add', [DelivererClientTopupController::class, 'addTopup'])->name('client-topup.add');
+    Route::get('/client-topup/history', [DelivererClientTopupController::class, 'history'])->name('client-topup.history');
 
     // ==================== IMPRESSION ====================
     Route::get('/print/run-sheet', [SimpleDelivererController::class, 'printRunSheet'])->name('print.run.sheet');

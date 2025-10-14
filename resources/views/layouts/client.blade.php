@@ -2,1476 +2,424 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#6366F1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="format-detection" content="telephone=no">
-    <title>@yield('title', 'Al-Amena Delivery') - Espace Client</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>@yield('title', 'Al-Amena') - Client</title>
 
-    <!-- PWA Meta Tags -->
-    <meta name="application-name" content="Al-Amena Client">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Al-Amena Client">
-    <meta name="description" content="Application client Al-Amena Delivery - Envoyer, Suivre, Gérer vos colis">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#8B5CF6">
-    <meta name="msapplication-config" content="/browserconfig.xml">
-    <meta name="msapplication-TileColor" content="#8B5CF6">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest-client.json">
-
-    <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238B5CF6'><path d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'/></svg>">
-    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-    <link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-    <link rel="apple-touch-icon" sizes="152x152" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-    <link rel="apple-touch-icon" sizes="144x144" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-    <link rel="apple-touch-icon" sizes="120x120" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-
-    <!-- Scripts -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Security -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
-    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': {
-                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
-                            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
-                            800: '#5b21b6', 900: '#4c1d95'
-                        },
-                        'secondary': {
-                            50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4',
-                            400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d',
-                            800: '#9d174d', 900: '#831843'
-                        },
-                        'accent': {
-                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
-                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
-                            800: '#075985', 900: '#0c4a6e'
-                        }
-                    },
-                    animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'glow': 'glow 2s ease-in-out infinite alternate',
-                        'slide-in': 'slideIn 0.5s ease-out',
-                        'fade-in': 'fadeIn 0.3s ease-out',
-                        'bounce-soft': 'bounceSoft 2s infinite',
-                        'pulse-slow': 'pulse 3s infinite',
-                        'shimmer': 'shimmer 2s linear infinite'
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-8px)' }
-                        },
-                        glow: {
-                            '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.4)' },
-                            '100%': { boxShadow: '0 0 30px rgba(139, 92, 246, 0.8)' }
-                        },
-                        slideIn: {
-                            '0%': { transform: 'translateX(-100%)', opacity: '0' },
-                            '100%': { transform: 'translateX(0)', opacity: '1' }
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '-200% 0' },
-                            '100%': { backgroundPosition: '200% 0' }
-                        }
-                    },
-                    boxShadow: {
-                        'glow-purple': '0 0 20px rgba(139, 92, 246, 0.3)',
-                        'glow-pink': '0 0 20px rgba(236, 72, 153, 0.3)',
-                        'modern': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                        'modern-lg': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- PWA Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw-client.js')
-                    .then(function(registration) {
-                        console.log('[PWA] Service Worker enregistré avec succès:', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('[PWA] Échec de l\'enregistrement du Service Worker:', error);
-                    });
-            });
-        }
-    </script>
-
-    <!-- Modern CSS Styles -->
     <style>
-        /* Alpine.js cloak */
-        [x-cloak] {
-            display: none !important;
-        }
+        /* === MOBILE FIRST APPROACH === */
         
-
-        :root {
-            --primary: #8B5CF6;
-            --secondary: #EC4899;
-            --accent: #0EA5E9;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --error: #EF4444;
-            --info: #3B82F6;
-            --dark: #1F2937;
-            --light: #F9FAFB;
-            --gradient-primary: linear-gradient(135deg, #8B5CF6, #EC4899);
-            --gradient-secondary: linear-gradient(135deg, #10B981, #059669);
-            --gradient-accent: linear-gradient(135deg, #0EA5E9, #0284C7);
+        /* Base Reset */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
         }
 
-        * {
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #F3F4F6;
+            overscroll-behavior-y: none;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
+        /* Mobile: Top header + Bottom nav spacing */
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            scroll-behavior: smooth;
+            padding-top: 56px; /* Mobile header height */
+            padding-bottom: calc(64px + env(safe-area-inset-bottom)); /* Bottom nav + safe area */
         }
 
-        /* Modern Glass Morphism */
-        .glass-modern {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
-        }
-
-        .glass-dark {
-            background: rgba(31, 41, 55, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Modern Navbar */
-        .navbar-modern {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-            box-shadow: 0 1px 20px rgba(139, 92, 246, 0.05);
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 9999 !important;
-            will-change: transform;
-        }
-
-        /* Sidebar Modern */
-        .sidebar-modern {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.95));
-            backdrop-filter: blur(30px);
-            border-right: 1px solid rgba(139, 92, 246, 0.08);
-            box-shadow: 4px 0 24px rgba(139, 92, 246, 0.05);
-            padding-top: 4rem;
-        }
-
-        /* Navigation Items */
-        .nav-item-modern {
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 16px;
-            margin: 2px 0;
-            overflow: hidden;
-        }
-
-        .nav-item-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--gradient-primary);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .nav-item-modern.active::before,
-        .nav-item-modern:hover::before {
-            transform: scaleY(1);
-        }
-
-        .nav-item-modern.active {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.06));
-            color: var(--primary);
-            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
-        }
-
-        .nav-item-modern:hover {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.04), rgba(236, 72, 153, 0.03));
-            transform: translateX(4px);
-            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.05);
-        }
-
-        /* Modern Dropdowns */
-        .dropdown-modern {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(25px);
-            border-radius: 16px;
-            border: 1px solid rgba(139, 92, 246, 0.1);
-            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.1);
-            overflow: hidden;
-        }
-
-        .dropdown-item-modern {
-            transition: all 0.2s ease;
-            border-radius: 12px;
-            margin: 4px 8px;
-        }
-
-        .dropdown-item-modern:hover {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(236, 72, 153, 0.04));
-            transform: translateX(2px);
-        }
-
-        /* Wallet Display */
-        .wallet-modern {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.06));
-            border: 1px solid rgba(16, 185, 129, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .wallet-modern:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
-        }
-
-        /* Loading Animations */
-        .loading-shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-
-        /* Floating Action Button */
-        .fab-modern {
-            background: var(--gradient-primary);
-            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 20px;
-        }
-
-        .fab-modern:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
-        }
-
-        /* Notification Badge */
-        .notification-badge-modern {
-            background: var(--gradient-primary);
-            animation: pulse-slow 3s infinite;
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
-        }
-
-        /* Toast Notifications */
-        .toast-modern {
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Desktop layout fixes */
-        .main-content {
-            margin-top: 4rem;
-            min-height: calc(100vh - 4rem);
-        }
-
-        /* Medium screens (tablets) - between mobile and desktop */
-        @media (min-width: 641px) and (max-width: 1024px) {
-            .main-content {
-                margin-top: 4.5rem !important;
-                min-height: calc(100vh - 4.5rem) !important;
-                padding-top: 0.75rem !important;
-            }
-
-            .main-content-mobile {
-                margin-top: 4.5rem !important;
-                min-height: calc(100vh - 4.5rem) !important;
-                padding-top: 0.75rem !important;
-            }
-
-            .sidebar-modern {
-                padding-top: 4.5rem !important;
-            }
-
-            /* Ensure content never gets hidden */
-            main {
-                padding-top: 1rem !important;
-            }
-        }
-
-        /* Responsive Improvements */
-        @media (max-width: 768px) {
-            .navbar-modern {
-                background: rgba(255, 255, 255, 0.98);
-                backdrop-filter: blur(20px);
-            }
-
-            .sidebar-modern {
-                background: rgba(255, 255, 255, 0.98);
-                backdrop-filter: blur(25px);
-                padding-top: 3.5rem;
-            }
-
-            .nav-item-modern {
-                font-size: 0.875rem;
-                padding: 12px 12px;
-            }
-
-            .nav-item-modern .w-5 {
-                width: 1rem;
-                height: 1rem;
-            }
-
-            .nav-item-modern .mr-4 {
-                margin-right: 0.75rem;
-            }
-
-            .dropdown-item-modern {
-                font-size: 0.875rem;
-                padding: 10px 12px;
-            }
-
-            .main-content {
-                padding: 0;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding-left: 0.75rem;
-                padding-right: 0.75rem;
-            }
-
-            .nav-item-modern {
-                font-size: 0.8rem;
-                padding: 10px 10px;
-            }
-
-            .sidebar-modern {
-                width: 280px;
-            }
-
-            .dropdown-item-modern {
-                font-size: 0.8rem;
-                padding: 8px 10px;
-            }
-
-            /* Reduce space for very small screens */
-            .main-content-mobile {
-                margin-top: 3rem !important;
-                min-height: calc(100vh - 3rem) !important;
-            }
-
-            .sidebar-modern {
-                padding-top: 3rem !important;
-            }
-        }
-
-        /* For extra small screens (iPhone SE, etc.) */
-        @media (max-width: 375px) {
-            .main-content-mobile {
-                margin-top: 2.8rem !important;
-                min-height: calc(100vh - 2.8rem) !important;
-            }
-
-            .sidebar-modern {
-                padding-top: 2.8rem !important;
-            }
-
-            .navbar-modern .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-
-            .navbar-modern h-12 {
-                height: 2.5rem;
-            }
-        }
-
-        /* For very small screens (width < 320px) */
-        @media (max-width: 320px) {
-            .main-content-mobile {
-                margin-top: 2.5rem !important;
-                min-height: calc(100vh - 2.5rem) !important;
-            }
-
-            .sidebar-modern {
-                padding-top: 2.5rem !important;
-            }
-        }
-
-        /* Enhanced Safe Area Support for iPhone Notch */
-        @supports (padding: max(0px)) {
-            .safe-area-top {
-                padding-top: env(safe-area-inset-top);
-            }
-
-            .safe-area-bottom {
-                padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-            }
-        }
-
-        /* Mobile Layout Fixes - Prevent caching elements at top */
-        @media (max-width: 640px) {
-            * {
-                -webkit-transform: translateZ(0);
-                transform: translateZ(0);
-                -webkit-backface-visibility: hidden;
-                backface-visibility: hidden;
-            }
-
+        /* Desktop: Sidebar spacing */
+        @media (min-width: 1024px) {
             body {
-                position: relative;
-                overflow-x: hidden;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Prevent body scroll when sidebar is open */
-            body.sidebar-open {
-                overflow: hidden;
-                position: fixed;
-                width: 100%;
-                height: 100%;
-            }
-
-            .navbar-modern {
-                padding-top: max(0.25rem, env(safe-area-inset-top));
-                background: rgba(255, 255, 255, 0.98) !important;
-                backdrop-filter: blur(20px) !important;
-                contain: layout style paint;
-                transform: translateZ(0);
-            }
-
-            .main-content-mobile {
-                margin-top: 3.5rem !important;
-                min-height: calc(100vh - 3.5rem) !important;
-                position: relative;
-                z-index: 1;
-                will-change: scroll-position;
-                contain: layout style paint;
-            }
-
-            /* Force repaint on scroll */
-            .main-content-mobile::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 1px;
-                background: transparent;
-                will-change: transform;
+                padding-top: 0;
+                padding-left: 280px;
+                padding-bottom: 0;
             }
         }
 
-        /* iPhone X and newer specific fixes - Reduced padding */
-        @media only screen
-        and (device-width: 375px)
-        and (device-height: 812px)
-        and (-webkit-device-pixel-ratio: 3),
-        only screen
-        and (device-width: 414px)
-        and (device-height: 896px)
-        and (-webkit-device-pixel-ratio: 2),
-        only screen
-        and (device-width: 414px)
-        and (device-height: 896px)
-        and (-webkit-device-pixel-ratio: 3),
-        only screen
-        and (device-width: 390px)
-        and (device-height: 844px)
-        and (-webkit-device-pixel-ratio: 3),
-        only screen
-        and (device-width: 428px)
-        and (device-height: 926px)
-        and (-webkit-device-pixel-ratio: 3) {
-            .navbar-modern {
-                padding-top: max(env(safe-area-inset-top), 0.5rem);
-            }
-
-            .main-content-mobile {
-                margin-top: calc(2.5rem + max(env(safe-area-inset-top), 0.5rem));
-            }
-
-            .sidebar-modern {
-                padding-top: calc(2.5rem + max(env(safe-area-inset-top), 0.5rem)) !important;
-            }
+        /* Prevent zoom on input (iOS) */
+        input, select, textarea {
+            font-size: 16px !important;
         }
 
-        /* Enhanced Scroll */
-        ::-webkit-scrollbar {
-            width: 6px;
+        /* Hide scrollbar but keep functionality */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(139, 92, 246, 0.05);
-            border-radius: 3px;
+        /* Safe areas for notched devices */
+        .safe-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.2);
-            border-radius: 3px;
+        /* Touch feedback */
+        .touch-active:active {
+            transform: scale(0.96);
+            opacity: 0.7;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.3);
+        /* Smooth transitions */
+        .transition-smooth {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Prevent notification black screen on mobile */
-        @media (max-width: 640px) {
-            .toast-modern,
-            [class*="toast"],
-            [id*="toast"] {
-                position: fixed !important;
-                right: 1rem !important;
-                left: 1rem !important;
-                top: max(4rem, calc(env(safe-area-inset-top) + 3rem)) !important;
-                width: auto !important;
-                max-width: none !important;
-                z-index: 10001 !important;
-                pointer-events: auto !important;
-                transform: none !important;
-                backdrop-filter: none !important;
+        /* Alpine.js cloak */
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
             }
-
-            /* Ensure notifications don't cover entire screen */
-            .toast-modern::before,
-            [class*="toast"]::before {
-                content: none !important;
-            }
-
-            /* Fix Alpine transitions on mobile */
-            [x-transition] {
-                will-change: opacity, transform !important;
+            to {
+                transform: translateY(0);
+                opacity: 1;
             }
         }
 
-        /* Offline Indicator */
-        .offline::before {
-            content: "🔌 Mode hors ligne";
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 9999;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateX(-50%) translateY(-100%); }
-            to { transform: translateX(-50%) translateY(0); }
-        }
-
-        /* Focus States */
-        .focus-modern:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-            border-color: var(--primary);
-        }
-
-        /* Performance Optimizations */
-        .will-change-transform {
-            will-change: transform;
-        }
-
-        .will-change-opacity {
-            will-change: opacity;
-        }
-
-        /* Reduce motion for accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-                scroll-behavior: auto !important;
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
             }
-        }
-    
-        /* Safe Area Bottom for iPhone */
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-            main,
-            .main-content,
-            .main-content-mobile {
-                padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
+            to {
+                transform: translateX(0);
             }
         }
 
-        /* Ensure content is not cut off on iPhone */
-        @media (max-width: 640px) {
-            main {
-                padding-bottom: max(env(safe-area-inset-bottom, 0px) + 1rem, 1.5rem) !important;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
             }
-            
-            .main-content-mobile {
-                padding-bottom: max(env(safe-area-inset-bottom, 0px) + 1rem, 1.5rem) !important;
-                min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+            to {
+                opacity: 1;
             }
         }
 
-        /* Extra space for iPhone with home indicator */
-        @media (max-width: 640px) and (display-mode: standalone) {
-            main,
-            .main-content-mobile {
-                padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem) !important;
-            }
+        .animate-slide-up {
+            animation: slideInUp 0.3s ease-out;
         }
 
+        .animate-slide-left {
+            animation: slideInLeft 0.3s ease-out;
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        /* Custom scrollbar for desktop */
+        @media (min-width: 1024px) {
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #F3F4F6;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #D1D5DB;
+                border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #9CA3AF;
+            }
+        }
     </style>
-
-    @stack('styles')
 </head>
-<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 min-h-screen overflow-x-hidden"
-      x-data="clientApp()"
-      :class="{ 'mobile-layout': isMobile }"
-      x-init="window.clientAppInstance = $data">
+<body x-data="{ 
+    sidebarOpen: false, 
+    currentRoute: '{{ Route::currentRouteName() }}',
+    userBalance: {{ Auth::user()->wallet->balance ?? 0 }},
+    userName: '{{ Auth::user()->name }}',
+    userEmail: '{{ Auth::user()->email }}',
+    userInitial: '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}'
+}" x-cloak>
 
-    <!-- Modern Compact Navigation Bar -->
-    <nav class="navbar-modern fixed top-0 left-0 right-0 z-50 safe-area-top">
-        <div class="container mx-auto px-3 sm:px-4" style="padding-top: env(safe-area-inset-top, 4px); padding-bottom: 4px;">
-            <div class="flex items-center justify-between h-12 sm:h-14">
-                <!-- Left: Logo & Brand -->
-                <div class="flex items-center space-x-4">
-                    <!-- Mobile menu button -->
-                    <button @click="toggleSidebar()"
-                            class="lg:hidden p-2 rounded-xl hover:bg-purple-50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 active:bg-purple-100 will-change-transform touch-manipulation">
-                        <svg class="w-6 h-6 text-purple-600 transition-transform duration-300" :class="sidebarOpen ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  :d="sidebarOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"/>
-                        </svg>
-                    </button>
-
-                    <!-- Brand -->
-                    <div class="flex items-center space-x-2 sm:space-x-3">
-                        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg will-change-transform hover:scale-105 transition-transform duration-200">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <div class="hidden sm:block">
-                            <h1 class="text-lg lg:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                Al-Amena
-                            </h1>
-                            <p class="text-xs text-gray-600 font-medium">Espace Client</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Actions -->
-                <div class="flex items-center space-x-2 sm:space-x-3">
-                    <!-- Wallet Balance -->
-                    <div class="hidden lg:flex items-center space-x-2 wallet-modern px-3 py-2 will-change-transform"
-                         :class="{ 'animate-pulse-slow': wallet.total_available !== null && wallet.total_available < 50 }">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg flex items-center justify-center shadow-md">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-xs text-emerald-700 font-semibold">Solde</p>
-                                <p class="text-sm font-bold text-emerald-800" x-text="formatBalance(wallet.total_available)" x-show="wallet.total_available !== null && wallet.total_available !== undefined">
-                                    ---
-                                </p>
-                                <div x-show="wallet.balance === null" class="flex items-center space-x-1">
-                                    <div class="w-3 h-3 bg-emerald-200 rounded-full animate-pulse"></div>
-                                    <div class="w-10 h-2 bg-emerald-100 rounded animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mobile Wallet -->
-                    <div class="lg:hidden" x-data="{ mobileWalletOpen: false }">
-                        <button @click="mobileWalletOpen = !mobileWalletOpen"
-                                class="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 transition-all duration-300 hover:bg-emerald-100">
-                            <div class="w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-md flex items-center justify-center">
-                                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2"/>
-                                </svg>
-                            </div>
-                            <span class="text-xs font-bold text-emerald-700" x-text="formatBalanceShort(wallet.total_available)" x-show="wallet.total_available !== null && wallet.total_available !== undefined">--</span>
-                        </button>
-
-                        <div x-show="mobileWalletOpen" @click.away="mobileWalletOpen = false" x-transition
-                             class="absolute right-4 mt-2 w-64 dropdown-modern z-50">
-                            <div class="p-4 border-b bg-gradient-to-r from-emerald-50 to-green-50">
-                                <div class="text-center">
-                                    <p class="text-sm text-emerald-600 font-semibold">Solde Actuel</p>
-                                    <p class="text-2xl font-bold text-emerald-700" x-text="formatBalance(wallet.total_available)">---</p>
-                                </div>
-                            </div>
-                            <div class="p-3 space-y-2">
-                                <a href="{{ route('client.wallet.index') }}" class="dropdown-item-modern flex items-center px-3 py-2 text-sm text-gray-700 hover:text-emerald-600">
-                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1"/>
-                                    </svg>
-                                    Portefeuille
-                                </a>
-                                <a href="{{ route('client.wallet.topup') }}" class="dropdown-item-modern flex items-center px-3 py-2 text-sm text-gray-700 hover:text-emerald-600">
-                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                    </svg>
-                                    Recharger
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notifications -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300 relative focus-modern will-change-transform">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
-                            </svg>
-                            <span x-show="notifications.unread_count > 0"
-                                  class="absolute -top-0.5 -right-0.5 notification-badge-modern text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
-                                  x-text="notifications.unread_count"></span>
-                        </button>
-
-                        <div x-show="open" @click.away="open = false" x-transition
-                             class="absolute right-0 mt-3 w-80 dropdown-modern z-50">
-                            <div class="p-4 border-b bg-gradient-to-r from-purple-50 to-pink-50">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="font-bold text-gray-900">Notifications</h3>
-                                    <button @click="markAllAsRead()" class="text-sm text-purple-600 hover:text-purple-800 font-medium">
-                                        Tout marquer lu
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="max-h-96 overflow-y-auto" x-html="notificationsList">
-                                <p class="p-4 text-gray-500 text-center">Chargement...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- User Profile -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-purple-50 transition-all duration-300 focus-modern will-change-transform">
-                            <div class="w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-                                <span class="text-white font-bold text-xs">{{ substr(auth()->user()->name, 0, 2) }}</span>
-                            </div>
-                            <div class="hidden lg:block text-left">
-                                <p class="text-sm font-semibold text-gray-900 truncate max-w-24">{{ auth()->user()->name }}</p>
-                                <p class="text-xs text-gray-500">Client</p>
-                            </div>
-                            <svg class="w-3 h-3 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-
-                        <div x-show="open" @click.away="open = false" x-transition
-                             class="absolute right-0 mt-3 w-72 dropdown-modern z-50">
-                            <div class="p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                                        <span class="text-white font-bold">{{ substr(auth()->user()->name, 0, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-gray-900">{{ auth()->user()->name }}</p>
-                                        <p class="text-sm text-gray-600">{{ auth()->user()->email }}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-3 space-y-1">
-                                <a href="{{ route('client.profile.index') }}" class="dropdown-item-modern flex items-center px-3 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    Mon Profil
-                                </a>
-                                <a href="{{ route('client.bank-accounts.index') }}" class="dropdown-item-modern flex items-center px-3 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1"/>
-                                    </svg>
-                                    Comptes Bancaires
-                                </a>
-                                <a href="{{ route('client.notifications.settings') }}" class="dropdown-item-modern flex items-center px-3 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0"/>
-                                    </svg>
-                                    Paramètres
-                                </a>
-                            </div>
-
-                            <div class="p-3 border-t">
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="w-full dropdown-item-modern flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/>
-                                        </svg>
-                                        Se déconnecter
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+    <!-- ========== MOBILE: Top Header ========== -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 safe-top">
+        <div class="flex items-center justify-between px-4 h-14">
+            <!-- Menu Button + Logo -->
+            <div class="flex items-center space-x-3">
+                <button @click="sidebarOpen = true" 
+                        class="p-2 -ml-2 text-gray-700 hover:bg-gray-100 rounded-lg touch-active transition-smooth">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-base font-bold text-gray-900">Al-Amena</h1>
+                    <p class="text-xs text-gray-500" x-text="userName.split(' ')[0]"></p>
                 </div>
             </div>
+
+            <!-- Wallet Balance -->
+            <a href="{{ route('client.wallet.index') }}" 
+               class="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 rounded-full border border-green-200 touch-active transition-smooth">
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-sm font-bold text-green-700" x-text="userBalance.toFixed(3)"></span>
+                <span class="text-xs text-green-600">DT</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- ========== MOBILE: Sidebar Overlay ========== -->
+    <div x-show="sidebarOpen" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         class="lg:hidden fixed inset-0 bg-black/50 z-50"
+         style="display: none;">
+    </div>
+
+    <!-- ========== MOBILE: Sidebar Drawer ========== -->
+    <aside x-show="sidebarOpen"
+           x-transition:enter="transition ease-out duration-300 transform"
+           x-transition:enter-start="-translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transition ease-in duration-200 transform"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="-translate-x-full"
+           class="lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 overflow-y-auto scrollbar-hide safe-top safe-bottom"
+           style="display: none;">
+        
+        <!-- Sidebar Header -->
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Menu</h2>
+                <button @click="sidebarOpen = false" 
+                        class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg touch-active transition-smooth">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-xl font-bold">
+                    <span x-text="userInitial"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-white truncate" x-text="userName"></p>
+                    <p class="text-sm text-white/80 truncate" x-text="userEmail"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Items -->
+        <nav class="p-3">
+            @include('layouts.partials.client-menu')
+        </nav>
+
+        <!-- Logout -->
+        <div class="p-3 border-t border-gray-200">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" 
+                        class="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl touch-active transition-smooth">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span class="font-medium">Déconnexion</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ========== DESKTOP: Sidebar ========== -->
+    <aside class="hidden lg:block fixed top-0 left-0 bottom-0 w-[280px] bg-white border-r border-gray-200 overflow-y-auto scrollbar-hide">
+        <!-- Desktop Header -->
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-6">
+            <h1 class="text-2xl font-bold text-white mb-1">Al-Amena</h1>
+            <p class="text-sm text-white/80">Espace Client</p>
+        </div>
+
+        <!-- User Info Card -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center space-x-3 mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
+                    <span x-text="userInitial"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 truncate text-sm" x-text="userName"></p>
+                    <p class="text-xs text-gray-500 truncate" x-text="userEmail"></p>
+                </div>
+            </div>
+            <a href="{{ route('client.wallet.index') }}" 
+               class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 border border-green-200 transition-smooth">
+                <span class="text-sm font-medium text-gray-700">Solde</span>
+                <div class="flex items-center space-x-1">
+                    <span class="text-lg font-bold text-green-600" x-text="userBalance.toFixed(3)"></span>
+                    <span class="text-xs text-green-600">DT</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Desktop Menu -->
+        <nav class="p-3 flex-1">
+            @include('layouts.partials.client-menu')
+        </nav>
+
+        <!-- Desktop Logout -->
+        <div class="p-3 border-t border-gray-200 bg-gray-50">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" 
+                        class="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-smooth">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span class="font-medium">Déconnexion</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ========== Main Content ========== -->
+    <main class="min-h-screen">
+        @yield('content')
+    </main>
+
+    <!-- ========== MOBILE: Bottom Navigation ========== -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 safe-bottom">
+        <div class="grid grid-cols-5 h-16">
+            <!-- Home -->
+            <a href="{{ route('client.dashboard') }}" 
+               class="flex flex-col items-center justify-center space-y-1 touch-active transition-smooth"
+               :class="currentRoute === 'client.dashboard' ? 'text-indigo-600' : 'text-gray-500'">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="text-xs font-medium">Accueil</span>
+            </a>
+
+            <!-- Packages -->
+            <a href="{{ route('client.packages.index') }}" 
+               class="flex flex-col items-center justify-center space-y-1 touch-active transition-smooth"
+               :class="currentRoute.includes('packages') ? 'text-indigo-600' : 'text-gray-500'">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <span class="text-xs font-medium">Colis</span>
+            </a>
+
+            <!-- Create (Center FAB) -->
+            <a href="{{ route('client.packages.create') }}" 
+               class="flex flex-col items-center justify-center -mt-6 touch-active transition-smooth">
+                <div class="w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/50">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-gray-500 mt-1">Nouveau</span>
+            </a>
+
+            <!-- Pickups -->
+            <a href="{{ route('client.pickup-requests.index') }}" 
+               class="flex flex-col items-center justify-center space-y-1 touch-active transition-smooth"
+               :class="currentRoute.includes('pickup') ? 'text-indigo-600' : 'text-gray-500'">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-xs font-medium">Collectes</span>
+            </a>
+
+            <!-- Wallet -->
+            <a href="{{ route('client.wallet.index') }}" 
+               class="flex flex-col items-center justify-center space-y-1 touch-active transition-smooth"
+               :class="currentRoute.includes('wallet') ? 'text-indigo-600' : 'text-gray-500'">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span class="text-xs font-medium">Wallet</span>
+            </a>
         </div>
     </nav>
 
-    <!-- Main Layout -->
-    <div class="flex">
-        <!-- Modern Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-40 w-72 sm:w-80 lg:w-72 sidebar-modern transform transition-transform duration-300 ease-in-out lg:translate-x-0"
-             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-             @click.away="if (isMobile) toggleSidebar()"
-             x-show="sidebarOpen || !isMobile"
-
-            <!-- Navigation Menu -->
-            <nav class="p-4 sm:p-6 space-y-2 h-full overflow-y-auto">
-                <!-- Dashboard -->
-                <a href="{{ route('client.dashboard') }}"
-                   class="nav-item-modern {{ request()->routeIs('client.dashboard') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium">
-                    <div class="w-5 h-5 mr-4">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-                        </svg>
-                    </div>
-                    <span>Dashboard</span>
-                </a>
-
-                <!-- Gestion des Colis -->
-                <div x-data="{ open: {{ request()->routeIs('client.packages.*') ? 'true' : 'false' }} }">
-                    <div class="nav-item-modern {{ request()->routeIs('client.packages.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"
-                         @click="open = !open">
-                        <div class="w-5 h-5 mr-4">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <span class="flex-1">Gestion des Colis</span>
-                        <div class="flex items-center space-x-2">
-                            <span x-show="stats.in_progress_packages > 0"
-                                  class="notification-badge-modern text-white text-xs px-2 py-1 rounded-full"
-                                  x-text="stats.in_progress_packages"></span>
-                            <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div x-show="open" x-collapse class="ml-6 mt-2 space-y-1">
-                        <a href="{{ route('client.packages.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                            </svg>
-                            <span>Mes Colis</span>
-                        </a>
-                        <a href="{{ route('client.packages.create') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                            </svg>
-                            <span>Nouveau Colis</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Demandes de Collecte -->
-                <div x-data="{ open: {{ request()->routeIs('client.pickup-requests.*') ? 'true' : 'false' }} }">
-                    <div class="nav-item-modern {{ request()->routeIs('client.pickup-requests.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"
-                         @click="open = !open">
-                        <div class="w-5 h-5 mr-4">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                            </svg>
-                        </div>
-                        <span class="flex-1">Demandes de Collecte</span>
-                        <div class="flex items-center space-x-2">
-                            <span x-show="stats.pending_pickups > 0"
-                                  class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full"
-                                  x-text="stats.pending_pickups"></span>
-                            <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div x-show="open" x-collapse class="ml-6 mt-2 space-y-1">
-                        <a href="{{ route('client.pickup-requests.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                            </svg>
-                            <span>Mes Collectes</span>
-                        </a>
-                        <a href="{{ route('client.pickup-requests.create') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                            </svg>
-                            <span>Nouvelle Collecte</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Manifestes & Adresses -->
-                <div x-data="{ open: {{ request()->routeIs('client.manifests.*', 'client.pickup-addresses.*') ? 'true' : 'false' }} }">
-                    <div class="nav-item-modern {{ request()->routeIs('client.manifests.*', 'client.pickup-addresses.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"
-                         @click="open = !open">
-                        <div class="w-5 h-5 mr-4">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                        </div>
-                        <span class="flex-1">Documents & Adresses</span>
-                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </div>
-                    <div x-show="open" x-collapse class="ml-6 mt-2 space-y-1">
-                        <a href="{{ route('client.manifests.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <span>Manifestes</span>
-                        </a>
-                        <a href="{{ route('client.pickup-addresses.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            </svg>
-                            <span>Adresses de Collecte</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Finances -->
-                <div x-data="{ open: {{ request()->routeIs('client.wallet.*', 'client.bank-accounts.*', 'client.withdrawals*') ? 'true' : 'false' }} }">
-                    <div class="nav-item-modern {{ request()->routeIs('client.wallet.*', 'client.bank-accounts.*', 'client.withdrawals*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"
-                         @click="open = !open">
-                        <div class="w-5 h-5 mr-4">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                            </svg>
-                        </div>
-                        <span class="flex-1">Finances</span>
-                        <div class="flex items-center space-x-2">
-                            <span x-show="stats.pending_withdrawals > 0"
-                                  class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full"
-                                  x-text="stats.pending_withdrawals"></span>
-                            <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div x-show="open" x-collapse class="ml-6 mt-2 space-y-1">
-                        <a href="{{ route('client.wallet.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1"/>
-                            </svg>
-                            <span>Mon Portefeuille</span>
-                        </a>
-                        <a href="{{ route('client.bank-accounts.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/>
-                            </svg>
-                            <span>Comptes Bancaires</span>
-                        </a>
-                        <a href="{{ route('client.withdrawals') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                            </svg>
-                            <span>Mes Retraits</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Retours -->
-                <a href="{{ route('client.returns.pending') }}"
-                   class="nav-item-modern {{ request()->routeIs('client.returns.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium">
-                    <div class="w-5 h-5 mr-4">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                    </div>
-                    <span class="flex-1">Mes Retours</span>
-                    <div class="flex items-center space-x-2">
-                        <span x-show="stats.pending_returns > 0"
-                              class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full"
-                              x-text="stats.pending_returns"></span>
-                    </div>
-                </a>
-
-                <!-- Support -->
-                <div x-data="{ open: {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'true' : 'false' }} }">
-                    <div class="nav-item-modern {{ request()->routeIs('client.tickets.*', 'client.notifications.*') ? 'active' : '' }} flex items-center px-4 py-3.5 text-gray-700 font-medium cursor-pointer"
-                         @click="open = !open">
-                        <div class="w-5 h-5 mr-4">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                            </svg>
-                        </div>
-                        <span class="flex-1">Support & Notifications</span>
-                        <div class="flex items-center space-x-2">
-                            <span x-show="notifications.unread_count > 0"
-                                  class="bg-red-500 text-white text-xs px-2 py-1 rounded-full"
-                                  x-text="notifications.unread_count"></span>
-                            <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div x-show="open" x-collapse class="ml-6 mt-2 space-y-1">
-                        <a href="{{ route('client.tickets.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <span>Support Tickets</span>
-                        </a>
-                        <a href="{{ route('client.notifications.index') }}" class="dropdown-item-modern flex items-center px-4 py-2.5 text-gray-600 hover:text-purple-600">
-                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5-5 5h5zm0-8h5l-5-5-5 5h5z"/>
-                            </svg>
-                            <span>Notifications</span>
-                        </a>
-                    </div>
-                </div>
-            </nav>
-        </div>
-
-        <!-- Mobile Overlay -->
-        <div x-show="sidebarOpen && isMobile" @click="toggleSidebar()"
-             class="fixed inset-0 bg-black bg-opacity-50 z-35 lg:hidden"
-             x-transition:enter="transition-opacity ease-linear duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"></div>
-
-        <!-- Main Content -->
-        <div class="flex-1 lg:ml-72 will-change-contents">
-            <main class="min-h-screen pb-0 sm:pb-4 px-0 sm:px-0"
-                  :class="isMobile ? 'main-content-mobile' : 'main-content'">
-                @yield('content')
-            </main>
+    <!-- ========== Toast Notifications ========== -->
+    @if(session('success'))
+    <div x-data="{ show: true }" 
+         x-show="show" 
+         x-init="setTimeout(() => show = false, 4000)" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-full opacity-0"
+         class="fixed bottom-20 lg:top-4 lg:bottom-auto right-4 left-4 lg:left-auto lg:w-96 bg-green-500 text-white px-4 py-3 rounded-xl shadow-2xl z-50"
+         style="display: none;">
+        <div class="flex items-center space-x-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="flex-1">{{ session('success') }}</span>
+            <button @click="show = false" class="flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
     </div>
-    
-    <!-- Modern Toast Notifications -->
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
-             x-transition:enter="transform transition ease-out duration-300"
-             x-transition:enter-start="translate-x-full opacity-0"
-             x-transition:enter-end="translate-x-0 opacity-100"
-             x-transition:leave="transform transition ease-in duration-200"
-             x-transition:leave-start="translate-x-0 opacity-100"
-             x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed right-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm"
-             style="top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem)); max-width: calc(100vw - 2rem);">
-            <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-sm font-medium">{{ session('success') }}</span>
-                <button @click="show = false" class="ml-auto hover:bg-white hover:bg-opacity-20 rounded p-0.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
     @endif
 
-    @if(session('error') || $errors->any())
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)"
-             x-transition:enter="transform transition ease-out duration-300"
-             x-transition:enter-start="translate-x-full opacity-0"
-             x-transition:enter-end="translate-x-0 opacity-100"
-             x-transition:leave="transform transition ease-in duration-200"
-             x-transition:leave-start="translate-x-0 opacity-100"
-             x-transition:leave-end="translate-x-full opacity-0"
-             class="fixed right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm"
-             style="top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem)); max-width: calc(100vw - 2rem);">
-            <div class="flex items-start space-x-2">
-                <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    @if(session('error'))
+    <div x-data="{ show: true }" 
+         x-show="show" 
+         x-init="setTimeout(() => show = false, 4000)" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-full opacity-0"
+         class="fixed bottom-20 lg:top-4 lg:bottom-auto right-4 left-4 lg:left-auto lg:w-96 bg-red-500 text-white px-4 py-3 rounded-xl shadow-2xl z-50"
+         style="display: none;">
+        <div class="flex items-center space-x-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="flex-1">{{ session('error') }}</span>
+            <button @click="show = false" class="flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
-                <div class="flex-1 text-sm font-medium">
-                    @if(session('error'))
-                        <span>{{ session('error') }}</span>
-                    @endif
-                    @if($errors->any())
-                        @foreach($errors->all() as $error)
-                            <div>{{ $error }}</div>
-                        @endforeach
-                    @endif
-                </div>
-                <button @click="show = false" class="ml-auto hover:bg-white hover:bg-opacity-20 rounded p-0.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
+            </button>
         </div>
+    </div>
     @endif
-
-    <!-- Enhanced Alpine.js Application -->
-    <script>
-        function clientApp() {
-            return {
-                sidebarOpen: false,
-                isOnline: navigator.onLine,
-                isMobile: window.innerWidth <= 1024,
-                stats: {
-                    in_progress_packages: 0,
-                    pending_withdrawals: 0,
-                    pending_pickups: 0,
-                    pending_returns: 0
-                },
-                notifications: {
-                    unread_count: 0
-                },
-                wallet: {
-                    balance: null,
-                    advance_balance: null,
-                    currency: 'DT'
-                },
-                notificationsList: '<p class="p-4 text-gray-500 text-center">Chargement...</p>',
-
-                init() {
-                    this.loadStats();
-                    this.loadNotifications();
-                    this.loadWalletBalance();
-
-                    // Auto-refresh every 60 seconds
-                    setInterval(() => {
-                        if (this.isOnline) {
-                            this.loadStats();
-                            this.loadNotifications();
-                            this.loadWalletBalance();
-                        }
-                    }, 60000);
-
-                    // Handle resize events
-                    this.handleResize();
-                    window.addEventListener('resize', () => this.handleResize());
-
-                    // Online/offline handling
-                    window.addEventListener('online', () => {
-                        this.isOnline = true;
-                        this.loadStats();
-                        this.loadNotifications();
-                        this.loadWalletBalance();
-                    });
-
-                    window.addEventListener('offline', () => {
-                        this.isOnline = false;
-                    });
-                },
-
-                handleResize() {
-                    this.isMobile = window.innerWidth <= 1024;
-                    if (window.innerWidth >= 1024) {
-                        this.sidebarOpen = false;
-                        document.body.classList.remove('sidebar-open');
-                    }
-                },
-
-                toggleSidebar() {
-                    this.sidebarOpen = !this.sidebarOpen;
-                    if (this.isMobile) {
-                        if (this.sidebarOpen) {
-                            document.body.classList.add('sidebar-open');
-                        } else {
-                            document.body.classList.remove('sidebar-open');
-                        }
-                    }
-                },
-
-                async loadStats() {
-                    try {
-                        const response = await fetch('/client/api/dashboard-stats');
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.stats.in_progress_packages = data.in_progress_packages || 0;
-                            this.stats.pending_withdrawals = data.pending_withdrawals || 0;
-                            this.stats.pending_pickups = data.pending_pickups || 0;
-                            this.stats.pending_returns = data.pending_returns || 0;
-                        }
-                    } catch (error) {
-                        console.error('Erreur chargement stats:', error);
-                    }
-                },
-
-                async loadWalletBalance() {
-                    try {
-                        const response = await fetch('/client/api/wallet-balance');
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.wallet.balance = data.balance;
-                            this.wallet.advance_balance = data.advance_balance || 0;
-                            this.wallet.frozen_amount = data.frozen || 0;
-                            this.wallet.currency = data.currency || 'DT';
-                            // Calculer le solde total disponible = avance + solde - montant gelé
-                            this.wallet.total_available = (data.advance_balance || 0) + data.balance - (data.frozen || 0);
-                        }
-                    } catch (error) {
-                        console.error('Erreur chargement solde:', error);
-                        this.wallet.balance = 0;
-                        this.wallet.advance_balance = 0;
-                        this.wallet.frozen_amount = 0;
-                        this.wallet.total_available = 0;
-                    }
-                },
-
-                async loadNotifications() {
-                    try {
-                        const response = await fetch('/client/api/notifications/unread-count');
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.notifications.unread_count = data.count;
-                        }
-
-                        const recentResponse = await fetch('/client/api/notifications/recent');
-                        if (recentResponse.ok) {
-                            const data = await recentResponse.json();
-                            this.updateNotificationsList(data.notifications);
-                        }
-                    } catch (error) {
-                        console.error('Erreur chargement notifications:', error);
-                    }
-                },
-
-                updateNotificationsList(notifications) {
-                    if (notifications.length === 0) {
-                        this.notificationsList = '<p class="p-4 text-gray-500 text-center">Aucune notification</p>';
-                        return;
-                    }
-
-                    this.notificationsList = notifications.map(notification => `
-                        <div class="p-4 border-b hover:bg-gray-50 ${notification.read ? 'opacity-75' : ''}">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <p class="font-semibold text-sm text-gray-900">${notification.title}</p>
-                                    <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
-                                    <p class="text-xs text-gray-500 mt-2">${this.formatDate(notification.created_at)}</p>
-                                </div>
-                                ${!notification.read ? `
-                                    <button onclick="markNotificationRead(${notification.id})"
-                                            class="text-xs text-purple-600 hover:text-purple-800 ml-2">
-                                        Marquer lu
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('');
-                },
-
-                async markAllAsRead() {
-                    try {
-                        const response = await fetch('/client/notifications/mark-all-read', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            }
-                        });
-
-                        if (response.ok) {
-                            this.loadNotifications();
-                        }
-                    } catch (error) {
-                        console.error('Erreur marquage notifications:', error);
-                    }
-                },
-
-                formatDate(dateString) {
-                    return new Date(dateString).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                },
-
-                formatBalance(amount) {
-                    if (amount === null || amount === undefined) {
-                        return '---';
-                    }
-                    return new Intl.NumberFormat('fr-FR', {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3
-                    }).format(amount) + ' ' + this.wallet.currency;
-                },
-
-                formatBalanceShort(amount) {
-                    if (amount === null || amount === undefined) {
-                        return '--';
-                    }
-                    if (amount >= 1000) {
-                        return (amount / 1000).toFixed(1) + 'K ' + this.wallet.currency;
-                    }
-                    return new Intl.NumberFormat('fr-FR', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 1
-                    }).format(amount) + ' ' + this.wallet.currency;
-                }
-            }
-        }
-
-        // Global notification functions
-        async function markNotificationRead(notificationId) {
-            try {
-                const response = await fetch(`/client/notifications/${notificationId}/mark-read`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-
-                if (response.ok) {
-                    document.querySelector('[x-data*="clientApp"]').__x.$data.loadNotifications();
-                }
-            } catch (error) {
-                console.error('Erreur marquage notification:', error);
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            // Sur mobile, si il y a un problème avec les toasts, utiliser alert comme fallback
-            const isMobile = window.innerWidth <= 640;
-
-            try {
-                const toast = document.createElement('div');
-                let bgClass;
-                let icon = '';
-
-                switch (type) {
-                    case 'success':
-                        bgClass = 'bg-gradient-to-r from-emerald-500 to-green-500';
-                        icon = '✅';
-                        break;
-                    case 'error':
-                        bgClass = 'bg-gradient-to-r from-red-500 to-pink-500';
-                        icon = '❌';
-                        break;
-                    case 'info':
-                        bgClass = 'bg-gradient-to-r from-blue-500 to-cyan-500';
-                        icon = 'ℹ️';
-                        break;
-                    case 'warning':
-                        bgClass = 'bg-gradient-to-r from-yellow-500 to-orange-500';
-                        icon = '⚠️';
-                        break;
-                    default:
-                        bgClass = 'bg-gradient-to-r from-gray-500 to-gray-600';
-                        icon = 'ℹ️';
-                }
-
-                // Position top sécurisée pour mobile - plus basse pour éviter la navbar
-                const topPosition = isMobile ? 'calc(env(safe-area-inset-top, 1rem) + 5.5rem)' : '6rem';
-
-                toast.className = `fixed left-4 right-4 ${bgClass} text-white px-4 py-3 rounded-lg shadow-lg z-[10001] transform transition-all duration-300`;
-
-                // Position et taille adaptées
-                toast.style.cssText = `
-                    top: ${topPosition};
-                    max-width: ${isMobile ? 'calc(100vw - 2rem)' : '24rem'};
-                    margin: 0 auto;
-                    pointer-events: auto;
-                    transform: translateY(-100%);
-                    opacity: 0;
-                `;
-
-                toast.innerHTML = `
-                    <div class="flex items-start space-x-3">
-                        <span class="text-lg flex-shrink-0">${icon}</span>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium leading-relaxed">${message}</p>
-                        </div>
-                        <button onclick="this.parentElement.parentElement.remove()"
-                                class="flex-shrink-0 ml-2 text-white hover:text-gray-200 rounded-full p-1 hover:bg-white hover:bg-opacity-20">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                `;
-
-                // Ajouter directement au body pour éviter les problèmes de container
-                document.body.appendChild(toast);
-
-                // Animation d'entrée plus robuste
-                requestAnimationFrame(() => {
-                    toast.style.transform = 'translateY(0)';
-                    toast.style.opacity = '1';
-                });
-
-                // Auto-suppression avec cleanup
-                const cleanup = () => {
-                    if (toast && toast.parentNode) {
-                        toast.style.transform = 'translateY(-100%)';
-                        toast.style.opacity = '0';
-                        setTimeout(() => {
-                            if (toast && toast.parentNode) {
-                                toast.remove();
-                            }
-                        }, 300);
-                    }
-                };
-
-                setTimeout(cleanup, type === 'info' ? 3000 : 5000);
-
-                // Nettoyage au clic
-                toast.addEventListener('click', cleanup);
-
-            } catch (error) {
-                // Fallback pour mobile en cas de problème avec les toasts
-                console.error('Erreur toast:', error);
-                if (isMobile) {
-                    alert(`${type.toUpperCase()}: ${message}`);
-                } else {
-                    console.log(`${type.toUpperCase()}: ${message}`);
-                }
-            }
-        }
-
-        window.showToast = showToast;
-    </script>
 
     @stack('scripts')
 </body>

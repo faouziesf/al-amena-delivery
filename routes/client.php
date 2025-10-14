@@ -51,7 +51,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     // ==================== API ROUTES ====================
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/dashboard-stats', [ClientDashboardController::class, 'apiStats'])->name('client.dashboard.stats');
-        Route::get('/wallet-balance', [ClientWalletController::class, 'apiBalance'])->name('wallet.balance');
     });
 
     // ==================== GESTION DES COLIS ====================
