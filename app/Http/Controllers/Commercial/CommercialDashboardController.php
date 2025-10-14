@@ -71,7 +71,7 @@ class CommercialDashboardController extends Controller
             $totalPackages = Package::count();
             $packagesToday = Package::whereDate('created_at', $today)->count();
             $deliveredToday = Package::where('status', 'DELIVERED')->whereDate('updated_at', $today)->count();
-            $packagesInProgress = Package::whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])->count();
+            $packagesInProgress = Package::whereIn('status', ['AVAILABLE', 'OUT_FOR_DELIVERY', 'PICKED_UP'])->count();
 
             // === MÉTRIQUES FINANCIÈRES - VRAIES DONNÉES ===
             // Seulement les revenus des packages DELIVERED

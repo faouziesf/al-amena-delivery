@@ -106,6 +106,7 @@ class ClientDashboardController extends Controller
             'in_progress_packages' => $packages->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP'])->count(),
             'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
             'returned_packages' => $packages->where('status', 'RETURNED')->count(),
+            'pending_returns' => $packages->where('status', 'RETURNED')->count(),
             'pending_complaints' => $user->complaints()->where('status', 'PENDING')->count(),
             'pending_withdrawals' => $user->withdrawalRequests()->where('status', 'PENDING')->count(),
             'pending_pickups' => $pickupRequests->where('status', 'pending')->count(),

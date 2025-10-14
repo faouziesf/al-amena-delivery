@@ -360,7 +360,7 @@ class SyncOfflineActions implements ShouldQueue
                 $package->update([
                     'assigned_deliverer_id' => $this->delivererId,
                     'assigned_at' => $action['timestamp'],
-                    'status' => 'ACCEPTED'
+                    'status' => 'OUT_FOR_DELIVERY'
                 ]);
 
                 app(ActionLogService::class)->log(
@@ -368,7 +368,7 @@ class SyncOfflineActions implements ShouldQueue
                     'Package',
                     $package->id,
                     'AVAILABLE',
-                    'ACCEPTED',
+                    'OUT_FOR_DELIVERY',
                     [
                         'package_code' => $package->package_code,
                         'offline_timestamp' => $action['timestamp'],
@@ -414,7 +414,7 @@ class SyncOfflineActions implements ShouldQueue
                 throw new \Exception('Colis non assigné à ce livreur');
             }
 
-            if ($package->status !== 'ACCEPTED') {
+            if ($package->status !== 'OUT_FOR_DELIVERY') {
                 return $this->handleConflict($action, $index, $package, 'Colis pas dans le bon statut pour pickup');
             }
 
@@ -437,7 +437,7 @@ class SyncOfflineActions implements ShouldQueue
                     'OFFLINE_PACKAGE_PICKED_UP',
                     'Package',
                     $package->id,
-                    'ACCEPTED',
+                    'OUT_FOR_DELIVERY',
                     'PICKED_UP',
                     [
                         'package_code' => $package->package_code,

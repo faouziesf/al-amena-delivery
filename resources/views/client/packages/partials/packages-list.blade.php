@@ -169,6 +169,16 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
                                         Suivre colis
                                     </a>
 
+                                    @if($package->return_package_id)
+                                        <a href="{{ route('client.returns.show-return-package', $package->return_package_id) }}"
+                                           class="flex items-center px-3 sm:px-4 py-2.5 sm:py-2 text-sm text-blue-600 hover:bg-blue-50 touch-manipulation flex-col sm:flex-row">
+                                            <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                            </svg>
+                                            📦 Suivre le retour
+                                        </a>
+                                    @endif
+
                                     <a href="{{ route('client.packages.print', $package) }}" target="_blank"
                                        class="flex items-center px-3 sm:px-4 sm:px-5 py-2.5 sm:py-3.5 sm:py-2 text-sm text-gray-700 hover:bg-gray-100 touch-manipulation flex-col sm:flex-row">
                                         <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

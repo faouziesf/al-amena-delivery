@@ -105,8 +105,26 @@
                                 </td>
 
                                 <td class="py-4 px-4">
-                                    <p class="text-sm text-gray-900">{{ $deliverer->assigned_delegation ?? 'Non assigné' }}</p>
-                                    <p class="text-sm text-gray-500">{{ $deliverer->address ?? 'Adresse non renseignée' }}</p>
+                                    <div class="text-sm">
+                                        <div class="flex flex-wrap gap-1 mb-1">
+                                            @foreach($deliverer->getDelivererGouvernorats() as $gov)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                {{ $gov }}
+                                            </span>
+                                            @endforeach
+                                        </div>
+                                        <p class="text-gray-500 text-xs">
+                                            @if($deliverer->deliverer_type === 'DELEGATION')
+                                                Délégation fixe
+                                            @elseif($deliverer->deliverer_type === 'JOKER')
+                                                Joker (toutes délégations)
+                                            @elseif($deliverer->deliverer_type === 'TRANSIT')
+                                                Transit uniquement
+                                            @else
+                                                {{ $deliverer->deliverer_type }}
+                                            @endif
+                                        </p>
+                                    </div>
                                 </td>
 
                                 <td class="py-4 px-4 text-center">
@@ -161,14 +179,22 @@
                                             </svg>
                                         </a>
 
-                                        <!-- Wallet Management -->
-                                        <button onclick="manageDelivererWallet({{ $deliverer->id }}, '{{ $deliverer->name }}', {{ $deliverer->wallet->balance ?? 0 }}, {{ $deliverer->wallet->advance_balance ?? 0 }})"
+                                        <!-- Vider Wallet -->
+                                        @if(($deliverer->wallet->balance ?? 0) > 0)
+                                        <button onclick="emptyDelivererWallet({{ $deliverer->id }}, '{{ $deliverer->name }}', {{ $deliverer->wallet->balance }})"
                                                 class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100 transition-colors"
-                                                title="Gérer wallet et avances">
+                                                title="Vider le wallet (ajouter à ma caisse)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                             </svg>
                                         </button>
+                                        @else
+                                        <span class="text-gray-400 p-1" title="Wallet vide">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                            </svg>
+                                        </span>
+                                        @endif
 
                                         <a href="{{ route('depot-manager.deliverers.edit', $deliverer) }}"
                                            class="text-blue-600 hover:text-blue-800 transition-colors"
@@ -214,89 +240,6 @@
 
 </div>
 
-<!-- Wallet Management Modal -->
-<div id="deliverer-wallet-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full">
-            <div class="flex justify-between items-center p-6 border-b">
-                <h3 class="text-lg font-bold text-gray-900" id="deliverer-wallet-title">Gérer Wallet & Avances</h3>
-                <button onclick="closeDelivererWalletModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="p-6">
-                <!-- Deliverer Info Section -->
-                <div class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-green-50 rounded-lg border">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-green-500 flex items-center justify-center">
-                            <span class="text-white font-bold text-lg" id="deliverer-wallet-initial">L</span>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900" id="deliverer-wallet-name">Livreur</div>
-                            <div class="grid grid-cols-2 gap-4 mt-2">
-                                <div>
-                                    <div class="text-xs text-gray-600">Solde Principal</div>
-                                    <div class="text-lg font-bold text-blue-600" id="deliverer-current-balance">0.000 DT</div>
-                                </div>
-                                <div>
-                                    <div class="text-xs text-gray-600">Avances</div>
-                                    <div class="text-lg font-bold text-green-600" id="deliverer-current-advance-balance">0.000 DT</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="deliverer-wallet-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Type de Transaction</label>
-                        <select id="deliverer-wallet-action" onchange="updateDelivererWalletActionUI()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-orange-500 focus:border-orange-500">
-                            <optgroup label="💰 Gestion du Solde Principal">
-                                <option value="add">Ajouter des fonds au solde</option>
-                                <option value="deduct">Déduire des fonds du solde</option>
-                            </optgroup>
-                            <optgroup label="💎 Gestion des Avances">
-                                <option value="add_advance">Ajouter une avance</option>
-                                <option value="remove_advance">Retirer une avance</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant (DT)</label>
-                        <input type="number" id="deliverer-wallet-amount" step="0.001" min="0.001" required
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-orange-500 focus:border-orange-500">
-                        <div class="text-xs text-gray-500 mt-1" id="deliverer-wallet-amount-help">
-                            Montant entre 0.001 DT et 10000 DT
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="deliverer-wallet-description" rows="3" required
-                                  placeholder="Motif de l'opération..."
-                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
-                    </div>
-
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" id="deliverer-wallet-submit-btn"
-                                class="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors">
-                            Confirmer l'Opération
-                        </button>
-                        <button type="button" onclick="closeDelivererWalletModal()"
-                                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
-                            Annuler
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 function toggleDelivererStatus(delivererId) {
     if (confirm('Voulez-vous changer le statut de ce livreur ?')) {
@@ -322,125 +265,43 @@ function toggleDelivererStatus(delivererId) {
     }
 }
 
-// Global variables
-let currentDelivererId = null;
-
-// Deliverer Wallet Management Functions
-function manageDelivererWallet(delivererId, delivererName, currentBalance, currentAdvanceBalance = 0) {
-    currentDelivererId = delivererId;
-    document.getElementById('deliverer-wallet-title').textContent = `Wallet & Avances - ${delivererName}`;
-    document.getElementById('deliverer-wallet-name').textContent = delivererName;
-    document.getElementById('deliverer-wallet-initial').textContent = delivererName.charAt(0).toUpperCase();
-    document.getElementById('deliverer-current-balance').textContent = `${parseFloat(currentBalance).toFixed(3)} DT`;
-    document.getElementById('deliverer-current-advance-balance').textContent = `${parseFloat(currentAdvanceBalance).toFixed(3)} DT`;
-
-    // Reset form
-    document.getElementById('deliverer-wallet-action').value = 'add';
-    updateDelivererWalletActionUI();
-
-    document.getElementById('deliverer-wallet-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeDelivererWalletModal() {
-    document.getElementById('deliverer-wallet-modal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-    document.getElementById('deliverer-wallet-form').reset();
-    currentDelivererId = null;
-}
-
-function updateDelivererWalletActionUI() {
-    const action = document.getElementById('deliverer-wallet-action').value;
-    const submitBtn = document.getElementById('deliverer-wallet-submit-btn');
-    const amountHelp = document.getElementById('deliverer-wallet-amount-help');
-    const amountInput = document.getElementById('deliverer-wallet-amount');
-
-    switch(action) {
-        case 'add':
-            submitBtn.textContent = 'Ajouter des Fonds';
-            submitBtn.className = 'flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors';
-            amountHelp.textContent = 'Montant entre 0.001 DT et 10000 DT';
-            amountInput.setAttribute('max', '10000');
-            break;
-        case 'deduct':
-            submitBtn.textContent = 'Déduire des Fonds';
-            submitBtn.className = 'flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors';
-            const currentBalance = parseFloat(document.getElementById('deliverer-current-balance').textContent);
-            amountHelp.textContent = `Maximum disponible: ${currentBalance.toFixed(3)} DT`;
-            amountInput.setAttribute('max', currentBalance);
-            break;
-        case 'add_advance':
-            submitBtn.textContent = 'Ajouter une Avance';
-            submitBtn.className = 'flex-1 bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors';
-            amountHelp.textContent = 'Montant entre 0.001 DT et 1000 DT (pour avances)';
-            amountInput.setAttribute('max', '1000');
-            break;
-        case 'remove_advance':
-            submitBtn.textContent = 'Retirer une Avance';
-            submitBtn.className = 'flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors';
-            const currentAdvanceBalance = parseFloat(document.getElementById('deliverer-current-advance-balance').textContent);
-            amountHelp.textContent = `Maximum disponible: ${currentAdvanceBalance.toFixed(3)} DT`;
-            amountInput.setAttribute('max', currentAdvanceBalance);
-            break;
+function emptyDelivererWallet(delivererId, delivererName, currentBalance) {
+    if (currentBalance <= 0) {
+        alert('Le wallet du livreur est déjà vide.');
+        return;
     }
-}
 
-// Form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const delivererWalletForm = document.getElementById('deliverer-wallet-form');
-    if (delivererWalletForm) {
-        delivererWalletForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    const notes = prompt(`Vider le wallet de ${delivererName} (${currentBalance.toFixed(3)} DT)\n\nNotes (optionnel):`);
+    
+    if (notes === null) return; // User cancelled
 
-            if (!currentDelivererId) return;
-
-            const action = document.getElementById('deliverer-wallet-action').value;
-            const amount = parseFloat(document.getElementById('deliverer-wallet-amount').value);
-            const description = document.getElementById('deliverer-wallet-description').value;
-
-            if (!amount || !description) {
-                alert('Tous les champs sont requis');
-                return;
+    if (confirm(`Confirmer le vidage de ${currentBalance.toFixed(3)} DT du wallet de ${delivererName} vers votre caisse ?`)) {
+        fetch(`/depot-manager/deliverers/${delivererId}/wallet/empty`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                amount: currentBalance,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erreur : ' + data.message);
             }
-
-            try {
-                let endpoint, url;
-
-                if (action === 'add' || action === 'deduct') {
-                    // Deliverer wallet operations
-                    endpoint = action === 'add' ? 'add' : 'deduct';
-                    url = `/depot-manager/deliverers/${currentDelivererId}/wallet/${endpoint}`;
-                } else {
-                    // Advance operations
-                    endpoint = action === 'add_advance' ? 'add' : 'remove';
-                    url = `/depot-manager/deliverers/${currentDelivererId}/advance/${endpoint}`;
-                }
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ amount, description })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    alert(data.message || 'Opération réalisée avec succès');
-                    closeDelivererWalletModal();
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    alert(data.message || 'Erreur lors de l\'opération');
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion');
-            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors du vidage du wallet');
         });
     }
-});
+}
 </script>
 
 @endsection

@@ -50,6 +50,10 @@ Route::post('/depot/scan/{sessionId}/add', [DepotScanController::class, 'addScan
     ->name('depot.scan.add')
     ->where('sessionId', '[0-9a-f-]{36}');
 
+// Vérifier le statut d'un colis (API pour distinguer introuvable vs statut invalide)
+Route::get('/depot/scan/check-package-status', [DepotScanController::class, 'checkPackageStatus'])
+    ->name('depot.scan.check.status');
+
 // Valider tous les colis depuis PC Dashboard OU Téléphone
 Route::post('/depot/scan/{sessionId}/validate-all', [DepotScanController::class, 'validateAllFromPC'])
     ->name('depot.scan.validate.all')
@@ -108,9 +112,24 @@ Route::get('/depot/returns/enter-name', [DepotReturnScanController::class, 'ente
 Route::get('/depot/returns/phone/{sessionId}', [DepotReturnScanController::class, 'phoneScanner'])
     ->name('depot.returns.phone-scanner');
 
+// Ajouter un code scanné au cache (temps réel)
+Route::post('/depot/returns/{sessionId}/add', [DepotReturnScanController::class, 'addScannedCode'])
+    ->name('depot.returns.scan.add')
+    ->where('sessionId', '[0-9a-f-]{36}');
+
 // Valider et créer les colis retours
 Route::post('/depot/returns/{sessionId}/validate', [DepotReturnScanController::class, 'validateAndCreate'])
     ->name('depot.returns.validate')
+    ->where('sessionId', '[0-9a-f-]{36}');
+
+// Heartbeat du PC
+Route::post('/depot/returns/{sessionId}/heartbeat', [DepotReturnScanController::class, 'heartbeat'])
+    ->name('depot.returns.heartbeat')
+    ->where('sessionId', '[0-9a-f-]{36}');
+
+// Terminer la session
+Route::post('/depot/returns/{sessionId}/terminate', [DepotReturnScanController::class, 'terminateSession'])
+    ->name('depot.returns.terminate')
     ->where('sessionId', '[0-9a-f-]{36}');
 
 // Démarrer une nouvelle session
@@ -153,18 +172,31 @@ Route::prefix('depot/returns/api')->name('depot.returns.api.')->group(function (
 });
 
 // ==================== ROUTES DE DEBUG (À SUPPRIMER EN PRODUCTION) ====================
-Route::prefix('depot/debug')->group(function () {
+Route::prefix('depot/debug')->name('depot.debug.')->group(function () {
     // Voir les colis disponibles
     Route::get('/packages', [DepotScanDebugController::class, 'debugPackages'])
-        ->name('depot.debug.packages');
+        ->name('packages');
 
     // Tester la recherche d'un code
     Route::get('/test-search', [DepotScanDebugController::class, 'testSearch'])
-        ->name('depot.debug.search');
+        ->name('search');
 
-    // Créer des colis de test
+    // Créer des colis de test avec différents statuts
     Route::post('/create-test-packages', [DepotScanDebugController::class, 'createTestPackages'])
-        ->name('depot.debug.create');
+        ->name('create');
+
+    // Obtenir l'état d'une session
+    Route::get('/session-status/{sessionId}', [DepotScanDebugController::class, 'sessionStatus'])
+        ->name('session-status')
+        ->where('sessionId', '[0-9a-f-]{36}');
+
+    // Lister toutes les sessions actives
+    Route::get('/active-sessions', [DepotScanDebugController::class, 'activeSessions'])
+        ->name('active-sessions');
+
+    // Nettoyer les colis de test
+    Route::delete('/clean-test-packages', [DepotScanDebugController::class, 'cleanTestPackages'])
+        ->name('clean');
 });
 
 }); // Fin du groupe middleware ngrok.cors

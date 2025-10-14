@@ -96,6 +96,7 @@ class DepotManagerDashboardController extends Controller
         }
 
         $stats = $user->getDepotStats();
+        $stats['depot_wallet_balance'] = $user->depot_wallet_balance ?? 0;
 
         return response()->json([
             'success' => true,

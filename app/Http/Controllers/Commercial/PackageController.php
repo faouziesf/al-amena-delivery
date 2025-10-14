@@ -117,14 +117,19 @@ class PackageController extends Controller
     public function updateStatus(Request $request, Package $package)
     {
         $request->validate([
-            'new_status' => 'required|in:AVAILABLE,ACCEPTED,PICKED_UP,DELIVERED,RETURNED,CANCELLED',
+            'new_status' => 'required|in:AVAILABLE,AT_DEPOT,OUT_FOR_DELIVERY,DELIVERED,RETURNED,REFUSED,UNAVAILABLE',
             'notes' => 'nullable|string|max:500',
-            'deliverer_id' => 'required_if:new_status,ACCEPTED|nullable|exists:users,id',
+            'deliverer_id' => 'required_if:new_status,OUT_FOR_DELIVERY|nullable|exists:users,id',
         ]);
 
+        // GARDE-FOU: Empêcher la modification des états finaux
+        if ($package->isFinalStatus()) {
+            return back()->with('error', 'Impossible de modifier un colis dans un état final (PAID ou RETURN_CONFIRMED).');
+        }
+
         try {
-            // Si on assigne à un livreur
-            if ($request->filled('deliverer_id') && $request->new_status === 'ACCEPTED') {
+            // Si on assigne à un livreur (assignation directe à OUT_FOR_DELIVERY)
+            if ($request->filled('deliverer_id') && $request->new_status === 'OUT_FOR_DELIVERY') {
                 $deliverer = User::where('role', 'DELIVERER')
                                ->where('account_status', 'ACTIVE')
                                ->findOrFail($request->deliverer_id);
@@ -163,10 +168,10 @@ class PackageController extends Controller
             $package->update([
                 'assigned_deliverer_id' => $deliverer->id,
                 'assigned_at' => now(),
-                'status' => 'ACCEPTED'
+                'status' => 'OUT_FOR_DELIVERY'
             ]);
 
-            $package->updateStatus('ACCEPTED', Auth::user(), $request->notes ?? "Assigné à {$deliverer->name}", [
+            $package->updateStatus('OUT_FOR_DELIVERY', Auth::user(), $request->notes ?? "Assigné à {$deliverer->name}", [
                 'assigned_deliverer' => $deliverer->name,
                 'assigned_by_commercial' => true
             ]);
@@ -264,10 +269,10 @@ class PackageController extends Controller
                     $package->update([
                         'assigned_deliverer_id' => $deliverer->id,
                         'assigned_at' => now(),
-                        'status' => 'ACCEPTED'
+                        'status' => 'OUT_FOR_DELIVERY'
                     ]);
 
-                    $package->updateStatus('ACCEPTED', Auth::user(), 
+                    $package->updateStatus('OUT_FOR_DELIVERY', Auth::user(), 
                         $request->notes ?? "Assignation groupée à {$deliverer->name}", 
                         [
                             'bulk_assignment' => true,
@@ -351,7 +356,7 @@ class PackageController extends Controller
 
             $query = Package::with(['sender', 'assignedDeliverer'])
                           ->where('delegation_to', $delegation->id)
-                          ->whereIn('status', ['ACCEPTED', 'PICKED_UP'])
+                          ->whereIn('status', ['OUT_FOR_DELIVERY', 'PICKED_UP'])
                           ->whereDate('created_at', $date);
 
             if ($request->filled('deliverer_id')) {
@@ -458,7 +463,7 @@ class PackageController extends Controller
 
         $packages = Package::with(['sender', 'assignedDeliverer'])
                           ->where('delegation_to', $delegationId)
-                          ->whereIn('status', ['ACCEPTED', 'PICKED_UP'])
+                          ->whereIn('status', ['OUT_FOR_DELIVERY', 'PICKED_UP'])
                           ->orderBy('created_at', 'desc')
                           ->limit(50)
                           ->get()
@@ -535,16 +540,21 @@ class PackageController extends Controller
     public function changeStatus(Request $request, Package $package)
     {
         $request->validate([
-            'new_status' => 'required|string|in:CREATED,AVAILABLE,PICKED_UP,AT_DEPOT,IN_TRANSIT,OUT_FOR_DELIVERY,DELIVERED,PAID,REFUSED,UNAVAILABLE,AWAITING_RETURN,RETURN_IN_PROGRESS,RETURNED_TO_CLIENT',
+            'new_status' => 'required|string|in:CREATED,AVAILABLE,AT_DEPOT,IN_TRANSIT,OUT_FOR_DELIVERY,DELIVERED,PAID,REFUSED,UNAVAILABLE,RETURNED,VERIFIED,AWAITING_RETURN,RETURN_IN_PROGRESS,RETURN_CONFIRMED,RETURN_ISSUE,EXCHANGE_PROCESSED,EXCHANGE_REQUESTED,PROBLEM',
             'change_reason' => 'required|string|max:500',
         ]);
 
         $oldStatus = $package->status;
         $newStatus = $request->new_status;
 
-        // Empêcher certaines transitions dangereuses
-        if ($oldStatus === 'PAID' && !in_array($newStatus, ['PAID'])) {
-            return back()->with('error', 'Impossible de changer le statut d\'un colis PAID (transaction finalisée).');
+        // GARDE-FOU: Empêcher la modification des états finaux
+        if ($package->isFinalStatus()) {
+            return back()->with('error', 'Impossible de modifier un colis dans un état final (PAID ou RETURN_CONFIRMED).');
+        }
+
+        // Empêcher certaines transitions dangereuses supplémentaires
+        if ($oldStatus === 'DELIVERED' && !in_array($newStatus, ['DELIVERED', 'PAID'])) {
+            return back()->with('error', 'Un colis livré ne peut être modifié que vers PAID.');
         }
 
         try {

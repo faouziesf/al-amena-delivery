@@ -31,6 +31,7 @@ class User extends Authenticatable
         'last_login',
         'assigned_delegation',
         'deliverer_type',
+        'deliverer_gouvernorats',
         'delegation_latitude',
         'delegation_longitude',
         'delegation_radius_km',
@@ -39,6 +40,7 @@ class User extends Authenticatable
         'depot_name',
         'depot_address',
         'is_depot_manager',
+        'depot_wallet_balance',
     ];
 
     /**
@@ -61,6 +63,7 @@ class User extends Authenticatable
         'verified_at' => 'datetime',
         'last_login' => 'datetime',
         'password' => 'hashed',
+        'deliverer_gouvernorats' => 'array',
         'assigned_gouvernorats' => 'array',
         'is_depot_manager' => 'boolean',
     ];
@@ -508,6 +511,70 @@ class User extends Authenticatable
     }
 
     /**
+     * Obtenir les gouvernorats assignés au livreur
+     */
+    public function getDelivererGouvernorats()
+    {
+        if (!$this->isDeliverer()) {
+            return [];
+        }
+
+        // Si le livreur a plusieurs gouvernorats (nouveau système)
+        if (!empty($this->deliverer_gouvernorats)) {
+            return is_array($this->deliverer_gouvernorats) 
+                ? $this->deliverer_gouvernorats 
+                : json_decode($this->deliverer_gouvernorats, true) ?? [];
+        }
+
+        // Fallback sur l'ancien système (un seul gouvernorat)
+        if (!empty($this->assigned_delegation)) {
+            return [$this->assigned_delegation];
+        }
+
+        return [];
+    }
+
+    /**
+     * Vérifier si le livreur peut gérer un gouvernorat spécifique
+     */
+    public function canDeliverInGouvernorat($gouvernorat)
+    {
+        if (!$this->isDeliverer()) {
+            return false;
+        }
+
+        // Livreur JOKER peut livrer partout
+        if ($this->deliverer_type === 'JOKER') {
+            return true;
+        }
+
+        // Vérifier si le gouvernorat est dans la liste
+        return in_array($gouvernorat, $this->getDelivererGouvernorats());
+    }
+
+    /**
+     * Obtenir le texte formaté des gouvernorats du livreur
+     */
+    public function getDelivererGouvernoratsTextAttribute()
+    {
+        $gouvernorats = $this->getDelivererGouvernorats();
+        
+        if (empty($gouvernorats)) {
+            return 'Aucun';
+        }
+
+        if ($this->deliverer_type === 'JOKER') {
+            return 'Tous les gouvernorats (JOKER)';
+        }
+
+        if ($this->deliverer_type === 'TRANSIT') {
+            return 'Transit uniquement';
+        }
+
+        return implode(', ', $gouvernorats);
+    }
+
+    /**
      * Vérifier si c'est un commercial
      */
     public function isCommercial()
@@ -627,7 +694,7 @@ class User extends Authenticatable
         
         return [
             'total_packages' => $packages->count(),
-            'in_progress_packages' => $packages->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP'])->count(),
+            'in_progress_packages' => $packages->whereIn('status', ['CREATED', 'AVAILABLE', 'AT_DEPOT', 'OUT_FOR_DELIVERY'])->count(),
             'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
             'returned_packages' => $packages->where('status', 'RETURNED')->count(),
             'total_cod_amount' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->sum('cod_amount'),
@@ -660,7 +727,7 @@ class User extends Authenticatable
             'delivered_packages' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->count(),
             'returned_packages' => $packages->where('status', 'RETURNED')->count(),
             'refused_packages' => $packages->where('status', 'REFUSED')->count(),
-            'pending_packages' => $packages->whereIn('status', ['ACCEPTED', 'PICKED_UP'])->count(),
+            'pending_packages' => $packages->where('status', 'OUT_FOR_DELIVERY')->count(),
             'total_earnings' => $packages->whereIn('status', ['DELIVERED', 'PAID'])->sum('delivery_fee'),
             'wallet_balance' => $this->wallet ? $this->wallet->balance : 0,
         ];
@@ -1139,7 +1206,7 @@ class User extends Authenticatable
                    ->where('account_status', 'ACTIVE')
                    ->whereIn('assigned_delegation', $this->assigned_gouvernorats_array)
                    ->with(['assignedPackages' => function($q) {
-                       $q->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                       $q->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                          ->select('id', 'assigned_deliverer_id', 'status', 'cod_amount');
                    }])
                    ->get();
@@ -1188,7 +1255,7 @@ class User extends Authenticatable
             'total_deliverers' => $deliverers->count(),
             'active_deliverers' => $deliverers->where('account_status', 'ACTIVE')->count(),
             'packages_in_progress' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                                           ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                           ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                            ->count(),
             'delivered_today' => Package::whereIn('assigned_deliverer_id', $delivererIds)
                                       ->where('status', 'DELIVERED')
@@ -1231,5 +1298,140 @@ class User extends Authenticatable
         // À adapter selon la logique métier
         $client = User::find($clientId);
         return $client && $client->role === 'CLIENT';
+    }
+
+    // ==================== MÉTHODES WALLET CHEF DÉPÔT ====================
+
+    /**
+     * Obtenir le solde du wallet du chef dépôt
+     */
+    public function getDepotWalletBalance()
+    {
+        return $this->depot_wallet_balance ?? 0;
+    }
+
+    /**
+     * Ajouter des fonds au wallet du chef dépôt (vidage wallet livreur)
+     */
+    public function addToDepotWallet($amount, $delivererId, $notes = null)
+    {
+        if (!$this->isDepotManager()) {
+            throw new \Exception('Seul un chef dépôt peut avoir un wallet.');
+        }
+
+        $balanceBefore = $this->depot_wallet_balance;
+        $balanceAfter = $balanceBefore + $amount;
+
+        $this->update(['depot_wallet_balance' => $balanceAfter]);
+
+        // Créer une transaction
+        \DB::table('depot_manager_wallet_transactions')->insert([
+            'transaction_code' => 'DWT-' . strtoupper(uniqid()),
+            'depot_manager_id' => $this->id,
+            'type' => 'DELIVERER_EMPTYING',
+            'amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'related_deliverer_id' => $delivererId,
+            'notes' => $notes,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $balanceAfter;
+    }
+
+    /**
+     * Déduire des fonds du wallet du chef dépôt (paiement espèce)
+     */
+    public function deductFromDepotWallet($amount, $withdrawalId = null, $notes = null)
+    {
+        if (!$this->isDepotManager()) {
+            throw new \Exception('Seul un chef dépôt peut avoir un wallet.');
+        }
+
+        if ($this->depot_wallet_balance < $amount) {
+            throw new \Exception('Solde insuffisant dans le wallet du chef dépôt.');
+        }
+
+        $balanceBefore = $this->depot_wallet_balance;
+        $balanceAfter = $balanceBefore - $amount;
+
+        $this->update(['depot_wallet_balance' => $balanceAfter]);
+
+        // Créer une transaction
+        \DB::table('depot_manager_wallet_transactions')->insert([
+            'transaction_code' => 'DWT-' . strtoupper(uniqid()),
+            'depot_manager_id' => $this->id,
+            'type' => 'CASH_PAYMENT',
+            'amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'related_withdrawal_id' => $withdrawalId,
+            'notes' => $notes,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $balanceAfter;
+    }
+
+    /**
+     * Ajustement du wallet par le superviseur
+     */
+    public function adjustDepotWallet($amount, $supervisorId, $type = 'SUPERVISOR_ADJUSTMENT', $notes = null)
+    {
+        if (!$this->isDepotManager()) {
+            throw new \Exception('Seul un chef dépôt peut avoir un wallet.');
+        }
+
+        $balanceBefore = $this->depot_wallet_balance;
+        $balanceAfter = $balanceBefore + $amount;
+
+        if ($balanceAfter < 0) {
+            throw new \Exception('Le solde du wallet ne peut pas être négatif.');
+        }
+
+        $this->update(['depot_wallet_balance' => $balanceAfter]);
+
+        // Créer une transaction
+        \DB::table('depot_manager_wallet_transactions')->insert([
+            'transaction_code' => 'DWT-' . strtoupper(uniqid()),
+            'depot_manager_id' => $this->id,
+            'type' => $type,
+            'amount' => abs($amount),
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'processed_by' => $supervisorId,
+            'notes' => $notes,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $balanceAfter;
+    }
+
+    /**
+     * Obtenir l'historique des transactions du wallet
+     */
+    public function getDepotWalletTransactions($limit = 50)
+    {
+        if (!$this->isDepotManager()) {
+            return collect([]);
+        }
+
+        return \DB::table('depot_manager_wallet_transactions')
+            ->where('depot_manager_id', $this->id)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Relation avec les transactions du wallet
+     */
+    public function depotWalletTransactions()
+    {
+        return $this->hasMany(\App\Models\DepotManagerWalletTransaction::class, 'depot_manager_id');
     }
 }

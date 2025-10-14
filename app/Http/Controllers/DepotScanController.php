@@ -100,10 +100,10 @@ class DepotScanController extends Controller
         $session['connected_at'] = now();
         Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
 
-        // Charger TOUS les colis valides pour scan dépôt (validation locale)
-        // Statuts REFUSÉS: DELIVERED, PAID, VERIFIED, RETURNED, CANCELLED, REFUSED, DELIVERED_PAID
+        // Charger UNIQUEMENT les colis avec statuts acceptés pour scan dépôt
+        // Statuts ACCEPTÉS: CREATED, AVAILABLE, PICKED_UP, OUT_FOR_DELIVERY, AT_DEPOT
         $packages = DB::table('packages')
-            ->whereNotIn('status', ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'])
+            ->whereIn('status', ['CREATED', 'AVAILABLE', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'AT_DEPOT'])
             ->select('id', 'package_code as c', 'status as s', 'depot_manager_name as d')
             ->get()
             ->map(function($pkg) use ($session) {
@@ -209,9 +209,8 @@ class DepotScanController extends Controller
         // Supprimer les doublons
         $searchVariants = array_unique($searchVariants);
         
-        // Statuts ACCEPTÉS pour scan dépôt (exclusion des statuts finaux)
-        $rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
-        $acceptedStatuses = ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'UNAVAILABLE', 'AT_DEPOT'];
+        // Statuts ACCEPTÉS pour scan dépôt : CREATED, AVAILABLE, PICKED_UP, OUT_FOR_DELIVERY, AT_DEPOT
+        $acceptedStatuses = ['CREATED', 'AVAILABLE', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'AT_DEPOT'];
         
         // Rechercher avec TOUTES les variantes
         foreach ($searchVariants as $variant) {
@@ -516,7 +515,19 @@ class DepotScanController extends Controller
             return redirect()->route('depot.enter.code')->withErrors(['code' => 'Session terminée. Entrez un nouveau code.']);
         }
 
-        // Rediriger vers le scanner
+        // DÉTECTION AUTOMATIQUE DU TYPE DE SCAN
+        $scanType = $session['scan_type'] ?? 'depot';
+        
+        \Log::info("Redirection automatique", [
+            'scan_type' => $scanType,
+            'sessionId' => $sessionId
+        ]);
+        
+        // Rediriger vers la bonne interface selon le type
+        if ($scanType === 'returns') {
+            return redirect()->route('depot.returns.phone-scanner', ['sessionId' => $sessionId]);
+        }
+        
         return redirect()->route('depot.scan.phone', ['sessionId' => $sessionId]);
     }
 
@@ -565,7 +576,19 @@ class DepotScanController extends Controller
             return back()->withErrors(['code' => 'Cette session a déjà été terminée. Entrez un nouveau code.'])->withInput();
         }
 
-        // Rediriger vers le scanner avec le sessionId
+        // DÉTECTION AUTOMATIQUE DU TYPE DE SCAN
+        $scanType = $session['scan_type'] ?? 'depot';
+        
+        \Log::info("Redirection automatique (POST)", [
+            'scan_type' => $scanType,
+            'sessionId' => $sessionId
+        ]);
+        
+        // Rediriger vers la bonne interface selon le type
+        if ($scanType === 'returns') {
+            return redirect()->route('depot.returns.phone-scanner', ['sessionId' => $sessionId]);
+        }
+        
         return redirect()->route('depot.scan.phone', ['sessionId' => $sessionId]);
     }
 
@@ -626,5 +649,57 @@ class DepotScanController extends Controller
         }
 
         return response()->json(['success' => false], 404);
+    }
+
+    /**
+     * Vérifier le statut réel d'un colis dans la base de données
+     * API pour distinguer "introuvable" vs "statut invalide"
+     */
+    public function checkPackageStatus(Request $request)
+    {
+        $code = strtoupper(trim($request->input('code')));
+        
+        // Rechercher avec variantes
+        $searchVariants = [
+            $code,
+            str_replace('_', '', $code),
+            str_replace('-', '', $code),
+            str_replace(['_', '-', ' '], '', $code),
+        ];
+        
+        $searchVariants = array_unique($searchVariants);
+        
+        $package = null;
+        foreach ($searchVariants as $variant) {
+            $package = DB::table('packages')
+                ->where('package_code', $variant)
+                ->select('package_code', 'status')
+                ->first();
+            
+            if ($package) {
+                break;
+            }
+        }
+        
+        // Si toujours pas trouvé, recherche LIKE
+        if (!$package) {
+            $cleanCode = str_replace(['_', '-', ' '], '', $code);
+            $package = DB::table('packages')
+                ->where(DB::raw('REPLACE(REPLACE(REPLACE(UPPER(package_code), "_", ""), "-", ""), " ", "")'), $cleanCode)
+                ->select('package_code', 'status')
+                ->first();
+        }
+        
+        if ($package) {
+            return response()->json([
+                'found' => true,
+                'code' => $package->package_code,
+                'status' => $package->status
+            ]);
+        }
+        
+        return response()->json([
+            'found' => false
+        ]);
     }
 }

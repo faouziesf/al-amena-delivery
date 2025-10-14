@@ -74,7 +74,7 @@
                     <select name="status" id="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         <option value="">Tous les statuts</option>
                         <option value="AVAILABLE" {{ request('status') === 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
-                        <option value="ACCEPTED" {{ request('status') === 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
+                        <option value="OUT_FOR_DELIVERY" {{ request('status') === 'OUT_FOR_DELIVERY' ? 'selected' : '' }}>En livraison</option>
                         <option value="PICKED_UP" {{ request('status') === 'PICKED_UP' ? 'selected' : '' }}>Récupéré</option>
                         <option value="DELIVERED" {{ request('status') === 'DELIVERED' ? 'selected' : '' }}>Livré</option>
                         <option value="RETURNED" {{ request('status') === 'RETURNED' ? 'selected' : '' }}>Retourné</option>
@@ -180,7 +180,7 @@
                                 @php
                                     $statusColors = [
                                         'AVAILABLE' => 'bg-yellow-100 text-yellow-800',
-                                        'ACCEPTED' => 'bg-blue-100 text-blue-800',
+                                        'OUT_FOR_DELIVERY' => 'bg-blue-100 text-blue-800',
                                         'PICKED_UP' => 'bg-orange-100 text-orange-800',
                                         'DELIVERED' => 'bg-green-100 text-green-800',
                                         'RETURNED' => 'bg-red-100 text-red-800',

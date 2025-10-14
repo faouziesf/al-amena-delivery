@@ -250,19 +250,16 @@
             </div>
         </div>
 
-        <!-- Validation - Termine la session après -->
+        <!-- Info: Validation depuis PC uniquement -->
         <div x-show="scannedCodes.length > 0" 
-             class="fixed left-0 right-0 bottom-0 p-4 bg-white border-t-2 border-gray-200 shadow-2xl">
-            <button @click="validateAndFinish()" 
-                    :disabled="processing"
-                    class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 disabled:opacity-50 shadow-lg text-lg">
-                <span x-show="!processing">
-                    ✅ Créer ReturnPackages (<span x-text="scannedCodes.length"></span> colis)
-                </span>
-                <span x-show="processing">
-                    ⏳ Traitement en cours...
-                </span>
-            </button>
+             class="fixed left-0 right-0 bottom-0 p-4 bg-gradient-to-r from-orange-500 to-red-600 border-t-2 border-red-700 shadow-2xl">
+            <div class="text-center text-white">
+                <div class="text-3xl font-black mb-2" x-text="scannedCodes.length"></div>
+                <div class="text-sm font-semibold">↩️ Retours scannés</div>
+                <div class="text-xs mt-2 opacity-90">
+                    💻 Validez depuis le PC pour créer les colis retours
+                </div>
+            </div>
         </div>
     </div>
 
@@ -428,48 +425,19 @@ function depotScannerApp() {
             console.log('✅ Colis trouvé:', packageData);
             console.log('Statut du colis:', packageData.status);
 
-            // Cas spécial: AT_DEPOT - vérifier si même dépôt
-            if (packageData.status === 'AT_DEPOT') {
-                const depotName = packageData.d; // Nom du dépôt actuel du colis
-                const currentDepot = packageData.current_depot; // Nom du dépôt qui scanne
-
-                if (depotName === currentDepot) {
-                    // Même dépôt - rejeter
-                    this.codeStatus = 'wrong_status';
-                    this.statusMessage = `Déjà au dépôt ${depotName}`;
-                    console.log('❌ Même dépôt:', depotName);
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
-                    return;
-                }
-                // Dépôt différent - accepter (transfert)
-                console.log('✅ Transfert dépôt:', depotName, '→', currentDepot);
-            }
-
-            // Vérifier statut - Rejeter les colis avec statuts finaux
-            const rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
-            const rejectedMessages = {
-                'DELIVERED': 'Statut invalide: DELIVERED',
-                'PAID': 'Statut invalide: PAID',
-                'VERIFIED': 'Statut invalide: VERIFIED',
-                'RETURNED': 'Statut invalide: RETURNED',
-                'CANCELLED': 'Statut invalide: CANCELLED',
-                'REFUSED': 'Statut invalide: REFUSED',
-                'DELIVERED_PAID': 'Statut invalide: DELIVERED_PAID'
-            };
-
-            console.log('🔍 Vérification statut:', packageData.status, 'Rejetés:', rejectedStatuses);
-            if (rejectedStatuses.includes(packageData.status)) {
+            // VÉRIFICATION SPÉCIFIQUE RETOURS: Seul RETURN_IN_PROGRESS est accepté
+            if (packageData.status !== 'RETURN_IN_PROGRESS') {
                 this.codeStatus = 'wrong_status';
-                this.statusMessage = `Statut non autorisé: ${rejectedMessages[packageData.status] || packageData.status}`;
-                console.log('❌ Statut rejeté:', packageData.status);
+                this.statusMessage = `Statut invalide: ${packageData.status}. Attendu: RETURN_IN_PROGRESS`;
+                console.log('❌ Statut rejeté:', packageData.status, '(attendu: RETURN_IN_PROGRESS)');
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
                 return;
             }
 
-            // Valide - Accepter tous les autres statuts
+            // Valide - Statut RETURN_IN_PROGRESS accepté
             this.codeStatus = 'valid';
-            this.statusMessage = `Colis valide (${packageData.status})`;
-            console.log('✅ Statut accepté:', packageData.status);
+            this.statusMessage = `Colis retour valide`;
+            console.log('✅ Statut accepté: RETURN_IN_PROGRESS');
             if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
         },
         
@@ -500,7 +468,7 @@ function depotScannerApp() {
             
             // Envoyer au serveur (mise à jour cache temps réel)
             try {
-                const response = await fetch(`/depot/scan/{{ $sessionId }}/add`, {
+                const response = await fetch(`/depot/returns/{{ $sessionId }}/add`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -760,47 +728,13 @@ function depotScannerApp() {
                 }, 1500);
                 return;
             }
-            
-            // Cas spécial: AT_DEPOT - vérifier si même dépôt (caméra)
-            if (packageData.status === 'AT_DEPOT') {
-                const depotName = packageData.d;
-                const currentDepot = packageData.current_depot;
 
-                if (depotName === currentDepot) {
-                    // Même dépôt - rejeter
-                    this.statusText = `⚠️ ${code} - Déjà au dépôt ${depotName}`;
-                    this.showFlash('error');
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
-                    console.log('📷 Même dépôt:', depotName);
-                    setTimeout(() => {
-                        if (this.cameraActive) {
-                            this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
-                        }
-                    }, 2000);
-                    return;
-                }
-                // Dépôt différent - accepter (transfert)
-                console.log('📷 Transfert dépôt:', depotName, '→', currentDepot);
-            }
-
-            // Vérifier statut - Rejeter les colis avec statuts finaux
-            const rejectedStatuses = ['DELIVERED', 'PAID', 'VERIFIED', 'RETURNED', 'CANCELLED', 'REFUSED', 'DELIVERED_PAID'];
-            const rejectedMessages = {
-                'DELIVERED': 'Statut invalide: DELIVERED',
-                'PAID': 'Statut invalide: PAID',
-                'VERIFIED': 'Statut invalide: VERIFIED',
-                'RETURNED': 'Statut invalide: RETURNED',
-                'CANCELLED': 'Statut invalide: CANCELLED',
-                'REFUSED': 'Statut invalide: REFUSED',
-                'DELIVERED_PAID': 'Statut invalide: DELIVERED_PAID'
-            };
-
-            if (rejectedStatuses.includes(packageData.status)) {
-                const message = rejectedMessages[packageData.status] || packageData.status;
-                this.statusText = `⚠️ ${code} - Statut non autorisé: ${message}`;
+            // VALIDATION STRICTE RETOURS : Seul RETURN_IN_PROGRESS est accepté
+            if (packageData.status !== 'RETURN_IN_PROGRESS') {
+                this.statusText = `⚠️ ${code} - Statut invalide: ${packageData.status}. Attendu: RETURN_IN_PROGRESS`;
                 this.showFlash('error');
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
-                console.log('📷 Statut rejeté (caméra):', packageData.status, '-', message);
+                console.log('❌ Statut rejeté (caméra):', packageData.status, '(attendu: RETURN_IN_PROGRESS)');
                 setTimeout(() => {
                     if (this.cameraActive) {
                         this.statusText = `📷 ${this.scannedCodes.length} code(s)`;
@@ -844,7 +778,7 @@ function depotScannerApp() {
         // Synchronisation serveur en arrière-plan
         async syncToServerAsync(code) {
             try {
-                await fetch(`/depot/scan/{{ $sessionId }}/add`, {
+                await fetch(`/depot/returns/{{ $sessionId }}/add`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -887,8 +821,9 @@ function depotScannerApp() {
             }
         },
         
-        // Valider et terminer la session
-        async validateAndFinish() {
+        // MÉTHODE SUPPRIMÉE : La validation se fait uniquement depuis le PC
+        // Le téléphone sert uniquement à scanner, pas à valider
+        async validateAndFinish_REMOVED() {
             if (this.scannedCodes.length === 0) {
                 alert('Aucun code à valider');
                 return;
@@ -902,7 +837,7 @@ function depotScannerApp() {
             
             try {
                 // CORRECTION NGROK : Envoyer requête JSON avec headers appropriés
-                const response = await fetch(`/depot/scan/{{ $sessionId }}/validate-all`, {
+                const response = await fetch(`/depot/returns/{{ $sessionId }}/validate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -961,13 +896,14 @@ function depotScannerApp() {
             }, 500);
         },
 
-        // Vérifier le heartbeat du PC
+        // Vérifier le heartbeat du PC (AMÉLIORÉ - RETOURS)
         async checkSessionActivity() {
             try {
-                const response = await fetch(`/depot/api/session/{{ $sessionId }}/check-activity`);
+                const response = await fetch(`/depot/returns/api/session/{{ $sessionId }}/check-activity`);
 
                 if (!response.ok) {
                     // Session n'existe plus
+                    console.log('❌ Session expirée ou introuvable');
                     this.stopCamera();
                     this.showSessionTerminatedPopup('expired');
                     return;
@@ -976,9 +912,14 @@ function depotScannerApp() {
                 const data = await response.json();
 
                 if (!data.active) {
-                    console.log('🛑 Session terminée - Raison:', data.reason);
+                    console.log('🛑 Session terminée par le Chef de Dépôt');
+                    console.log('Raison:', data.reason || 'Validation effectuée');
+                    
+                    // Arrêter immédiatement la caméra
                     this.stopCamera();
-                    this.showSessionTerminatedPopup(data.reason);
+                    
+                    // Afficher popup plein écran
+                    this.showSessionTerminatedPopup(data.reason || 'completed');
 
                     // Désactiver tous les boutons et inputs
                     document.querySelectorAll('input, button').forEach(el => {
@@ -1013,37 +954,46 @@ function depotScannerApp() {
             }
 
             const reasons = {
-                'expired': 'La session a expiré',
-                'completed': 'La validation a été effectuée par le chef de dépôt',
-                'inactivity': 'Session inactive pendant 30 minutes',
-                'pc_closed': 'Le PC a été fermé'
+                'completed': '✅ Session Terminée par le Chef de Dépôt',
+                'expired': '⏰ Session Expirée',
+                'inactivity': '💤 Session Terminée (Inactivité)',
+                'default': '🛑 Session Terminée'
             };
 
-            const message = reasons[reason] || 'Session terminée';
+            const title = reasons[reason] || reasons['default'];
+            const message = reason === 'completed' 
+                ? '↩️ Les colis retours ont été créés avec succès par le Chef de Dépôt.'
+                : 'La session de scan retours a été terminée.';
 
             console.log('🛑 Affichage popup session terminée:', reason);
 
-            // Créer le popup
             const popup = document.createElement('div');
             popup.id = 'session-popup';
             popup.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 99999; display: flex; align-items: center; justify-center; padding: 20px;">
-                    <div style="background: white; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
-                        <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
-                        <h2 style="font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #1f2937;">Session Terminée</h2>
-                        <p style="color: #6b7280; margin-bottom: 15px; font-size: 16px; line-height: 1.6;">${message}</p>
-                        <p style="color: #10b981; font-weight: 600; margin-bottom: 30px; font-size: 14px;">Les colis ont été validés avec succès !</p>
-                        <a href="/depot/enter-code"
-                           style="display: block; background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; padding: 18px 35px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;">
-                            🔑 Saisir un Nouveau Code
-                        </a>
-                        <p style="color: #9ca3af; margin-top: 20px; font-size: 12px;">Scannez un nouveau QR code ou saisissez le code à 8 chiffres</p>
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div style="background: white; border-radius: 24px; padding: 50px 30px; max-width: 450px; width: 100%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+                        <div style="font-size: 100px; margin-bottom: 25px; animation: bounce 1s ease-in-out;">${reason === 'completed' ? '✅' : '🛑'}</div>
+                        <h2 style="font-size: 28px; font-weight: 900; margin-bottom: 20px; color: #1f2937;">${title}</h2>
+                        <p style="color: #4b5563; margin-bottom: 25px; font-size: 17px; line-height: 1.6;">${message}</p>
+                        <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 2px solid #f59e0b;">
+                            <p style="color: #92400e; font-size: 15px; margin-bottom: 10px;">💻 <strong>Validation depuis le PC</strong></p>
+                            <p style="color: #b45309; font-size: 13px;">Seul le Chef de Dépôt peut créer les colis retours depuis l'interface PC.</p>
+                        </div>
+                        <button onclick="window.close()" style="width: 100%; background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; padding: 18px 30px; border-radius: 14px; border: none; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            ✖️ Fermer cette Page
+                        </button>
+                        <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">Vous pouvez fermer cet onglet en toute sécurité</p>
                     </div>
                 </div>
+                <style>
+                    @keyframes bounce {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-20px); }
+                    }
+                </style>
             `;
             document.body.appendChild(popup);
 
-            // Vibration pour alerter l'utilisateur
             if (navigator.vibrate) {
                 navigator.vibrate([200, 100, 200, 100, 200]);
             }

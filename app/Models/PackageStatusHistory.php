@@ -61,7 +61,7 @@ class PackageStatusHistory extends Model
         return match($status) {
             'CREATED' => 'Créé',
             'AVAILABLE' => 'Disponible',
-            'ACCEPTED' => 'Accepté',
+            'OUT_FOR_DELIVERY' => 'En livraison',
             'PICKED_UP' => 'Collecté',
             'DELIVERED' => 'Livré',
             'PAID' => 'Payé',
@@ -94,7 +94,7 @@ class PackageStatusHistory extends Model
         return match($this->new_status) {
             'CREATED' => 'text-gray-600 bg-gray-100',
             'AVAILABLE' => 'text-blue-600 bg-blue-100',
-            'ACCEPTED' => 'text-purple-600 bg-purple-100',
+            'OUT_FOR_DELIVERY' => 'text-purple-600 bg-purple-100',
             'PICKED_UP' => 'text-indigo-600 bg-indigo-100',
             'DELIVERED' => 'text-green-600 bg-green-100',
             'PAID' => 'text-green-800 bg-green-200',

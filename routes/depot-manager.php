@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     // ==================== GESTION DES LIVREURS ====================
     Route::prefix('deliverers')->name('deliverers.')->group(function () {
         Route::get('/', [DepotManagerDelivererController::class, 'index'])->name('index');
+        Route::get('/stats', [DepotManagerDelivererController::class, 'stats'])->name('stats');
         Route::get('/create', [DepotManagerDelivererController::class, 'create'])->name('create');
         Route::post('/', [DepotManagerDelivererController::class, 'store'])->name('store');
         Route::get('/{deliverer}', [DepotManagerDelivererController::class, 'show'])->name('show');
@@ -37,11 +38,8 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
         Route::post('/{deliverer}/toggle-status', [DepotManagerDelivererController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{deliverer}/reassign-packages', [DepotManagerDelivererController::class, 'reassignPackages'])->name('reassign-packages');
 
-        // Wallet Management Routes
-        Route::post('/{deliverer}/wallet/add', [DepotManagerDelivererController::class, 'addFunds'])->name('wallet.add');
-        Route::post('/{deliverer}/wallet/deduct', [DepotManagerDelivererController::class, 'deductFunds'])->name('wallet.deduct');
-        Route::post('/{deliverer}/advance/add', [DepotManagerDelivererController::class, 'addAdvance'])->name('advance.add');
-        Route::post('/{deliverer}/advance/remove', [DepotManagerDelivererController::class, 'removeAdvance'])->name('advance.remove');
+        // Wallet Management Routes - Chef dépôt peut uniquement vider le wallet complet
+        Route::post('/{deliverer}/wallet/empty', [DepotManagerDelivererController::class, 'emptyDelivererWallet'])->name('wallet.empty');
     });
 
     // ==================== GESTION DES COLIS ====================
@@ -58,12 +56,16 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
         // ==================== ACTIONS REQUISES DASHBOARD ====================
         Route::get('/dashboard-actions', [DepotManagerPackageController::class, 'dashboardActions'])->name('dashboard-actions');
         Route::get('/{package}/details', [DepotManagerPackageController::class, 'packageDetails'])->name('details');
-        Route::post('/process-all-returns', [DepotManagerPackageController::class, 'processAllReturns'])->name('process-all-returns');
 
         Route::get('/{package}', [DepotManagerPackageController::class, 'show'])->name('show');
         Route::post('/{package}/reassign', [DepotManagerPackageController::class, 'reassign'])->name('reassign');
-        Route::post('/{package}/process-return', [DepotManagerPackageController::class, 'processReturn'])->name('process-return');
-        Route::post('/process-return-dashboard', [DepotManagerPackageController::class, 'processReturnFromDashboard'])->name('process-return-dashboard');
+        
+        // ROUTES SUPPRIMÉES (anciennes routes de retour obsolètes):
+        // - process-all-returns
+        // - process-return
+        // - process-return-dashboard
+        // Ces fonctionnalités sont maintenant gérées par le nouveau système de retours
+        
         Route::get('/{package}/return-receipt', [DepotManagerPackageController::class, 'printReturnReceipt'])->name('return-receipt');
         Route::post('/create-return-package', [DepotManagerPackageController::class, 'createReturnPackage'])->name('create-return-package');
         Route::get('/{package}/delivery-receipt', [DepotManagerPackageController::class, 'deliveryReceipt'])->name('delivery-receipt');

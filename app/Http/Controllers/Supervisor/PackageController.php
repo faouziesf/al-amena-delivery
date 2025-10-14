@@ -61,11 +61,10 @@ class PackageController extends Controller
             'total_packages' => Package::count(),
             'created_packages' => Package::where('status', 'CREATED')->count(),
             'available_packages' => Package::where('status', 'AVAILABLE')->count(),
-            'accepted_packages' => Package::where('status', 'ACCEPTED')->count(),
+            'out_for_delivery_packages' => Package::where('status', 'OUT_FOR_DELIVERY')->count(),
             'picked_up_packages' => Package::where('status', 'PICKED_UP')->count(),
             'delivered_packages' => Package::where('status', 'DELIVERED')->count(),
             'returned_packages' => Package::where('status', 'RETURNED')->count(),
-            'cancelled_packages' => Package::where('status', 'CANCELLED')->count(),
         ];
 
         $delegations = \App\Models\Delegation::where('active', true)->get();
@@ -160,7 +159,7 @@ class PackageController extends Controller
     public function updateStatus(Request $request, Package $package)
     {
         $request->validate([
-            'status' => 'required|in:CREATED,AVAILABLE,ACCEPTED,PICKED_UP,DELIVERED,RETURNED,REFUSED,CANCELLED',
+            'status' => 'required|in:CREATED,AVAILABLE,OUT_FOR_DELIVERY,PICKED_UP,DELIVERED,RETURNED,REFUSED',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -174,8 +173,8 @@ class PackageController extends Controller
 
             // Mettre à jour les dates selon le statut
             switch ($request->status) {
-                case 'ACCEPTED':
-                    $package->update(['acceptance_date' => now()]);
+                case 'OUT_FOR_DELIVERY':
+                    $package->update(['assigned_at' => now()]);
                     break;
                 case 'PICKED_UP':
                     $package->update(['pickup_date' => now()]);
@@ -220,7 +219,7 @@ class PackageController extends Controller
 
         $package->update([
             'assigned_deliverer_id' => $request->deliverer_id,
-            'status' => 'ACCEPTED',
+            'status' => 'OUT_FOR_DELIVERY',
             'assigned_at' => now(),
         ]);
 

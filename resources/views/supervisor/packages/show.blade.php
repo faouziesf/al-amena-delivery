@@ -21,7 +21,7 @@
                     <span class="px-3 py-1 rounded-full text-sm font-medium
                         @if($package->status === 'CREATED') bg-gray-100 text-gray-800
                         @elseif($package->status === 'AVAILABLE') bg-blue-100 text-blue-800
-                        @elseif($package->status === 'ACCEPTED') bg-yellow-100 text-yellow-800
+                        @elseif($package->status === 'OUT_FOR_DELIVERY') bg-yellow-100 text-yellow-800
                         @elseif($package->status === 'PICKED_UP') bg-orange-100 text-orange-800
                         @elseif($package->status === 'DELIVERED') bg-green-100 text-green-800
                         @elseif($package->status === 'RETURNED') bg-red-100 text-red-800
@@ -331,7 +331,7 @@
                     <select name="status" class="w-full border-gray-300 rounded-lg">
                         <option value="CREATED" {{ $package->status === 'CREATED' ? 'selected' : '' }}>Créé</option>
                         <option value="AVAILABLE" {{ $package->status === 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
-                        <option value="ACCEPTED" {{ $package->status === 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
+                        <option value="OUT_FOR_DELIVERY" {{ $package->status === 'OUT_FOR_DELIVERY' ? 'selected' : '' }}>En livraison</option>
                         <option value="PICKED_UP" {{ $package->status === 'PICKED_UP' ? 'selected' : '' }}>Collecté</option>
                         <option value="DELIVERED" {{ $package->status === 'DELIVERED' ? 'selected' : '' }}>Livré</option>
                         <option value="RETURNED" {{ $package->status === 'RETURNED' ? 'selected' : '' }}>Retourné</option>

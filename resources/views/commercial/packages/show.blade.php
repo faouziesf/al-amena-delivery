@@ -366,6 +366,19 @@
                 </div>
                 <div class="p-6">
                     <div class="space-y-3">
+                        <!-- Bouton 4ème tentative (si applicable) -->
+                        @if($package->status === 'AWAITING_RETURN' && $package->unavailable_attempts >= 3)
+                        <form action="{{ route('commercial.packages.launch.fourth.attempt', $package) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir lancer une 4ème tentative de livraison ?');">
+                            @csrf
+                            <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Lancer 4ème Tentative
+                            </button>
+                        </form>
+                        @endif
+
                         <button onclick="openAssignModal()" class="w-full inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -378,9 +391,9 @@
                             </svg>
                             Modifier COD
                         </button>
-                        <button onclick="openStatusModal()" class="w-full inline-flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium">
+                        <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                             Changer statut
                         </button>
@@ -468,37 +481,6 @@
                     </div>
                 </div>
 
-                <!-- Actions commerciales (dans section retours si applicable) -->
-                <div class="border-t-2 border-orange-200 pt-6">
-                    <h3 class="font-bold text-orange-900 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                        Actions Disponibles
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @if($package->status === 'AWAITING_RETURN')
-                        <!-- Bouton 4ème tentative -->
-                        <form action="{{ route('commercial.packages.launch.fourth.attempt', $package) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir lancer une 4ème tentative de livraison ?');">
-                            @csrf
-                            <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                </svg>
-                                Lancer 4ème Tentative
-                            </button>
-                        </form>
-                        @endif
-
-                        <!-- Bouton changement manuel de statut -->
-                        <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                            Changer le Statut
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Colis retour associé -->
                 @if($package->returnPackage)
@@ -535,43 +517,6 @@
                     </div>
                 </div>
                 @endif
-            </div>
-        </div>
-        @endif
-
-        <!-- Section Actions Commerciales (visible pour tous les statuts NON retour) -->
-        @if(!in_array($package->status, ['AWAITING_RETURN', 'RETURN_IN_PROGRESS', 'RETURNED_TO_CLIENT', 'RETURN_CONFIRMED', 'RETURN_ISSUE']))
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-8">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    Actions Commerciales
-                </h2>
-                <p class="text-purple-100 text-sm mt-1">Gestion et modifications du colis</p>
-            </div>
-
-            <div class="p-6">
-                <button onclick="openManualStatusModal()" class="w-full inline-flex items-center justify-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all transform hover:scale-105 font-semibold shadow-lg">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    Changer le Statut Manuellement
-                </button>
-
-                <!-- Note d'information -->
-                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-sm text-blue-800">
-                            <p class="font-semibold mb-1">À propos du changement de statut</p>
-                            <p>Le changement manuel de statut nécessite une justification obligatoire. Tous les statuts sont disponibles, y compris les statuts de retour comme <strong>RETURN_IN_PROGRESS</strong>.</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         @endif

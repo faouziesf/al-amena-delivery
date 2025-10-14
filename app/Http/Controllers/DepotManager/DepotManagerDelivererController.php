@@ -45,7 +45,7 @@ class DepotManagerDelivererController extends Controller
         }
 
         $deliverers = $query->with(['assignedPackages' => function($q) {
-                               $q->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE']);
+                               $q->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE']);
                            }])
                            ->orderBy('account_status')
                            ->orderBy('assigned_delegation')
@@ -69,7 +69,7 @@ class DepotManagerDelivererController extends Controller
         // Statistiques du livreur
         $stats = [
             'packages_in_progress' => Package::where('assigned_deliverer_id', $deliverer->id)
-                                           ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                           ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                            ->count(),
             'delivered_this_month' => Package::where('assigned_deliverer_id', $deliverer->id)
                                            ->where('status', 'DELIVERED')
@@ -91,7 +91,7 @@ class DepotManagerDelivererController extends Controller
 
         // Colis actuels
         $currentPackages = Package::where('assigned_deliverer_id', $deliverer->id)
-                                 ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                 ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                  ->with(['sender', 'delegationFrom', 'delegationTo'])
                                  ->orderBy('created_at', 'desc')
                                  ->get();
@@ -137,18 +137,23 @@ class DepotManagerDelivererController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'assigned_delegation' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
+            'deliverer_gouvernorats' => 'required|array|min:1',
+            'deliverer_gouvernorats.*' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
             'address' => 'nullable|string|max:500',
         ]);
 
         DB::transaction(function () use ($request, $user) {
+            // Utiliser le premier gouvernorat comme assigned_delegation (pour compatibilité)
+            $firstGouvernorat = $request->deliverer_gouvernorats[0];
+            
             $deliverer = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
                 'role' => 'DELIVERER',
-                'assigned_delegation' => $request->assigned_delegation,
+                'assigned_delegation' => $firstGouvernorat,
+                'deliverer_gouvernorats' => $request->deliverer_gouvernorats,
                 'address' => $request->address,
                 'deliverer_type' => 'DELEGATION', // Chef dépôt ne peut créer que des livreurs DELEGATION
                 'account_status' => 'ACTIVE',
@@ -204,16 +209,21 @@ class DepotManagerDelivererController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $deliverer->id,
             'phone' => 'required|string|max:20',
-            'assigned_delegation' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
+            'deliverer_gouvernorats' => 'required|array|min:1',
+            'deliverer_gouvernorats.*' => 'required|string|in:' . implode(',', $user->assigned_gouvernorats_array),
             'address' => 'nullable|string|max:500',
             'account_status' => 'required|string|in:ACTIVE,SUSPENDED',
         ]);
+
+        // Utiliser le premier gouvernorat comme assigned_delegation (pour compatibilité)
+        $firstGouvernorat = $request->deliverer_gouvernorats[0];
 
         $deliverer->update([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'assigned_delegation' => $request->assigned_delegation,
+            'assigned_delegation' => $firstGouvernorat,
+            'deliverer_gouvernorats' => $request->deliverer_gouvernorats,
             'address' => $request->address,
             'account_status' => $request->account_status,
             // deliverer_type reste DELEGATION et n'est pas modifiable par chef dépôt
@@ -267,7 +277,7 @@ class DepotManagerDelivererController extends Controller
 
         DB::transaction(function () use ($request, $deliverer, $newDeliverer) {
             $packageQuery = Package::where('assigned_deliverer_id', $deliverer->id)
-                                  ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE']);
+                                  ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE']);
 
             if ($request->filled('package_ids')) {
                 $packageQuery->whereIn('id', $request->package_ids);
@@ -278,7 +288,18 @@ class DepotManagerDelivererController extends Controller
             foreach ($packages as $package) {
                 $package->update([
                     'assigned_deliverer_id' => $newDeliverer->id,
-                    'status' => 'ACCEPTED' // Reset status for new deliverer
+                    'reassigned_at' => now(),
+                    'reassigned_by' => $deliverer->id,
+                    'reassignment_reason' => 'Réassignation par chef de dépôt'
+                    // Le statut reste OUT_FOR_DELIVERY
+                ]);
+                
+                // Enregistrer dans l'historique
+                $package->statusHistory()->create([
+                    'status' => 'OUT_FOR_DELIVERY',
+                    'changed_by' => auth()->id(),
+                    'notes' => "Réassigné de {$deliverer->name} à {$newDeliverer->name}",
+                    'created_at' => now()
                 ]);
             }
         });
@@ -287,45 +308,10 @@ class DepotManagerDelivererController extends Controller
     }
 
     /**
-     * Ajouter des fonds au wallet d'un livreur
+     * Vider le wallet d'un livreur (transfert vers wallet chef dépôt)
+     * SEULE OPÉRATION AUTORISÉE pour le chef dépôt sur les wallets livreurs
      */
-    public function addFunds(Request $request, User $deliverer)
-    {
-        $user = Auth::user();
-
-        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
-            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
-        }
-
-        $request->validate([
-            'amount' => 'required|numeric|min:0.001|max:10000',
-            'description' => 'required|string|max:500'
-        ]);
-
-        try {
-            DB::transaction(function () use ($request, $deliverer, $user) {
-                $wallet = $deliverer->ensureWallet();
-                $wallet->addFunds($request->amount, $user->id, $request->description);
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => "Fonds ajoutés avec succès au wallet de {$deliverer->name}",
-                'balance' => $deliverer->fresh()->wallet->balance
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de l\'ajout des fonds: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Déduire des fonds du wallet d'un livreur
-     */
-    public function deductFunds(Request $request, User $deliverer)
+    public function emptyDelivererWallet(Request $request, User $deliverer)
     {
         $user = Auth::user();
 
@@ -335,109 +321,120 @@ class DepotManagerDelivererController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:0.001',
-            'description' => 'required|string|max:500'
+            'notes' => 'nullable|string|max:500'
         ]);
 
         try {
             DB::transaction(function () use ($request, $deliverer, $user) {
                 $wallet = $deliverer->ensureWallet();
+                $amount = $request->amount;
 
-                if ($wallet->balance < $request->amount) {
-                    throw new \Exception('Solde insuffisant pour cette déduction');
+                if ($wallet->balance < $amount) {
+                    throw new \Exception('Le solde du livreur est insuffisant pour ce vidage.');
                 }
 
-                $wallet->deductFunds($request->amount, $user->id, $request->description);
+                // Déduire du wallet du livreur
+                $wallet->deductFunds($amount, $user->id, 'Vidage wallet par chef dépôt: ' . ($request->notes ?? ''));
+
+                // Ajouter au wallet du chef dépôt
+                $user->addToDepotWallet($amount, $deliverer->id, $request->notes);
+
+                // Enregistrer dans deliverer_wallet_emptyings
+                DB::table('deliverer_wallet_emptyings')->insert([
+                    'deliverer_id' => $deliverer->id,
+                    'depot_manager_id' => $user->id,
+                    'amount' => $amount,
+                    'notes' => $request->notes,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             });
 
             return response()->json([
                 'success' => true,
-                'message' => "Fonds déduits avec succès du wallet de {$deliverer->name}",
-                'balance' => $deliverer->fresh()->wallet->balance
+                'message' => "Wallet de {$deliverer->name} vidé avec succès. {$request->amount} DT ajoutés à votre caisse.",
+                'deliverer_balance' => $deliverer->fresh()->wallet->balance,
+                'depot_wallet_balance' => $user->fresh()->depot_wallet_balance
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la déduction: ' . $e->getMessage()
+                'message' => 'Erreur lors du vidage: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Ajouter une avance au wallet d'un livreur
+     * Afficher les statistiques des livreurs
      */
-    public function addAdvance(Request $request, User $deliverer)
+    public function stats(Request $request)
     {
         $user = Auth::user();
 
-        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
-            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
+        if (!$user->isDepotManager()) {
+            abort(403, 'Accès réservé aux chefs dépôt.');
         }
 
-        $request->validate([
-            'amount' => 'required|numeric|min:0.001|max:1000',
-            'description' => 'required|string|max:500'
-        ]);
+        // Obtenir tous les livreurs gérés
+        $deliverers = User::where('role', 'DELIVERER')
+                         ->where('deliverer_type', 'DELEGATION')
+                         ->whereIn('assigned_delegation', $user->assigned_gouvernorats_array)
+                         ->with('wallet')
+                         ->get();
 
-        try {
-            DB::transaction(function () use ($request, $deliverer, $user) {
-                $wallet = $deliverer->ensureWallet();
-                $wallet->addAdvance($request->amount, $user->id, $request->description);
-            });
+        // Calculer les statistiques pour chaque livreur
+        $delivererStats = $deliverers->map(function ($deliverer) {
+            $today = now()->startOfDay();
+            $thisMonth = now()->startOfMonth();
 
-            return response()->json([
-                'success' => true,
-                'message' => "Avance accordée avec succès à {$deliverer->name}",
-                'advance_balance' => $deliverer->fresh()->wallet->advance_balance
-            ]);
+            return [
+                'deliverer' => $deliverer,
+                'delivered_today' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                          ->where('status', 'DELIVERED')
+                                          ->where('delivered_at', '>=', $today)
+                                          ->count(),
+                'delivered_this_month' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                               ->where('status', 'DELIVERED')
+                                               ->where('delivered_at', '>=', $thisMonth)
+                                               ->count(),
+                'cod_collected_today' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                              ->where('status', 'DELIVERED')
+                                              ->where('delivered_at', '>=', $today)
+                                              ->sum('cod_amount'),
+                'cod_collected_this_month' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                                   ->where('status', 'DELIVERED')
+                                                   ->where('delivered_at', '>=', $thisMonth)
+                                                   ->sum('cod_amount'),
+                'returns_today' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                        ->where('status', 'RETURNED')
+                                        ->where('updated_at', '>=', $today)
+                                        ->count(),
+                'returns_this_month' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                             ->where('status', 'RETURNED')
+                                             ->where('updated_at', '>=', $thisMonth)
+                                             ->count(),
+                'in_progress' => Package::where('assigned_deliverer_id', $deliverer->id)
+                                      ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
+                                      ->count(),
+                'wallet_balance' => $deliverer->wallet ? $deliverer->wallet->balance : 0,
+            ];
+        });
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de l\'ajout de l\'avance: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+        // Statistiques globales
+        $globalStats = [
+            'total_deliverers' => $deliverers->count(),
+            'active_deliverers' => $deliverers->where('account_status', 'ACTIVE')->count(),
+            'total_delivered_today' => $delivererStats->sum('delivered_today'),
+            'total_delivered_this_month' => $delivererStats->sum('delivered_this_month'),
+            'total_cod_today' => $delivererStats->sum('cod_collected_today'),
+            'total_cod_this_month' => $delivererStats->sum('cod_collected_this_month'),
+            'total_returns_today' => $delivererStats->sum('returns_today'),
+            'total_returns_this_month' => $delivererStats->sum('returns_this_month'),
+            'total_in_progress' => $delivererStats->sum('in_progress'),
+        ];
 
-    /**
-     * Retirer une avance du wallet d'un livreur
-     */
-    public function removeAdvance(Request $request, User $deliverer)
-    {
-        $user = Auth::user();
-
-        if (!$user->canManageGouvernorat($deliverer->assigned_delegation)) {
-            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas gérer ce livreur.'], 403);
-        }
-
-        $request->validate([
-            'amount' => 'required|numeric|min:0.001',
-            'description' => 'required|string|max:500'
-        ]);
-
-        try {
-            DB::transaction(function () use ($request, $deliverer, $user) {
-                $wallet = $deliverer->ensureWallet();
-
-                if ($wallet->advance_balance < $request->amount) {
-                    throw new \Exception('Avance insuffisante pour cette opération');
-                }
-
-                $wallet->removeAdvance($request->amount, $user->id, $request->description);
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => "Avance retirée avec succès à {$deliverer->name}",
-                'advance_balance' => $deliverer->fresh()->wallet->advance_balance
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors du retrait de l\'avance: ' . $e->getMessage()
-            ], 500);
-        }
+        return view('depot-manager.deliverers.stats', compact('delivererStats', 'globalStats', 'user'));
     }
 
     /**

@@ -15,6 +15,17 @@
         <span class="sm:hidden">Retour</span>
     </a>
 
+    @if($package->return_package_id)
+    <a href="{{ route('client.returns.show-return-package', $package->return_package_id) }}"
+       class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        <span class="hidden sm:inline">📦 Suivre le Retour</span>
+        <span class="sm:hidden">📦 Retour</span>
+    </a>
+    @endif
+
     @if(in_array($package->status, ['DELIVERED', 'PICKED_UP', 'ACCEPTED', 'REFUSED']))
     <a href="{{ route('client.complaints.create', $package) }}"
        class="inline-flex items-center px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">

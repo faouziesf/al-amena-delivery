@@ -55,11 +55,11 @@ class DepotReturnScanController extends Controller
         // Stocker aussi par code pour accès rapide
         Cache::put("depot_code_{$sessionCode}", $sessionId, 8 * 60 * 60);
 
-        // Utiliser la MÊME vue que le scan normal avec mode retours
+        // Utiliser la vue SPÉCIFIQUE pour les retours (orange/rouge)
         $isReturnsMode = true; // Indiquer que c'est pour les retours
         $scannerUrl = route('depot.returns.phone-scanner', $sessionId); // URL pour retours
 
-        return view('depot.scan-dashboard', compact('sessionId', 'depotManagerName', 'sessionCode', 'isReturnsMode', 'scannerUrl'));
+        return view('depot.returns.scan-dashboard-returns', compact('sessionId', 'depotManagerName', 'sessionCode', 'isReturnsMode', 'scannerUrl'));
     }
 
     /**
@@ -123,144 +123,144 @@ class DepotReturnScanController extends Controller
             });
 
         $depotManagerName = $session['depot_manager_name'] ?? 'Dépôt';
+        $isReturnsMode = true; // Indicateur pour la vue
 
         // Utiliser la vue SPÉCIFIQUE pour les retours (orange/rouge)
-        return view('depot.phone-scanner-returns', compact('sessionId', 'packages', 'depotManagerName'));
+        return view('depot.phone-scanner-returns', compact('sessionId', 'packages', 'depotManagerName', 'isReturnsMode'));
     }
 
     /**
-     * API: Scanner un colis retour (mobile)
+     * Ajouter un code scanné au cache (APPROCHE DIRECTE - TEMPS RÉEL)
+     * Identique au scan dépôt mais pour les retours
      */
-    public function scanPackage(Request $request, $sessionId)
+    public function addScannedCode(Request $request, $sessionId)
     {
         $request->validate([
-            'package_code' => 'required|string',
+            'code' => 'required|string',
         ]);
 
-        $sessionData = Cache::get("depot_session_{$sessionId}");
-
-        if (!$sessionData) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session expirée ou introuvable',
-            ], 400);
+        $session = Cache::get("depot_session_{$sessionId}");
+        
+        if (!$session) {
+            return response()->json(['error' => 'Session expirée'], 404);
         }
 
-        // Vérifier si session terminée
-        if (isset($sessionData['status']) && $sessionData['status'] === 'completed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session terminée',
-            ], 400);
+        // Normaliser le code scanné
+        $originalCode = trim($request->code);
+        $code = strtoupper($originalCode);
+        
+        // Vérifier si déjà scanné dans cette session
+        $scannedPackages = $session['scanned_packages'] ?? [];
+        foreach ($scannedPackages as $scanned) {
+            $scannedCode = $scanned['package_code'] ?? $scanned['code'];
+            if (strtoupper($scannedCode) === $code || 
+                str_replace(['_', '-', ' '], '', strtoupper($scannedCode)) === str_replace(['_', '-', ' '], '', $code)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Déjà scanné dans cette session'
+                ]);
+            }
         }
-
-        $packageCode = trim($request->package_code);
-
-        // Rechercher le colis
-        $package = Package::where(function($query) use ($packageCode) {
-            $query->where('package_code', $packageCode)
-                  ->orWhere('tracking_number', $packageCode);
-        })->first();
+        
+        // RECHERCHE INTELLIGENTE : Essayer plusieurs variantes du code
+        $package = null;
+        $searchVariants = [
+            $code,
+            str_replace('_', '', $code),
+            str_replace('-', '', $code),
+            str_replace(['_', '-', ' '], '', $code),
+            strtolower($code),
+            $originalCode,
+        ];
+        
+        $searchVariants = array_unique($searchVariants);
+        
+        // Rechercher avec TOUTES les variantes
+        foreach ($searchVariants as $variant) {
+            $package = DB::table('packages')
+                ->where('package_code', $variant)
+                ->select('id', 'package_code', 'status')
+                ->first();
+            
+            if ($package) {
+                break;
+            }
+        }
+        
+        // Si toujours pas trouvé, essayer une recherche LIKE
+        if (!$package) {
+            $cleanCode = str_replace(['_', '-', ' '], '', $code);
+            $package = DB::table('packages')
+                ->where(DB::raw('REPLACE(REPLACE(REPLACE(UPPER(package_code), "_", ""), "-", ""), " ", "")'), $cleanCode)
+                ->select('id', 'package_code', 'status')
+                ->first();
+        }
 
         if (!$package) {
             return response()->json([
                 'success' => false,
-                'message' => "Colis {$packageCode} introuvable",
+                'message' => 'Colis introuvable dans la base de données',
+                'searched_code' => $code,
             ], 404);
         }
 
-        // Vérifier que le colis est en RETURN_IN_PROGRESS
+        // VÉRIFICATION SPÉCIFIQUE RETOURS : Doit être RETURN_IN_PROGRESS
         if ($package->status !== 'RETURN_IN_PROGRESS') {
             return response()->json([
                 'success' => false,
-                'message' => "Ce colis n'est pas en retour (statut: {$package->status})",
+                'message' => "Statut invalide: {$package->status}. Seuls les colis RETURN_IN_PROGRESS peuvent être scannés.",
                 'current_status' => $package->status,
+                'expected_status' => 'RETURN_IN_PROGRESS'
             ], 422);
         }
 
-        // Vérifier si déjà scanné dans cette session
-        $scannedPackages = $sessionData['scanned_packages'] ?? [];
-
-        // Vérifier si le code existe déjà
-        foreach ($scannedPackages as $scanned) {
-            if (($scanned['package_code'] ?? $scanned['code']) === $package->package_code) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ce colis a déjà été scanné',
-                    'already_scanned' => true,
-                ], 422);
-            }
-        }
-
-        // Ajouter le colis à la session (format compatible avec scan normal)
+        // Ajouter au cache (SANS mettre à jour la DB)
         $scannedPackages[] = [
-            'id' => $package->id,
+            'code' => $code,
             'package_code' => $package->package_code,
-            'code' => $package->package_code,
-            'tracking_number' => $package->tracking_number,
-            'cod_amount' => $package->cod_amount,
-            'sender_id' => $package->sender_id,
-            'sender_name' => $package->sender->name ?? 'N/A',
-            'return_reason' => $package->return_reason,
-            'scanned_at' => now()->toDateTimeString(),
+            'tracking_number' => $package->package_code,
+            'status' => $package->status,
+            'scanned_at' => now()->toISOString(),
+            'scanned_time' => now()->format('H:i:s')
         ];
-
-        $sessionData['scanned_packages'] = $scannedPackages;
-        $sessionData['last_activity'] = now();
-        Cache::put("depot_session_{$sessionId}", $sessionData, 8 * 60 * 60);
-
+        
+        $session['scanned_packages'] = $scannedPackages;
+        $session['last_scan'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+        
         Log::info('Colis retour scanné', [
             'session_id' => $sessionId,
-            'package_id' => $package->id,
             'package_code' => $package->package_code,
-            'depot_manager' => $sessionData['depot_manager_name'],
+            'status' => $package->status,
         ]);
-
+        
         return response()->json([
             'success' => true,
-            'message' => "Colis {$package->package_code} scanné avec succès",
-            'package' => [
-                'code' => $package->package_code,
-                'tracking' => $package->tracking_number,
-                'cod' => number_format($package->cod_amount, 2),
-                'sender' => $package->sender->name ?? 'N/A',
-                'reason' => $package->return_reason,
-            ],
-            'total_scanned' => count($scannedPackages),
+            'code' => $package->package_code,
+            'message' => 'Colis retour trouvé : ' . $package->package_code,
+            'total' => count($scannedPackages)
         ]);
     }
 
     /**
-     * API: Obtenir l'état de la session
+     * API: Obtenir l'état de la session (FORMAT COMPATIBLE AVEC DASHBOARD PC)
      */
     public function getSessionStatus($sessionId)
     {
         $sessionData = Cache::get("depot_session_{$sessionId}");
 
         if (!$sessionData) {
-            return response()->json([
-                'exists' => false,
-                'active' => false,
-            ]);
+            return response()->json(['error' => 'Session not found'], 404);
         }
 
         $scannedPackages = $sessionData['scanned_packages'] ?? [];
 
+        // Format compatible avec le polling du dashboard PC
         return response()->json([
-            'exists' => true,
-            'active' => ($sessionData['status'] ?? 'waiting') !== 'completed',
-            'depot_manager' => $sessionData['depot_manager_name'],
-            'total_packages' => count($scannedPackages),
-            'packages' => array_map(function($pkg) {
-                return [
-                    'code' => $pkg['package_code'] ?? $pkg['code'],
-                    'sender' => $pkg['sender_name'] ?? 'N/A',
-                    'cod' => number_format($pkg['cod_amount'] ?? 0, 2),
-                    'reason' => $pkg['return_reason'] ?? '',
-                    'scanned_at' => $pkg['scanned_at'],
-                ];
-            }, $scannedPackages),
-            'last_activity' => $sessionData['last_activity']->diffForHumans(),
+            'status' => $sessionData['status'] ?? 'waiting',
+            'scanned_packages' => $scannedPackages,
+            'total_scanned' => count($scannedPackages),
+            'last_heartbeat' => $sessionData['last_heartbeat'] ?? null,
         ]);
     }
 
@@ -461,12 +461,88 @@ class DepotReturnScanController extends Controller
      */
     public function printReturnLabel(ReturnPackage $returnPackage)
     {
+        // Charger les relations nécessaires
+        $returnPackage->load(['originalPackage.pickupAddress', 'originalPackage.sender']);
+        
+        // Récupérer les informations de pickup depuis le colis original
+        $pickupInfo = null;
+        if ($returnPackage->originalPackage && $returnPackage->originalPackage->pickupAddress) {
+            $pickupAddress = $returnPackage->originalPackage->pickupAddress;
+            $pickupInfo = [
+                'name' => $pickupAddress->name,
+                'contact_name' => $pickupAddress->contact_name,
+                'phone' => $pickupAddress->phone,
+                'tel2' => $pickupAddress->tel2,
+                'address' => $pickupAddress->address,
+                'city' => $pickupAddress->city ?? '',
+                'postal_code' => $pickupAddress->postal_code ?? '',
+            ];
+        } elseif ($returnPackage->originalPackage) {
+            // Fallback vers les anciennes données de pickup du colis
+            $package = $returnPackage->originalPackage;
+            $pickupInfo = [
+                'name' => $package->sender->name ?? 'N/A',
+                'contact_name' => $package->sender->name ?? 'N/A',
+                'phone' => $package->pickup_phone ?? $package->sender->phone ?? 'N/A',
+                'tel2' => '',
+                'address' => $package->pickup_address ?? 'N/A',
+                'city' => '',
+                'postal_code' => '',
+            ];
+        }
+        
         // Marquer comme imprimé
         $returnPackage->markAsPrinted();
 
         return view('depot.returns.print-label', [
             'returnPackage' => $returnPackage,
+            'pickupInfo' => $pickupInfo,
         ]);
+    }
+
+    /**
+     * Heartbeat du PC pour indiquer que la session est active
+     */
+    public function heartbeat($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        // Mettre à jour le timestamp du heartbeat
+        $session['last_heartbeat'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Terminer la session (PC fermé/rafraîchi SANS validation)
+     */
+    public function terminateSession($sessionId)
+    {
+        $session = Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        // NE TERMINER QUE SI PAS DE COLIS SCANNÉS (éviter perte de données)
+        $scannedCount = count($session['scanned_packages'] ?? []);
+
+        if ($scannedCount > 0) {
+            // Ne pas terminer si des colis sont scannés (attendre validation)
+            return response()->json(['success' => true, 'kept_alive' => true]);
+        }
+
+        // Marquer comme terminée seulement si aucun colis scanné
+        $session['status'] = 'terminated';
+        $session['terminated_at'] = now();
+        Cache::put("depot_session_{$sessionId}", $session, 8 * 60 * 60);
+
+        return response()->json(['success' => true, 'kept_alive' => false]);
     }
 
     /**

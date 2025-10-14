@@ -90,12 +90,21 @@
                     <span class="text-gray-900">{{ $deliverer->phone }}</span>
                 </div>
 
-                <div class="flex items-center text-sm">
-                    <svg class="w-4 h-4 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-start text-sm">
+                    <svg class="w-4 h-4 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <span class="text-gray-900">{{ $deliverer->assigned_delegation ?? 'Non assigné' }}</span>
+                    <div class="flex-1">
+                        <div class="text-gray-900 font-medium">Gouvernorats:</div>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @foreach($deliverer->getDelivererGouvernorats() as $gov)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ $gov }}
+                            </span>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 @if($deliverer->address)
@@ -155,6 +164,30 @@
             </div>
         </div>
     </div>
+
+    <!-- Wallet du livreur -->
+    @if($deliverer->wallet)
+    <div class="bg-white rounded-xl shadow-sm border border-green-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Wallet du Livreur</h3>
+            <div class="text-right">
+                <p class="text-sm text-gray-600">Solde actuel</p>
+                <p class="text-3xl font-bold text-green-600">{{ number_format($deliverer->wallet->balance, 3) }} DT</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <button onclick="emptyDelivererWallet({{ $deliverer->id }}, {{ $deliverer->wallet->balance }})"
+                    class="flex-1 flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    {{ $deliverer->wallet->balance <= 0 ? 'disabled' : '' }}>
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                Vider le Wallet (Ajouter à ma Caisse)
+            </button>
+        </div>
+    </div>
+    @endif
 
     <!-- Actions de gestion -->
     <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
@@ -286,6 +319,44 @@ function reassignPackages(delivererId) {
 
 function viewPerformanceReport(delivererId) {
     window.open(`/depot-manager/reports?deliverer=${delivererId}`, '_blank');
+}
+
+function emptyDelivererWallet(delivererId, currentBalance) {
+    if (currentBalance <= 0) {
+        alert('Le wallet du livreur est déjà vide.');
+        return;
+    }
+
+    const notes = prompt(`Vider le wallet du livreur (${currentBalance.toFixed(3)} DT)\n\nNotes (optionnel):`);
+    
+    if (notes === null) return; // User cancelled
+
+    if (confirm(`Confirmer le vidage de ${currentBalance.toFixed(3)} DT du wallet du livreur vers votre caisse ?`)) {
+        fetch(`/depot-manager/deliverers/${delivererId}/wallet/empty`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                amount: currentBalance,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erreur : ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors du vidage du wallet');
+        });
+    }
 }
 </script>
 

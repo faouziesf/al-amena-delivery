@@ -111,46 +111,138 @@ class DepotScanDebugController extends Controller
     }
 
     /**
-     * Créer des colis de test
+     * Créer des colis de test avec différents statuts
+     * ROUTE: POST /depot/debug/create-test-packages
      */
     public function createTestPackages()
     {
-        $testCodes = [
-            'TEST_001',
-            'TEST_002',
-            'TEST-003',
-            'TEST004',
-            'test_005',
+        // Colis de test avec différents statuts
+        $testPackages = [
+            ['code' => 'DEPOT_TEST_001', 'status' => 'CREATED'],
+            ['code' => 'DEPOT_TEST_002', 'status' => 'AWAITING_PICKUP'],
+            ['code' => 'DEPOT_TEST_003', 'status' => 'IN_TRANSIT'],
+            ['code' => 'DEPOT_TEST_004', 'status' => 'OUT_FOR_DELIVERY'],
+            ['code' => 'DEPOT_TEST_005', 'status' => 'DELIVERED'], // Ne devrait PAS être scannable
+            
+            ['code' => 'RETURN_TEST_001', 'status' => 'AWAITING_RETURN'],
+            ['code' => 'RETURN_TEST_002', 'status' => 'RETURN_IN_PROGRESS'],
+            ['code' => 'RETURN_TEST_003', 'status' => 'RETURN_IN_PROGRESS'],
+            ['code' => 'RETURN_TEST_004', 'status' => 'DELIVERED'], // Statut invalide pour retours
+            ['code' => 'RETURN_TEST_005', 'status' => 'AT_DEPOT'], // Statut invalide pour retours
         ];
 
         $created = [];
+        $skipped = [];
 
-        foreach ($testCodes as $code) {
+        // Trouver un sender_id valide
+        $senderId = DB::table('users')->where('role', 'client')->first()->id ?? 1;
+
+        foreach ($testPackages as $pkg) {
             // Vérifier si existe déjà
-            $exists = DB::table('packages')->where('package_code', $code)->exists();
+            $exists = DB::table('packages')->where('package_code', $pkg['code'])->exists();
             
             if (!$exists) {
-                // Créer un colis de test minimal
                 DB::table('packages')->insert([
-                    'package_code' => $code,
-                    'sender_id' => 1, // Assumant qu'un user avec ID 1 existe
-                    'status' => 'CREATED',
-                    'cod_amount' => 0,
-                    'delivery_fee' => 0,
-                    'return_fee' => 0,
+                    'package_code' => $pkg['code'],
+                    'sender_id' => $senderId,
+                    'status' => $pkg['status'],
+                    'cod_amount' => 50.00,
+                    'delivery_fee' => 7.00,
+                    'return_fee' => 7.00,
                     'delivery_attempts' => 0,
+                    'recipient_name' => 'Test Recipient',
+                    'recipient_phone' => '12345678',
+                    'recipient_address' => 'Test Address',
+                    'recipient_city' => 'Tunis',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
                 
-                $created[] = $code;
+                $created[] = $pkg;
+            } else {
+                $skipped[] = $pkg['code'];
             }
         }
 
         return response()->json([
-            'message' => 'Colis de test créés',
+            'success' => true,
+            'message' => 'Colis de test créés avec succès',
+            'created_count' => count($created),
             'created_packages' => $created,
-            'note' => 'Utilisez ces codes pour tester le scan'
+            'skipped' => $skipped,
+            'instructions' => [
+                'depot_scan' => 'Utilisez DEPOT_TEST_001 à DEPOT_TEST_004 pour tester le scan dépôt',
+                'depot_invalid' => 'DEPOT_TEST_005 (DELIVERED) devrait être rejeté',
+                'return_scan' => 'Utilisez RETURN_TEST_002 et RETURN_TEST_003 pour tester le scan retours',
+                'return_invalid' => 'RETURN_TEST_004 et RETURN_TEST_005 devraient afficher le statut invalide'
+            ]
+        ]);
+    }
+
+    /**
+     * Obtenir l'état d'une session depuis le cache
+     * ROUTE: GET /depot/debug/session-status/{sessionId}
+     */
+    public function sessionStatus($sessionId)
+    {
+        $session = \Illuminate\Support\Facades\Cache::get("depot_session_{$sessionId}");
+
+        if (!$session) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session non trouvée',
+                'sessionId' => $sessionId
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sessionId' => $sessionId,
+            'session_data' => [
+                'status' => $session['status'] ?? 'unknown',
+                'scan_type' => $session['scan_type'] ?? 'depot',
+                'depot_manager' => $session['depot_manager_name'] ?? 'N/A',
+                'session_code' => $session['session_code'] ?? 'N/A',
+                'created_at' => $session['created_at'] ?? null,
+                'total_scanned' => count($session['scanned_packages'] ?? []),
+                'scanned_packages' => $session['scanned_packages'] ?? [],
+                'last_heartbeat' => $session['last_heartbeat'] ?? null,
+            ]
+        ]);
+    }
+
+    /**
+     * Lister toutes les sessions actives
+     * ROUTE: GET /depot/debug/active-sessions
+     */
+    public function activeSessions()
+    {
+        // Note: Cette méthode nécessite Redis ou une méthode pour lister toutes les clés
+        // Pour file cache, c'est plus complexe
+        
+        return response()->json([
+            'message' => 'Fonctionnalité limitée avec file cache',
+            'note' => 'Utilisez sessionStatus avec un sessionId spécifique',
+            'example' => '/depot/debug/session-status/{uuid}'
+        ]);
+    }
+
+    /**
+     * Nettoyer les colis de test
+     * ROUTE: DELETE /depot/debug/clean-test-packages
+     */
+    public function cleanTestPackages()
+    {
+        $deleted = DB::table('packages')
+            ->where('package_code', 'LIKE', 'DEPOT_TEST_%')
+            ->orWhere('package_code', 'LIKE', 'RETURN_TEST_%')
+            ->orWhere('package_code', 'LIKE', 'TEST_%')
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Colis de test supprimés',
+            'deleted_count' => $deleted
         ]);
     }
 }

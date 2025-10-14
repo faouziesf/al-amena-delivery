@@ -88,7 +88,7 @@ class PackageScannerService
         // Colis assigné à ce livreur
         if ($package->assigned_deliverer_id === $delivererId) {
             return match($package->status) {
-                'ACCEPTED' => [
+                'OUT_FOR_DELIVERY' => [
                     'success' => true,
                     'message' => "📦 Prêt pour collecte",
                     'action' => 'pickup',

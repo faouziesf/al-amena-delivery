@@ -95,12 +95,11 @@ class UserController extends Controller
             // Déterminer le type de livreur depuis is_transit_deliverer
             $isTransit = $request->input('is_transit_deliverer');
             
-            // Pour les livreurs locaux (non transit), la délégation est requise
-            if ($isTransit === 'false' || $isTransit === false) {
+            // Pour les livreurs locaux (non transit), les gouvernorats sont requis
+            if ($isTransit === 'false' || $isTransit === false || $isTransit === '0') {
                 $delegations = array_keys(User::getAvailableDelegations());
-                $validationRules['delegation_id'] = 'required|in:' . implode(',', $delegations);
-            } else {
-                $validationRules['delegation_id'] = 'nullable';
+                $validationRules['deliverer_gouvernorats'] = 'required|array|min:1';
+                $validationRules['deliverer_gouvernorats.*'] = 'required|string|in:' . implode(',', $delegations);
             }
 
             $validationRules['is_transit_deliverer'] = 'required|boolean';
@@ -120,6 +119,10 @@ class UserController extends Controller
             'assigned_gouvernorats.array' => 'Les gouvernorats doivent être sous forme de liste.',
             'assigned_gouvernorats.min' => 'Veuillez sélectionner au moins un gouvernorat.',
             'assigned_gouvernorats.*.in' => 'Un des gouvernorats sélectionnés n\'est pas valide.',
+            'deliverer_gouvernorats.required' => 'Veuillez sélectionner au moins un gouvernorat pour le livreur.',
+            'deliverer_gouvernorats.array' => 'Les gouvernorats doivent être sous forme de liste.',
+            'deliverer_gouvernorats.min' => 'Veuillez sélectionner au moins un gouvernorat.',
+            'deliverer_gouvernorats.*.in' => 'Un des gouvernorats sélectionnés n\'est pas valide.',
         ];
 
         $validated = $request->validate($validationRules, $customMessages);
@@ -151,10 +154,13 @@ class UserController extends Controller
                     if ($isTransit === 'true' || $isTransit === true || $isTransit === '1') {
                         $userData['deliverer_type'] = 'TRANSIT';
                         $userData['assigned_delegation'] = null;
+                        $userData['deliverer_gouvernorats'] = null;
                     } else {
                         // Livreur local = DELEGATION
                         $userData['deliverer_type'] = 'DELEGATION';
-                        $userData['assigned_delegation'] = $request->delegation_id;
+                        // Utiliser le premier gouvernorat comme assigned_delegation (compatibilité)
+                        $userData['assigned_delegation'] = $request->deliverer_gouvernorats[0] ?? null;
+                        $userData['deliverer_gouvernorats'] = $request->deliverer_gouvernorats;
                     }
                     
                     $userData['delegation_latitude'] = null;
@@ -429,5 +435,72 @@ class UserController extends Controller
                      ->get();
 
         return response()->json($sessions);
+    }
+
+    /**
+     * Gérer le wallet d'un chef dépôt (ajout/retrait/vidage)
+     */
+    public function manageDepotWallet(Request $request, User $user)
+    {
+        if (!$user->isDepotManager()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet utilisateur n\'est pas un chef dépôt.'
+            ], 400);
+        }
+
+        $request->validate([
+            'action' => 'required|in:add,deduct,empty',
+            'amount' => 'required|numeric|min:0.001',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $user) {
+                $supervisor = auth()->user();
+                $amount = $request->amount;
+                $action = $request->action;
+
+                if ($action === 'add') {
+                    // Ajouter des fonds au wallet du chef dépôt
+                    $user->adjustDepotWallet($amount, $supervisor->id, 'SUPERVISOR_ADJUSTMENT', $request->notes);
+                } elseif ($action === 'deduct') {
+                    // Retirer des fonds du wallet du chef dépôt
+                    $user->adjustDepotWallet(-$amount, $supervisor->id, 'SUPERVISOR_ADJUSTMENT', $request->notes);
+                } elseif ($action === 'empty') {
+                    // Vider complètement le wallet du chef dépôt
+                    $currentBalance = $user->depot_wallet_balance;
+                    if ($currentBalance > 0) {
+                        $user->adjustDepotWallet(-$currentBalance, $supervisor->id, 'SUPERVISOR_EMPTYING', $request->notes);
+                    }
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Wallet du chef dépôt mis à jour avec succès.',
+                'new_balance' => $user->fresh()->depot_wallet_balance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du wallet: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Afficher l'historique du wallet d'un chef dépôt
+     */
+    public function depotWalletHistory(User $user)
+    {
+        if (!$user->isDepotManager()) {
+            abort(403, 'Cet utilisateur n\'est pas un chef dépôt.');
+        }
+
+        $transactions = $user->getDepotWalletTransactions(100);
+
+        return view('supervisor.users.depot-wallet-history', compact('user', 'transactions'));
     }
 }

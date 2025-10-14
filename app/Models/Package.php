@@ -187,7 +187,7 @@ class Package extends Model
 
     public function scopeInProgress($query)
     {
-        return $query->whereIn('status', ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
+        return $query->whereIn('status', ['CREATED', 'AVAILABLE', 'AT_DEPOT', 'OUT_FOR_DELIVERY']);
     }
 
     public function scopeDelivered($query)
@@ -203,7 +203,7 @@ class Package extends Model
     // Helper methods
     public function isInProgress()
     {
-        return in_array($this->status, ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP']);
+        return in_array($this->status, ['CREATED', 'AVAILABLE', 'AT_DEPOT', 'OUT_FOR_DELIVERY']);
     }
 
     public function isDelivered()
@@ -213,7 +213,17 @@ class Package extends Model
 
     public function canBeModified()
     {
-        return $this->cod_modifiable_by_commercial && $this->status !== 'PAID';
+        // Les états finaux ne peuvent pas être modifiés
+        $finalStatuses = ['PAID', 'RETURN_CONFIRMED'];
+        return $this->cod_modifiable_by_commercial && !in_array($this->status, $finalStatuses);
+    }
+
+    /**
+     * Vérifier si le colis est dans un état final (non modifiable)
+     */
+    public function isFinalStatus()
+    {
+        return in_array($this->status, ['PAID', 'RETURN_CONFIRMED']);
     }
 
     /**
@@ -234,7 +244,7 @@ class Package extends Model
         }
 
         // Vérifier si le colis est assigné à un livreur ou a un statut avancé
-        if ($this->assigned_deliverer_id || in_array($this->status, ['ACCEPTED', 'PICKED_UP', 'DELIVERED', 'RETURNED', 'PAID'])) {
+        if ($this->assigned_deliverer_id || in_array($this->status, ['OUT_FOR_DELIVERY', 'DELIVERED', 'RETURNED', 'PAID'])) {
             return true;
         }
 
@@ -413,8 +423,7 @@ class Package extends Model
      */
     public function isCancelledByClient()
     {
-        return $this->status === 'CANCELLED' ||
-               (!empty($this->cancellation_reason) && $this->cancelled_by_client);
+        return !empty($this->cancellation_reason) && $this->cancelled_by_client;
     }
 
     /**
@@ -533,7 +542,7 @@ class Package extends Model
         
         if ($this->assigned_deliverer_id === $deliverer->id) {
             return match($this->status) {
-                'ACCEPTED' => 'pickup',
+                'OUT_FOR_DELIVERY' => 'pickup',
                 'PICKED_UP', 'UNAVAILABLE' => 'deliver', 
                 'VERIFIED' => 'return',
                 default => 'view'
@@ -550,7 +559,7 @@ class Package extends Model
     {
         return match($this->status) {
             'AVAILABLE' => '📦 Disponible',
-            'ACCEPTED' => '✅ Accepté',
+            'OUT_FOR_DELIVERY' => '🚚 En livraison',
             'PICKED_UP' => '🚚 Collecté',
             'DELIVERED' => '✅ Livré',
             'VERIFIED' => '↩️ À retourner',

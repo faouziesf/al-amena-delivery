@@ -395,12 +395,13 @@
                             </select>
                         </div>
 
-                        <div x-show="needsDelegation()">
+                        <!-- Délégation pour CLIENT uniquement -->
+                        <div x-show="form.role === 'CLIENT'">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                📍 Délégation <span x-show="isDelegationRequired()">*</span>
+                                📍 Délégation *
                             </label>
                             <select x-model="form.delegation_id" name="delegation_id" 
-                                    :required="isDelegationRequired()"
+                                    :required="form.role === 'CLIENT'"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                 <option value="">Sélectionner une délégation</option>
                                 @if(isset($delegations))
@@ -409,10 +410,44 @@
                                     @endforeach
                                 @endif
                             </select>
-                            <p class="text-xs text-gray-500 mt-1" x-show="form.role === 'CLIENT'">Délégation principale du client</p>
-                            <p class="text-xs text-gray-500 mt-1" x-show="form.role === 'DELIVERER' && form.is_transit_deliverer === false">Délégation de livraison du livreur local</p>
-                            <p class="text-xs text-gray-500 mt-1" x-show="form.role === 'DELIVERER' && form.is_transit_deliverer === true">Les livreurs transit n'ont pas de délégation fixe</p>
+                            <p class="text-xs text-gray-500 mt-1">Délégation principale du client</p>
                         </div>
+                    </div>
+
+                    <!-- Gouvernorats multiples pour LIVREUR -->
+                    <div x-show="form.role === 'DELIVERER' && form.is_transit_deliverer === false" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h3 class="text-lg font-medium text-blue-800 mb-4">
+                            📍 Gouvernorats de livraison *
+                            <span class="text-xs font-normal text-blue-600">(Sélectionnez au moins 1)</span>
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 bg-white rounded border border-blue-200">
+                            @if(isset($gouvernorats))
+                                @foreach($gouvernorats as $key => $name)
+                                <label class="flex items-center p-2 hover:bg-blue-100 rounded cursor-pointer transition-colors">
+                                    <input type="checkbox" name="deliverer_gouvernorats[]" value="{{ $key }}"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-700">{{ $name }}</span>
+                                </label>
+                                @endforeach
+                            @endif
+                        </div>
+                        <div class="mt-3 flex items-center space-x-3">
+                            <button type="button" onclick="selectAllDelivererGouvernorats()" 
+                                    class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                ✓ Tout sélectionner
+                            </button>
+                            <span class="text-gray-300">|</span>
+                            <button type="button" onclick="deselectAllDelivererGouvernorats()" 
+                                    class="text-sm text-gray-600 hover:text-gray-800 font-medium">
+                                ✗ Tout désélectionner
+                            </button>
+                        </div>
+                        <p class="mt-2 text-xs text-blue-600">
+                            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                            Le livreur pourra livrer dans tous les gouvernorats sélectionnés
+                        </p>
                     </div>
 
                     <!-- Configuration spéciale pour Chef Dépôt -->
@@ -578,6 +613,18 @@ function userCreationWizard() {
                     return false;
                 }
             }
+            
+            // Validation spéciale pour DELIVERER local
+            if (this.form.role === 'DELIVERER' && this.form.is_transit_deliverer === false) {
+                const checkboxes = document.querySelectorAll('input[name="deliverer_gouvernorats[]"]:checked');
+                if (checkboxes.length === 0) {
+                    event.preventDefault();
+                    alert('⚠️ Veuillez sélectionner au moins un gouvernorat pour le livreur');
+                    this.isSubmitting = false;
+                    return false;
+                }
+            }
+            
             this.isSubmitting = true;
             // Le formulaire sera soumis normalement
         },
@@ -599,6 +646,19 @@ function userCreationWizard() {
             });
         }
     }
+}
+
+// Fonctions helper pour la sélection des gouvernorats livreur
+function selectAllDelivererGouvernorats() {
+    document.querySelectorAll('input[name="deliverer_gouvernorats[]"]').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+}
+
+function deselectAllDelivererGouvernorats() {
+    document.querySelectorAll('input[name="deliverer_gouvernorats[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 </script>
 @endsection

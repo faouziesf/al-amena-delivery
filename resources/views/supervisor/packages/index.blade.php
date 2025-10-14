@@ -137,11 +137,10 @@
                         <option value="">Tous les statuts</option>
                         <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Créé</option>
                         <option value="AVAILABLE" {{ request('status') == 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
-                        <option value="ACCEPTED" {{ request('status') == 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
+                        <option value="OUT_FOR_DELIVERY" {{ request('status') == 'OUT_FOR_DELIVERY' ? 'selected' : '' }}>En livraison</option>
                         <option value="PICKED_UP" {{ request('status') == 'PICKED_UP' ? 'selected' : '' }}>Collecté</option>
                         <option value="DELIVERED" {{ request('status') == 'DELIVERED' ? 'selected' : '' }}>Livré</option>
                         <option value="RETURNED" {{ request('status') == 'RETURNED' ? 'selected' : '' }}>Retourné</option>
-                        <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
                     </select>
                 </div>
                 <div>
@@ -269,7 +268,7 @@
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                 @if($package->status === 'CREATED') bg-gray-100 text-gray-800
                                 @elseif($package->status === 'AVAILABLE') bg-blue-100 text-blue-800
-                                @elseif($package->status === 'ACCEPTED') bg-yellow-100 text-yellow-800
+                                @elseif($package->status === 'OUT_FOR_DELIVERY') bg-yellow-100 text-yellow-800
                                 @elseif($package->status === 'PICKED_UP') bg-orange-100 text-orange-800
                                 @elseif($package->status === 'DELIVERED') bg-green-100 text-green-800
                                 @elseif($package->status === 'RETURNED') bg-red-100 text-red-800

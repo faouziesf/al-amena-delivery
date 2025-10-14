@@ -63,17 +63,25 @@
                         <option value="">-- Sélectionner un nouveau statut --</option>
                         <option value="CREATED" @if($package->status === 'CREATED') disabled class="bg-gray-100" @endif>CREATED - Colis créé</option>
                         <option value="AVAILABLE" @if($package->status === 'AVAILABLE') disabled class="bg-gray-100" @endif>AVAILABLE - Disponible pour livraison</option>
+                        <option value="ACCEPTED" @if($package->status === 'ACCEPTED') disabled class="bg-gray-100" @endif>ACCEPTED - Accepté par livreur</option>
                         <option value="AT_DEPOT" @if($package->status === 'AT_DEPOT') disabled class="bg-gray-100" @endif>AT_DEPOT - Au dépôt</option>
                         <option value="PICKED_UP" @if($package->status === 'PICKED_UP') disabled class="bg-gray-100" @endif>PICKED_UP - Collecté</option>
+                        <option value="IN_TRANSIT" @if($package->status === 'IN_TRANSIT') disabled class="bg-gray-100" @endif>IN_TRANSIT - En transit</option>
+                        <option value="OUT_FOR_DELIVERY" @if($package->status === 'OUT_FOR_DELIVERY') disabled class="bg-gray-100" @endif>OUT_FOR_DELIVERY - En cours de livraison</option>
                         <option value="DELIVERED" @if($package->status === 'DELIVERED') disabled class="bg-gray-100" @endif>DELIVERED - Livré</option>
+                        <option value="PAID" @if($package->status === 'PAID') disabled class="bg-gray-100" @endif>PAID - Payé</option>
                         <option value="UNAVAILABLE" @if($package->status === 'UNAVAILABLE') disabled class="bg-gray-100" @endif>UNAVAILABLE - Destinataire indisponible</option>
                         <option value="REFUSED" @if($package->status === 'REFUSED') disabled class="bg-gray-100" @endif>REFUSED - Refusé</option>
+                        <option value="CANCELLED" @if($package->status === 'CANCELLED') disabled class="bg-gray-100" @endif>CANCELLED - Annulé</option>
+                        <option value="RETURNED" @if($package->status === 'RETURNED') disabled class="bg-gray-100" @endif>RETURNED - Retourné</option>
+                        <option value="VERIFIED" @if($package->status === 'VERIFIED') disabled class="bg-gray-100" @endif>VERIFIED - Vérifié</option>
                         <option value="AWAITING_RETURN" @if($package->status === 'AWAITING_RETURN') disabled class="bg-gray-100" @endif>AWAITING_RETURN - En attente de retour</option>
                         <option value="RETURN_IN_PROGRESS" @if($package->status === 'RETURN_IN_PROGRESS') disabled class="bg-gray-100" @endif>RETURN_IN_PROGRESS - Retour en cours</option>
                         <option value="RETURNED_TO_CLIENT" @if($package->status === 'RETURNED_TO_CLIENT') disabled class="bg-gray-100" @endif>RETURNED_TO_CLIENT - Retourné au client</option>
                         <option value="RETURN_CONFIRMED" @if($package->status === 'RETURN_CONFIRMED') disabled class="bg-gray-100" @endif>RETURN_CONFIRMED - Retour confirmé</option>
                         <option value="RETURN_ISSUE" @if($package->status === 'RETURN_ISSUE') disabled class="bg-gray-100" @endif>RETURN_ISSUE - Problème de retour</option>
-                        <option value="PAID" @if($package->status === 'PAID') disabled class="bg-gray-100" @endif>PAID - Payé</option>
+                        <option value="EXCHANGE_REQUESTED" @if($package->status === 'EXCHANGE_REQUESTED') disabled class="bg-gray-100" @endif>EXCHANGE_REQUESTED - Échange demandé</option>
+                        <option value="EXCHANGE_PROCESSED" @if($package->status === 'EXCHANGE_PROCESSED') disabled class="bg-gray-100" @endif>EXCHANGE_PROCESSED - Échange traité</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Les statuts grisés sont indisponibles (statut actuel ou transitions invalides)</p>
                 </div>

@@ -75,6 +75,10 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
 
         // Export
         Route::get('/export', [UserController::class, 'export'])->name('export');
+
+        // Gestion wallet chef dépôt
+        Route::post('/{user}/depot-wallet/manage', [UserController::class, 'manageDepotWallet'])->name('depot-wallet.manage');
+        Route::get('/{user}/depot-wallet/history', [UserController::class, 'depotWalletHistory'])->name('depot-wallet.history');
     });
 
     // ==================== GESTION SYSTÈME ====================

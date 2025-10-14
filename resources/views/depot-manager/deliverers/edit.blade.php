@@ -88,24 +88,51 @@
         <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-6">Affectation géographique</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Gouvernorat -->
+            <div class="space-y-6">
+                <!-- Gouvernorats (sélection multiple) -->
                 <div>
-                    <label for="assigned_delegation" class="block text-sm font-medium text-gray-700 mb-2">
-                        Gouvernorat d'affectation <span class="text-red-500">*</span>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Gouvernorats d'affectation <span class="text-red-500">*</span>
                     </label>
-                    <select name="assigned_delegation" id="assigned_delegation" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 @error('assigned_delegation') border-red-500 @enderror">
-                        <option value="">Sélectionner un gouvernorat</option>
-                        @foreach(auth()->user()->assigned_gouvernorats_array as $gov)
-                            <option value="{{ $gov }}" {{ old('assigned_delegation', $deliverer->assigned_delegation) == $gov ? 'selected' : '' }}>
-                                {{ $gov }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('assigned_delegation')
+                    @php
+                        $currentGouvernorats = old('deliverer_gouvernorats', $deliverer->getDelivererGouvernorats());
+                    @endphp
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto @error('deliverer_gouvernorats') border-red-500 @enderror">
+                        <div class="space-y-2">
+                            @foreach(auth()->user()->assigned_gouvernorats_array as $gov)
+                            <label class="flex items-center space-x-3 p-2 hover:bg-orange-50 rounded cursor-pointer">
+                                <input type="checkbox" 
+                                       name="deliverer_gouvernorats[]" 
+                                       value="{{ $gov }}"
+                                       {{ in_array($gov, $currentGouvernorats) ? 'checked' : '' }}
+                                       class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                                <span class="text-sm text-gray-700 font-medium">{{ $gov }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @error('deliverer_gouvernorats')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                    <p class="mt-2 text-xs text-gray-500">
+                        <svg class="w-4 h-4 inline text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Sélectionnez un ou plusieurs gouvernorats pour ce livreur
+                    </p>
+                </div>
+
+                <!-- Bouton sélectionner tout / désélectionner tout -->
+                <div class="flex items-center space-x-3">
+                    <button type="button" onclick="selectAllGouvernorats()" 
+                            class="text-sm text-orange-600 hover:text-orange-800 font-medium">
+                        ✓ Tout sélectionner
+                    </button>
+                    <span class="text-gray-300">|</span>
+                    <button type="button" onclick="deselectAllGouvernorats()" 
+                            class="text-sm text-gray-600 hover:text-gray-800 font-medium">
+                        ✗ Tout désélectionner
+                    </button>
                 </div>
 
                 <!-- Type de livreur (lecture seule) -->
@@ -186,5 +213,17 @@
 
 </div>
 
+<script>
+function selectAllGouvernorats() {
+    document.querySelectorAll('input[name="deliverer_gouvernorats[]"]').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+}
 
+function deselectAllGouvernorats() {
+    document.querySelectorAll('input[name="deliverer_gouvernorats[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+</script>
 @endsection

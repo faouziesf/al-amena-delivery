@@ -12,6 +12,7 @@ use App\Http\Controllers\Client\ClientBankAccountController;
 use App\Http\Controllers\Client\ClientProfileController;
 use App\Http\Controllers\Client\ClientTicketController;
 use App\Http\Controllers\Client\ClientManifestController;
+use App\Http\Controllers\Client\ClientReturnController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,11 +27,25 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/api/stats', [ClientDashboardController::class, 'apiStats'])->name('dashboard.api.stats');
 
-    // ==================== GESTION RETOURS CLIENT ====================
+    // ==================== GESTION RETOURS CLIENT (REFACTORISÉ) ====================
     Route::prefix('returns')->name('returns.')->group(function () {
-        Route::get('/', [ClientDashboardController::class, 'returns'])->name('index');
-        Route::post('/{package}/confirm', [ClientDashboardController::class, 'confirmReturn'])->name('confirm');
-        Route::post('/{package}/report-issue', [ClientDashboardController::class, 'reportReturnIssue'])->name('report-issue');
+        // Liste des retours en attente de traitement (48h)
+        Route::get('/pending', [ClientReturnController::class, 'pending'])->name('pending');
+        
+        // Détails d'un colis retourné
+        Route::get('/{id}', [ClientReturnController::class, 'show'])->name('show');
+        
+        // Détails du colis retour associé (ReturnPackage)
+        Route::get('/return-package/{returnPackageId}', [ClientReturnController::class, 'showReturnPackage'])->name('show-return-package');
+        
+        // Valider la réception d'un colis retourné
+        Route::post('/{id}/validate-reception', [ClientReturnController::class, 'validateReception'])->name('validate-reception');
+        
+        // Réclamer un problème pour un colis retourné
+        Route::post('/{id}/report-problem', [ClientReturnController::class, 'reportProblem'])->name('report-problem');
+        
+        // API: Obtenir le nombre de retours en attente (pour badge notification)
+        Route::get('/api/pending-count', [ClientReturnController::class, 'getPendingCount'])->name('api.pending-count');
     });
 
     // ==================== API ROUTES ====================

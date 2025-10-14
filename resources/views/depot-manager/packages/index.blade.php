@@ -84,7 +84,7 @@
                     <option value="PAYMENT" {{ request('status') == 'PAYMENT' ? 'selected' : '' }}>💰 Colis de Paiement</option>
                     <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Créé</option>
                     <option value="AVAILABLE" {{ request('status') == 'AVAILABLE' ? 'selected' : '' }}>Disponible</option>
-                    <option value="ACCEPTED" {{ request('status') == 'ACCEPTED' ? 'selected' : '' }}>Accepté</option>
+                    <option value="OUT_FOR_DELIVERY" {{ request('status') == 'OUT_FOR_DELIVERY' ? 'selected' : '' }}>En livraison</option>
                     <option value="PICKED_UP" {{ request('status') == 'PICKED_UP' ? 'selected' : '' }}>Collecté</option>
                     <option value="DELIVERED" {{ request('status') == 'DELIVERED' ? 'selected' : '' }}>Livré</option>
                     <option value="RETURNED" {{ request('status') == 'RETURNED' ? 'selected' : '' }}>Retourné</option>
@@ -216,7 +216,7 @@
                                         @if($package->status === 'DELIVERED') bg-green-100 text-green-800
                                         @elseif($package->status === 'PICKED_UP') bg-blue-100 text-blue-800
                                         @elseif($package->status === 'RETURNED') bg-red-100 text-red-800
-                                        @elseif($package->status === 'ACCEPTED') bg-yellow-100 text-yellow-800
+                                        @elseif($package->status === 'OUT_FOR_DELIVERY') bg-yellow-100 text-yellow-800
                                         @else bg-gray-100 text-gray-800 @endif">
                                         {{ $package->status }}
                                     </span>
@@ -236,7 +236,7 @@
                                             </svg>
                                         </a>
 
-                                        @if($package->assignedDeliverer && in_array($package->status, ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE']))
+                                        @if($package->assignedDeliverer && in_array($package->status, ['OUT_FOR_DELIVERY', 'PICKED_UP', 'UNAVAILABLE']))
                                         <button onclick="reassignPackage({{ $package->id }})"
                                                 class="text-blue-600 hover:text-blue-800 transition-colors"
                                                 title="Réassigner">

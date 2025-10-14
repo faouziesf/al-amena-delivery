@@ -80,7 +80,7 @@ class DepotManagerPackageController extends Controller
                                 $q->whereIn('assigned_deliverer_id', $delivererIds)
                                   ->orWhereNotNull('payment_withdrawal_id');
                             })
-                            ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                            ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                             ->count(),
             'delivered' => Package::where(function($q) use ($delivererIds) {
                                 $q->whereIn('assigned_deliverer_id', $delivererIds)
@@ -92,7 +92,7 @@ class DepotManagerPackageController extends Controller
                              $q->whereIn('assigned_deliverer_id', $delivererIds)
                                ->orWhereNotNull('payment_withdrawal_id');
                         })
-                        ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                        ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                         ->where('delivery_attempts', '>=', 3)
                         ->count()
         ];
@@ -143,7 +143,17 @@ class DepotManagerPackageController extends Controller
 
         $package->update([
             'assigned_deliverer_id' => $newDeliverer->id,
-            'status' => 'ACCEPTED'
+            'status' => 'OUT_FOR_DELIVERY',
+            'reassigned_at' => now(),
+            'reassignment_reason' => 'Réassignation par chef de dépôt'
+        ]);
+        
+        // Enregistrer dans l'historique
+        $package->statusHistory()->create([
+            'status' => 'OUT_FOR_DELIVERY',
+            'changed_by' => auth()->id(),
+            'notes' => "Réassigné à {$newDeliverer->name}",
+            'created_at' => now()
         ]);
 
         return back()->with('success', 'Colis réassigné avec succès.');
@@ -171,14 +181,14 @@ class DepotManagerPackageController extends Controller
                                       ->whereDate('delivered_at', today())
                                       ->count(),
             'in_progress' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                                  ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                  ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                   ->count(),
             'cod_collected_today' => Package::whereIn('assigned_deliverer_id', $delivererIds)
                                           ->where('status', 'DELIVERED')
                                           ->whereDate('delivered_at', today())
                                           ->sum('cod_amount'),
             'urgent_packages' => Package::whereIn('assigned_deliverer_id', $delivererIds)
-                                      ->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])
+                                      ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                       ->where('delivery_attempts', '>=', 3)
                                       ->count()
         ];
@@ -197,7 +207,7 @@ class DepotManagerPackageController extends Controller
                                           ->whereDate('delivered_at', today())
                                           ->count(),
                 'in_progress' => Package::whereIn('assigned_deliverer_id', $gouvernoratDelivererIds)
-                                      ->whereIn('status', ['ACCEPTED', 'PICKED_UP', 'UNAVAILABLE'])
+                                      ->whereIn('status', ['OUT_FOR_DELIVERY', 'UNAVAILABLE'])
                                       ->count()
             ];
         }
@@ -438,7 +448,8 @@ class DepotManagerPackageController extends Controller
             'processed_today' => Package::where('status', 'RETURNED')
                                        ->whereNotNull('return_processed_at')
                                        ->whereDate('return_processed_at', today())
-                                       ->count()
+                                       ->count(),
+            'total_exchanges' => Package::where('status', 'EXCHANGE_PROCESSED')->count()
         ];
 
         return view('depot-manager.packages.returns-exchanges', compact('packages', 'stats', 'user'));

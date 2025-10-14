@@ -433,7 +433,7 @@ class RunSheet extends Model
         $packages = collect($this->packages_data);
         
         return [
-            'pickups' => $packages->where('status', 'ACCEPTED')->count(),
+            'pickups' => $packages->where('status', 'OUT_FOR_DELIVERY')->count(),
             'deliveries' => $packages->whereIn('status', ['PICKED_UP', 'UNAVAILABLE'])->count(),
             'returns' => $packages->where('status', 'VERIFIED')->count(),
             'total' => $packages->count()
