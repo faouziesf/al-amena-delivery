@@ -38,6 +38,22 @@ class PickupRequest extends Model
         return $this->belongsTo(User::class, 'assigned_deliverer_id');
     }
 
+    /**
+     * Relation vers la délégation (gouvernorat) du pickup
+     */
+    public function delegation(): BelongsTo
+    {
+        return $this->belongsTo(Delegation::class, 'delegation_from');
+    }
+
+    /**
+     * Alias pour delegation_from
+     */
+    public function delegationFrom(): BelongsTo
+    {
+        return $this->delegation();
+    }
+
     // Note: pickup_address est un champ texte libre, pas une relation
     // Si on veut une relation vers ClientPickupAddress, il faudra ajouter pickup_address_id à la table
 

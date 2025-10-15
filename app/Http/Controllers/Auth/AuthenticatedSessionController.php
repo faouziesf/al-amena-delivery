@@ -68,10 +68,14 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->route('deliverer.dashboard');
             case 'COMMERCIAL':
                 return redirect()->route('commercial.dashboard');
+            case 'DEPOT_MANAGER':
+                return redirect()->route('depot-manager.dashboard');
             case 'SUPERVISOR':
                 return redirect()->route('supervisor.dashboard');
             default:
-                return redirect()->route('dashboard');
+                // Logout user with invalid/deprecated role
+                Auth::guard('web')->logout();
+                return redirect()->route('login')->with('error', 'Type de compte non reconnu ou désactivé. Veuillez contacter l\'administrateur.');
         }
     }
 }

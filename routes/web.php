@@ -58,12 +58,10 @@ Route::get('/dashboard', function () {
             return redirect()->route('commercial.dashboard');
         case 'DEPOT_MANAGER':
             return redirect()->route('depot-manager.dashboard');
-        case 'TRANSIT_DRIVER':
-            return redirect()->route('transit-driver.app');
         case 'SUPERVISOR':
             return redirect()->route('supervisor.dashboard');
         default:
-            return redirect()->route('login');
+            return redirect()->route('login')->with('error', 'Type de compte non reconnu ou désactivé.');
     }
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -91,11 +89,10 @@ require __DIR__.'/supervisor.php';
 // Routes spécifiques aux chefs dépôt
 require __DIR__.'/depot-manager.php';
 
-// Routes spécifiques aux livreurs de transit
-require __DIR__.'/transit-driver.php';
-
 // Routes système de scan dépôt
 require __DIR__.'/depot.php';
+
+// TRANSIT_DRIVER routes removed - account type deprecated
 
 // Routes d'authentification
 require __DIR__.'/auth.php';
@@ -280,14 +277,40 @@ if (app()->environment(['local', 'staging'])) {
 
 // 404 personnalisé pour les routes inexistantes
 Route::fallback(function () {
-    if (request()->expectsJson()) {
-        return response()->json([
-            'error' => 'Route non trouvée',
-            'message' => 'L\'endpoint demandé n\'existe pas'
-        ], 404);
+    // Check if user is authenticated
+    if (auth()->check()) {
+        // User is logged in but accessing invalid route - redirect to dashboard with error
+        $errorMessage = 'La page demandée n\'existe pas.';
+        
+        // Add debug details if debug mode is enabled
+        if (config('app.debug')) {
+            $errorMessage .= ' (Route: ' . request()->path() . ')';
+        }
+        
+        // Redirect to appropriate dashboard based on role
+        $user = auth()->user();
+        $dashboardRoute = match($user->role) {
+            'CLIENT' => 'client.dashboard',
+            'DELIVERER' => 'deliverer.dashboard',
+            'COMMERCIAL' => 'commercial.dashboard',
+            'SUPERVISOR' => 'supervisor.dashboard',
+            'DEPOT_MANAGER' => 'depot-manager.dashboard',
+            default => 'login'
+        };
+        
+        return redirect()->route($dashboardRoute)->with('error', $errorMessage);
     }
     
-    return response()->view('errors.404', [], 404);
+    // User not authenticated - redirect to login
+    if (!request()->expectsJson()) {
+        return redirect()->route('login')->with('error', 'Veuillez vous connecter pour accéder à cette page.');
+    }
+    
+    // For API requests, return JSON error
+    return response()->json([
+        'error' => 'Route non trouvée',
+        'message' => 'L\'endpoint demandé n\'existe pas'
+    ], 404);
 });
 
 /*

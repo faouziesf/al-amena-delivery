@@ -1661,4 +1661,42 @@ class SimpleDelivererController extends Controller
         }
     }
 
+    /**
+     * Pickups disponibles - Vue
+     */
+    public function availablePickups()
+    {
+        $user = Auth::user();
+        $gouvernorats = $user->deliverer_gouvernorats ?? [];
+        
+        $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['assigned', 'pending'])
+            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
+                return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
+                    $subQ->whereIn('governorate', $gouvernorats);
+                });
+            })
+            ->with('delegation', 'client')
+            ->orderBy('requested_pickup_date', 'asc')
+            ->get();
+        
+        return view('deliverer.pickups-available', compact('pickups'));
+    }
+
+    /**
+     * Scanner simple - Vue
+     */
+    public function scanSimple()
+    {
+        return view('deliverer.scan-production');
+    }
+
+    /**
+     * Scanner multi - Vue
+     */
+    public function scanMulti()
+    {
+        return view('deliverer.multi-scanner-production');
+    }
+
 }

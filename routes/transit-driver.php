@@ -5,9 +5,22 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Transit Driver Routes - Routes pour les livreurs de transit
+| Transit Driver Routes - DEPRECATED - DO NOT USE
+|--------------------------------------------------------------------------
+| 
+| ⚠️ WARNING: This account type has been DEPRECATED and removed from the system.
+| 
+| This file is kept for reference only. All TRANSIT_DRIVER functionality
+| has been removed from the platform. Users with this role will be logged
+| out and shown an error message.
+| 
+| Date Deprecated: 2025-10-15
+| Reason: Account type no longer needed in the workflow
+|
 |--------------------------------------------------------------------------
 */
+
+// ALL ROUTES BELOW ARE DISABLED AND NON-FUNCTIONAL
 
 // Route publique pour l'application
 Route::get('/transit-driver', [TransitDriverController::class, 'index'])->name('transit-driver.app');
