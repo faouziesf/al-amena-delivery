@@ -32,11 +32,11 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
     @endif
 
     <!-- Packages Grid - Mobile Optimized Compact List -->
-    <div class="space-y-2 sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">@foreach($packages as $package)
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-2xl transition-all duration-200 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+    <div class="space-y-2 sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">@foreach($packages as $package)
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
             <!-- Mobile Optimized Package Row -->
-            <div class="p-2 sm:p-3">
+            <div class="p-2.5 sm:p-3">
                 <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row">
                     <!-- Left Section: Checkbox + Package Info -->
                     <div class="flex items-start sm:items-center space-x-2 sm:space-x-3 flex-1 min-w-0 flex-col sm:flex-row">
@@ -47,7 +47,7 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
                         @endif
 
                         <!-- Enhanced Status Badge - Mobile Optimized -->
-                        <div class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-sm sm:text-xs font-semibold rounded-2xl border-2 flex-shrink-0 min-w-[70px] sm:min-w-[90px] justify-center
+                        <div class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border flex-shrink-0 min-w-[65px] sm:min-w-[80px] justify-center
                             {{ match($package->status) {
                                 'CREATED' => 'bg-gray-100 text-gray-800 border-gray-300 shadow-md hover:shadow-xl',
                                 'AVAILABLE' => 'bg-blue-100 text-blue-800 border-blue-300 shadow-md hover:shadow-xl',
@@ -115,21 +115,21 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
                         </div>
                     </div>
 
-                    <!-- Right Section: Actions - Mobile Optimized -->
-                    <div class="flex items-start sm:items-center space-x-1 ml-2 sm:ml-3 flex-col sm:flex-row">
+                    <!-- Right Section: Actions - Mobile Optimized avec fond -->
+                    <div class="flex items-center gap-1.5 ml-2 bg-gray-50 rounded-lg p-1.5">
                         <!-- Quick Action Buttons for CREATED/AVAILABLE -->
                         @if(in_array($package->status, ['CREATED', 'AVAILABLE']))
                             <a href="{{ route('client.packages.edit', $package) }}"
-                               class="p-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors touch-manipulation"
+                               class="p-2 bg-white text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm transition-all touch-manipulation"
                                title="Modifier">
-                                <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
                             </a>
                             <button onclick="deletePackage({{ $package->id }}, '{{ $package->package_code }}')"
-                                    class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors touch-manipulation"
+                                    class="p-2 bg-white text-red-600 hover:bg-red-50 rounded-lg shadow-sm transition-all touch-manipulation"
                                     title="Supprimer">
-                                <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
                             </button>
@@ -138,10 +138,10 @@ $packagesCount = $isPaginated ? $packages->total() : $packages->count();
                         <!-- More Actions Dropdown -->
                         <div class="relative">
                             <button onclick="toggleDropdown({{ $package->id }})"
-                                    class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors touch-manipulation"
+                                    class="p-2 bg-white text-gray-600 hover:bg-gray-100 rounded-lg shadow-sm transition-all touch-manipulation"
                                     title="Plus d'actions"
                                     id="dropdown-button-{{ $package->id }}">
-                                <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
                                 </svg>
                             </button>

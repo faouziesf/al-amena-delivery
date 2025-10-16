@@ -3,7 +3,7 @@
 @section('title', "Nouvelle réclamation - Colis {$package->package_code}")
 
 @section('content')
-<div class="container mx-auto px-4 py-4 sm:py-5 lg:py-6 max-w-2xl">
+<div class="max-w-7xl mx-auto sm:py-5 lg:py-6 max-w-2xl">
     <div class="bg-white rounded-2xl shadow-md hover:shadow-xl border p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
         <!-- En-tête -->
         <div class="mb-6">

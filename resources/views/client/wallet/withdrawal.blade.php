@@ -3,7 +3,7 @@
 @section('title', 'Demande de Retrait')
 
 @section('content')
-<div class="container mx-auto px-4 py-4 sm:py-5 lg:py-6">
+<div class="max-w-7xl mx-auto sm:py-5 lg:py-6">
 
     <!-- En-tête -->
     <div class="mb-6 md:mb-8">

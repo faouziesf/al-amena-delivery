@@ -3,7 +3,7 @@
 @section('title', 'Ajouter un Compte Bancaire')
 
 @section('content')
-<div class="container mx-auto px-4 py-4 sm:py-5 lg:py-6">
+<div class="max-w-7xl mx-auto">
     <!-- En-tête -->
     <div class="mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between flex-col sm:flex-row">

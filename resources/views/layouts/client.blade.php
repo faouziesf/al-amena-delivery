@@ -308,7 +308,7 @@
     </aside>
 
     <!-- ========== Main Content ========== -->
-    <main class="min-h-screen">
+    <main class="min-h-screen px-4 py-4 lg:px-6 lg:py-6">
         @yield('content')
     </main>
 

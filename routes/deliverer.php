@@ -71,22 +71,46 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         // Run Sheet & Tasks
         Route::get('/run-sheet', [DelivererController::class, 'apiRunSheet'])->name('run.sheet');
         Route::get('/task/{id}', [DelivererController::class, 'apiTaskDetail'])->name('task.detail');
+        Route::get('/tasks', [DelivererController::class, 'apiRunSheet'])->name('tasks');
         
         // Packages
+        Route::get('/packages', [SimpleDelivererController::class, 'apiActivePackages'])->name('packages');
         Route::get('/packages/active', [SimpleDelivererController::class, 'apiActivePackages'])->name('packages.active');
         Route::get('/packages/delivered', [SimpleDelivererController::class, 'apiDeliveredPackages'])->name('packages.delivered');
+        Route::get('/packages/pending', [SimpleDelivererController::class, 'apiActivePackages'])->name('packages.pending');
         
-        // Pickups
+        // Pickups (avec alias pour compatibilité)
         Route::get('/pickups/available', [SimpleDelivererController::class, 'apiAvailablePickups'])->name('pickups.available');
+        Route::get('/available/pickups', [SimpleDelivererController::class, 'apiAvailablePickups'])->name('available.pickups');
         Route::post('/pickups/{pickupRequest}/accept', [SimpleDelivererController::class, 'acceptPickup'])->name('pickups.accept');
         Route::post('/pickups/{pickupRequest}/collected', [DelivererActionsController::class, 'markPickupCollected'])->name('pickups.collected');
+        Route::get('/pickups', [SimpleDelivererController::class, 'apiAvailablePickups'])->name('pickups');
+        
+        // Returns (Retours)
+        Route::get('/returns', [DelivererController::class, 'apiReturns'])->name('returns');
+        Route::get('/returns/pending', [DelivererController::class, 'apiReturns'])->name('returns.pending');
+        
+        // Payments (Paiements)
+        Route::get('/payments', [DelivererController::class, 'apiPayments'])->name('payments');
+        Route::get('/payments/pending', [DelivererController::class, 'apiPayments'])->name('payments.pending');
         
         // Wallet
+        Route::get('/wallet', [DelivererController::class, 'apiWalletBalance'])->name('wallet');
         Route::get('/wallet/balance', [DelivererController::class, 'apiWalletBalance'])->name('wallet.balance');
+        Route::get('/wallet/transactions', [DelivererController::class, 'apiWalletTransactions'])->name('wallet.transactions');
+        
+        // Stats
+        Route::get('/stats', [DelivererController::class, 'apiStats'])->name('stats');
+        Route::get('/stats/today', [DelivererController::class, 'apiStatsToday'])->name('stats.today');
         
         // Client Search & Recharge
         Route::get('/search/client', [DelivererClientTopupController::class, 'searchClient'])->name('search.client');
         Route::post('/recharge/client', [DelivererClientTopupController::class, 'addTopup'])->name('recharge.client');
+        Route::get('/clients/search', [DelivererClientTopupController::class, 'searchClient'])->name('clients.search');
+        
+        // Scan & Verify
+        Route::post('/scan/verify', [SimpleDelivererController::class, 'processScan'])->name('scan.verify');
+        Route::post('/verify/package', [SimpleDelivererController::class, 'processScan'])->name('verify.package');
     });
 
     // ==================== FALLBACK - GESTION ERREURS ====================

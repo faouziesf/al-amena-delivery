@@ -406,11 +406,12 @@ return new class extends Migration
         Schema::create('deliverer_wallet_emptyings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('deliverer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('commercial_id')->constrained('users')->onDelete('cascade');
-            $table->decimal('wallet_amount', 16, 3);
-            $table->decimal('physical_amount', 16, 3);
+            $table->foreignId('commercial_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->decimal('wallet_amount', 16, 3)->nullable();
+            $table->decimal('physical_amount', 16, 3)->nullable();
+            $table->decimal('amount', 16, 3)->nullable(); // For depot manager emptyings
             $table->decimal('discrepancy_amount', 16, 3)->default(0);
-            $table->timestamp('emptying_date');
+            $table->timestamp('emptying_date')->nullable();
             $table->text('notes')->nullable();
             $table->boolean('receipt_generated')->default(false);
             $table->string('receipt_path')->nullable();

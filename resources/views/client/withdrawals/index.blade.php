@@ -3,8 +3,8 @@
 @section('title', 'Mes demandes de retrait')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-    <div class="container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-4 sm:py-5 lg:py-6">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-4 lg:px-6 lg:py-6">
+    <div class="max-w-7xl mx-auto">
         <!-- Header Mobile-Optimized -->
         <div class="flex flex-col space-y-4 mb-6 sm:mb-8 flex-col sm:flex-row">
             <div class="flex flex-col space-y-3 flex-col sm:flex-row">

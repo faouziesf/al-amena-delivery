@@ -1339,11 +1339,21 @@ class SimpleDelivererController extends Controller
 
     /**
      * API: Récupérer les pickup requests disponibles (pending)
+     * Filtré par gouvernorats du livreur
      */
     public function apiAvailablePickups()
     {
+        $user = Auth::user();
+        $gouvernorats = is_array($user->deliverer_gouvernorats) ? $user->deliverer_gouvernorats : [];
+        
         $pickups = PickupRequest::where('status', 'pending')
             ->where('assigned_deliverer_id', null)
+            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
+                return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
+                    $subQ->whereIn('governorate', $gouvernorats);
+                });
+            })
+            ->with(['delegation', 'client'])
             ->orderBy('requested_pickup_date', 'asc')
             ->get()
             ->map(function($pickup) {
@@ -1353,10 +1363,11 @@ class SimpleDelivererController extends Controller
                     'pickup_contact_name' => $pickup->pickup_contact_name,
                     'pickup_phone' => $pickup->pickup_phone,
                     'pickup_notes' => $pickup->pickup_notes,
-                    'delegation_from' => $pickup->delegation_from,
+                    'delegation_name' => $pickup->delegation?->name ?? 'N/A',
+                    'governorate' => $pickup->delegation?->governorate ?? 'N/A',
                     'requested_pickup_date' => $pickup->requested_pickup_date?->format('d/m/Y H:i'),
                     'status' => $pickup->status,
-                    'client_name' => $pickup->client?->name,
+                    'client_name' => $pickup->client?->name ?? 'N/A',
                     'type' => 'available_pickup'
                 ];
             });
@@ -1366,6 +1377,7 @@ class SimpleDelivererController extends Controller
 
     /**
      * Accepter une pickup request
+     * Avec vérification gouvernorat
      */
     public function acceptPickup(PickupRequest $pickupRequest)
     {
@@ -1392,6 +1404,18 @@ class SimpleDelivererController extends Controller
                 'success' => false,
                 'message' => 'Cette demande de collecte a déjà été acceptée par un autre livreur'
             ], 400);
+        }
+        
+        // Vérifier que le pickup est dans les gouvernorats du livreur
+        $gouvernorats = is_array($user->deliverer_gouvernorats) ? $user->deliverer_gouvernorats : [];
+        if (!empty($gouvernorats)) {
+            $pickupGouvernorat = $pickupRequest->delegation?->governorate;
+            if (!in_array($pickupGouvernorat, $gouvernorats)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce ramassage n\'est pas dans votre zone de travail'
+                ], 403);
+            }
         }
 
         try {

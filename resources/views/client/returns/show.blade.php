@@ -3,7 +3,7 @@
 @section('title', 'Détails du Retour - ' . $package->package_code)
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="max-w-7xl mx-auto">
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm">
         <ol class="flex items-center space-x-2 text-gray-600">

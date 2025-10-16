@@ -343,4 +343,135 @@ class DelivererController extends Controller
             'frozen' => $wallet->frozen_amount ?? 0
         ]);
     }
+
+    /**
+     * API: Wallet Transactions
+     */
+    public function apiWalletTransactions()
+    {
+        $user = Auth::user();
+        $transactions = \App\Models\Transaction::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'transactions' => $transactions
+        ]);
+    }
+
+    /**
+     * API: Returns (Retours fournisseur)
+     */
+    public function apiReturns()
+    {
+        $user = Auth::user();
+        $gouvernorats = is_array($user->deliverer_gouvernorats) ? $user->deliverer_gouvernorats : [];
+        
+        $returns = \App\Models\ReturnPackage::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['pending', 'assigned'])
+            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
+                return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
+                    $subQ->whereIn('governorate', $gouvernorats);
+                });
+            })
+            ->with('delegation')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'returns' => $returns,
+            'count' => $returns->count()
+        ]);
+    }
+
+    /**
+     * API: Payments (Paiements espèce)
+     */
+    public function apiPayments()
+    {
+        $user = Auth::user();
+        $gouvernorats = is_array($user->deliverer_gouvernorats) ? $user->deliverer_gouvernorats : [];
+        
+        $payments = \App\Models\WithdrawalRequest::where('assigned_deliverer_id', $user->id)
+            ->whereIn('status', ['pending', 'assigned'])
+            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
+                return $q->whereHas('client', function($subQ) use ($gouvernorats) {
+                    $subQ->whereIn('governorate', $gouvernorats);
+                });
+            })
+            ->with('client')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'payments' => $payments,
+            'count' => $payments->count()
+        ]);
+    }
+
+    /**
+     * API: Stats générales
+     */
+    public function apiStats()
+    {
+        $user = Auth::user();
+        
+        $stats = [
+            'total_deliveries' => Package::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'DELIVERED')
+                ->count(),
+            'total_pickups' => PickupRequest::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'picked_up')
+                ->count(),
+            'pending_tasks' => Package::where('assigned_deliverer_id', $user->id)
+                ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])
+                ->count(),
+            'today_deliveries' => Package::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'DELIVERED')
+                ->whereDate('delivered_at', today())
+                ->count(),
+            'wallet_balance' => UserWallet::where('user_id', $user->id)->value('balance') ?? 0
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * API: Stats du jour
+     */
+    public function apiStatsToday()
+    {
+        $user = Auth::user();
+        
+        $stats = [
+            'deliveries' => Package::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'DELIVERED')
+                ->whereDate('delivered_at', today())
+                ->count(),
+            'pickups' => PickupRequest::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'picked_up')
+                ->whereDate('picked_up_at', today())
+                ->count(),
+            'cod_collected' => Package::where('assigned_deliverer_id', $user->id)
+                ->where('status', 'DELIVERED')
+                ->whereDate('delivered_at', today())
+                ->sum('cod_amount'),
+            'pending' => Package::where('assigned_deliverer_id', $user->id)
+                ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])
+                ->count()
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'stats' => $stats,
+            'date' => today()->format('Y-m-d')
+        ]);
+    }
 }

@@ -3,7 +3,7 @@
 @section('title', 'Détail du Manifeste - ' . $manifest->manifest_number)
 
 @section('content')
-<div x-data="manifestShowApp()" class="container mx-auto px-4 py-6">
+<div x-data="manifestShowApp()" class="max-w-7xl mx-auto">
     <!-- En-tête avec breadcrumb -->
     <div class="mb-8">
         <nav class="flex mb-4" aria-label="Breadcrumb">

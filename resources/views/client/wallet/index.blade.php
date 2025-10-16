@@ -3,36 +3,36 @@
 @section('title', 'Mon Portefeuille')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-    <div class="container mx-auto px-3 sm:px-4 lg:px-6 py-4 lg:py-6">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-4 lg:px-6 lg:py-6">
+    <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
-        <div class="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0 mb-6 lg:mb-8">
+        <div class="flex flex-col space-y-3 lg:flex-row lg:justify-between lg:items-start lg:space-y-0 mb-4 sm:mb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1">
                     💰 Mon Portefeuille
                 </h1>
-                <p class="text-gray-600 text-sm lg:text-base">Gérez votre solde et vos transactions en toute simplicité</p>
+                <p class="text-gray-600 text-sm">Gérez votre solde et vos transactions</p>
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 lg:gap-3">
+            <div class="flex flex-wrap gap-2">
                 <a href="{{ url('client/wallet/topup/requests') }}" 
-                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md flex items-center gap-1.5 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     <span class="hidden sm:inline">Demande de</span> Recharge
                 </a>
                 <a href="{{ route('client.wallet.withdrawal') }}" 
-                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md flex items-center gap-1.5 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
                     Retirer
                 </a>
                 <a href="{{ route('client.wallet.statement') }}" 
-                   class="bg-white text-purple-600 border-2 border-purple-200 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2 text-sm lg:text-base">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-white text-purple-600 border border-purple-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-50 transition-all shadow-sm flex items-center gap-1.5 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a4 4 0 01-4 4z"/>
                     </svg>
                     <span class="hidden sm:inline">Relevé</span> PDF
@@ -42,20 +42,20 @@
 
         <!-- Alerts -->
         @if(session('success'))
-            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-4 lg:px-6 py-3 lg:py-4 rounded-xl mb-4 lg:mb-6 shadow-sm">
+            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 text-emerald-800 px-3 sm:px-4 py-2.5 rounded-lg mb-3 sm:mb-4 shadow-sm">
                 <div class="flex items-center">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span class="text-sm lg:text-base">{{ session('success') }}</span>
+                    <span class="text-sm">{{ session('success') }}</span>
                 </div>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-4 lg:px-6 py-3 lg:py-4 rounded-xl mb-4 lg:mb-6 shadow-sm">
+            <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-3 sm:px-4 py-2.5 rounded-lg mb-3 sm:mb-4 shadow-sm">
                 <div class="flex items-center">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <span class="text-sm lg:text-base">{{ session('error') }}</span>
@@ -64,39 +64,35 @@
         @endif
 
         <!-- Main Balance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <!-- Solde disponible -->
-            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-3 sm:p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-100 text-xs lg:text-sm font-medium">Solde disponible</p>
-                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2" id="available-balance">
+                        <p class="text-purple-100 text-xs font-medium">Disponible</p>
+                        <p class="text-lg sm:text-xl font-bold mt-1" id="available-balance">
                             {{ number_format($user->wallet->balance - ($user->wallet->frozen_amount ?? 0), 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                         </svg>
                     </div>
                 </div>
-                <div class="mt-3 lg:mt-4 flex items-center">
-                    <div class="bg-white/20 rounded-full w-1.5 h-1.5 lg:w-2 lg:h-2 animate-pulse"></div>
-                    <span class="text-purple-100 text-xs ml-2">Mise à jour en temps réel</span>
-                </div>
             </div>
 
             <!-- Montant en attente -->
-            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl p-3 sm:p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-orange-100 text-xs lg:text-sm font-medium">En attente</p>
-                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
+                        <p class="text-orange-100 text-xs font-medium">Attente</p>
+                        <p class="text-lg sm:text-xl font-bold mt-1">
                             {{ number_format($user->wallet->pending_amount ?? 0, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
@@ -104,16 +100,16 @@
             </div>
 
             <!-- Montant gelé -->
-            <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-xl p-3 sm:p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-red-100 text-xs lg:text-sm font-medium">Gelé (retraits)</p>
-                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
+                        <p class="text-red-100 text-xs font-medium">Gelé</p>
+                        <p class="text-lg sm:text-xl font-bold mt-1">
                             {{ number_format($user->wallet->frozen_amount ?? 0, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
                     </div>
@@ -121,16 +117,16 @@
             </div>
 
             <!-- Solde total -->
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-4 lg:p-6 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl p-3 sm:p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-emerald-100 text-xs lg:text-sm font-medium">Solde total</p>
-                        <p class="text-xl lg:text-3xl font-bold mt-1 lg:mt-2">
+                        <p class="text-emerald-100 text-xs font-medium">Total</p>
+                        <p class="text-lg sm:text-xl font-bold mt-1">
                             {{ number_format($user->wallet->balance, 3) }} DT
                         </p>
                     </div>
-                    <div class="bg-white/20 rounded-full p-2 lg:p-3">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/20 rounded-full p-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
@@ -139,35 +135,35 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
-            <div class="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-purple-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-2">💳 Total crédité</h3>
-                        <p class="text-xl lg:text-3xl font-bold text-emerald-600">
+                        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-1">💳 Crédité</h3>
+                        <p class="text-lg sm:text-xl font-bold text-emerald-600">
                             {{ number_format($stats['total_credited'], 3) }} DT
                         </p>
-                        <p class="text-xs lg:text-sm text-gray-500 mt-1">Revenus accumulés</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Revenus</p>
                     </div>
-                    <div class="bg-emerald-100 rounded-full p-3 lg:p-4">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-emerald-100 rounded-full p-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300">
+            <div class="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-purple-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-2">💸 Total débité</h3>
-                        <p class="text-xl lg:text-3xl font-bold text-red-600">
+                        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-1">💸 Débité</h3>
+                        <p class="text-lg sm:text-xl font-bold text-red-600">
                             {{ number_format($stats['total_debited'], 3) }} DT
                         </p>
-                        <p class="text-xs lg:text-sm text-gray-500 mt-1">Frais et retraits</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Frais</p>
                     </div>
-                    <div class="bg-red-100 rounded-full p-3 lg:p-4">
-                        <svg class="w-6 h-6 lg:w-8 lg:h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-red-100 rounded-full p-2">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                         </svg>
                     </div>

@@ -3,7 +3,7 @@
 @section('title', 'Mes Colis')
 
 @section('content')
-<div class="min-h-screen bg-gray-50" x-data="packagesApp()">
+<div class="min-h-screen bg-gray-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6" x-data="packagesApp()">
     <!-- Mobile Header Actions -->
     <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-3 space-y-3">
         <div class="flex items-center justify-between">
@@ -164,9 +164,9 @@
     </div>
 
     <!-- Content Container -->
-    <div class="max-w-7xl lg:mx-auto px-0 lg:px-6 py-4">
+    <div class="max-w-7xl lg:mx-auto px-4 lg:px-6 py-4">
         <!-- Mobile: Card List -->
-        <div class="lg:hidden space-y-3 px-4">
+        <div class="lg:hidden space-y-3">
             @forelse($packages as $package)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden touch-active transition-smooth">
                     <div class="p-4">
@@ -314,7 +314,7 @@
 
         <!-- Pagination -->
         @if($packages->hasPages())
-        <div class="mt-4 px-4 lg:px-0">
+        <div class="mt-4">
             {{ $packages->links() }}
         </div>
         @endif

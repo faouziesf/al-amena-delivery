@@ -40,7 +40,7 @@ function loadPickups() {
                     <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-12 text-center text-white">
                         <div class="text-6xl mb-4">✅</div>
                         <h4 class="text-xl font-bold mb-2">Aucun ramassage disponible</h4>
-                        <p class="text-white/80">Revenez plus tard</p>
+                        <p class="text-white/80">Tous les ramassages de votre zone ont été assignés</p>
                     </div>
                 `;
                 return;
@@ -56,6 +56,10 @@ function loadPickups() {
                     </div>
                     <div class="space-y-2 text-sm mb-4">
                         <div>
+                            <div class="text-xs text-gray-500">🗺️ Gouvernorat</div>
+                            <div class="font-semibold text-indigo-600">${pickup.governorate} - ${pickup.delegation_name}</div>
+                        </div>
+                        <div>
                             <div class="text-xs text-gray-500">📍 Adresse</div>
                             <div class="font-semibold text-gray-800">${pickup.pickup_address}</div>
                         </div>
@@ -65,10 +69,21 @@ function loadPickups() {
                         </div>
                         <div>
                             <div class="text-xs text-gray-500">📞 Téléphone</div>
-                            <a href="tel:${pickup.pickup_phone}" class="text-indigo-600 font-medium">${pickup.pickup_phone}</a>
+                            <a href="tel:${pickup.pickup_phone}" class="text-indigo-600 font-medium hover:underline">${pickup.pickup_phone}</a>
                         </div>
+                        <div>
+                            <div class="text-xs text-gray-500">👥 Client</div>
+                            <div class="text-gray-700">${pickup.client_name}</div>
+                        </div>
+                        ${pickup.pickup_notes ? `
+                        <div>
+                            <div class="text-xs text-gray-500">📝 Notes</div>
+                            <div class="text-gray-600 text-xs italic">${pickup.pickup_notes}</div>
+                        </div>
+                        ` : ''}
                     </div>
                     <button onclick="acceptPickup(${pickup.id})" 
+                            id="btn-${pickup.id}"
                             class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95">
                         ✅ Accepter ce ramassage
                     </button>
@@ -79,38 +94,50 @@ function loadPickups() {
             console.error('Error:', error);
             document.getElementById('pickups-container').innerHTML = `
                 <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
-                    Erreur de chargement
+                    <strong>Erreur de chargement</strong><br>
+                    <small>${error.message}</small>
                 </div>
             `;
         });
 }
 
 function acceptPickup(id) {
-    if (!confirm('Accepter ce ramassage ?')) return;
+    if (!confirm('Voulez-vous accepter ce ramassage ?')) return;
     
-    // Afficher le loading
-    showLoading();
+    const btn = document.getElementById(`btn-${id}`);
+    const originalText = btn.innerHTML;
+    
+    // Afficher le loading sur le bouton
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>';
     
     fetch(`/deliverer/api/pickups/${id}/accept`, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
-        hideLoading();
         if (data.success) {
-            showToast('Ramassage accepté !', 'success');
-            loadPickups();
+            showToast(data.message || 'Ramassage accepté !', 'success');
+            // Recharger la liste après 1 seconde
+            setTimeout(() => {
+                loadPickups();
+            }, 1000);
         } else {
-            showToast(data.message || 'Erreur', 'error');
+            showToast(data.message || 'Erreur lors de l\'acceptation', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     })
     .catch(error => {
-        hideLoading();
+        console.error('Error:', error);
         showToast('Erreur de connexion', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
 }
 </script>

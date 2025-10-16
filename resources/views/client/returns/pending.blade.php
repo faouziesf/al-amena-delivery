@@ -3,7 +3,7 @@
 @section('title', 'Retours à Traiter')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="max-w-7xl mx-auto">
     <!-- En-tête -->
     <div class="mb-6">
         <div class="flex items-center justify-between">
