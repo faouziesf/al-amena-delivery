@@ -1,11 +1,11 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Détails du Colis Retour')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- Breadcrumb -->
-    <nav class="mb-6 text-sm">
+    <nav class="mb-3 sm:mb-2 sm:mb-3 text-sm">
         <ol class="flex items-center space-x-2 text-gray-600">
             <li><a href="{{ route('client.dashboard') }}" class="hover:text-blue-600">Tableau de bord</a></li>
             <li>/</li>
@@ -18,10 +18,10 @@
     </nav>
 
     <!-- En-tête -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">📦 Colis Retour</h1>
+                <h1 class="text-lg sm:text-xl font-bold text-gray-900">📦 Colis Retour</h1>
                 <p class="text-gray-600 mt-1">Détails du retour pour le colis {{ $originalPackage->package_code }}</p>
             </div>
             <div>
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Lien vers le colis original -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center">
             <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -52,13 +52,13 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3">
         <!-- Colonne principale -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-2 sm:space-y-3">
             <!-- Informations du colis retour -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations du Colis Retour</h2>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Informations du Colis Retour</h2>
+                <dl class="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Code du retour</dt>
                         <dd class="mt-1 text-sm text-gray-900 font-mono">
@@ -89,9 +89,9 @@
             </div>
 
             <!-- Informations du colis original -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Colis Original</h2>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Colis Original</h2>
+                <dl class="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Code colis</dt>
                         <dd class="mt-1 text-sm text-gray-900 font-mono">
@@ -121,9 +121,9 @@
 
             <!-- Informations de retour -->
             @if($returnPackage->sender_data)
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Adresse de Retour</h2>
-                <dl class="grid grid-cols-1 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Adresse de Retour</h2>
+                <dl class="grid grid-cols-1 gap-2 sm:gap-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Nom</dt>
                         <dd class="mt-1 text-sm text-gray-900">
@@ -148,10 +148,10 @@
         </div>
 
         <!-- Colonne latérale -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-2 sm:space-y-3">
             <!-- Actions -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Actions</h2>
                 <div class="space-y-3">
                     <a href="{{ route('client.packages.show', $originalPackage->id) }}" 
                        class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition-colors">
@@ -173,7 +173,7 @@
             </div>
 
             <!-- Informations supplémentaires -->
-            <div class="bg-gray-50 rounded-lg p-4">
+            <div class="bg-gray-50 rounded-lg p-2.5 sm:p-3">
                 <h3 class="text-sm font-semibold text-gray-700 mb-2">ℹ️ Information</h3>
                 <p class="text-xs text-gray-600">
                     Ce colis retour a été créé automatiquement pour gérer le retour du colis original vers votre adresse.

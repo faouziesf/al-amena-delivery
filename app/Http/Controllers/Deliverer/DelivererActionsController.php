@@ -415,22 +415,23 @@ class DelivererActionsController extends Controller
      */
     private function handleCodCollection($package, $user)
     {
-        // Ajouter le montant COD au wallet du livreur (en attente)
+        // Ajouter le montant COD au wallet du livreur INSTANTANÉMENT
         $wallet = \App\Models\UserWallet::firstOrCreate(
             ['user_id' => $user->id],
             ['balance' => 0, 'pending_amount' => 0]
         );
 
-        $wallet->increment('pending_amount', $package->cod_amount);
+        // Créditer le wallet immédiatement
+        $wallet->increment('balance', $package->cod_amount);
 
-        // Logger la transaction
+        // Logger la transaction comme COMPLETED
         \App\Models\FinancialTransaction::create([
             'user_id' => $user->id,
             'type' => 'COD_COLLECTED',
             'amount' => $package->cod_amount,
             'description' => 'COD collecté - Colis ' . $package->package_code,
             'reference' => 'COD_' . $package->id,
-            'status' => 'PENDING'
+            'status' => 'COMPLETED'
         ]);
     }
 }

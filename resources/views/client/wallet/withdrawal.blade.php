@@ -1,15 +1,15 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Demande de Retrait')
 
 @section('content')
-<div class="max-w-7xl mx-auto sm:py-5 lg:py-6">
+<div class="max-w-7xl mx-auto sm:py-5 lg:py-3 sm:py-2 sm:py-3">
 
     <!-- En-tête -->
-    <div class="mb-6 md:mb-8">
+    <div class="mb-3 sm:mb-2 sm:mb-3 md:mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-col sm:flex-row">
-            <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Demande de Retrait</h1>
+            <div class="mb-2 sm:mb-3 sm:mb-0">
+                <h1 class="text-lg sm:text-xl md:text-xl sm:text-lg sm:text-xl font-bold text-gray-900 mb-2">Demande de Retrait</h1>
                 <p class="text-gray-600 text-sm md:text-sm sm:text-base">Retirez des fonds de votre portefeuille</p>
             </div>
             <a href="{{ route('client.wallet.index') }}"
@@ -22,19 +22,19 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6 lg:gap-8">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 lg:gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 sm:gap-3 sm:gap-2 sm:gap-3">
 
         <!-- Formulaire principal -->
         <div class="lg:col-span-2">
             <form action="{{ route('client.wallet.store.withdrawal') }}" method="POST"
-                  class="space-y-8" x-data="withdrawalForm()">
+                  class="space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3" x-data="withdrawalForm()">
                 @csrf
 
                 <!-- Informations de base -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 md:p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                    <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6">Montant à retirer</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 md:p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                    <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-3 sm:mb-2 sm:mb-3">Montant à retirer</h3>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 md:space-y-6"><div>
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3 sm:gap-5 lg:gap-3 sm:gap-2 sm:gap-3 md:space-y-3 sm:space-y-2 sm:space-y-3"><div>
                             <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
                                 Montant (DT) <span class="text-red-500">*</span>
                             </label>
@@ -49,7 +49,7 @@
                                        x-model="amount"
                                        @input="calculateFees()"
                                        required
-                                       class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('amount') border-red-500 @enderror min-h-[44px]">
+                                       class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('amount') border-red-500 @enderror min-h-[44px]">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none flex-col sm:flex-row">
                                     <span class="text-gray-500 text-sm">DT</span>
                                 </div>
@@ -71,7 +71,7 @@
                                       name="reason"
                                       rows="3"
                                       placeholder="Optionnel - indiquez le motif de votre retrait"
-                                      class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('reason') border-red-500 @enderror">{{ old('reason') }}</textarea>
+                                      class="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-sm sm:text-base @error('reason') border-red-500 @enderror">{{ old('reason') }}</textarea>
                             @error('reason')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -80,10 +80,10 @@
                 </div>
 
                 <!-- Méthode de retrait -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Méthode de retrait</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Méthode de retrait</h3>
 
-                    <div class="space-y-4">
+                    <div class="space-y-2 sm:space-y-3">
                         <!-- Virement bancaire -->
                         <label class="block">
                             <div class="flex items-center flex-col sm:flex-row">
@@ -133,17 +133,17 @@
                 <!-- Configuration virement bancaire -->
                 <div x-show="method === 'BANK_TRANSFER'"
                      x-transition
-                     class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Informations bancaires</h3>
+                     class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Informations bancaires</h3>
 
                     @if(isset($bankAccounts) && $bankAccounts->count() > 0)
                         <!-- Comptes existants -->
-                        <div class="space-y-4 mb-6">
+                        <div class="space-y-2 sm:space-y-3 mb-3 sm:mb-2 sm:mb-3">
                             <label class="block text-sm font-medium text-gray-700">Choisir un compte enregistré</label>
 
                             @foreach($bankAccounts as $account)
                                 <label class="block">
-                                    <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
+                                    <div class="flex items-center p-2.5 sm:p-3 border rounded-lg hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                          :class="selectedBankAccount === {{ $account->id }} ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
                                         <input type="radio"
                                                x-model="selectedBankAccount"
@@ -170,7 +170,7 @@
 
                             <!-- Option nouveau compte -->
                             <label class="block">
-                                <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
+                                <div class="flex items-center p-2.5 sm:p-3 border rounded-lg hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                      :class="selectedBankAccount === 'new' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
                                     <input type="radio"
                                            x-model="selectedBankAccount"
@@ -188,9 +188,9 @@
                     <!-- Formulaire nouveau compte -->
                     <div x-show="selectedBankAccount === 'new' || {{ (isset($bankAccounts) && $bankAccounts->count() === 0) ? 'true' : 'false' }}"
                          x-transition
-                         class="space-y-6">
+                         class="space-y-3 sm:space-y-2 sm:space-y-3">
 
-                        <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 lg:gap-3 sm:gap-2 sm:gap-3">
                             <div>
                                 <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-2">
                                     Nom de la banque <span class="text-red-500">*</span>
@@ -198,7 +198,7 @@
                                 <select id="bank_name"
                                         name="bank_name"
                                         x-model="newBankAccount.bank_name"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
                                     <option value="">Sélectionner une banque</option>
 
                                     <!-- Banques commerciales publiques -->
@@ -256,7 +256,7 @@
                                        name="account_holder_name"
                                        x-model="newBankAccount.account_holder_name"
                                        placeholder="Nom complet du titulaire du compte"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]">
                             </div>
                         </div>
 
@@ -271,7 +271,7 @@
                                    @input="validateIban()"
                                    placeholder="TN59 XXXX XXXX XXXX XXXX XXXX XX"
                                    maxlength="29"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono min-h-[44px]">
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono min-h-[44px]">
                             <div x-show="ibanValidation.message" class="mt-2">
                                 <p :class="ibanValidation.valid ? 'text-green-600' : 'text-red-600'"
                                    class="text-sm"
@@ -294,16 +294,16 @@
                 <!-- Configuration livraison espèces -->
                 <div x-show="method === 'CASH_DELIVERY'"
                      x-transition
-                     class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Adresse de livraison</h3>
+                     class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Adresse de livraison</h3>
 
                     @if(isset($pickupAddresses) && $pickupAddresses->count() > 0)
-                        <div class="space-y-4">
+                        <div class="space-y-2 sm:space-y-3">
                             <label class="block text-sm font-medium text-gray-700">Choisir une adresse enregistrée</label>
 
                             @foreach($pickupAddresses as $address)
                                 <label class="block">
-                                    <div class="flex items-center p-4 border rounded-2xl hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
+                                    <div class="flex items-center p-2.5 sm:p-3 border rounded-lg hover:bg-gray-50 cursor-pointer flex-col sm:flex-row"
                                          :class="selectedDeliveryAddress === {{ $address->id }} ? 'border-orange-500 bg-orange-50' : 'border-gray-200'">
                                         <input type="radio"
                                                x-model="selectedDeliveryAddress"
@@ -330,12 +330,12 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="text-center py-8">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center py-2 sm:py-3 sm:py-3 sm:py-2 sm:py-3">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-2 sm:mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <p class="text-gray-500 mb-4">Aucune adresse de pickup enregistrée</p>
+                            <p class="text-gray-500 mb-2 sm:mb-3">Aucune adresse de pickup enregistrée</p>
                             <a href="{{ route('client.pickup-addresses.create') }}"
                                class="text-orange-600 hover:text-orange-700 font-medium">
                                 Ajouter une adresse de pickup →
@@ -345,10 +345,10 @@
                 </div>
 
                 <!-- Résumé et validation -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Résumé de la demande</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Résumé de la demande</h3>
 
-                    <div class="space-y-4">
+                    <div class="space-y-2 sm:space-y-3">
                         <div class="flex justify-between items-center py-2 flex-col sm:flex-row">
                             <span class="text-gray-600">Montant demandé</span>
                             <span class="font-medium" x-text="formatAmount(amount) + ' DT'">0.000 DT</span>
@@ -373,7 +373,7 @@
                                 :class="isFormValid()
                                        ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:bg-purple-700 text-white'
                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
-                                class="w-full py-3 px-4 sm:px-5 lg:px-6 rounded-2xl font-medium transition-colors">
+                                class="w-full py-3 px-4 sm:px-5 lg:px-4 rounded-lg font-medium transition-colors">
                             Confirmer la demande de retrait
                         </button>
                     </div>
@@ -383,11 +383,11 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-2 sm:space-y-3">
 
             <!-- Solde disponible -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Votre portefeuille</h3>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-md p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Votre portefeuille</h3>
                 <div class="space-y-3">
                     <div class="flex justify-between flex-col sm:flex-row">
                         <span class="text-gray-600">Solde total</span>
@@ -409,9 +409,9 @@
             </div>
 
             <!-- Informations -->
-            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-5 lg:p-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
                 <h3 class="text-lg font-semibold text-blue-900 mb-3">
-                    <svg class="w-6 h-6 sm:w-5 sm:h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 sm:w-5 sm:h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     Informations

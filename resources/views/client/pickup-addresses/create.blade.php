@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Nouvelle Adresse de Collecte')
 @section('page-title', 'Ajouter une Adresse de Collecte')
@@ -14,25 +14,25 @@
 <div class="max-w-3xl mx-auto">
 
     <!-- Header -->
-    <div class="flex items-center mb-8">
+    <div class="flex items-center mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <a href="{{ route('client.pickup-addresses.index') }}" class="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Nouvelle Adresse de Collecte</h1>
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900">Nouvelle Adresse de Collecte</h1>
             <p class="text-gray-600">Ajoutez une adresse pour faciliter vos futures demandes de collecte</p>
         </div>
     </div>
 
-    <form action="{{ route('client.pickup-addresses.store') }}" method="POST" class="space-y-8">
+    <form action="{{ route('client.pickup-addresses.store') }}" method="POST" class="space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3">
         @csrf
 
         <!-- Section Informations Principales -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -41,7 +41,7 @@
                 <h2 class="text-xl font-bold text-gray-900">Informations de l'Adresse</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3">
                 <!-- Nom de l'adresse -->
                 <div class="md:col-span-2">
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -110,8 +110,8 @@
                         <input type="checkbox" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}
                                class="sr-only">
                         <div class="relative">
-                            <div class="w-6 h-6 border-2 border-emerald-300 rounded bg-white transition-all duration-200 checkbox-unchecked"></div>
-                            <div class="absolute inset-0 w-6 h-6 bg-emerald-600 border-2 border-emerald-600 rounded flex items-center justify-center opacity-0 transition-all duration-200 checkbox-checked">
+                            <div class="w-5 h-5 border-2 border-emerald-300 rounded bg-white transition-all duration-200 checkbox-unchecked"></div>
+                            <div class="absolute inset-0 w-5 h-5 bg-emerald-600 border-2 border-emerald-600 rounded flex items-center justify-center opacity-0 transition-all duration-200 checkbox-checked">
                                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
@@ -124,9 +124,9 @@
         </div>
 
         <!-- Section Informations de Contact -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
@@ -134,7 +134,7 @@
                 <h2 class="text-xl font-bold text-gray-900">Informations de Contact</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-2 sm:gap-3">
                 <!-- Nom du contact -->
                 <div>
                     <label for="contact_name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -180,9 +180,9 @@
         </div>
 
         <!-- Section Notes -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -207,7 +207,7 @@
         <!-- Actions -->
         <div class="flex items-center justify-between">
             <a href="{{ route('client.pickup-addresses.index') }}"
-               class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+               class="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -215,7 +215,7 @@
             </a>
 
             <button type="submit"
-                    class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-base font-medium text-white hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                    class="inline-flex items-center px-4 sm:px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-base font-medium text-white hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

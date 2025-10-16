@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Modifier mon Profil')
 
@@ -6,15 +6,15 @@
 <div class="max-w-7xl mx-auto">
 
     <!-- En-tête -->
-    <div class="mb-8">
+    <div class="mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Modifier mon Profil</h1>
+                <h1 class="text-xl sm:text-lg sm:text-xl font-bold text-gray-900 mb-2">Modifier mon Profil</h1>
                 <p class="text-gray-600">Mettez à jour vos informations personnelles et professionnelles</p>
             </div>
             <a href="{{ route('client.profile.index') }}"
                class="text-gray-600 hover:text-gray-800 transition-colors">
-                <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 Retour
@@ -23,23 +23,23 @@
     </div>
 
     <form action="{{ route('client.profile.update') }}" method="POST" enctype="multipart/form-data"
-          class="space-y-8" x-data="profileForm()">
+          class="space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3" x-data="profileForm()">
         @csrf
         @method('PUT')
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 sm:gap-3 sm:gap-2 sm:gap-3">
 
             <!-- Formulaire principal -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-2 space-y-3 sm:space-y-2 sm:space-y-3">
 
                 <!-- Informations personnelles -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <div class="p-6 border-b border-gray-200">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="p-3 sm:p-2.5 sm:p-3 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900">Informations Personnelles</h3>
                         <p class="text-sm text-gray-600 mt-1">Ces informations sont obligatoires pour votre compte</p>
                     </div>
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-3 sm:p-2.5 sm:p-3 space-y-3 sm:space-y-2 sm:space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3">
                             <div>
                                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
                                     Nom complet <span class="text-red-500">*</span>
@@ -49,7 +49,7 @@
                                        name="name"
                                        value="{{ old('name', $user->name) }}"
                                        required
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('name') border-red-500 @enderror">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('name') border-red-500 @enderror">
                                 @error('name')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -65,7 +65,7 @@
                                        value="{{ old('phone', $user->phone) }}"
                                        required
                                        placeholder="Ex: 20123456"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('phone') border-red-500 @enderror">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('phone') border-red-500 @enderror">
                                 @error('phone')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -81,7 +81,7 @@
                                       rows="3"
                                       required
                                       placeholder="Votre adresse complète avec ville et code postal"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('address') border-red-500 @enderror">{{ old('address', $user->address) }}</textarea>
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('address') border-red-500 @enderror">{{ old('address', $user->address) }}</textarea>
                             @error('address')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -90,13 +90,13 @@
                 </div>
 
                 <!-- Informations professionnelles -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <div class="p-6 border-b border-gray-200">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="p-3 sm:p-2.5 sm:p-3 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-900">Informations Professionnelles</h3>
                         <p class="text-sm text-gray-600 mt-1">Optionnelles mais recommandées pour un meilleur service</p>
                     </div>
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-3 sm:p-2.5 sm:p-3 space-y-3 sm:space-y-2 sm:space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3">
                             <div>
                                 <label for="shop_name" class="block text-sm font-medium text-gray-700 mb-2">
                                     Nom de boutique/entreprise
@@ -106,7 +106,7 @@
                                        name="shop_name"
                                        value="{{ old('shop_name', optional($user->clientProfile)->shop_name) }}"
                                        placeholder="Ex: Boutique Mode Tunis"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('shop_name') border-red-500 @enderror">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('shop_name') border-red-500 @enderror">
                                 @error('shop_name')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -121,7 +121,7 @@
                                        name="business_sector"
                                        value="{{ old('business_sector', optional($user->clientProfile)->business_sector) }}"
                                        placeholder="Ex: Mode et vêtements"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('business_sector') border-red-500 @enderror">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('business_sector') border-red-500 @enderror">
                                 @error('business_sector')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -141,16 +141,16 @@
                                        maxlength="13"
                                        x-model="fiscalNumber"
                                        @input="validateFiscalNumber()"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono @error('fiscal_number') border-red-500 @enderror">
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono @error('fiscal_number') border-red-500 @enderror">
                                 <div x-show="fiscalValidation.show"
                                      class="absolute right-3 top-3"
                                      x-transition>
                                     <svg x-show="fiscalValidation.valid"
-                                         class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                     <svg x-show="!fiscalValidation.valid"
-                                         class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </div>
@@ -169,11 +169,11 @@
                             <label for="identity_document" class="block text-sm font-medium text-gray-700 mb-2">
                                 Document d'identité
                             </label>
-                            <div class="space-y-4">
+                            <div class="space-y-2 sm:space-y-3">
                                 @if(optional($user->clientProfile)->identity_document)
-                                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                                    <div class="flex items-center justify-between p-2.5 sm:p-3 bg-green-50 rounded-lg border border-green-200">
                                         <div class="flex items-center">
-                                            <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                             </svg>
                                             <div>
@@ -199,7 +199,7 @@
                                     </div>
                                 @endif
 
-                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 sm:p-2.5 sm:p-3 hover:border-purple-400 transition-colors">
                                     <input type="file"
                                            id="identity_document"
                                            name="identity_document"
@@ -207,7 +207,7 @@
                                            @change="handleFileUpload($event)"
                                            class="hidden">
                                     <label for="identity_document" class="cursor-pointer block text-center">
-                                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-2 sm:mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                         </svg>
                                         <p class="text-gray-600 font-medium">{{ optional($user->clientProfile)->identity_document ? 'Remplacer le document' : 'Télécharger un document' }}</p>
@@ -217,7 +217,7 @@
 
                                 <div x-show="uploadProgress.show"
                                      x-transition
-                                     class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                     class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 sm:p-3">
                                     <div class="flex items-center">
                                         <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -237,28 +237,28 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-3 sm:space-y-2 sm:space-y-3">
 
                 <!-- Actions -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Sauvegarder les modifications</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-2.5 sm:p-3">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Sauvegarder les modifications</h3>
                     <div class="space-y-3">
                         <button type="submit"
-                                class="w-full bg-purple-600 text-white py-3 px-4 rounded-xl hover:bg-purple-700 transition-colors font-medium">
+                                class="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
                             <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             Enregistrer
                         </button>
                         <a href="{{ route('client.profile.index') }}"
-                           class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-200 transition-colors font-medium text-center inline-block">
+                           class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium text-center inline-block">
                             Annuler
                         </a>
                     </div>
                 </div>
 
                 <!-- Aide -->
-                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-2.5 sm:p-3">
                     <h3 class="text-lg font-semibold text-blue-900 mb-3">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>

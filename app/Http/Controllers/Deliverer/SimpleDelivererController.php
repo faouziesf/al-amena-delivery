@@ -288,8 +288,8 @@ class SimpleDelivererController extends Controller
         $package = $this->findPackageByCode($code);
 
         if ($package) {
-            // Auto-assigner si pas encore assigné
-            if (!$package->assigned_deliverer_id) {
+            // Auto-assigner ou réassigner au livreur qui scanne
+            if (!$package->assigned_deliverer_id || $package->assigned_deliverer_id !== $user->id) {
                 $package->update([
                     'assigned_deliverer_id' => $user->id,
                     'assigned_at' => now(),
@@ -297,11 +297,7 @@ class SimpleDelivererController extends Controller
                 ]);
             }
             
-            // Vérifier assignation
-            if ($package->assigned_deliverer_id !== $user->id) {
-                return redirect()->route('deliverer.scan.simple')
-                    ->with('error', 'Ce colis est déjà assigné à un autre livreur');
-            }
+            // PLUS DE VÉRIFICATION - Le livreur peut scanner tous les colis
 
             // Sauvegarder en session (historique)
             $lastScans = session('last_scans', []);
@@ -553,48 +549,82 @@ class SimpleDelivererController extends Controller
     /**
      * Trouver un colis par code (tracking_number ou package_code)
      * Support multiple formats: QR codes, barcodes, avec/sans préfixe
+     * COPIÉ EXACTEMENT du chef de dépôt (DepotScanController) - FONCTIONNE À 100%
      */
     private function findPackageByCode(string $code): ?Package
     {
-        $cleanCode = strtoupper(trim($code));
+        $originalCode = trim($code);
+        $cleanCode = strtoupper($originalCode);
         
         // Si c'est une URL complète (QR code), extraire le code
         if (preg_match('/\/track\/(.+)$/i', $cleanCode, $matches)) {
             $cleanCode = strtoupper($matches[1]);
         }
         
-        // Nettoyer les espaces et caractères spéciaux
-        $cleanCode = preg_replace('/[^A-Z0-9_-]/', '', $cleanCode);
+        // RECHERCHE INTELLIGENTE : Essayer plusieurs variantes du code (EXACTEMENT comme chef dépôt)
+        $searchVariants = [
+            $cleanCode,                                          // Code original en majuscules
+            str_replace('_', '', $cleanCode),                    // Sans underscore
+            str_replace('-', '', $cleanCode),                    // Sans tiret
+            str_replace(['_', '-', ' '], '', $cleanCode),       // Nettoyé complètement
+            strtolower($cleanCode),                              // Minuscules
+            $originalCode,                                       // Code original (casse préservée)
+        ];
         
-        // Liste des variations possibles du code
-        $codeVariations = [$cleanCode];
+        // Supprimer les doublons
+        $searchVariants = array_unique($searchVariants);
         
-        // Ajouter variation avec PKG_ si pas présent
-        if (!str_starts_with($cleanCode, 'PKG_')) {
-            $codeVariations[] = 'PKG_' . $cleanCode;
+        // Statuts ACCEPTÉS pour scan livreur (MÊME LOGIQUE que chef dépôt)
+        $acceptedStatuses = ['CREATED', 'AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'UNAVAILABLE', 'AT_DEPOT', 'VERIFIED'];
+        
+        // Rechercher avec TOUTES les variantes (EXACTEMENT comme chef dépôt)
+        foreach ($searchVariants as $variant) {
+            $package = DB::table('packages')
+                ->where('package_code', $variant)
+                ->whereIn('status', $acceptedStatuses)
+                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->first();
+            
+            if ($package) {
+                // Convertir en modèle Eloquent
+                return Package::find($package->id);
+            }
+            
+            // Chercher aussi par tracking_number
+            $package = DB::table('packages')
+                ->where('tracking_number', $variant)
+                ->whereIn('status', $acceptedStatuses)
+                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->first();
+            
+            if ($package) {
+                // Convertir en modèle Eloquent
+                return Package::find($package->id);
+            }
         }
         
-        // Ajouter variation sans PKG_ si présent
-        if (str_starts_with($cleanCode, 'PKG_')) {
-            $codeVariations[] = substr($cleanCode, 4);
-        }
-        
-        // Chercher dans toutes les variations
-        foreach ($codeVariations as $variation) {
-            // Chercher par tracking_number
-            $package = Package::where('tracking_number', $variation)->first();
-            if ($package) return $package;
+        // Si toujours pas trouvé, essayer une recherche LIKE (EXACTEMENT comme chef dépôt)
+        $cleanForLike = str_replace(['_', '-', ' '], '', $cleanCode);
+        if (strlen($cleanForLike) >= 6) {
+            $package = DB::table('packages')
+                ->whereRaw('REPLACE(REPLACE(REPLACE(UPPER(package_code), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
+                ->whereIn('status', $acceptedStatuses)
+                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->first();
             
-            // Chercher par package_code
-            $package = Package::where('package_code', $variation)->first();
-            if ($package) return $package;
+            if ($package) {
+                return Package::find($package->id);
+            }
             
-            // Recherche partielle (fin du code) pour codes longs
-            if (strlen($variation) >= 8) {
-                $package = Package::where('tracking_number', 'LIKE', '%' . substr($variation, -8))
-                    ->orWhere('package_code', 'LIKE', '%' . substr($variation, -8))
-                    ->first();
-                if ($package) return $package;
+            // Essayer aussi avec tracking_number
+            $package = DB::table('packages')
+                ->whereRaw('REPLACE(REPLACE(REPLACE(UPPER(tracking_number), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
+                ->whereIn('status', $acceptedStatuses)
+                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->first();
+            
+            if ($package) {
+                return Package::find($package->id);
             }
         }
         
@@ -624,11 +654,12 @@ class SimpleDelivererController extends Controller
             ]);
         }
 
-        // Vérifier que le colis est assigné au livreur
-        if ($package->assigned_deliverer_id != $user->id) {
-            return response()->json([
-                'valid' => false,
-                'message' => 'Colis non assigné à vous'
+        // PLUS DE VÉRIFICATION - Le livreur peut vérifier tous les colis
+        // Auto-assigner si nécessaire
+        if (!$package->assigned_deliverer_id || $package->assigned_deliverer_id != $user->id) {
+            $package->update([
+                'assigned_deliverer_id' => $user->id,
+                'assigned_at' => now()
             ]);
         }
 
@@ -709,25 +740,15 @@ class SimpleDelivererController extends Controller
                     continue;
                 }
 
-                // Auto-assigner si pas encore assigné
-                if (!$package->assigned_deliverer_id) {
+                // Auto-assigner ou réassigner au livreur qui scanne
+                if (!$package->assigned_deliverer_id || $package->assigned_deliverer_id !== $user->id) {
                     $package->update([
                         'assigned_deliverer_id' => $user->id,
                         'assigned_at' => now()
                     ]);
                 }
 
-                // Vérifier assignation
-                if ($package->assigned_deliverer_id !== $user->id) {
-                    $results[] = [
-                        'code' => $cleanCode,
-                        'status' => 'error',
-                        'error_type' => 'wrong_deliverer',
-                        'message' => 'Déjà assigné à un autre livreur'
-                    ];
-                    $errorCount++;
-                    continue;
-                }
+                // PLUS DE VÉRIFICATION - Le livreur peut scanner tous les colis
 
                 // Validation du statut selon l'action
                 $statusValidation = $this->validateStatusForAction($package->status, $action);
@@ -1077,8 +1098,8 @@ class SimpleDelivererController extends Controller
             $package = $this->findPackageByCode($code);
 
             if ($package) {
-                // Auto-assigner si pas encore assigné
-                if (!$package->assigned_deliverer_id) {
+                // Auto-assigner si pas encore assigné OU réassigner au livreur actuel
+                if (!$package->assigned_deliverer_id || $package->assigned_deliverer_id !== $user->id) {
                     $package->update([
                         'assigned_deliverer_id' => $user->id,
                         'assigned_at' => now(),
@@ -1086,13 +1107,8 @@ class SimpleDelivererController extends Controller
                     ]);
                 }
                 
-                // Vérifier que le package est assigné au livreur actuel
-                if ($package->assigned_deliverer_id !== $user->id) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Ce colis est déjà assigné à un autre livreur'
-                    ], 403);
-                }
+                // PLUS DE VÉRIFICATION - Le livreur peut scanner tous les colis
+                // Le colis est automatiquement assigné au livreur qui le scanne
                 
                 // OPTIMISÉ - Réponse minimaliste pour rapidité
                 return response()->json([

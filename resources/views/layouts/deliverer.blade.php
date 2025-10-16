@@ -568,7 +568,7 @@
             <div class="mb-6">
                 <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Accès rapides</h3>
                 <div class="space-y-2">
-                    <a href="{{ route('deliverer.run.sheet') }}"
+                    <a href="{{ route('deliverer.tournee') }}"
                        class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all"
                        @click="menuOpen = false">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,7 +595,7 @@
                         <span class="font-medium">Scanner Multiple</span>
                     </a>
 
-                    <a href="{{ route('deliverer.wallet.optimized') }}"
+                    <a href="{{ route('deliverer.wallet') }}"
                        class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all"
                        @click="menuOpen = false">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -685,11 +685,11 @@
 
         <div class="flex items-center">
             <!-- Onglet TOURNÉE -->
-            <a href="{{ route('deliverer.run.sheet') }}"
+            <a href="{{ route('deliverer.tournee') }}"
                class="flex-1 flex flex-col items-center py-2 px-2 transition-colors
-                      {{ request()->routeIs('deliverer.run.sheet') ? 'text-blue-600' : 'text-gray-500' }}">
+                      {{ request()->routeIs('deliverer.tournee') ? 'text-blue-600' : 'text-gray-500' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-1
-                           {{ request()->routeIs('deliverer.run.sheet') ? 'bg-blue-100' : 'bg-gray-100' }}">
+                           {{ request()->routeIs('deliverer.tournee') ? 'bg-blue-100' : 'bg-gray-100' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
@@ -700,11 +700,11 @@
             </a>
 
             <!-- Onglet WALLET -->
-            <a href="{{ route('deliverer.wallet.optimized') }}"
+            <a href="{{ route('deliverer.wallet') }}"
                class="flex-1 flex flex-col items-center py-2 px-2 transition-colors
-                      {{ request()->routeIs('deliverer.wallet.optimized') ? 'text-green-600' : 'text-gray-500' }}">
+                      {{ request()->routeIs('deliverer.wallet') ? 'text-green-600' : 'text-gray-500' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-1
-                           {{ request()->routeIs('deliverer.wallet.optimized') ? 'bg-green-100' : 'bg-gray-100' }}">
+                           {{ request()->routeIs('deliverer.wallet') ? 'bg-green-100' : 'bg-gray-100' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>

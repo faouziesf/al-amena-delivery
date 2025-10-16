@@ -1,17 +1,17 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Paramètres de Notifications')
 
 @section('header')
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-purple-900">Paramètres de Notifications</h1>
+            <h1 class="text-lg sm:text-xl font-bold text-purple-900">Paramètres de Notifications</h1>
             <p class="mt-1 text-sm text-purple-600">
                 Gérez vos préférences de notifications
             </p>
         </div>
         <a href="{{ route('client.notifications.index') }}"
-           class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 transition ease-in-out duration-150">
+           class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 transition ease-in-out duration-150">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -25,10 +25,10 @@
         @csrf
 
         <!-- Paramètres généraux -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Paramètres généraux</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-3 sm:p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Paramètres généraux</h3>
 
-            <div class="space-y-6">
+            <div class="space-y-3 sm:space-y-2 sm:space-y-3">
                 <!-- Notifications par email -->
                 <div class="flex items-center justify-between">
                     <div>
@@ -61,7 +61,7 @@
                         Fréquence du résumé par email
                     </label>
                     <select name="summary_frequency" id="summary_frequency"
-                            class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                         <option value="never" {{ old('summary_frequency', $settings['summary_frequency'] ?? 'daily') === 'never' ? 'selected' : '' }}>Jamais</option>
                         <option value="daily" {{ old('summary_frequency', $settings['summary_frequency'] ?? 'daily') === 'daily' ? 'selected' : '' }}>Quotidien</option>
                         <option value="weekly" {{ old('summary_frequency', $settings['summary_frequency'] ?? 'daily') === 'weekly' ? 'selected' : '' }}>Hebdomadaire</option>
@@ -72,10 +72,10 @@
         </div>
 
         <!-- Types de notifications -->
-        <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Types de notifications</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-3 sm:p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-2 sm:mb-3">Types de notifications</h3>
 
-            <div class="space-y-6">
+            <div class="space-y-3 sm:space-y-2 sm:space-y-3">
                 <!-- Notifications de colis -->
                 <div>
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Notifications de colis</h4>
@@ -204,11 +204,11 @@
         <!-- Boutons d'action -->
         <div class="flex items-center justify-end space-x-4">
             <a href="{{ route('client.notifications.index') }}"
-               class="inline-flex items-center px-6 py-3 bg-gray-300 border border-transparent rounded-xl font-semibold text-sm text-gray-700 hover:bg-gray-400 transition ease-in-out duration-150">
+               class="inline-flex items-center px-3 sm:px-4 py-2 bg-gray-300 border border-transparent rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-400 transition ease-in-out duration-150">
                 Annuler
             </a>
             <button type="submit"
-                    class="inline-flex items-center px-6 py-3 bg-purple-600 border border-transparent rounded-xl font-semibold text-sm text-white hover:bg-purple-700 transition ease-in-out duration-150">
+                    class="inline-flex items-center px-3 sm:px-4 py-2 bg-purple-600 border border-transparent rounded-lg font-semibold text-sm text-white hover:bg-purple-700 transition ease-in-out duration-150">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

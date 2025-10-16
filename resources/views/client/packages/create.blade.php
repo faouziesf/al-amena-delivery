@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Nouveau Colis')
 @section('page-title', 'Créer un Nouveau Colis')
@@ -50,25 +50,25 @@
 }
 </style>
 
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8" x-data="packageCreateForm()">
+<div class="max-w-5xl mx-auto px-4 sm:px-4 lg:px-4 sm:px-4" x-data="packageCreateForm()">
 
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-2 sm:mb-3 sm:mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <a href="{{ route('client.packages.index') }}"
-           class="mb-4 sm:mb-0 sm:mr-4 inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mb-2 sm:mb-3 sm:mb-0 sm:mr-4 inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
         </a>
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Nouveau Colis</h1>
+            <h1 class="text-lg sm:text-xl sm:text-xl sm:text-lg sm:text-xl font-bold text-gray-900">Nouveau Colis</h1>
             <p class="text-gray-600 mt-1">Créez votre colis étape par étape</p>
         </div>
     </div>
 
     <!-- Message d'erreur global -->
     @if($errors->any())
-        <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+        <div class="mb-3 sm:mb-2 sm:mb-3 bg-red-50 border border-red-200 rounded-lg p-2.5 sm:p-3">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,13 +89,13 @@
         </div>
     @endif
 
-    <form action="{{ route('client.packages.store') }}" method="POST" class="space-y-6 sm:space-y-8">
+    <form action="{{ route('client.packages.store') }}" method="POST" class="space-y-3 sm:space-y-2 sm:space-y-3 sm:space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3">
         @csrf
 
         <!-- SECTION 1: ADRESSE DE PICKUP -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 mobile-responsive p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -136,13 +136,13 @@
                     </a>
                 </div>
             @else
-                <div class="text-center py-8">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="text-center py-2 sm:py-3 sm:py-3 sm:py-2 sm:py-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         </svg>
                     </div>
-                    <p class="text-gray-600 mb-4">Aucune adresse de pickup enregistrée</p>
+                    <p class="text-gray-600 mb-2 sm:mb-3">Aucune adresse de pickup enregistrée</p>
                     <a href="{{ route('client.pickup-addresses.create') }}"
                        class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,9 +155,9 @@
         </div>
 
         <!-- SECTION 2: INFORMATIONS DU DESTINATAIRE -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 mobile-responsive p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
@@ -166,7 +166,7 @@
                 <span class="ml-3 text-sm text-red-500">*</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 grid-mobile">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 grid-mobile">
                 <!-- Nom complet -->
                 <div class="md:col-span-2">
                     <label for="nom_complet" class="block text-sm font-medium text-gray-700 mb-2">
@@ -264,9 +264,9 @@
         </div>
 
         <!-- SECTION 3: DÉTAILS DU COLIS -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-300 to-purple-500 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 mobile-responsive p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-300 to-purple-500 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
@@ -275,7 +275,7 @@
                 <span class="ml-3 text-sm text-red-500">*</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 grid-mobile">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 grid-mobile">
                 <!-- Contenu -->
                 <div>
                     <label for="contenu" class="block text-sm font-medium text-gray-700 mb-2">
@@ -319,10 +319,10 @@
             </div>
 
             <!-- Options du colis -->
-            <div class="mt-6 space-y-4">
+            <div class="mt-6 space-y-2 sm:space-y-3">
                 <h3 class="text-lg font-medium text-gray-900">Options de traitement</h3>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                     <!-- Fragile -->
                     <label class="flex items-center cursor-pointer p-3 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all duration-200"
                            :class="isFragile ? 'border-purple-400 bg-purple-50' : ''">
@@ -387,13 +387,13 @@
 
             <!-- Mode de paiement -->
             <div class="mt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Mode de paiement accepté</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-2 sm:mb-3">Mode de paiement accepté</h3>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                     <!-- Espèces seulement (par défaut) -->
                     <label class="cursor-pointer">
                         <input type="radio" name="payment_method" value="especes_seulement" x-model="paymentMethod" class="sr-only" checked>
-                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                        <div class="p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-200"
                              :class="paymentMethod === 'especes_seulement' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-300'">
                             <div class="flex items-center">
                                 <div class="w-4 h-4 border-2 border-green-300 rounded-full mr-3"
@@ -411,7 +411,7 @@
                     <!-- Chèque seulement -->
                     <label class="cursor-pointer">
                         <input type="radio" name="payment_method" value="cheque_seulement" x-model="paymentMethod" class="sr-only">
-                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                        <div class="p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-200"
                              :class="paymentMethod === 'cheque_seulement' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'">
                             <div class="flex items-center">
                                 <div class="w-4 h-4 border-2 border-blue-300 rounded-full mr-3"
@@ -429,7 +429,7 @@
                     <!-- Espèces et Chèque -->
                     <label class="cursor-pointer">
                         <input type="radio" name="payment_method" value="especes_et_cheques" x-model="paymentMethod" class="sr-only">
-                        <div class="p-4 border-2 rounded-lg transition-all duration-200"
+                        <div class="p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-200"
                              :class="paymentMethod === 'especes_et_cheques' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'">
                             <div class="flex items-center">
                                 <div class="w-4 h-4 border-2 border-purple-300 rounded-full mr-3"
@@ -448,9 +448,9 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <a href="{{ route('client.packages.index') }}"
-               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+               class="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -459,8 +459,8 @@
 
             <button type="submit"
                     :disabled="!isFormValid()"
-                    :class="isFormValid() ? 'bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-lg' : 'bg-gray-400 cursor-not-allowed'"
-                    class="inline-flex items-center justify-center px-8 py-3 border border-transparent rounded-lg text-base font-medium text-white transition-all duration-200">
+                    :class="isFormValid() ? 'bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-sm' : 'bg-gray-400 cursor-not-allowed'"
+                    class="inline-flex items-center justify-center px-4 sm:px-3 sm:px-4 py-2 border border-transparent rounded-lg text-base font-medium text-white transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

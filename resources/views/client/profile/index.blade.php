@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Mon Profil')
 
@@ -6,14 +6,14 @@
 <div class="max-w-7xl mx-auto">
 
     <!-- En-tête -->
-    <div class="mb-6 md:mb-8">
+    <div class="mb-3 sm:mb-2 sm:mb-3 md:mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Mon Profil</h1>
+            <div class="mb-2 sm:mb-3 sm:mb-0">
+                <h1 class="text-lg sm:text-xl md:text-xl sm:text-lg sm:text-xl font-bold text-gray-900 mb-2">Mon Profil</h1>
                 <p class="text-gray-600 text-sm md:text-base">Gérez vos informations personnelles et professionnelles</p>
             </div>
             <a href="{{ route('client.profile.edit') }}"
-               class="bg-purple-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl hover:bg-purple-700 transition-colors text-sm md:text-base inline-flex items-center justify-center">
+               class="bg-purple-600 text-white px-4 md:px-4 py-2.5 md:py-3 rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base inline-flex items-center justify-center">
                 <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
@@ -22,18 +22,18 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 sm:gap-3 sm:gap-2 sm:gap-3">
 
         <!-- Informations principales -->
-        <div class="lg:col-span-2 space-y-4 lg:space-y-6">
+        <div class="lg:col-span-2 space-y-2 sm:space-y-3 lg:space-y-3 sm:space-y-2 sm:space-y-3">
 
             <!-- Informations personnelles -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                <div class="p-4 md:p-6 border-b border-gray-200">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3 border-b border-gray-200">
                     <h3 class="text-base md:text-lg font-semibold text-gray-900">Informations Personnelles</h3>
                 </div>
-                <div class="p-4 md:p-6 space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3 space-y-2 sm:space-y-3">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-500 mb-1">Nom complet</label>
                             <p class="text-gray-900 font-medium">{{ $user->name }}</p>
@@ -61,14 +61,14 @@
             </div>
 
             <!-- Informations professionnelles -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                <div class="p-4 md:p-6 border-b border-gray-200">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3 border-b border-gray-200">
                     <h3 class="text-base md:text-lg font-semibold text-gray-900">Informations Professionnelles</h3>
                 </div>
-                <div class="p-4 md:p-6">
+                <div class="p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3">
                     @if($user->clientProfile && $user->clientProfile->hasBusinessInfo())
-                        <div class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2 sm:space-y-3">
+                            <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500 mb-1">Nom de boutique/entreprise</label>
                                     <p class="text-gray-900 font-medium">{{ $user->clientProfile->shop_name ?? 'Non renseigné' }}</p>
@@ -98,11 +98,11 @@
                             </div>
                         </div>
                     @else
-                        <div class="text-center py-8">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center py-2 sm:py-3 sm:py-3 sm:py-2 sm:py-3">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-2 sm:mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                            <p class="text-gray-500 mb-4">Aucune information professionnelle renseignée</p>
+                            <p class="text-gray-500 mb-2 sm:mb-3">Aucune information professionnelle renseignée</p>
                             <a href="{{ route('client.profile.edit') }}"
                                class="text-purple-600 hover:text-purple-700 font-medium">
                                 Compléter mon profil →
@@ -115,12 +115,12 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-4 lg:space-y-6">
+        <div class="space-y-2 sm:space-y-3 lg:space-y-3 sm:space-y-2 sm:space-y-3">
 
             <!-- Statut et dates -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6">
-                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4">Informations du compte</h3>
-                <div class="space-y-4">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Informations du compte</h3>
+                <div class="space-y-2 sm:space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-500 mb-1">Membre depuis</label>
                         <p class="text-gray-900">{{ $user->created_at ? $user->created_at->format('d/m/Y') : 'Date inconnue' }}</p>
@@ -142,8 +142,8 @@
 
             <!-- Offre tarifaire -->
             @if($user->clientProfile && $user->clientProfile->hasValidPricing())
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6">
-                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4">Votre Offre Tarifaire</h3>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Votre Offre Tarifaire</h3>
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Livraison réussie</span>
@@ -167,9 +167,9 @@
 
             <!-- Progression profil -->
             @if($user->clientProfile)
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6">
-                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4">Complétude du profil</h3>
-                <div class="mb-4">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-2.5 sm:p-3 md:p-3 sm:p-2.5 sm:p-3">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Complétude du profil</h3>
+                <div class="mb-2 sm:mb-3">
                     <div class="flex justify-between text-sm mb-2">
                         <span class="text-gray-600">Progression</span>
                         <span class="font-medium">{{ $user->clientProfile->getCompletionPercentage() }}%</span>

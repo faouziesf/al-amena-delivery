@@ -1,11 +1,11 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Détails du Retour - ' . $package->package_code)
 
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- Breadcrumb -->
-    <nav class="mb-6 text-sm">
+    <nav class="mb-3 sm:mb-2 sm:mb-3 text-sm">
         <ol class="flex items-center space-x-2 text-gray-600">
             <li><a href="{{ route('client.dashboard') }}" class="hover:text-blue-600">Tableau de bord</a></li>
             <li>/</li>
@@ -16,10 +16,10 @@
     </nav>
 
     <!-- En-tête -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">📦 {{ $package->package_code }}</h1>
+                <h1 class="text-lg sm:text-xl font-bold text-gray-900">📦 {{ $package->package_code }}</h1>
                 <p class="text-gray-600 mt-1">Détails du colis retourné</p>
             </div>
             <div>
@@ -32,7 +32,7 @@
 
     <!-- Alerte temps restant -->
     @if($package->status === 'RETURNED' && isset($package->hours_remaining))
-        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -50,13 +50,13 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3">
         <!-- Colonne principale -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-2 sm:space-y-3">
             <!-- Informations du retour -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations du Retour</h2>
-                <dl class="grid grid-cols-1 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Informations du Retour</h2>
+                <dl class="grid grid-cols-1 gap-2 sm:gap-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Date de retour</dt>
                         <dd class="mt-1 text-sm text-gray-900">
@@ -81,9 +81,9 @@
             </div>
 
             <!-- Informations du colis -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations du Colis</h2>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Informations du Colis</h2>
+                <dl class="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Destinataire</dt>
                         <dd class="mt-1 text-sm text-gray-900">
@@ -118,10 +118,10 @@
             </div>
 
             <!-- Historique -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Historique du Statut</h2>
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Historique du Statut</h2>
                 <div class="flow-root">
-                    <ul class="-mb-8">
+                    <ul class="-mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
                         @foreach($package->statusHistory as $index => $history)
                             <li>
                                 <div class="relative pb-8">
@@ -157,10 +157,10 @@
         </div>
 
         <!-- Colonne latérale -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-2 sm:space-y-3">
             <!-- Actions -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Actions</h2>
                 <div class="space-y-3">
                     @if($package->status === 'RETURNED')
                         <!-- Bouton Valider la Réception -->
@@ -209,8 +209,8 @@
 
             <!-- Réclamations associées -->
             @if($package->complaints->isNotEmpty())
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Réclamations</h2>
+                <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Réclamations</h2>
                     <div class="space-y-3">
                         @foreach($package->complaints as $complaint)
                             <div class="border-l-4 border-blue-500 pl-3 py-2">

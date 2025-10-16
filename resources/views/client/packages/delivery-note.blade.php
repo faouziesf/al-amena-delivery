@@ -313,14 +313,46 @@
                 </table>
             </section>
             
-            @if($package->is_fragile || $package->requires_signature || $package->special_instructions || $package->notes)
+            @if($package->is_fragile || $package->requires_signature || $package->allow_opening || $package->special_instructions || $package->notes)
             <section class="notes-section">
-                 <div class="section-title">INSTRUCTIONS & NOTES</div>
-                 <div class="notes-content">
-                    @if($package->is_fragile)<strong>FRAGILE</strong><br>@endif
-                    @if($package->requires_signature)<strong>SIGNATURE REQUISE</strong><br>@endif
-                    {{ $package->special_instructions }}<br>
-                    {{ $package->notes }}
+                 <div class="section-title">INSTRUCTIONS SPÉCIALES</div>
+                 <div class="notes-content" style="line-height: 1.6;">
+                    @php
+                        $hasInstructions = false;
+                    @endphp
+                    
+                    {{-- Flags visuels compacts --}}
+                    @if($package->is_fragile || $package->requires_signature || $package->allow_opening)
+                        <div style="display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
+                            @if($package->is_fragile)
+                                <span style="background: #fff3cd; padding: 3px 8px; border-radius: 3px; font-size: 9pt; font-weight: bold; color: #856404;">⚠️ FRAGILE</span>
+                            @endif
+                            @if($package->requires_signature)
+                                <span style="background: #d1ecf1; padding: 3px 8px; border-radius: 3px; font-size: 9pt; font-weight: bold; color: #0c5460;">✍️ SIGNATURE OBLIGATOIRE</span>
+                            @endif
+                            @if($package->allow_opening)
+                                <span style="background: #d4edda; padding: 3px 8px; border-radius: 3px; font-size: 9pt; font-weight: bold; color: #155724;">📦 OUVERTURE AUTORISÉE</span>
+                            @endif
+                        </div>
+                        @php $hasInstructions = true; @endphp
+                    @endif
+                    
+                    {{-- Instructions spéciales --}}
+                    @if($package->special_instructions)
+                        @if($hasInstructions)<hr style="margin: 8px 0; border: none; border-top: 1px solid #dee2e6;">@endif
+                        <div style="font-size: 9.5pt;">
+                            <strong>Instructions:</strong> {{ $package->special_instructions }}
+                        </div>
+                        @php $hasInstructions = true; @endphp
+                    @endif
+                    
+                    {{-- Notes/Commentaires --}}
+                    @if($package->notes)
+                        @if($hasInstructions)<hr style="margin: 8px 0; border: none; border-top: 1px solid #dee2e6;">@endif
+                        <div style="font-size: 9.5pt;">
+                            <strong>Remarques:</strong> {{ $package->notes }}
+                        </div>
+                    @endif
                  </div>
             </section>
             @endif

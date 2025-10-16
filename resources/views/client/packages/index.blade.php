@@ -5,9 +5,9 @@
 @section('content')
 <div class="min-h-screen bg-gray-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6" x-data="packagesApp()">
     <!-- Mobile Header Actions -->
-    <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-3 space-y-3">
+    <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-2.5 space-y-2.5">
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">📦 Mes Colis</h2>
+            <h2 class="text-base font-bold text-gray-900">📦 Mes Colis</h2>
             <button @click="showFilters = !showFilters" 
                     class="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg touch-active transition-smooth">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,14 +20,14 @@
         <!-- Quick Action Buttons -->
         <div class="flex space-x-2">
             <a href="{{ route('client.packages.create') }}" 
-               class="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl touch-active transition-smooth shadow-lg">
+               class="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg touch-active transition-smooth shadow-md text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 <span class="font-medium">Nouveau</span>
             </a>
             <a href="{{ route('client.packages.create-fast') }}" 
-               class="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl touch-active transition-smooth shadow-lg">
+               class="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg touch-active transition-smooth shadow-md text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
@@ -37,23 +37,23 @@
     </div>
 
     <!-- Desktop Header -->
-    <div class="hidden lg:block bg-white border-b border-gray-200 px-6 py-4">
+    <div class="hidden lg:block bg-white border-b border-gray-200 px-6 py-3">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">📦 Mes Colis</h1>
-                    <p class="text-sm text-gray-600 mt-1">Gérez et suivez tous vos envois</p>
+                    <h1 class="text-xl font-bold text-gray-900">📦 Mes Colis</h1>
+                    <p class="text-sm text-gray-600 mt-0.5">Gérez et suivez tous vos envois</p>
                 </div>
-                <div class="flex space-x-3">
+                <div class="flex space-x-2">
                     <a href="{{ route('client.packages.create') }}" 
-                       class="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-smooth shadow-lg">
+                       class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-smooth shadow-md text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         <span class="font-medium">Nouveau Colis</span>
                     </a>
                     <a href="{{ route('client.packages.create-fast') }}" 
-                       class="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-smooth shadow-lg">
+                       class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-smooth shadow-md text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
@@ -124,42 +124,46 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Bulk Actions -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
-                    <div class="flex items-center space-x-3">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" 
-                                   x-model="allChecked" 
-                                   @change="toggleSelectAll()"
-                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <span class="ml-2 text-sm text-gray-700">Tout sélectionner</span>
-                        </label>
-                        <span class="text-sm text-gray-500" x-text="`${selectedPackages.length} sélectionné(s)`"></span>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                        <button type="button"
-                                @click="bulkPrint()"
-                                :disabled="selectedPackages.length === 0"
-                                class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                            </svg>
-                            <span>Imprimer</span>
-                        </button>
-                        <button type="button"
-                                @click="bulkExport()"
-                                :disabled="selectedPackages.length === 0"
-                                class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <span>Exporter</span>
-                        </button>
-                    </div>
-                </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions (Toujours visible) -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="px-4 lg:px-6 py-3 max-w-7xl lg:mx-auto">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               x-model="allChecked" 
+                               @change="toggleSelectAll()"
+                               class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Tout sélectionner</span>
+                    </label>
+                    <span class="text-sm text-gray-500" x-text="`${selectedPackages.length} sélectionné(s)`"></span>
+                </div>
+
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button type="button"
+                            @click="bulkPrint()"
+                            :disabled="selectedPackages.length === 0"
+                            class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span>Imprimer BL</span>
+                    </button>
+                    <button type="button"
+                            @click="bulkExport()"
+                            :disabled="selectedPackages.length === 0"
+                            class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-smooth shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Exporter</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -169,36 +173,29 @@
         <div class="lg:hidden space-y-3">
             @forelse($packages as $package)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden touch-active transition-smooth">
-                    <div class="p-4">
+                    <div class="p-3">
                         <!-- Header Row -->
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex items-start space-x-3 flex-1 min-w-0">
-                                <!-- Checkbox -->
-                                <input type="checkbox" 
-                                       x-model="selectedPackages" 
-                                       value="{{ $package->id }}"
-                                       class="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                                
-                                <!-- Package Info -->
-                                <div class="flex-1 min-w-0">
-                                    <a href="{{ route('client.packages.show', $package) }}" 
-                                       class="block text-base font-bold text-indigo-600 hover:text-indigo-800 mb-1">
-                                        {{ $package->package_code }}
-                                    </a>
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        @include('client.packages.partials.status-badge', ['status' => $package->status])
-                                    </div>
+                        <div class="flex items-start space-x-2.5 mb-2.5">
+                            <!-- Checkbox -->
+                            <input type="checkbox" 
+                                   x-model="selectedPackages" 
+                                   value="{{ $package->id }}"
+                                   class="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 flex-shrink-0">
+                            
+                            <!-- Package Info -->
+                            <div class="flex-1 min-w-0">
+                                <a href="{{ route('client.packages.show', $package) }}" 
+                                   class="block text-sm font-bold text-indigo-600 hover:text-indigo-800 mb-1.5 truncate">
+                                    {{ $package->package_code }}
+                                </a>
+                                <div class="flex items-center">
+                                    @include('client.packages.partials.status-badge', ['status' => $package->status])
                                 </div>
-                            </div>
-
-                            <!-- Actions Menu -->
-                            <div class="flex-shrink-0 ml-2">
-                                @include('client.packages.partials.actions-menu-mobile', ['package' => $package])
                             </div>
                         </div>
 
                         <!-- Package Details -->
-                        <div class="space-y-2 text-sm">
+                        <div class="space-y-1.5 text-sm ml-6">
                             <div class="flex items-center text-gray-700">
                                 <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -212,10 +209,15 @@
                                 </svg>
                                 <span class="truncate">{{ $package->delegationTo->name ?? 'N/A' }}</span>
                             </div>
-                            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <div class="flex items-center justify-between pt-1.5 border-t border-gray-100">
                                 <span class="text-xs text-gray-500">{{ $package->created_at->format('d/m/Y H:i') }}</span>
-                                <span class="text-lg font-bold text-green-600">{{ number_format($package->cod_amount, 2) }} DT</span>
+                                <span class="text-base font-bold text-green-600">{{ number_format($package->cod_amount, 2) }} DT</span>
                             </div>
+                        </div>
+
+                        <!-- Actions Menu (en dessous) -->
+                        <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                            @include('client.packages.partials.actions-menu-mobile', ['package' => $package])
                         </div>
                     </div>
                 </div>
@@ -376,7 +378,13 @@ function packagesApp() {
                 alert('Veuillez sélectionner au moins un colis.');
                 return;
             }
-            alert('Fonction d\'export en développement');
+
+            // Construire l'URL avec les IDs sélectionnés
+            const packageIds = this.selectedPackages.join(',');
+            const exportUrl = '{{ route("client.packages.export") }}' + '?package_ids=' + packageIds;
+            
+            // Ouvrir dans un nouvel onglet pour téléchargement
+            window.open(exportUrl, '_blank');
         }
     }
 }

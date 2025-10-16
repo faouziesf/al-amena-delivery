@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Créer un Manifeste')
 
@@ -6,7 +6,7 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Header mobile-optimized -->
     <div class="bg-white shadow-sm sticky top-0 z-40">
-        <div class="px-4 sm:px-6 lg:px-8 py-4">
+        <div class="px-4 sm:px-4 lg:px-4 sm:px-4 py-2 sm:py-3">
             <!-- Breadcrumb compact -->
             <nav class="flex items-center space-x-2 text-sm mb-3" aria-label="Breadcrumb">
                 <a href="{{ route('client.manifests.index') }}" class="flex items-center text-gray-500 hover:text-indigo-600 transition-colors">
@@ -24,17 +24,17 @@
 
             <!-- Titre responsive -->
             <div>
-                <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Créer un nouveau Manifeste</h1>
+                <h1 class="text-xl sm:text-lg sm:text-xl lg:text-xl sm:text-lg sm:text-xl font-bold text-gray-900">Créer un nouveau Manifeste</h1>
                 <p class="text-sm sm:text-base text-gray-600 mt-1">Sélectionnez vos colis et votre adresse de collecte</p>
             </div>
         </div>
     </div>
 
     <!-- Contenu principal -->
-    <div class="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="px-4 sm:px-4 lg:px-4 sm:px-4 py-3 sm:py-2 sm:py-3 space-y-3 sm:space-y-2 sm:space-y-3">
         <!-- Messages flash -->
         @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl shadow-sm">
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg shadow-sm">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -49,7 +49,7 @@
         @endif
 
         @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl shadow-sm">
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-sm">
                 <div class="flex items-start">
                     <div class="flex-shrink-0 mt-0.5">
                         <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -71,15 +71,15 @@
 
         @if($availablePackages->count() == 0)
             <!-- Aucun colis disponible -->
-            <div class="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
-                <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div class="bg-white rounded-lg shadow-sm p-3 sm:p-2.5 sm:p-3 sm:p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3 text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
                     <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4-4-4m-6 4l4 4 4-4"></path>
                     </svg>
                 </div>
                 <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Aucun colis disponible</h3>
-                <p class="text-sm sm:text-base text-gray-600 mb-6">Tous vos colis sont soit déjà dans des manifestes, soit ne sont pas éligibles</p>
-                <a href="{{ route('client.packages.create') }}" class="inline-flex items-center justify-center w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg">
+                <p class="text-sm sm:text-base text-gray-600 mb-3 sm:mb-2 sm:mb-3">Tous vos colis sont soit déjà dans des manifestes, soit ne sont pas éligibles</p>
+                <a href="{{ route('client.packages.create') }}" class="inline-flex items-center justify-center w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
@@ -87,27 +87,27 @@
                 </a>
             </div>
         @else
-        <form method="POST" action="{{ route('client.manifests.generate') }}" class="space-y-6">
+        <form method="POST" action="{{ route('client.manifests.generate') }}" class="space-y-3 sm:space-y-2 sm:space-y-3">
             @csrf
 
             <!-- Étape 1: Sélection de l'adresse de collecte -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-50 to-indigo-100 px-4 sm:px-6 py-4 border-b border-indigo-200">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-50 to-indigo-100 px-4 sm:px-4 py-2 sm:py-3 border-b border-indigo-200">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">1</div>
+                        <div class="flex-shrink-0 w-5 h-5 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">1</div>
                         <h2 class="ml-3 text-lg sm:text-xl font-semibold text-gray-900">Adresse de Collecte</h2>
                     </div>
                 </div>
-                <div class="p-4 sm:p-6">
+                <div class="p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
                     @if($clientPickupAddresses->count() > 0)
-                        <div class="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 sm:gap-4">
+                        <div class="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 xl:grid-cols-3 sm:gap-2 sm:gap-3">
                             @foreach($clientPickupAddresses as $address)
                                 <label class="relative block">
                                     <input type="radio" name="pickup_address_id" value="{{ $address->id }}"
                                            class="sr-only peer"
                                            @if($address->is_default) checked @endif
                                            required>
-                                    <div class="p-4 border-2 border-gray-200 rounded-xl cursor-pointer peer-checked:border-indigo-500 peer-checked:bg-indigo-50 hover:border-gray-300 transition-all duration-200 hover:shadow-sm">
+                                    <div class="p-2.5 sm:p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-500 peer-checked:bg-indigo-50 hover:border-gray-300 transition-all duration-200 hover:shadow-sm">
                                         <div class="flex items-start justify-between">
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center justify-between mb-2">
@@ -139,16 +139,16 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="text-center py-8 sm:py-12">
-                            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center py-2 sm:py-3 sm:py-3 sm:py-2 sm:py-3 sm:py-12">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                                <svg class="w-5 h-5 sm:w-10 sm:h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
                             </div>
                             <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Aucune adresse de collecte</h3>
-                            <p class="text-sm sm:text-base text-gray-600 mb-6">Vous devez d'abord ajouter une adresse de collecte</p>
-                            <a href="{{ route('client.pickup-addresses.create') }}" class="inline-flex items-center justify-center w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            <p class="text-sm sm:text-base text-gray-600 mb-3 sm:mb-2 sm:mb-3">Vous devez d'abord ajouter une adresse de collecte</p>
+                            <a href="{{ route('client.pickup-addresses.create') }}" class="inline-flex items-center justify-center w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
@@ -160,11 +160,11 @@
             </div>
 
             <!-- Étape 2: Sélection des colis -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 sm:px-6 py-4 border-b border-green-200">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 sm:px-4 py-2 sm:py-3 border-b border-green-200">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">2</div>
+                            <div class="flex-shrink-0 w-5 h-5 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">2</div>
                             <h2 class="ml-3 text-lg sm:text-xl font-semibold text-gray-900">Sélection des Colis</h2>
                         </div>
                         <div class="text-sm text-gray-600">
@@ -175,8 +175,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="p-4 sm:p-6">
-                    <div class="mb-6">
+                <div class="p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+                    <div class="mb-3 sm:mb-2 sm:mb-3">
                         <label class="inline-flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                             <input type="checkbox" id="select-all" class="form-checkbox h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500">
                             <span class="ml-3 text-sm font-medium text-gray-700">Sélectionner tous les colis disponibles</span>
@@ -186,7 +186,7 @@
                     <!-- Version mobile: Cards -->
                     <div class="sm:hidden space-y-3">
                         @foreach($availablePackages as $package)
-                            <div class="bg-gray-50 rounded-xl p-4 package-row">
+                            <div class="bg-gray-50 rounded-lg p-2.5 sm:p-3 package-row">
                                 <div class="flex items-start space-x-3">
                                     <input type="checkbox" name="package_ids[]" value="{{ $package->id }}"
                                            class="package-checkbox form-checkbox h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500 mt-1">
@@ -227,22 +227,22 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="w-12 px-6 py-3 text-left">
+                                    <th class="w-12 px-3 sm:px-4 py-2 text-left">
                                         <span class="sr-only">Sélectionner</span>
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Code Suivi
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Destinataire
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Destination
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         COD
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Statut
                                     </th>
                                 </tr>
@@ -250,15 +250,15 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($availablePackages as $package)
                                     <tr class="hover:bg-gray-50 transition-colors package-row">
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                             <input type="checkbox" name="package_ids[]" value="{{ $package->id }}"
                                                    class="package-checkbox form-checkbox h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500">
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $package->package_code }}</div>
                                             <div class="text-sm text-gray-500">{{ $package->content_description }}</div>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-4 py-2 sm:py-3">
                                             <div class="text-sm font-medium text-gray-900">
                                                 {{ is_array($package->recipient_data) ? ($package->recipient_data['name'] ?? 'N/A') : 'N/A' }}
                                             </div>
@@ -266,7 +266,7 @@
                                                 {{ is_array($package->recipient_data) ? ($package->recipient_data['phone'] ?? 'N/A') : 'N/A' }}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-4 py-2 sm:py-3">
                                             <div class="text-sm text-gray-900 max-w-xs truncate">
                                                 {{ is_array($package->recipient_data) ? ($package->recipient_data['address'] ?? 'N/A') : 'N/A' }}
                                             </div>
@@ -274,7 +274,7 @@
                                                 {{ optional($package->delegationTo)->name ?? 'N/A' }}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                             @if($package->cod_amount > 0)
                                                 <span class="text-sm font-medium text-green-600">
                                                     {{ number_format($package->cod_amount, 3) }} DT
@@ -283,7 +283,7 @@
                                                 <span class="text-sm text-gray-400">Aucun</span>
                                             @endif
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                 {{ $package->status === 'CREATED' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
                                                 {{ $package->status === 'CREATED' ? 'Créé' : 'Disponible' }}
@@ -296,9 +296,9 @@
                     </div>
 
                     <!-- Résumé de sélection mobile-optimized -->
-                    <div id="selection-summary" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl" style="display: none;">
+                    <div id="selection-summary" class="mt-6 p-2.5 sm:p-3 bg-green-50 border border-green-200 rounded-lg" style="display: none;">
                         <h3 class="text-sm font-medium text-green-900 mb-3">Résumé de la sélection</h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 text-sm">
                             <div class="text-center p-2 bg-white rounded-lg">
                                 <div class="text-lg font-bold text-green-600" id="summary-count">0</div>
                                 <div class="text-xs text-gray-600">Colis sélectionnés</div>
@@ -322,10 +322,10 @@
 
             <!-- Actions (mobile-optimized) -->
             @if($clientPickupAddresses->count() > 0)
-                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+                <div class="bg-white rounded-lg shadow-sm p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
                     <div class="flex flex-col sm:flex-row gap-3 sm:justify-between">
                         <a href="{{ route('client.manifests.index') }}"
-                           class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors duration-200 font-medium">
+                           class="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 font-medium">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
@@ -333,7 +333,7 @@
                         </a>
 
                         <button type="submit" id="create-manifest-btn"
-                                class="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg font-medium"
+                                class="inline-flex items-center justify-center px-4 sm:px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-sm font-medium"
                                 disabled>
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>

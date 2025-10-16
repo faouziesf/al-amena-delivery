@@ -1,25 +1,25 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Retours à Traiter')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- En-tête -->
-    <div class="mb-6">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">📦 Retours à Traiter</h1>
+                <h1 class="text-xl sm:text-lg sm:text-xl font-bold text-gray-900">📦 Retours à Traiter</h1>
                 <p class="text-gray-600 mt-1">Gérez vos colis retournés</p>
             </div>
             <div class="text-right">
-                <div class="text-3xl font-bold text-orange-600">{{ $returnedPackages->total() }}</div>
+                <div class="text-xl sm:text-lg sm:text-xl font-bold text-orange-600">{{ $returnedPackages->total() }}</div>
                 <div class="text-sm text-gray-600">Retour(s) en attente</div>
             </div>
         </div>
     </div>
 
     <!-- Message d'information -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
         <div class="flex">
             <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -36,7 +36,7 @@
     </div>
 
     @if(session('success'))
-        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+        <div class="bg-green-50 border-l-4 border-green-500 p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -53,7 +53,7 @@
     @if($returnedPackages->isEmpty())
         <!-- Aucun retour -->
         <div class="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div class="text-6xl mb-4">✅</div>
+            <div class="text-6xl mb-2 sm:mb-3">✅</div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun retour en attente</h3>
             <p class="text-gray-600">Vous n'avez actuellement aucun colis retourné à traiter.</p>
             <a href="{{ route('client.packages.index') }}" class="mt-4 inline-block text-blue-600 hover:text-blue-700 font-medium">
@@ -67,22 +67,22 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Code Colis
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Destinataire
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Date de Retour
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Raison
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Temps Restant
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -90,14 +90,14 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($returnedPackages as $package)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="text-sm font-medium text-gray-900">
                                             {{ $package->package_code }}
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-2 sm:py-3">
                                     <div class="text-sm text-gray-900">
                                         {{ $package->recipient_data['name'] ?? 'N/A' }}
                                     </div>
@@ -105,7 +105,7 @@
                                         {{ $package->recipient_data['phone'] ?? 'N/A' }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
                                         {{ $package->returned_to_client_at ? $package->returned_to_client_at->format('d/m/Y') : 'N/A' }}
                                     </div>
@@ -113,12 +113,12 @@
                                         {{ $package->returned_to_client_at ? $package->returned_to_client_at->format('H:i') : '' }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-2 sm:py-3">
                                     <div class="text-sm text-gray-900">
                                         {{ $package->return_reason ?? 'Non spécifiée' }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-4 py-2 sm:py-3 whitespace-nowrap">
                                     @if(isset($package->hours_remaining))
                                         @if($package->hours_remaining > 24)
                                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -140,7 +140,7 @@
                                         <span class="text-xs text-gray-500">N/A</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td class="px-4 py-2 sm:py-3 whitespace-nowrap text-sm font-medium">
                                     <div class="flex flex-col space-y-2">
                                         <!-- Bouton Valider la Réception -->
                                         <form action="{{ route('client.returns.validate-reception', $package->id) }}" 
@@ -185,7 +185,7 @@
 
             <!-- Pagination -->
             @if($returnedPackages->hasPages())
-                <div class="px-6 py-4 border-t border-gray-200">
+                <div class="px-4 py-2 sm:py-3 border-t border-gray-200">
                     {{ $returnedPackages->links() }}
                 </div>
             @endif

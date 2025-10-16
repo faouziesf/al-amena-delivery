@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Détails de la Demande #' . $pickupRequest->id)
 @section('page-title', 'Demande de Collecte #' . $pickupRequest->id)
@@ -19,16 +19,16 @@
 <div class="max-w-6xl mx-auto">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <div class="flex items-center">
             <a href="{{ route('client.pickup-requests.index') }}" class="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
             <div>
                 <div class="flex items-center space-x-3 mb-2">
-                    <h1 class="text-2xl font-bold text-gray-900">Demande #{{ $pickupRequest->id }}</h1>
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-900">Demande #{{ $pickupRequest->id }}</h1>
                     @php
                         $statusConfig = [
                             'pending' => ['color' => 'orange', 'text' => 'En Attente', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
@@ -63,15 +63,15 @@
         @endif
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 sm:gap-3 sm:gap-2 sm:gap-3">
 
         <!-- Colonne principale -->
-        <div class="lg:col-span-2 space-y-8">
+        <div class="lg:col-span-2 space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3">
 
             <!-- Informations de Collecte -->
-            <div class="detail-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+            <div class="detail-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+                <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -80,8 +80,8 @@
                     <h2 class="text-xl font-bold text-gray-900">Informations de Collecte</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3">
+                    <div class="space-y-2 sm:space-y-3">
                         <div>
                             <h3 class="text-sm font-medium text-gray-900 mb-2">📍 Adresse de collecte</h3>
                             <p class="text-gray-700 bg-gray-50 p-3 rounded-lg">{{ $pickupRequest->pickup_address }}</p>
@@ -94,7 +94,7 @@
                         @endif
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-2 sm:space-y-3">
                         <div>
                             <h3 class="text-sm font-medium text-gray-900 mb-2">📅 Date demandée</h3>
                             <p class="text-gray-700">{{ $pickupRequest->requested_pickup_date->format('d/m/Y à H:i') }}</p>
@@ -120,9 +120,9 @@
             </div>
 
             <!-- Informations sur le fonctionnement -->
-            <div class="detail-section bg-blue-50 rounded-2xl shadow-lg border border-blue-200 p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+            <div class="detail-section bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-3 sm:p-2.5 sm:p-3">
+                <div class="flex items-center mb-2 sm:mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -131,19 +131,19 @@
                 </div>
                 <div class="space-y-3 text-sm text-blue-800">
                     <div class="flex items-start">
-                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📍</div>
+                        <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📍</div>
                         <p>Cette demande de collecte est configurée pour l'adresse indiquée ci-dessus</p>
                     </div>
                     <div class="flex items-start">
-                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">🚛</div>
+                        <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">🚛</div>
                         <p>Un livreur se rendra à cette adresse pour collecter vos colis</p>
                     </div>
                     <div class="flex items-start">
-                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📦</div>
+                        <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📦</div>
                         <p>Les colis à collecter seront déterminés lors de la visite du livreur</p>
                     </div>
                     <div class="flex items-start">
-                        <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📱</div>
+                        <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">📱</div>
                         <p>Vous recevrez des notifications sur le statut de la collecte</p>
                     </div>
                 </div>
@@ -151,12 +151,12 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-8">
+        <div class="space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3">
 
             <!-- Statut et Timeline -->
-            <div class="detail-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+            <div class="detail-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+                <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
@@ -164,11 +164,11 @@
                     <h2 class="text-xl font-bold text-gray-900">Suivi</h2>
                 </div>
 
-                <div class="space-y-4">
+                <div class="space-y-2 sm:space-y-3">
                     <!-- Étape: Demande créée -->
                     <div class="timeline-item flex items-start">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
@@ -184,7 +184,7 @@
                     @if($pickupRequest->assigned_deliverer_id)
                     <div class="timeline-item flex items-start">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <div class="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
@@ -202,7 +202,7 @@
                     @if($pickupRequest->status === 'picked_up')
                     <div class="timeline-item flex items-start">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
@@ -219,7 +219,7 @@
                     @if($pickupRequest->status === 'cancelled')
                     <div class="timeline-item flex items-start">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <div class="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
                                 <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
@@ -236,9 +236,9 @@
 
             <!-- Informations Livreur (si assigné) -->
             @if($pickupRequest->assignedDeliverer)
-            <div class="detail-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+            <div class="detail-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+                <div class="flex items-center mb-2 sm:mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
@@ -262,8 +262,8 @@
             @endif
 
             <!-- Actions Rapides -->
-            <div class="detail-section bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">Actions Rapides</h2>
+            <div class="detail-section bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3">
+                <h2 class="text-lg font-bold text-gray-900 mb-2 sm:mb-3">Actions Rapides</h2>
                 <div class="space-y-3">
                     <a href="{{ route('client.pickup-requests.index') }}"
                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">

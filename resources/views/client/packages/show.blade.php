@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Colis ' . $package->package_code)
 @section('page-title', 'Détails du Colis')
@@ -17,7 +17,7 @@
 
     @if($package->return_package_id)
     <a href="{{ route('client.returns.show-return-package', $package->return_package_id) }}"
-       class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg">
+       class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
@@ -50,14 +50,14 @@
 
 @section('content')
 <!-- Main container with proper mobile spacing -->
-<div x-data="packageDetailsData()" x-init="init()" class="pb-6 px-4 sm:px-6 lg:px-8">
+<div x-data="packageDetailsData()" x-init="init()" class="pb-6 px-4 sm:px-4 lg:px-4 sm:px-4">
 
     <!-- Mobile Status Header -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
-        <div class="bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 p-4 sm:p-6 text-white">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3 text-white">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div class="flex-1">
-                    <h1 class="text-xl sm:text-2xl font-bold mb-2 flex items-center">
+                    <h1 class="text-xl sm:text-lg sm:text-xl font-bold mb-2 flex items-center">
                         📦 {{ $package->package_code }}
                     </h1>
                     <p class="text-blue-100 text-sm">Créé le {{ $package->created_at->format('d/m/Y à H:i') }}</p>
@@ -82,7 +82,7 @@
                         @endswitch
                     </div>
                     <div>
-                        <p class="text-2xl sm:text-3xl font-bold">{{ number_format($package->cod_amount, 3) }} DT</p>
+                        <p class="text-lg sm:text-xl sm:text-xl sm:text-lg sm:text-xl font-bold">{{ number_format($package->cod_amount, 3) }} DT</p>
                         <p class="text-xs text-blue-100">Montant COD</p>
                     </div>
                 </div>
@@ -91,15 +91,15 @@
     </div>
 
     <!-- Mobile-First Layout -->
-    <div class="space-y-6">
+    <div class="space-y-3 sm:space-y-2 sm:space-y-3">
 
         <!-- Tracking Progress - Always Visible on Mobile -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 🕒 Suivi en Temps Réel
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2 sm:space-y-3">
                 @php
                     $statuses = [
                         'CREATED' => ['🆕 Créé', 'Colis créé dans le système'],
@@ -128,17 +128,17 @@
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             @if($isCompleted)
-                                <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                                <div class="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
                             @elseif($isCurrent)
-                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                                <div class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center animate-pulse shadow-sm">
                                     <div class="w-3 h-3 bg-white rounded-full"></div>
                                 </div>
                             @else
-                                <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                                <div class="w-5 h-5 bg-gray-300 rounded-full"></div>
                             @endif
                         </div>
 
@@ -162,7 +162,7 @@
 
             <!-- Quick Actions -->
             <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3">
                     <button @click="refreshStatus()"
                             class="flex items-center justify-center px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,12 +185,12 @@
         </div>
 
         <!-- Route Information - Mobile Optimized -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 🗺️ Itinéraire
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2 sm:space-y-3">
                 <!-- From -->
                 <div class="flex items-center p-3 bg-blue-50 rounded-lg">
                     <div class="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
@@ -205,7 +205,7 @@
 
                 <!-- Arrow -->
                 <div class="flex justify-center">
-                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                     </svg>
                 </div>
@@ -225,10 +225,10 @@
         </div>
 
         <!-- People Information - Mobile Cards -->
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 gap-2 sm:gap-3">
             <!-- Sender -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                     👤 Expéditeur
                 </h3>
                 <div class="space-y-3">
@@ -248,8 +248,8 @@
             </div>
 
             <!-- Recipient -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                     🎯 Destinataire
                 </h3>
                 <div class="space-y-3">
@@ -270,12 +270,12 @@
         </div>
 
         <!-- Package Details - Mobile Optimized -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 📦 Détails du Colis
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2 sm:space-y-3">
                 <!-- Content Description -->
                 <div class="p-3 bg-purple-50 rounded-lg">
                     <p class="text-sm font-medium text-purple-800 mb-1">📋 Contenu</p>
@@ -283,7 +283,7 @@
                 </div>
 
                 <!-- Financial Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                     <div class="p-3 bg-green-50 rounded-lg">
                         <p class="text-sm font-medium text-green-800 mb-1">💰 Montant COD</p>
                         <p class="text-xl font-bold text-green-600">{{ number_format($package->cod_amount, 3) }} DT</p>
@@ -313,8 +313,8 @@
 
         <!-- Assigned Deliverer -->
         @if($package->assignedDeliverer)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 🚛 Livreur Assigné
             </h3>
 
@@ -346,14 +346,14 @@
 
         <!-- Complaints Section -->
         @if($package->complaints->count() > 0)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 📝 Réclamations
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2 sm:space-y-3">
                 @foreach($package->complaints as $complaint)
-                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div class="border border-gray-200 rounded-lg p-2.5 sm:p-3 bg-gray-50">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
                         <div class="flex items-center space-x-2">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
@@ -381,8 +381,8 @@
 
         <!-- COD Modifications -->
         @if($package->codModifications->count() > 0)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                 💰 Modifications COD
             </h3>
 
@@ -409,8 +409,8 @@
 
         <!-- Detailed History - Collapsible on Mobile -->
         @if($package->statusHistory->count() > 0)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center justify-between mb-2 sm:mb-3">
                 <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                     📚 Historique Détaillé
                 </h3>
@@ -420,7 +420,7 @@
                 </button>
             </div>
 
-            <div class="space-y-4" x-show="showAllHistory" x-transition>
+            <div class="space-y-2 sm:space-y-3" x-show="showAllHistory" x-transition>
                 @foreach($package->statusHistory->take(10) as $history)
                 <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -473,7 +473,7 @@ function packageDetailsData() {
 
         showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm ${
+            notification.className = `fixed top-4 right-4 z-50 p-2.5 sm:p-3 rounded-lg shadow-sm text-white max-w-sm ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' : 'bg-blue-500'
             }`;

@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Mes Adresses de Collecte')
 @section('page-title', 'Adresses de Collecte')
@@ -15,15 +15,15 @@
 <div class="max-w-6xl mx-auto">
 
     <!-- Header avec Actions -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3 space-y-2 sm:space-y-3 sm:space-y-0">
         <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg" style="animation: float 3s ease-in-out infinite">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm" style="animation: float 3s ease-in-out infinite">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
             </div>
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Mes Adresses de Collecte</h2>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-900">Mes Adresses de Collecte</h2>
                 <p class="text-gray-600">{{ $addresses->count() }} adresse(s) enregistrée(s)</p>
             </div>
         </div>
@@ -36,7 +36,7 @@
                 </svg>
                 Demandes de Collecte
             </a>
-            <a href="{{ route('client.pickup-addresses.create') }}" class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+            <a href="{{ route('client.pickup-addresses.create') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -47,12 +47,12 @@
 
     <!-- Liste des Adresses -->
     @if($addresses->count() > 0)
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-2 gap-3 sm:gap-2 sm:gap-3">
             @foreach($addresses as $address)
-            <div class="address-card bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl {{ $address->is_default ? 'ring-2 ring-emerald-500 bg-emerald-50' : '' }}">
-                <div class="flex items-start justify-between mb-4">
+            <div class="address-card bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-2.5 sm:p-3 hover:shadow-md {{ $address->is_default ? 'ring-2 ring-emerald-500 bg-emerald-50' : '' }}">
+                <div class="flex items-start justify-between mb-2 sm:mb-3">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-br {{ $address->is_default ? 'from-emerald-500 to-teal-600' : 'from-gray-100 to-gray-200' }} rounded-xl flex items-center justify-center">
+                        <div class="w-10 h-10 bg-gradient-to-br {{ $address->is_default ? 'from-emerald-500 to-teal-600' : 'from-gray-100 to-gray-200' }} rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 {{ $address->is_default ? 'text-white' : 'text-gray-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -79,7 +79,7 @@
                             </svg>
                         </button>
 
-                        <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                        <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-gray-200 z-10">
                             <div class="py-1">
                                 <a href="{{ route('client.pickup-addresses.edit', $address) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +118,7 @@
                         <p class="text-gray-700 text-sm">{{ $address->address }}</p>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <p class="text-sm font-medium text-gray-900 mb-1">🏢 Délégation</p>
                             <p class="text-gray-700 text-sm">{{ $address->delegation }}</p>
@@ -167,15 +167,15 @@
     @else
         <!-- État vide -->
         <div class="text-center py-16">
-            <div class="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div class="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-2 sm:mb-3">
                 <svg class="w-12 h-12 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune adresse de collecte</h3>
-            <p class="text-gray-600 mb-6">Ajoutez vos adresses de collecte pour créer des demandes plus rapidement.</p>
+            <p class="text-gray-600 mb-3 sm:mb-2 sm:mb-3">Ajoutez vos adresses de collecte pour créer des demandes plus rapidement.</p>
             <a href="{{ route('client.pickup-addresses.create') }}"
-               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-base font-medium text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-200">
+               class="inline-flex items-center px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 border border-transparent rounded-lg shadow-sm text-base font-medium text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>

@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Nouvelle Demande de Collecte')
 @section('page-title', 'Créer une Demande de Collecte')
@@ -98,25 +98,25 @@
 }
 </style>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" x-data="pickupRequestForm()">
+<div class="max-w-4xl mx-auto px-4 sm:px-4 lg:px-4 sm:px-4" x-data="pickupRequestForm()">
 
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-2 sm:mb-3 sm:mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <a href="{{ route('client.pickup-requests.index') }}"
-           class="mb-4 sm:mb-0 sm:mr-4 inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mb-2 sm:mb-3 sm:mb-0 sm:mr-4 inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
         </a>
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Nouvelle Demande de Collecte</h1>
+            <h1 class="text-lg sm:text-xl sm:text-xl sm:text-lg sm:text-xl font-bold text-gray-900">Nouvelle Demande de Collecte</h1>
             <p class="text-gray-600 mt-1">Créez une demande de collecte pour une adresse spécifique</p>
         </div>
     </div>
 
     <!-- Message d'erreur global -->
     @if($errors->any())
-        <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+        <div class="mb-3 sm:mb-2 sm:mb-3 bg-red-50 border border-red-200 rounded-lg p-2.5 sm:p-3">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@
         </div>
     @endif
 
-    <form action="{{ route('client.pickup-requests.store') }}" method="POST" class="space-y-6 sm:space-y-8" @submit="submitForm()">
+    <form action="{{ route('client.pickup-requests.store') }}" method="POST" class="space-y-3 sm:space-y-2 sm:space-y-3 sm:space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3" @submit="submitForm()">
         @csrf
 
         <!-- Champs cachés pour la soumission -->
@@ -145,9 +145,9 @@
         <input type="hidden" name="delegation_from" id="hidden_delegation_from" value="{{ old('delegation_from', '') }}" />
 
         <!-- Section Adresse de Collecte -->
-        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex items-center mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 mobile-responsive p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-3 sm:mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -157,7 +157,7 @@
             </div>
 
             <!-- Type d'adresse -->
-            <div class="mb-6">
+            <div class="mb-3 sm:mb-2 sm:mb-3">
                 <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-3 sm:space-y-0">
                     <label class="flex items-center cursor-pointer">
                         <input type="radio" name="address_type" value="saved" x-model="addressType" class="sr-only">
@@ -197,11 +197,11 @@
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 transform translate-y-4"
                  x-transition:enter-end="opacity-100 transform translate-y-0"
-                 class="space-y-4">
+                 class="space-y-2 sm:space-y-3">
                 @if($savedAddresses->count() > 0)
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 grid-mobile">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3 grid-mobile">
                         @foreach($savedAddresses as $address)
-                        <label class="address-card block p-4 border-2 rounded-xl transition-all duration-300 cursor-pointer hover:border-purple-300"
+                        <label class="address-card block p-2.5 sm:p-3 border-2 rounded-lg transition-all duration-300 cursor-pointer hover:border-purple-300"
                                :class="{
                                    'border-purple-500 bg-purple-50 selected': selectedAddressId == {{ $address->id }},
                                    'border-gray-200': selectedAddressId != {{ $address->id }}
@@ -263,13 +263,13 @@
                         </a>
                     </div>
                 @else
-                    <div class="text-center py-8">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-center py-2 sm:py-3 sm:py-3 sm:py-2 sm:py-3">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             </svg>
                         </div>
-                        <p class="text-gray-600 mb-4">Aucune adresse enregistrée</p>
+                        <p class="text-gray-600 mb-2 sm:mb-3">Aucune adresse enregistrée</p>
                         <a href="{{ route('client.pickup-addresses.create') }}"
                            class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,8 +286,8 @@
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 transform translate-y-4"
                  x-transition:enter-end="opacity-100 transform translate-y-0"
-                 class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 grid-mobile">
+                 class="space-y-2 sm:space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 grid-mobile">
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Adresse complète *</label>
                         <textarea id="pickup_address_visible" name="pickup_address_visible" rows="3"
@@ -333,7 +333,7 @@
             </div>
 
             <!-- Notes et Date -->
-            <div class="mt-6 space-y-4">
+            <div class="mt-6 space-y-2 sm:space-y-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Notes de collecte</label>
                     <textarea name="pickup_notes" rows="2"
@@ -359,9 +359,9 @@
         </div>
 
         <!-- Informations sur le fonctionnement -->
-        <div class="form-section bg-blue-50 rounded-2xl shadow-lg border border-blue-200 mobile-responsive p-4 sm:p-6">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
+        <div class="form-section bg-blue-50 rounded-lg shadow-sm border border-blue-200 mobile-responsive p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex items-center mb-2 sm:mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -370,28 +370,28 @@
             </div>
             <div class="space-y-3 text-sm text-blue-800">
                 <div class="flex items-start">
-                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">1</div>
+                    <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">1</div>
                     <p>Vous créez une demande de collecte pour une adresse spécifique</p>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">2</div>
+                    <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">2</div>
                     <p>Un livreur sera assigné à votre demande selon la disponibilité</p>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">3</div>
+                    <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">3</div>
                     <p>Le livreur se rendra à l'adresse indiquée pour collecter vos colis</p>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">4</div>
+                    <div class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center mr-3 mt-0.5 text-xs font-bold">4</div>
                     <p>Vous pouvez suivre le statut de votre demande en temps réel</p>
                 </div>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <a href="{{ route('client.pickup-requests.index') }}"
-               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+               class="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -400,8 +400,8 @@
 
             <button type="submit"
                     :disabled="!isFormValid()"
-                    :class="isFormValid() ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg' : 'bg-gray-400 cursor-not-allowed'"
-                    class="inline-flex items-center justify-center px-8 py-3 border border-transparent rounded-lg text-base font-medium text-white transition-all duration-200">
+                    :class="isFormValid() ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-sm' : 'bg-gray-400 cursor-not-allowed'"
+                    class="inline-flex items-center justify-center px-4 sm:px-3 sm:px-4 py-2 border border-transparent rounded-lg text-base font-medium text-white transition-all duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

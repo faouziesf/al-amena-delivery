@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Création Rapide de Colis')
 @section('page-title', 'Création Rapide')
@@ -6,14 +6,14 @@
 
 @section('content')
 <!-- Main container with proper mobile spacing -->
-<div x-data="fastCreateApp()" x-init="init()" class="pb-24 px-4 sm:px-6 lg:px-8">
+<div x-data="fastCreateApp()" x-init="init()" class="pb-24 px-4 sm:px-4 lg:px-4 sm:px-4">
 
     <!-- Progress Indicator -->
-    <div class="mb-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <div class="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
@@ -34,10 +34,10 @@
     </div>
 
     <!-- Pickup Address Section - Collapsible -->
-    <div class="mb-6">
-        <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg overflow-hidden">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg shadow-sm overflow-hidden">
             <!-- Header -->
-            <div class="p-4 cursor-pointer" @click="togglePickupSection()">
+            <div class="p-2.5 sm:p-3 cursor-pointer" @click="togglePickupSection()">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -53,7 +53,7 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <div x-show="selectedPickupId" class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <div x-show="selectedPickupId" class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -75,14 +75,14 @@
                  class="border-t border-purple-500/30">
 
                 @if($pickupAddresses->count() > 0)
-                    <div class="p-4 space-y-3">
+                    <div class="p-2.5 sm:p-3 space-y-3">
                         @foreach($pickupAddresses as $address)
                             <label class="block cursor-pointer">
                                 <input type="radio" name="pickup_address_id" value="{{ $address->id }}"
                                        x-model="selectedPickupId" class="sr-only">
-                                <div class="p-4 rounded-lg border-2 transition-all duration-200"
+                                <div class="p-2.5 sm:p-3 rounded-lg border-2 transition-all duration-200"
                                      :class="selectedPickupId == {{ $address->id }} ?
-                                             'border-white bg-white/15 shadow-lg' :
+                                             'border-white bg-white/15 shadow-sm' :
                                              'border-white/30 bg-white/5 hover:bg-white/10'">
                                     <div class="flex items-center justify-between">
                                         <div class="flex-1">
@@ -98,7 +98,7 @@
                                             @endif
                                         </div>
                                         <div x-show="selectedPickupId == {{ $address->id }}" class="ml-3">
-                                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                            <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                                 </svg>
@@ -110,13 +110,13 @@
                         @endforeach
                     </div>
                 @else
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-3 sm:p-2.5 sm:p-3 text-center">
+                        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
                         </div>
-                        <p class="text-white mb-4">Aucune adresse de collecte enregistrée</p>
+                        <p class="text-white mb-2 sm:mb-3">Aucune adresse de collecte enregistrée</p>
                         <a href="{{ route('client.pickup-addresses.create') }}"
                            class="inline-flex items-center px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-colors font-medium">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,18 +131,18 @@
     </div>
 
     <!-- Packages List -->
-    <div class="space-y-4">
+    <div class="space-y-2 sm:space-y-3">
         <template x-for="(package, index) in packages" :key="package.id">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
 
                 <!-- Package Summary (Collapsed State) -->
                 <div x-show="!package.expanded" @click="expandPackage(index)"
-                     class="p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                     class="p-2.5 sm:p-3 cursor-pointer hover:bg-gray-50 transition-colors">
                     <div class="flex items-center justify-between">
                         <!-- Package Info -->
                         <div class="flex-1">
                             <div class="flex items-center space-x-3 mb-2">
-                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <div class="w-5 h-5 bg-blue-100 rounded-lg flex items-center justify-center">
                                     <span class="text-sm font-bold text-blue-600" x-text="index + 1"></span>
                                 </div>
                                 <div class="flex-1">
@@ -179,13 +179,13 @@
                             <!-- Status Indicator -->
                             <div class="ml-2">
                                 <div x-show="isPackageValid(package)"
-                                     class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                     class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
                                 <div x-show="!isPackageValid(package)"
-                                     class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                                     class="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                                     </svg>
@@ -208,9 +208,9 @@
                      class="border-t border-gray-200">
 
                     <!-- Form Header -->
-                    <div class="p-4 bg-gray-50 flex items-center justify-between">
+                    <div class="p-2.5 sm:p-3 bg-gray-50 flex items-center justify-between">
                         <h3 class="font-semibold text-gray-900 flex items-center">
-                            <span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm mr-2" x-text="index + 1"></span>
+                            <span class="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm mr-2" x-text="index + 1"></span>
                             Configuration du colis
                         </h3>
                         <button @click="collapsePackage(index)"
@@ -222,11 +222,11 @@
                     </div>
 
                     <!-- Form Content -->
-                    <div class="p-4 space-y-6">
+                    <div class="p-2.5 sm:p-3 space-y-3 sm:space-y-2 sm:space-y-3">
                         <!-- Recipient Section -->
-                        <div class="bg-blue-50 rounded-lg p-4">
-                            <div class="flex items-center mb-4">
-                                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                        <div class="bg-blue-50 rounded-lg p-2.5 sm:p-3">
+                            <div class="flex items-center mb-2 sm:mb-3">
+                                <div class="w-5 h-5 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
@@ -234,7 +234,7 @@
                                 <h4 class="font-semibold text-blue-900">👤 Destinataire</h4>
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4">
+                            <div class="grid grid-cols-1 gap-2 sm:gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-blue-800 mb-2">
                                         Nom complet <span class="text-red-500">*</span>
@@ -246,7 +246,7 @@
                                            placeholder="Nom du destinataire">
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                     <div>
                                         <label class="block text-sm font-medium text-blue-800 mb-2">
                                             📱 Téléphone principal <span class="text-red-500">*</span>
@@ -268,7 +268,7 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                     <div>
                                         <label class="block text-sm font-medium text-blue-800 mb-2">
                                             🏛️ Gouvernorat <span class="text-red-500">*</span>
@@ -311,9 +311,9 @@
                         </div>
 
                         <!-- Package Details Section -->
-                        <div class="bg-green-50 rounded-lg p-4">
-                            <div class="flex items-center mb-4">
-                                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                        <div class="bg-green-50 rounded-lg p-2.5 sm:p-3">
+                            <div class="flex items-center mb-2 sm:mb-3">
+                                <div class="w-5 h-5 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                     </svg>
@@ -321,8 +321,8 @@
                                 <h4 class="font-semibold text-green-900">📦 Détails du Colis</h4>
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 gap-2 sm:gap-3">
+                                <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                     <div>
                                         <label class="block text-sm font-medium text-green-800 mb-2">
                                             📋 Contenu <span class="text-red-500">*</span>
@@ -398,7 +398,7 @@
                                 </div>
 
                                 <!-- Additional Fields -->
-                                <div class="grid grid-cols-1 gap-4">
+                                <div class="grid grid-cols-1 gap-2 sm:gap-3">
                                     <div>
                                         <label class="block text-sm font-medium text-green-800 mb-2">
                                             🗒️ Notes internes
@@ -417,9 +417,9 @@
         </template>
 
         <!-- Add Package Button -->
-        <div class="text-center py-6">
+        <div class="text-center py-3 sm:py-2 sm:py-3">
             <button @click="addNewPackage()"
-                    class="inline-flex items-center px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                    class="inline-flex items-center px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md transform hover:scale-105">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -428,9 +428,9 @@
         </div>
 
         <!-- Validation Button -->
-        <div x-show="packages.length > 0" class="text-center py-6 border-t border-gray-200">
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 mb-6">
-                <div class="flex items-center justify-center mb-4">
+        <div x-show="packages.length > 0" class="text-center py-3 sm:py-2 sm:py-3 border-t border-gray-200">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 sm:p-2.5 sm:p-3 mb-3 sm:mb-2 sm:mb-3">
+                <div class="flex items-center justify-center mb-2 sm:mb-3">
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <span class="text-xl font-bold text-green-600" x-text="packages.length"></span>
                     </div>
@@ -445,8 +445,8 @@
                         :class="canSubmit() ?
                                 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transform hover:scale-105' :
                                 'bg-gray-400 cursor-not-allowed'"
-                        class="w-full flex items-center justify-center space-x-2 px-8 py-4 text-white font-bold rounded-xl shadow-lg transition-all duration-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="w-full flex items-center justify-center space-x-2 px-4 sm:px-4 py-2 sm:py-3 text-white font-bold rounded-lg shadow-sm transition-all duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                     <span x-text="'🚀 Créer ' + (packages.length === 1 ? 'le colis' : 'les ' + packages.length + ' colis')"></span>
@@ -465,7 +465,7 @@
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0 transform translate-y-full"
      x-transition:enter-end="opacity-100 transform translate-y-0"
-     class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 safe-area-bottom">
+     class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2.5 sm:p-3 z-50 safe-area-bottom">
 
     <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between space-x-4">
@@ -486,7 +486,7 @@
                     :class="canSubmit() ?
                             'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transform hover:scale-105' :
                             'bg-gray-400 cursor-not-allowed'"
-                    class="flex items-center space-x-2 px-6 py-3 text-white font-bold rounded-xl shadow-lg transition-all duration-200">
+                    class="flex items-center space-x-2 px-3 sm:px-4 py-2 text-white font-bold rounded-lg shadow-sm transition-all duration-200">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -712,7 +712,7 @@ function fastCreateApp() {
 
         showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm ${
+            notification.className = `fixed top-4 right-4 z-50 p-2.5 sm:p-3 rounded-lg shadow-sm text-white max-w-sm ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' : 'bg-blue-500'
             }`;

@@ -1,14 +1,14 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Historique des transactions')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-4 lg:px-6 lg:py-6">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-2 sm:py-3 lg:px-4 lg:py-3 sm:py-2 sm:py-3">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 flex-col sm:flex-row">
-            <div class="mb-4 lg:mb-0">
-                <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3 flex-col sm:flex-row">
+            <div class="mb-2 sm:mb-3 lg:mb-0">
+                <h1 class="text-xl sm:text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                     📋 Historique des transactions
                 </h1>
                 <p class="text-gray-600">Consultez tous les mouvements de votre portefeuille</p>
@@ -16,15 +16,15 @@
             
             <div class="flex flex-wrap gap-3 flex-col sm:flex-row">
                 <a href="{{ route('client.wallet.export') }}"
-                   class="bg-gradient-to-r from-purple-400 to-purple-600 text-white px-4 sm:px-5 lg:px-6 py-3 rounded-2xl hover:from-purple-500 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
-                    <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-gradient-to-r from-purple-400 to-purple-600 text-white px-4 sm:px-5 lg:px-3 sm:px-4 py-2 rounded-lg hover:from-purple-500 hover:to-purple-700 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
+                    <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     Exporter CSV
                 </a>
                 <a href="{{ route('client.wallet.index') }}" 
-                   class="bg-white text-purple-600 border-2 border-purple-200 px-4 sm:px-5 lg:px-6 py-3 rounded-2xl hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center gap-2 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
-                    <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="bg-white text-purple-600 border-2 border-purple-200 px-4 sm:px-5 lg:px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-sm transform hover:scale-105 flex items-center gap-2 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
+                    <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                     Retour au portefeuille
@@ -33,20 +33,20 @@
         </div>
 
         <!-- Filtres avancés -->
-        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-5 lg:p-6 mb-8 transition-all duration-300 hover:-translate-y-1">
-            <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center flex-col sm:flex-row">
-                <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-lg shadow-sm border border-purple-100 p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3 transition-all duration-300 hover:-translate-y-1">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 sm:mb-2 sm:mb-3 flex items-center flex-col sm:flex-row">
+                <svg class="w-5 h-5 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
                 Filtres de recherche
             </h3>
             
-            <form method="GET" action="{{ route('client.wallet.transactions') }}" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+            <form method="GET" action="{{ route('client.wallet.transactions') }}" class="space-y-2 sm:space-y-3">
+                <div class="grid grid-cols-2 lg:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-2 sm:gap-3">
                     <!-- Type de transaction -->
                     <div>
                         <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Type de transaction</label>
-                        <select name="type" id="type" class="block w-full rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 bg-white min-h-[44px]">
+                        <select name="type" id="type" class="block w-full rounded-lg border-gray-300 shadow-md hover:shadow-md focus:border-purple-500 focus:ring-purple-500 bg-white min-h-[44px]">
                             <option value="">🔍 Tous les types</option>
                             <option value="CREDIT" {{ request('type') === 'CREDIT' ? 'selected' : '' }}>💰 Crédits</option>
                             <option value="DEBIT" {{ request('type') === 'DEBIT' ? 'selected' : '' }}>💸 Débits</option>
@@ -58,7 +58,7 @@
                     <!-- Statut -->
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                        <select name="status" id="status" class="block w-full rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 bg-white min-h-[44px]">
+                        <select name="status" id="status" class="block w-full rounded-lg border-gray-300 shadow-md hover:shadow-md focus:border-purple-500 focus:ring-purple-500 bg-white min-h-[44px]">
                             <option value="">📊 Tous les statuts</option>
                             <option value="COMPLETED" {{ request('status') === 'COMPLETED' ? 'selected' : '' }}>✅ Terminé</option>
                             <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>⏳ En attente</option>
@@ -73,7 +73,7 @@
                                name="date_from" 
                                id="date_from" 
                                value="{{ request('date_from') }}"
-                               class="block w-full rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
+                               class="block w-full rounded-lg border-gray-300 shadow-md hover:shadow-md focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
                     </div>
 
                     <!-- Date de fin -->
@@ -83,7 +83,7 @@
                                name="date_to" 
                                id="date_to" 
                                value="{{ request('date_to') }}"
-                               class="block w-full rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
+                               class="block w-full rounded-lg border-gray-300 shadow-md hover:shadow-md focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
                     </div>
                 </div>
 
@@ -96,7 +96,7 @@
                                id="search" 
                                value="{{ request('search') }}"
                                placeholder="Rechercher par description ou ID de transaction..."
-                               class="block w-full pl-12 rounded-2xl border-gray-300 shadow-md hover:shadow-xl focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
+                               class="block w-full pl-12 rounded-lg border-gray-300 shadow-md hover:shadow-md focus:border-purple-500 focus:ring-purple-500 min-h-[44px]">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none flex-col sm:flex-row">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -108,15 +108,15 @@
                 <!-- Boutons d'action -->
                 <div class="flex flex-wrap gap-3 pt-4 flex-col sm:flex-row">
                     <button type="submit" 
-                            class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 sm:px-5 lg:px-6 py-3 rounded-2xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
-                        <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 sm:px-5 lg:px-3 sm:px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
+                        <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         Rechercher
                     </button>
                     <a href="{{ route('client.wallet.transactions') }}" 
-                       class="bg-gray-100 text-gray-700 px-4 sm:px-5 lg:px-6 py-3 rounded-2xl hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
-                        <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="bg-gray-100 text-gray-700 px-4 sm:px-5 lg:px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 flex items-center gap-2 flex-col sm:flex-row">
+                        <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                         Réinitialiser
@@ -133,59 +133,59 @@
             $netAmount = $totalCredits - $totalDebits;
         @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-8">
-            <div class="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-4 sm:p-5 lg:p-6 border border-purple-300">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-2 sm:gap-3 mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
+            <div class="bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 border border-purple-300">
                 <div class="flex items-center justify-between flex-col sm:flex-row">
                     <div>
                         <p class="text-purple-700 text-sm font-medium">Total crédité</p>
-                        <p class="text-2xl font-bold text-purple-800">{{ number_format($totalCredits, 3) }} DT</p>
+                        <p class="text-lg sm:text-xl font-bold text-purple-800">{{ number_format($totalCredits, 3) }} DT</p>
                     </div>
                     <div class="bg-purple-300 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-purple-200 to-purple-300 rounded-2xl p-4 sm:p-5 lg:p-6 border border-purple-400">
+            <div class="bg-gradient-to-br from-purple-200 to-purple-300 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 border border-purple-400">
                 <div class="flex items-center justify-between flex-col sm:flex-row">
                     <div>
                         <p class="text-purple-800 text-sm font-medium">Total débité</p>
-                        <p class="text-2xl font-bold text-purple-900">{{ number_format($totalDebits, 3) }} DT</p>
+                        <p class="text-lg sm:text-xl font-bold text-purple-900">{{ number_format($totalDebits, 3) }} DT</p>
                     </div>
                     <div class="bg-purple-400 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-purple-300 to-purple-400 rounded-2xl p-4 sm:p-5 lg:p-6 border border-purple-500">
+            <div class="bg-gradient-to-br from-purple-300 to-purple-400 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 border border-purple-500">
                 <div class="flex items-center justify-between flex-col sm:flex-row">
                     <div>
                         <p class="text-purple-900 text-sm font-medium">Solde net</p>
-                        <p class="text-2xl font-bold {{ $netAmount >= 0 ? 'text-green-700' : 'text-red-700' }}">
+                        <p class="text-lg sm:text-xl font-bold {{ $netAmount >= 0 ? 'text-green-700' : 'text-red-700' }}">
                             {{ number_format($netAmount, 3) }} DT
                         </p>
                     </div>
                     <div class="bg-purple-500 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl p-4 sm:p-5 lg:p-6 border border-purple-600">
+            <div class="bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 border border-purple-600">
                 <div class="flex items-center justify-between flex-col sm:flex-row">
                     <div>
                         <p class="text-purple-100 text-sm font-medium">Nb transactions</p>
-                        <p class="text-2xl font-bold text-white">{{ $transactions->total() }}</p>
+                        <p class="text-lg sm:text-xl font-bold text-white">{{ $transactions->total() }}</p>
                     </div>
                     <div class="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 rounded-full p-3">
-                        <svg class="w-6 h-6 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
@@ -194,8 +194,8 @@
         </div>
 
         <!-- Liste des transactions -->
-        <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-            <div class="px-4 sm:px-5 lg:px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+            <div class="px-4 sm:px-5 lg:px-4 py-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-col sm:flex-row">
                     <h3 class="text-lg font-semibold text-gray-800 mb-2 sm:mb-0">
                         📊 Transactions 
@@ -213,32 +213,32 @@
                 <!-- Liste responsive des transactions -->
                 <div class="divide-y divide-gray-100">
                     @foreach($transactions as $transaction)
-                        <div class="p-4 sm:p-5 lg:p-6 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300">
+                        <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 hover:bg-gradient-to-r hover:from-purple-25 hover:to-indigo-25 transition-all duration-300">
                             <div class="flex flex-col lg:flex-row lg:items-center justify-between flex-col sm:flex-row">
                                 <!-- Informations principales -->
                                 <div class="flex items-start flex-1 flex-col sm:flex-row">
                                     <!-- Icône du type de transaction -->
                                     <div class="flex-shrink-0 mr-4 flex-col sm:flex-row">
                                         @if($transaction->amount > 0)
-                                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl flex items-center justify-center shadow-md hover:shadow-xl flex-col sm:flex-row">
+                                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg flex items-center justify-center shadow-md hover:shadow-md flex-col sm:flex-row">
                                                 @if($transaction->type === 'PACKAGE_PAYMENT')
-                                                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                                     </svg>
                                                 @else
-                                                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                                                     </svg>
                                                 @endif
                                             </div>
                                         @else
-                                            <div class="w-12 h-12 bg-gradient-to-br from-red-100 to-pink-100 rounded-2xl flex items-center justify-center shadow-md hover:shadow-xl flex-col sm:flex-row">
+                                            <div class="w-12 h-12 bg-gradient-to-br from-red-100 to-pink-100 rounded-lg flex items-center justify-center shadow-md hover:shadow-md flex-col sm:flex-row">
                                                 @if($transaction->type === 'WITHDRAWAL')
-                                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                                     </svg>
                                                 @else
-                                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                                                     </svg>
                                                 @endif
@@ -258,7 +258,7 @@
                                         </div>
 
                                         <!-- Informations détaillées -->
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600">
+                                        <div class="grid grid-cols-2 lg:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600">
                                             <div class="flex items-center flex-col sm:flex-row">
                                                 <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
@@ -310,7 +310,7 @@
                                                 $withdrawal = \App\Models\WithdrawalRequest::where('request_code', $transaction->reference)->first();
                                             @endphp
                                             @if($withdrawal)
-                                                <div class="mt-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl border border-orange-200">
+                                                <div class="mt-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
                                                     <div class="flex items-center justify-between mb-2 flex-col sm:flex-row">
                                                         <h5 class="text-sm font-semibold text-orange-800 flex items-center flex-col sm:flex-row">
                                                             <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,7 +322,7 @@
                                                             {{ $withdrawal->status_display }}
                                                         </span>
                                                     </div>
-                                                    <div class="grid grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                                                         <div class="flex items-center text-orange-700 flex-col sm:flex-row">
                                                             <svg class="w-5 h-5 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -383,7 +383,7 @@
                                                                 @csrf
                                                                 @method('PATCH')
                                                                 <button type="submit"
-                                                                        class="text-sm sm:text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-2xl transition-colors duration-200 flex items-center flex-col sm:flex-row">
+                                                                        class="text-sm sm:text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg transition-colors duration-200 flex items-center flex-col sm:flex-row">
                                                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                                                     </svg>
@@ -399,7 +399,7 @@
                                 </div>
 
                                 <!-- Montant et actions -->
-                                <div class="flex items-center justify-between lg:justify-end gap-2 sm:gap-3 lg:gap-4 mt-4 lg:mt-0 lg:ml-6 flex-col sm:flex-row">
+                                <div class="flex items-center justify-between lg:justify-end gap-2 sm:gap-3 lg:gap-2 sm:gap-3 mt-4 lg:mt-0 lg:ml-6 flex-col sm:flex-row">
                                     <div class="text-right">
                                         <p class="text-xl font-bold {{ $transaction->amount > 0 ? 'text-emerald-600' : 'text-red-600' }}">
                                             {{ $transaction->formatted_amount }}
@@ -410,7 +410,7 @@
                                     </div>
                                     
                                     <a href="{{ route('client.wallet.transaction.show', $transaction) }}" 
-                                       class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
+                                       class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105 text-sm font-medium">
                                         Détails →
                                     </a>
                                 </div>
@@ -421,7 +421,7 @@
 
                 <!-- Pagination -->
                 @if($transactions->hasPages())
-                    <div class="px-4 sm:px-5 lg:px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
+                    <div class="px-4 sm:px-5 lg:px-4 py-2 sm:py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-gray-200">
                         <div class="flex justify-center flex-col sm:flex-row">
                             {{ $transactions->appends(request()->query())->links('pagination::tailwind') }}
                         </div>
@@ -429,13 +429,13 @@
                 @endif
             @else
                 <!-- État vide -->
-                <div class="p-12 text-center max-w-md mx-auto"><div class="w-20 h-20 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 flex-col sm:flex-row">
+                <div class="p-12 text-center max-w-md mx-auto"><div class="w-20 h-20 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-2 sm:mb-3 flex-col sm:flex-row">
                         <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">Aucune transaction trouvée</h3>
-                    <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    <p class="text-gray-600 mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3 max-w-md mx-auto">
                         @if(request()->hasAny(['type', 'status', 'date_from', 'date_to', 'search']))
                             Aucune transaction ne correspond à vos critères de recherche. Essayez de modifier vos filtres.
                         @else
@@ -446,16 +446,16 @@
                     <div class="flex flex-wrap justify-center gap-3 flex-col sm:flex-row">
                         @if(request()->hasAny(['type', 'status', 'date_from', 'date_to', 'search']))
                             <a href="{{ route('client.wallet.transactions') }}" 
-                               class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               class="inline-flex items-center px-4 sm:px-5 lg:px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
                                 Supprimer les filtres
                             </a>
                         @else
                             <a href="{{ route('client.packages.create') }}" 
-                               class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               class="inline-flex items-center px-4 sm:px-5 lg:px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                 </svg>
                                 Créer mon premier colis
@@ -463,8 +463,8 @@
                         @endif
                         
                         <a href="{{ route('client.wallet.index') }}" 
-                           class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-white text-purple-600 border-2 border-purple-200 rounded-2xl hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
-                            <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           class="inline-flex items-center px-4 sm:px-5 lg:px-3 sm:px-4 py-2 bg-white text-purple-600 border-2 border-purple-200 rounded-lg hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 transition-all duration-300 hover:-translate-y-1 flex-col sm:flex-row">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                             Retour au portefeuille
@@ -604,11 +604,11 @@ document.querySelectorAll('.bg-white').forEach(card => {
 
 /* Responsive design amélioré */
 @media (max-width: 640px) {
-    .grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 {
+    .grid-cols-2 lg:grid-cols-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     
-    .grid-cols-1 sm:grid-cols-2 {
+    .grid-cols-2 {
         grid-template-columns: repeat(1, minmax(0, 1fr));
     }
 }

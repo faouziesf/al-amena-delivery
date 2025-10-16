@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', "Ticket #{$ticket->ticket_number} - {$ticket->subject}")
 
@@ -55,7 +55,7 @@
 
     <!-- Messages Area - Mobile optimisé -->
     <div class="flex-1 overflow-y-auto bg-white" id="messagesContainer">
-        <div class="px-3 py-4 space-y-3">
+        <div class="px-3 py-2 sm:py-3 space-y-3">
             @forelse($ticket->messages as $message)
                 @php
                     $isOwn = $message->isFromClient();
@@ -63,7 +63,7 @@
                 <div class="flex {{ $isOwn ? 'justify-end' : 'justify-start' }}">
                     <div class="max-w-[80%] {{ $isOwn ? 'order-2' : 'order-1' }}">
                         <!-- Message bulle -->
-                        <div class="rounded-2xl px-4 py-3 {{ $isOwn
+                        <div class="rounded-lg px-4 py-3 {{ $isOwn
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-100 text-gray-900' }}">
                             <!-- Sender info pour messages non-propres -->
@@ -111,7 +111,7 @@
             @empty
                 <div class="flex items-center justify-center h-64 text-gray-500">
                     <div class="text-center">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-16 h-16 mx-auto mb-2 sm:mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
                         <h3 class="text-lg font-semibold mb-1">Conversation vide</h3>
@@ -137,7 +137,7 @@
                                   id="message"
                                   rows="1"
                                   placeholder="Écrivez votre message..."
-                                  class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-gray-50 text-sm"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-gray-50 text-sm"
                                   maxlength="2000"></textarea>
                         @error('message')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -162,7 +162,7 @@
 
                         <!-- Bouton envoyer -->
                         <button type="submit"
-                                class="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors shadow-lg">
+                                class="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors shadow-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                             </svg>
@@ -180,9 +180,9 @@
         </form>
     </div>
     @else
-    <div class="bg-gray-50 border-t border-gray-200 px-3 py-4 text-center flex-shrink-0">
+    <div class="bg-gray-50 border-t border-gray-200 px-3 py-2 sm:py-3 text-center flex-shrink-0">
         <div class="text-gray-500">
-            <svg class="w-6 h-6 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
             <p class="text-sm font-medium">Ce ticket est fermé</p>
@@ -193,25 +193,25 @@
 
     <!-- Popup des détails -->
     <div id="ticketDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 transition-opacity duration-300">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+        <div class="flex items-center justify-center min-h-screen p-2.5 sm:p-3">
+            <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
 
                 <!-- Header du modal -->
-                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white rounded-t-2xl">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 sm:py-2 sm:py-3 text-white rounded-t-2xl">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold">Détails du ticket</h2>
                         <button onclick="toggleTicketDetails()" class="text-white hover:text-blue-200 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
                 </div>
 
-                <div class="p-6 space-y-6">
+                <div class="p-3 sm:p-2.5 sm:p-3 space-y-3 sm:space-y-2 sm:space-y-3">
                     <!-- Informations principales -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 rounded-lg p-4">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                        <div class="bg-slate-50 rounded-lg p-2.5 sm:p-3">
                             <div class="text-sm text-slate-600 mb-1">Statut</div>
                             <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                 @if($ticket->status === 'OPEN') bg-green-100 text-green-800
@@ -222,7 +222,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-slate-50 rounded-lg p-4">
+                        <div class="bg-slate-50 rounded-lg p-2.5 sm:p-3">
                             <div class="text-sm text-slate-600 mb-1">Priorité</div>
                             <div class="text-sm font-semibold {{ $ticket->priority === 'HIGH' ? 'text-red-600' : 'text-slate-900' }}">
                                 {{ $ticket->priority === 'HIGH' ? 'Élevée' : 'Normale' }}
@@ -234,7 +234,7 @@
                     @if($ticket->description)
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900 mb-3">Description initiale</h3>
-                            <div class="bg-slate-50 rounded-lg p-4 text-slate-700 leading-relaxed">
+                            <div class="bg-slate-50 rounded-lg p-2.5 sm:p-3 text-slate-700 leading-relaxed">
                                 {!! nl2br(e($ticket->description)) !!}
                             </div>
                         </div>
@@ -244,7 +244,7 @@
                     @if($ticket->is_complaint && $ticket->package)
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900 mb-3">Colis concerné</h3>
-                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-2.5 sm:p-3">
                                 <div class="flex items-center space-x-2 text-orange-700 mb-2">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92z" clip-rule="evenodd"/>
@@ -290,7 +290,7 @@
                             <form action="{{ route('client.tickets.mark-resolved', $ticket) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit"
-                                        class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors duration-200">
+                                        class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200">
                                     ✅ Marquer comme résolu définitivement
                                 </button>
                             </form>
@@ -338,7 +338,7 @@ function validateForm(e) {
 
         // Modern alert style
         const alertDiv = document.createElement('div');
-        alertDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+        alertDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-3 sm:px-4 py-2 rounded-lg shadow-sm z-50 transform transition-all duration-300';
         alertDiv.innerHTML = `
             <div class="flex items-center space-x-2">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

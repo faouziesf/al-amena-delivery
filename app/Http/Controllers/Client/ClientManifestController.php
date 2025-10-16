@@ -422,6 +422,54 @@ class ClientManifestController extends Controller
         return view('client.manifests.show', compact('manifest', 'packages', 'manifestData'));
     }
 
+    /**
+     * Supprimer un manifeste
+     */
+    public function destroy($manifestId)
+    {
+        try {
+            $user = Auth::user();
+            $manifest = Manifest::where('id', $manifestId)
+                ->where('sender_id', $user->id)
+                ->firstOrFail();
+
+            // Vérifier si le manifeste peut être supprimé
+            if (!$manifest->canBeDeleted()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce manifeste ne peut pas être supprimé. Il contient des colis déjà ramassés ou livrés.'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            // Remettre les colis à l'état READY
+            $packages = Package::whereIn('id', $manifest->package_ids ?? [])->get();
+            foreach ($packages as $package) {
+                $package->status = 'READY';
+                $package->manifest_id = null;
+                $package->save();
+            }
+
+            // Supprimer le manifeste
+            $manifest->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Manifeste supprimé avec succès.',
+                'redirect' => route('client.manifests.index')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Retirer un colis d'un manifeste

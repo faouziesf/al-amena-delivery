@@ -189,6 +189,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::get('/create', [ClientManifestController::class, 'create'])->name('create');
         Route::post('/generate', [ClientManifestController::class, 'generate'])->name('generate');
         Route::get('/{manifest}', [ClientManifestController::class, 'show'])->name('show');
+        Route::delete('/{manifest}', [ClientManifestController::class, 'destroy'])->name('destroy');
         Route::post('/{manifest}/remove-package', [ClientManifestController::class, 'removePackage'])->name('remove-package');
         Route::post('/{manifest}/add-package', [ClientManifestController::class, 'addPackage'])->name('add-package');
         Route::get('/{manifest}/details', [ClientManifestController::class, 'getDetails'])->name('details');

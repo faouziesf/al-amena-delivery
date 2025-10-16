@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @php
 // Ensure recipient_data is properly decoded as array
@@ -27,14 +27,14 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
 @section('page-description', 'Modifier les informations du colis {{ $package->package_code }}')
 
 @section('content')
-<div class="pb-24 px-4 sm:px-6 lg:px-8">
+<div class="pb-24 px-4 sm:px-4 lg:px-4 sm:px-4">
 
     <!-- Header avec informations du colis -->
-    <div class="mb-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <div class="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
@@ -64,8 +64,8 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
     </div>
 
     <!-- Notice d'information -->
-    <div class="mb-6">
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-3 rounded-r-lg">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -86,9 +86,9 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
         @method('PUT')
 
         <!-- Adresse de Collecte -->
-        <div class="mb-6">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-lg overflow-hidden">
-                <div class="p-4">
+        <div class="mb-3 sm:mb-2 sm:mb-3">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg shadow-sm overflow-hidden">
+                <div class="p-2.5 sm:p-3">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,10 +103,10 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     </div>
                 </div>
 
-                <div class="bg-white p-4">
+                <div class="bg-white p-2.5 sm:p-3">
                     @if(!$canModifyPickup)
                         <!-- Pickup assigné - Affichage en lecture seule -->
-                        <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div class="mb-2 sm:mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                             <div class="flex items-center space-x-2">
                                 <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
@@ -146,7 +146,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                         @endif
                     @else
                         <!-- Pickup modifiable - Interface normale -->
-                        <div class="space-y-4">
+                        <div class="space-y-2 sm:space-y-3">
                             @if($pickupAddresses->isNotEmpty())
                                 @foreach($pickupAddresses as $address)
                                     <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
@@ -166,7 +166,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                                     </label>
                                 @endforeach
                             @else
-                                <div class="text-center py-6">
+                                <div class="text-center py-3 sm:py-2 sm:py-3">
                                     <p class="text-gray-500">Aucune adresse de collecte configurée.</p>
                                     <a href="{{ route('client.pickup-addresses.create') }}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
                                         Créer une adresse
@@ -180,11 +180,11 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
         </div>
 
         <!-- Informations du Destinataire -->
-        <div class="mb-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="mb-3 sm:mb-2 sm:mb-3">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <div class="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
@@ -195,7 +195,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     </div>
                 </div>
 
-                <div class="p-4 space-y-4">
+                <div class="p-2.5 sm:p-3 space-y-2 sm:space-y-3">
                     <!-- Nom complet -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nom Complet *</label>
@@ -208,7 +208,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     </div>
 
                     <!-- Téléphones -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone Principal *</label>
                             <input type="tel" name="telephone_1" value="{{ old('telephone_1', $recipientData['phone'] ?? '') }}"
@@ -237,7 +237,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     </div>
 
                     <!-- Gouvernorat et Délégation -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Gouvernorat *</label>
                             <select name="gouvernorat" x-model="selectedGouvernorat" @change="updateDelegations()" required
@@ -274,11 +274,11 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
         </div>
 
         <!-- Informations du Colis -->
-        <div class="mb-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="mb-3 sm:mb-2 sm:mb-3">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <div class="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
@@ -289,9 +289,9 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     </div>
                 </div>
 
-                <div class="p-4 space-y-4">
+                <div class="p-2.5 sm:p-3 space-y-2 sm:space-y-3">
                     <!-- Contenu et Prix -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Contenu du Colis *</label>
                             <input type="text" name="contenu" value="{{ old('contenu', $package->content_description) }}"
@@ -322,7 +322,7 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
                     <!-- Options du Colis -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-3">Options du Colis</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3">
                             <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
                                 <input type="hidden" name="fragile" value="false">
                                 <input type="checkbox" name="fragile" value="true" {{ old('fragile', $package->is_fragile) ? 'checked' : '' }}
@@ -384,14 +384,14 @@ $canModifyPickup = is_null($package->assigned_deliverer_id) && in_array($package
         <!-- Boutons d'Action -->
         <div class="flex flex-col sm:flex-row gap-3">
             <a href="{{ route('client.packages.index') }}"
-               class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+               class="flex-1 inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
                 Annuler
             </a>
             <button type="submit"
-                    class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-colors">
+                    class="flex-1 inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

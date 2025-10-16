@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Gestion des Manifestes')
 @section('page-title', 'Manifestes')
@@ -6,14 +6,14 @@
 
 @section('content')
 <!-- Main container with proper mobile spacing -->
-<div x-data="manifestsApp()" x-init="init()" class="pb-6 px-4 sm:px-6 lg:px-8">
+<div x-data="manifestsApp()" x-init="init()" class="pb-6 px-4 sm:px-4 lg:px-4 sm:px-4">
 
     <!-- Header Section - Mobile Optimized -->
-    <div class="mb-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+    <div class="mb-3 sm:mb-2 sm:mb-3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-3 sm:space-y-0">
                 <div class="flex-1">
-                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+                    <h1 class="text-xl sm:text-lg sm:text-xl font-bold text-gray-900 flex items-center">
                         📋 Gestion des Manifestes
                     </h1>
                     <p class="text-gray-600 text-sm mt-1">Créez des manifestes pour vos colis en attente</p>
@@ -40,7 +40,7 @@
 
     <!-- Flash Messages -->
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-start">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-3 sm:mb-2 sm:mb-3 flex items-start">
             <svg class="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
@@ -49,7 +49,7 @@
     @endif
 
     @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-3 sm:mb-2 sm:mb-3 flex items-start">
             <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
             </svg>
@@ -70,18 +70,18 @@
     </div>
 
     <!-- Empty State -->
-    <div x-show="manifests.length === 0 && !loading" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-        <div class="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div x-show="manifests.length === 0 && !loading" class="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3 text-center">
+        <div class="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
             <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
         </div>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">📋 Aucun manifeste créé</h3>
-        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        <p class="text-gray-600 mb-3 sm:mb-2 sm:mb-3 max-w-md mx-auto">
             Vous n'avez pas encore créé de manifestes. Créez votre premier manifeste pour organiser vos colis par lots.
         </p>
         <button @click="openCreateModal"
-                class="inline-flex items-center bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105">
+                class="inline-flex items-center bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-3 sm:px-4 py-2 rounded-lg transition-all transform hover:scale-105">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
@@ -90,15 +90,15 @@
     </div>
 
     <!-- Manifests Grid - Mobile-First -->
-    <div x-show="manifests.length > 0 && !loading" class="space-y-4">
+    <div x-show="manifests.length > 0 && !loading" class="space-y-2 sm:space-y-3">
         <template x-for="manifest in manifests" :key="manifest.id">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                 <!-- Mobile Header -->
-                <div class="p-4 border-b border-gray-100">
+                <div class="p-2.5 sm:p-3 border-b border-gray-100">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
                             </div>
@@ -115,10 +115,10 @@
                 </div>
 
                 <!-- Content -->
-                <div class="p-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                <div class="p-2.5 sm:p-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
                         <div class="text-center p-3 bg-blue-50 rounded-lg">
-                            <p class="text-2xl font-bold text-blue-600" x-text="manifest.total_packages"></p>
+                            <p class="text-lg sm:text-xl font-bold text-blue-600" x-text="manifest.total_packages"></p>
                             <p class="text-xs text-blue-800">📦 Colis</p>
                         </div>
                         <div class="text-center p-3 bg-green-50 rounded-lg">
@@ -164,18 +164,18 @@
 
     <!-- Create Manifest Modal - Mobile Optimized -->
     <div x-show="showCreateModal" x-cloak
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4"
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2.5 sm:p-3"
          @click.self="closeCreateModal">
-        <div class="relative top-4 mx-auto border w-full max-w-4xl shadow-lg rounded-xl bg-white">
-            <div class="p-4 sm:p-6">
+        <div class="relative top-4 mx-auto border w-full max-w-4xl shadow-sm rounded-lg bg-white">
+            <div class="p-2.5 sm:p-3 sm:p-3 sm:p-2.5 sm:p-3">
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+                <div class="flex items-center justify-between mb-3 sm:mb-2 sm:mb-3">
+                    <h3 class="text-xl sm:text-lg sm:text-xl font-bold text-gray-900 flex items-center">
                         ➕ Créer un nouveau Manifeste
                     </h3>
                     <button @click="closeCreateModal"
                             class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
@@ -186,17 +186,17 @@
 
                     <!-- No Packages Available -->
                     <div x-show="availablePackages.length === 0" class="text-center py-12">
-                        <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
                             <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4-4-4m-6 4l4 4 4-4"/>
                             </svg>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2">📦 Aucun colis disponible</h3>
-                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                        <p class="text-gray-600 mb-3 sm:mb-2 sm:mb-3 max-w-md mx-auto">
                             Tous vos colis sont soit déjà dans des manifestes, soit ne sont pas éligibles pour la création de manifestes.
                         </p>
                         <a href="{{ route('client.packages.create') }}"
-                           class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors">
+                           class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
@@ -205,9 +205,9 @@
                     </div>
 
                     <!-- Packages Available -->
-                    <div x-show="availablePackages.length > 0" class="space-y-6">
+                    <div x-show="availablePackages.length > 0" class="space-y-3 sm:space-y-2 sm:space-y-3">
                         <!-- Pickup Address Selection -->
-                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 sm:p-3">
                             <label class="block text-sm font-medium text-indigo-900 mb-3">
                                 📍 Adresse de collecte *
                             </label>
@@ -228,16 +228,16 @@
                         </div>
 
                         <!-- Mobile-First Package Selection -->
-                        <div class="space-y-4">
+                        <div class="space-y-2 sm:space-y-3">
                             <!-- Available Packages -->
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
                                     📦 Colis Disponibles
                                     <span class="ml-2 text-sm font-normal text-gray-600" x-text="`(${availablePackages.length} disponibles)`">
                                     </span>
                                 </h4>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                                <div class="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
                                     <template x-for="pkg in availablePackages" :key="pkg.id">
                                         <div class="border border-gray-200 rounded-lg p-3 cursor-pointer transition-all"
                                              :class="selectedPackages.includes(pkg.id) ? 'bg-indigo-50 border-indigo-300' : 'hover:bg-gray-50'"
@@ -260,11 +260,11 @@
                             </div>
 
                             <!-- Selected Summary -->
-                            <div x-show="selectedPackages.length > 0" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div x-show="selectedPackages.length > 0" class="bg-green-50 border border-green-200 rounded-lg p-2.5 sm:p-3">
                                 <h4 class="text-sm font-medium text-green-800 mb-2">
                                     ✅ Résumé de votre sélection
                                 </h4>
-                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="grid grid-cols-2 gap-2 sm:gap-3 text-sm">
                                     <div>
                                         <span class="text-green-700">Colis sélectionnés:</span>
                                         <span class="font-medium" x-text="selectedPackages.length"></span>
@@ -280,12 +280,12 @@
                         <!-- Modal Actions -->
                         <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
                             <button type="button" @click="closeCreateModal"
-                                    class="flex-1 sm:flex-none px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium">
+                                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium">
                                 ❌ Annuler
                             </button>
                             <button type="button" @click="createManifest"
                                     :disabled="selectedPackages.length === 0 || !selectedPickupAddressId || creating"
-                                    class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span x-show="creating" class="inline-flex items-center">
                                     <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                     ⏳ Création en cours...
@@ -473,7 +473,7 @@ function manifestsApp() {
             const isMobile = window.innerWidth <= 640;
             const topPosition = isMobile ? 'calc(env(safe-area-inset-top, 1rem) + 5.5rem)' : '6rem';
 
-            notification.className = `fixed right-4 z-[10001] p-4 rounded-lg shadow-lg text-white max-w-sm ${
+            notification.className = `fixed right-4 z-[10001] p-2.5 sm:p-3 rounded-lg shadow-sm text-white max-w-sm ${
                 type === 'success' ? 'bg-green-500' :
                 type === 'error' ? 'bg-red-500' : 'bg-blue-500'
             }`;

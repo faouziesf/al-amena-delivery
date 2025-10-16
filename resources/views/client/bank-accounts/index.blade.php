@@ -1,19 +1,19 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Mes Comptes Bancaires')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- En-tête -->
-    <div class="mb-8">
+    <div class="mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between flex-col sm:flex-row">
-            <div class="mb-4 lg:mb-0">
-                <h1 class="text-3xl font-bold text-gray-900">💳 Mes Comptes Bancaires</h1>
+            <div class="mb-2 sm:mb-3 lg:mb-0">
+                <h1 class="text-xl sm:text-lg sm:text-xl font-bold text-gray-900">💳 Mes Comptes Bancaires</h1>
                 <p class="text-gray-600 mt-2">Gérez vos comptes bancaires pour les retraits</p>
             </div>
             <div class="flex flex-row flex-wrap sm:flex-row gap-3 flex-col sm:flex-row"><button @click="openCreateModal()"
-                        class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
-                    <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="inline-flex items-center px-4 sm:px-5 lg:px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all shadow-sm hover:shadow-md transform hover:scale-105 transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                    <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     Ajouter un compte bancaire
@@ -24,9 +24,9 @@
 
     <!-- Messages de succès/erreur -->
     @if(session('success'))
-        <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-2xl">
+        <div class="mb-3 sm:mb-2 sm:mb-3 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
             <div class="flex flex-col sm:flex-row">
-                <svg class="w-6 h-6 sm:w-5 sm:h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 sm:w-5 sm:h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
                 {{ session('success') }}
@@ -35,9 +35,9 @@
     @endif
 
     @if(session('error'))
-        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl">
+        <div class="mb-3 sm:mb-2 sm:mb-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             <div class="flex flex-col sm:flex-row">
-                <svg class="w-6 h-6 sm:w-5 sm:h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 sm:w-5 sm:h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
                 {{ session('error') }}
@@ -46,15 +46,15 @@
     @endif
 
     <!-- Liste des comptes bancaires -->
-    <div class="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6">
+    <div class="grid grid-cols-2 xl:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 lg:gap-3 sm:gap-2 sm:gap-3">
         @forelse($bankAccounts as $account)
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transition-all duration-300 hover:-translate-y-1">
+            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 transition-all duration-300 hover:-translate-y-1">
                 <!-- Header avec status -->
-                <div class="p-4 sm:p-5 lg:p-6 pb-4">
-                    <div class="flex items-center justify-between mb-4 flex-col sm:flex-row">
+                <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 pb-4">
+                    <div class="flex items-center justify-between mb-2 sm:mb-3 flex-col sm:flex-row">
                         <div class="flex items-center flex-col sm:flex-row">
-                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center flex-col sm:flex-row">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-col sm:flex-row">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                 </svg>
                             </div>
@@ -69,7 +69,7 @@
                             <!-- Actions dropdown -->
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                                    <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
                                     </svg>
                                 </button>
@@ -81,7 +81,7 @@
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 z-10 transition-all duration-300 hover:-translate-y-1">
+                                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-gray-200 z-10 transition-all duration-300 hover:-translate-y-1">
 
                                     @if(!$account->is_default)
                                         <form action="{{ route('client.bank-accounts.set-default', $account) }}" method="POST" class="block">
@@ -128,7 +128,7 @@
                             <p class="text-sm text-gray-600">{{ $account->account_holder_name }}</p>
                         </div>
 
-                        <div class="bg-gray-50 rounded-2xl p-3">
+                        <div class="bg-gray-50 rounded-lg p-3">
                             <div class="flex items-center justify-between flex-col sm:flex-row">
                                 <span class="text-sm sm:text-xs font-medium text-gray-500 uppercase tracking-wider">IBAN</span>
                                 <button @click="toggleIban({{ $account->id }})" class="text-sm sm:text-xs text-purple-600 hover:text-purple-800">
@@ -154,16 +154,16 @@
             </div>
         @empty
             <div class="col-span-full">
-                <div class="text-center py-12 max-w-md mx-auto"><div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
+                <div class="text-center py-12 max-w-md mx-auto"><div class="w-24 h-24 mx-auto mb-2 sm:mb-3 bg-gray-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
                         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
                     </div>
                     <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun compte bancaire</h3>
-                    <p class="text-gray-500 mb-6">Ajoutez votre premier compte bancaire pour effectuer des retraits</p>
+                    <p class="text-gray-500 mb-3 sm:mb-2 sm:mb-3">Ajoutez votre premier compte bancaire pour effectuer des retraits</p>
                     <button @click="openCreateModal()"
-                            class="inline-flex items-center px-4 sm:px-5 lg:px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl transition-all transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
-                        <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="inline-flex items-center px-4 sm:px-5 lg:px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95 transition-all duration-200 flex-col sm:flex-row">
+                        <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         Ajouter un compte bancaire
@@ -175,33 +175,33 @@
 
     <!-- Modal d'ajout de compte bancaire -->
     <div x-show="showCreateModal" x-cloak
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 flex-col sm:flex-row"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2.5 sm:p-3 z-50 flex-col sm:flex-row"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100">
 
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-screen overflow-y-auto transition-all duration-300 hover:-translate-y-1"
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full max-h-screen overflow-y-auto transition-all duration-300 hover:-translate-y-1"
              @click.away="closeCreateModal()"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 transform scale-95"
              x-transition:enter-end="opacity-100 transform scale-100">
 
-            <form action="{{ route('client.bank-accounts.store') }}" method="POST" class="p-4 sm:p-5 lg:p-6">
+            <form action="{{ route('client.bank-accounts.store') }}" method="POST" class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
                 @csrf
 
-                <div class="flex justify-between items-center mb-6 flex-col sm:flex-row">
+                <div class="flex justify-between items-center mb-3 sm:mb-2 sm:mb-3 flex-col sm:flex-row">
                     <h3 class="text-xl font-bold text-gray-900">Ajouter un compte bancaire</h3>
                     <button type="button" @click="closeCreateModal()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6"><div>
+                <div class="grid grid-cols-2 gap-2 sm:gap-3 sm:gap-5 lg:gap-3 sm:gap-2 sm:gap-3"><div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nom de la banque</label>
                         <select name="bank_name" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]">
                             <option value="">Sélectionner une banque</option>
 
                             <!-- Banques commerciales publiques -->
@@ -253,7 +253,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nom du titulaire</label>
                         <input type="text" name="account_holder_name" required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]"
                                placeholder="Nom complet du titulaire du compte">
                     </div>
 
@@ -262,7 +262,7 @@
                         <input type="text" name="iban" required
                                x-model="newIban"
                                @input="validateIban()"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 min-h-[44px]"
                                placeholder="TN5901000123456789012345"
                                maxlength="24">
                         <div x-show="ibanValidation.message" class="mt-2 text-sm"
@@ -281,12 +281,12 @@
 
                 <div class="flex justify-end space-x-3 mt-6 flex-col sm:flex-row">
                     <button type="button" @click="closeCreateModal()"
-                            class="px-4 sm:px-5 lg:px-6 py-2 border border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50">
+                            class="px-4 sm:px-5 lg:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         Annuler
                     </button>
                     <button type="submit"
                             :disabled="!ibanValidation.valid"
-                            class="px-4 sm:px-5 lg:px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="px-4 sm:px-5 lg:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed">
                         Ajouter le compte
                     </button>
                 </div>

@@ -1,16 +1,16 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', "Demande de retrait #{$withdrawal->request_code}")
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-4 lg:px-6 lg:py-6">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -mx-4 -my-4 lg:-mx-6 lg:-my-6 px-4 py-2 sm:py-3 lg:px-4 lg:py-3 sm:py-2 sm:py-3">
     <div class="max-w-7xl mx-auto">
         <!-- Header avec navigation -->
-        <div class="flex items-center mb-6 flex-col sm:flex-row">
+        <div class="flex items-center mb-3 sm:mb-2 sm:mb-3 flex-col sm:flex-row">
             <a href="{{ route('client.withdrawals') }}" 
                class="flex items-center text-purple-600 hover:text-purple-800 transition-all duration-300 mr-6 group flex-col sm:flex-row">
                 <div class="bg-purple-100 rounded-full p-2 mr-3 group-hover:bg-purple-200 transition-colors">
-                    <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </div>
@@ -24,16 +24,16 @@
         </div>
 
         <!-- Titre principal -->
-        <div class="mb-8">
+        <div class="mb-2 sm:mb-3 sm:mb-3 sm:mb-2 sm:mb-3">
             <div class="flex flex-col md:flex-row md:items-center justify-between flex-col sm:flex-row">
                 <div>
-                    <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+                    <h1 class="text-xl sm:text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
                         💸 Demande #{{ $withdrawal->request_code }}
                     </h1>
                     <p class="text-gray-600">Détails et suivi de votre demande de retrait</p>
                 </div>
                 <div class="mt-4 md:mt-0">
-                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold {{ $withdrawal->status_color }} shadow-md hover:shadow-xl flex-col sm:flex-row">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold {{ $withdrawal->status_color }} shadow-md hover:shadow-md flex-col sm:flex-row">
                         {{ $withdrawal->status_display }}
                     </span>
                 </div>
@@ -42,9 +42,9 @@
 
         <!-- Alertes -->
         @if(session('success'))
-            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-4 sm:px-5 lg:px-6 py-4 rounded-2xl mb-6 shadow-md hover:shadow-xl">
+            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-800 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 rounded-lg mb-3 sm:mb-2 sm:mb-3 shadow-md hover:shadow-md">
                 <div class="flex items-center flex-col sm:flex-row">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     {{ session('success') }}
@@ -53,9 +53,9 @@
         @endif
 
         @if(session('error'))
-            <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-4 sm:px-5 lg:px-6 py-4 rounded-2xl mb-6 shadow-md hover:shadow-xl">
+            <div class="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 text-red-800 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 rounded-lg mb-3 sm:mb-2 sm:mb-3 shadow-md hover:shadow-md">
                 <div class="flex items-center flex-col sm:flex-row">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     {{ session('error') }}
@@ -63,36 +63,36 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 xl:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 sm:gap-3 sm:gap-2 sm:gap-3">
             <!-- Colonne principale -->
-            <div class="xl:col-span-2 space-y-8">
+            <div class="xl:col-span-2 space-y-2 sm:space-y-3 sm:space-y-3 sm:space-y-2 sm:space-y-3">
                 <!-- Informations principales -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-purple-100">
+                <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-purple-100">
                         <h3 class="text-xl font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                            <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                             Informations de la demande
                         </h3>
                     </div>
                     
-                    <div class="p-4 sm:p-5 lg:p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6">
+                    <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 lg:gap-3 sm:gap-2 sm:gap-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-600 mb-1">Montant demandé</p>
-                                <p class="text-3xl font-bold text-purple-600">{{ number_format($withdrawal->amount, 3) }} DT</p>
+                                <p class="text-xl sm:text-lg sm:text-xl font-bold text-purple-600">{{ number_format($withdrawal->amount, 3) }} DT</p>
                             </div>
 
                             <div>
                                 <p class="text-sm font-medium text-gray-600 mb-1">Méthode de retrait</p>
                                 <div class="flex items-center flex-col sm:flex-row">
                                     @if($withdrawal->method === 'BANK_TRANSFER')
-                                        <svg class="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 sm:w-5 sm:h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
                                     @else
-                                        <svg class="w-6 h-6 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                         </svg>
                                     @endif
@@ -118,7 +118,7 @@
                         @if($withdrawal->reason)
                             <div class="mt-6">
                                 <p class="text-sm font-medium text-gray-600 mb-2">Motif de la demande</p>
-                                <p class="text-gray-900 bg-gray-50 p-3 rounded-2xl">{{ $withdrawal->reason }}</p>
+                                <p class="text-gray-900 bg-gray-50 p-3 rounded-lg">{{ $withdrawal->reason }}</p>
                             </div>
                         @endif
                     </div>
@@ -126,16 +126,16 @@
 
                 <!-- Coordonnées bancaires (si applicable) -->
                 @if($withdrawal->method === 'BANK_TRANSFER' && $withdrawal->bank_details)
-                    <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-blue-100">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-blue-100">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                                 </svg>
                                 Coordonnées bancaires
                             </h3>
                         </div>
-                        <div class="p-4 sm:p-5 lg:p-6">
+                        <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
                             @php
                                 $bankDetails = is_string($withdrawal->bank_details)
                                     ? json_decode($withdrawal->bank_details, true)
@@ -143,12 +143,12 @@
                             @endphp
 
                             @if($bankDetails && is_array($bankDetails))
-                                <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-4 lg:gap-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-2 sm:gap-3 lg:gap-2 sm:gap-3 lg:gap-3 sm:gap-2 sm:gap-3">
                                     @if(isset($bankDetails['bank_name']))
                                         <div>
                                             <p class="text-sm font-medium text-gray-600 mb-2">Banque</p>
-                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-2xl flex-col sm:flex-row">
-                                                <svg class="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg flex-col sm:flex-row">
+                                                <svg class="w-5 h-5 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                                 </svg>
                                                 <span class="font-medium text-blue-900">{{ $bankDetails['bank_name'] }}</span>
@@ -159,8 +159,8 @@
                                     @if(isset($bankDetails['account_holder_name']))
                                         <div>
                                             <p class="text-sm font-medium text-gray-600 mb-2">Titulaire du compte</p>
-                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-2xl flex-col sm:flex-row">
-                                                <svg class="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg flex-col sm:flex-row">
+                                                <svg class="w-5 h-5 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                                 </svg>
                                                 <span class="font-medium text-blue-900">{{ $bankDetails['account_holder_name'] }}</span>
@@ -171,8 +171,8 @@
                                     @if(isset($bankDetails['iban']))
                                         <div class="md:col-span-2">
                                             <p class="text-sm font-medium text-gray-600 mb-2">IBAN</p>
-                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-2xl flex-col sm:flex-row">
-                                                <svg class="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg flex-col sm:flex-row">
+                                                <svg class="w-5 h-5 sm:w-5 sm:h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                                 </svg>
                                                 <span class="font-mono text-blue-900 font-medium tracking-wider">{{ $bankDetails['iban'] }}</span>
@@ -189,9 +189,9 @@
 
                                     @if(isset($bankDetails['bank_account_id']))
                                         <div class="md:col-span-2">
-                                            <div class="bg-green-50 border border-green-200 rounded-2xl p-3">
+                                            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                                                 <div class="flex items-center flex-col sm:flex-row">
-                                                    <svg class="w-6 h-6 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                     </svg>
                                                     <span class="text-sm font-medium text-green-800">Compte bancaire enregistré utilisé</span>
@@ -202,7 +202,7 @@
                                     @endif
                                 </div>
                             @else
-                                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 sm:p-3">
                                     <p class="text-sm text-blue-900">{{ $withdrawal->bank_details }}</p>
                                 </div>
                             @endif
@@ -212,19 +212,19 @@
 
                 <!-- Informations de livraison (si applicable) -->
                 @if($withdrawal->method === 'CASH_DELIVERY')
-                    <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-green-100">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-green-100">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20a3 3 0 01-3-3v-2a3 3 0 013-3h1m8-3a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
                                 Informations de livraison
                             </h3>
                         </div>
                         
-                        <div class="p-4 sm:p-5 lg:p-6">
+                        <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
                             @if($withdrawal->delivery_receipt_code)
-                                <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
+                                <div class="mb-2 sm:mb-3 p-2.5 sm:p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                     <p class="text-sm font-medium text-yellow-800 mb-2">🔑 Code de livraison</p>
                                     <p class="text-xl font-mono font-bold text-yellow-900">{{ $withdrawal->delivery_receipt_code }}</p>
                                     <p class="text-sm text-yellow-700 mt-1">Communiquez ce code au livreur lors de la remise</p>
@@ -232,7 +232,7 @@
                             @endif
 
                             @if($withdrawal->assignedDeliverer)
-                                <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 lg:gap-2 sm:gap-3">
                                     <div>
                                         <p class="text-sm font-medium text-gray-600 mb-1">Livreur assigné</p>
                                         <p class="text-lg font-semibold text-gray-900">{{ $withdrawal->assignedDeliverer->name }}</p>
@@ -247,9 +247,9 @@
                             @endif
 
                             @if($withdrawal->delivered_at)
-                                <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-2xl">
+                                <div class="mt-4 p-2.5 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
                                     <div class="flex items-center flex-col sm:flex-row">
-                                        <svg class="w-6 h-6 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 sm:w-5 sm:h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                         <div>
@@ -265,17 +265,17 @@
 
                 <!-- Notes du commercial -->
                 @if($withdrawal->processing_notes)
-                    <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-blue-100">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-blue-100">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                 </svg>
                                 Note du commercial
                             </h3>
                         </div>
-                        <div class="p-4 sm:p-5 lg:p-6">
-                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
+                        <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-2.5 sm:p-3 rounded-r-xl">
                                 <p class="text-blue-800">{{ $withdrawal->processing_notes }}</p>
                                 @if($withdrawal->processedByCommercial)
                                     <p class="text-sm text-blue-600 mt-2 font-medium">
@@ -289,17 +289,17 @@
 
                 <!-- Motif de rejet -->
                 @if($withdrawal->rejection_reason)
-                    <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                        <div class="bg-gradient-to-r from-red-50 to-pink-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-red-100">
+                    <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                        <div class="bg-gradient-to-r from-red-50 to-pink-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-red-100">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                                <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 Motif de rejet
                             </h3>
                         </div>
-                        <div class="p-4 sm:p-5 lg:p-6">
-                            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl">
+                        <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
+                            <div class="bg-red-50 border-l-4 border-red-400 p-2.5 sm:p-3 rounded-r-xl">
                                 <p class="text-red-800">{{ $withdrawal->rejection_reason }}</p>
                                 @if($withdrawal->processedByCommercial)
                                     <p class="text-sm text-red-600 mt-2 font-medium">
@@ -313,23 +313,23 @@
             </div>
 
             <!-- Colonne latérale -->
-            <div class="space-y-6">
+            <div class="space-y-3 sm:space-y-2 sm:space-y-3">
                 <!-- Timeline -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-purple-100">
+                <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-purple-100">
                         <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                            <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             Timeline
                         </h3>
                     </div>
                     
-                    <div class="p-4 sm:p-5 lg:p-6">
-                        <div class="space-y-4">
+                    <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
+                        <div class="space-y-2 sm:space-y-3">
                             <!-- Création -->
                             <div class="flex items-start flex-col sm:flex-row">
-                                <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
+                                <div class="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
                                     <svg class="w-5 h-5 sm:w-4 sm:h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                     </svg>
@@ -343,7 +343,7 @@
                             @if($withdrawal->processed_at)
                                 <!-- Traitement -->
                                 <div class="flex items-start flex-col sm:flex-row">
-                                    <div class="flex-shrink-0 w-8 h-8 {{ $withdrawal->status === 'REJECTED' ? 'bg-red-100' : 'bg-green-100' }} rounded-full flex items-center justify-center flex-col sm:flex-row">
+                                    <div class="flex-shrink-0 w-5 h-5 {{ $withdrawal->status === 'REJECTED' ? 'bg-red-100' : 'bg-green-100' }} rounded-full flex items-center justify-center flex-col sm:flex-row">
                                         @if($withdrawal->status === 'REJECTED')
                                             <svg class="w-5 h-5 sm:w-4 sm:h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -369,7 +369,7 @@
                             @if($withdrawal->assignedDeliverer && $withdrawal->status !== 'REJECTED')
                                 <!-- Assignment livreur -->
                                 <div class="flex items-start flex-col sm:flex-row">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
+                                    <div class="flex-shrink-0 w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
                                         <svg class="w-5 h-5 sm:w-4 sm:h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                         </svg>
@@ -384,7 +384,7 @@
                             @if($withdrawal->delivered_at)
                                 <!-- Livraison terminée -->
                                 <div class="flex items-start flex-col sm:flex-row">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
+                                    <div class="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
                                         <svg class="w-5 h-5 sm:w-4 sm:h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                         </svg>
@@ -399,7 +399,7 @@
                             @if($withdrawal->status === 'PENDING')
                                 <!-- En attente -->
                                 <div class="flex items-start flex-col sm:flex-row">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
+                                    <div class="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-col sm:flex-row">
                                         <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
                                     </div>
                                     <div class="ml-3">
@@ -413,45 +413,45 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-6 py-4 border-b border-blue-100">
+                <div class="bg-white rounded-lg shadow-sm border border-purple-100 overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-5 lg:px-4 py-2 sm:py-3 border-b border-blue-100">
                         <h3 class="text-lg font-semibold text-gray-800 flex items-center flex-col sm:flex-row">
-                            <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                             Actions
                         </h3>
                     </div>
                     
-                    <div class="p-4 sm:p-5 lg:p-6 space-y-3">
+                    <div class="p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3 space-y-3">
                         @if($withdrawal->canBeProcessed())
                             <form action="{{ route('client.wallet.withdrawal.cancel', $withdrawal) }}" 
                                   method="POST" 
                                   onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette demande ? Cette action est irréversible.')">
                                 @csrf
                                 <button type="submit" 
-                                        class="w-full bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-2xl hover:from-red-600 hover:to-pink-700 transition-all duration-300 text-sm font-medium transform hover:scale-105 shadow-lg">
+                                        class="w-full bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-300 text-sm font-medium transform hover:scale-105 shadow-sm">
                                     ❌ Annuler la demande
                                 </button>
                             </form>
                         @endif
 
                         <a href="{{ route('client.withdrawals') }}" 
-                           class="block w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-2xl hover:bg-gray-200 transition-all duration-300 text-sm font-medium text-center transform hover:scale-105">
+                           class="block w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-all duration-300 text-sm font-medium text-center transform hover:scale-105">
                             📋 Toutes mes demandes
                         </a>
 
                         <a href="{{ route('client.wallet.withdrawal') }}" 
-                           class="block w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3 rounded-2xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 text-sm font-medium text-center transform hover:scale-105 shadow-lg">
+                           class="block w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 text-sm font-medium text-center transform hover:scale-105 shadow-sm">
                             💸 Nouvelle demande
                         </a>
                     </div>
                 </div>
 
                 <!-- Informations utiles -->
-                <div class="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 lg:p-6">
+                <div class="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-lg p-2.5 sm:p-3 sm:p-5 lg:p-3 sm:p-2.5 sm:p-3">
                     <h3 class="text-lg font-semibold text-amber-900 mb-3 flex items-center flex-col sm:flex-row">
-                        <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         Bon à savoir
@@ -518,10 +518,10 @@ function fallbackCopyTextToClipboard(text) {
 function showCopySuccessMessage() {
     // Créer une notification temporaire
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-2xl shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-sm z-50 transform translate-x-full transition-transform duration-300';
     notification.innerHTML = `
         <div class="flex items-center flex-col sm:flex-row">
-            <svg class="w-6 h-6 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             IBAN copié dans le presse-papiers!
