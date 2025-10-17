@@ -460,46 +460,102 @@ class SimpleDelivererController extends Controller
     }
 
     /**
-     * Validation de la liste des colis scannés
+     * Validation de la liste des colis scannés (MULTI SCAN)
      */
     public function validateMultiScan(Request $request)
     {
-        $request->validate([
-            'packages' => 'required|array|min:1',
-            'packages.*' => 'exists:packages,id'
+        $validated = $request->validate([
+            'codes' => 'required|array|min:1',
+            'codes.*' => 'required|string',
+            'action' => 'required|in:pickup,delivery'
         ]);
 
         $user = Auth::user();
-        $packageIds = $request->packages;
+        
+        // Gérer les codes (peuvent être array ou string JSON)
+        $codes = $request->codes;
+        if (is_string($codes)) {
+            $codes = json_decode($codes, true);
+        }
+        if (!is_array($codes)) {
+            $codes = [];
+        }
+        
+        $action = $request->action;
+
+        if (empty($codes)) {
+            return redirect()->back()->with('error', 'Aucun code à traiter');
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        DB::beginTransaction();
 
         try {
-            DB::beginTransaction();
+            foreach ($codes as $code) {
+                $cleanCode = $this->normalizeCode(trim($code));
+                $package = $this->findPackageByCode($cleanCode);
 
-            $packages = Package::whereIn('id', $packageIds)->get();
+                if (!$package) {
+                    $errorCount++;
+                    $errors[] = "$cleanCode : Non trouvé";
+                    continue;
+                }
 
-            foreach ($packages as $package) {
-                // Assigner au livreur et marquer comme PICKED_UP
-                $package->update([
-                    'status' => 'PICKED_UP',
-                    'picked_up_at' => $package->picked_up_at ?? now(),
-                    'assigned_deliverer_id' => $user->id
-                ]);
+                // Auto-assigner au livreur
+                if (!$package->assigned_deliverer_id || $package->assigned_deliverer_id !== $user->id) {
+                    $package->assigned_deliverer_id = $user->id;
+                    $package->assigned_at = now();
+                }
+
+                // Appliquer l'action
+                if ($action === 'pickup') {
+                    // Ramassage : CREATED, AVAILABLE → PICKED_UP
+                    if (in_array($package->status, ['CREATED', 'AVAILABLE'])) {
+                        $package->status = 'PICKED_UP';
+                        // Définir picked_up_at seulement s'il n'est pas déjà défini
+                        if (!$package->picked_up_at) {
+                            $package->picked_up_at = now();
+                        }
+                        $package->save();
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                        $errors[] = "$cleanCode : Statut incompatible ({$package->status})";
+                    }
+                } else {
+                    // Livraison : AVAILABLE, CREATED, AT_DEPOT, OUT_FOR_DELIVERY, PICKED_UP → OUT_FOR_DELIVERY
+                    if (in_array($package->status, ['AVAILABLE', 'CREATED', 'AT_DEPOT', 'OUT_FOR_DELIVERY', 'PICKED_UP'])) {
+                        $package->status = 'OUT_FOR_DELIVERY';
+                        $package->save();
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                        $errors[] = "$cleanCode : Statut incompatible ({$package->status})";
+                    }
+                }
             }
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Colis validés avec succès',
-                'count' => count($packageIds)
-            ]);
+            $actionLabel = $action === 'pickup' ? 'ramassés' : 'en livraison';
+            $message = "✅ $successCount colis $actionLabel";
+            
+            if ($errorCount > 0) {
+                $message .= " | ⚠️ $errorCount erreurs";
+                if (count($errors) <= 3) {
+                    $message .= " : " . implode(', ', $errors);
+                }
+            }
+
+            return redirect()->route('deliverer.tournee')->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la validation: ' . $e->getMessage()
-            ], 500);
+            \Log::error('Erreur validateMultiScan:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 
@@ -1359,36 +1415,50 @@ class SimpleDelivererController extends Controller
      */
     public function apiAvailablePickups()
     {
-        $user = Auth::user();
-        $gouvernorats = is_array($user->deliverer_gouvernorats) ? $user->deliverer_gouvernorats : [];
-        
-        $pickups = PickupRequest::where('status', 'pending')
-            ->where('assigned_deliverer_id', null)
-            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
-                return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
-                    $subQ->whereIn('governorate', $gouvernorats);
+        try {
+            $user = Auth::user();
+            
+            // Gérer les gouvernorats (array ou JSON)
+            $gouvernorats = $user->deliverer_gouvernorats ?? [];
+            if (is_string($gouvernorats)) {
+                $gouvernorats = json_decode($gouvernorats, true) ?? [];
+            }
+            if (!is_array($gouvernorats)) {
+                $gouvernorats = [];
+            }
+            
+            $pickups = PickupRequest::where('status', 'pending')
+                ->where('assigned_deliverer_id', null)
+                ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
+                    return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
+                        $subQ->whereIn('governorate', $gouvernorats);
+                    });
+                })
+                ->with(['delegation', 'client'])
+                ->orderBy('requested_pickup_date', 'asc')
+                ->get()
+                ->map(function($pickup) {
+                    return [
+                        'id' => $pickup->id,
+                        'pickup_address' => $pickup->pickup_address ?? 'N/A',
+                        'pickup_contact_name' => $pickup->pickup_contact_name ?? 'N/A',
+                        'pickup_phone' => $pickup->pickup_phone ?? 'N/A',
+                        'pickup_notes' => $pickup->pickup_notes,
+                        'delegation_name' => $pickup->delegation?->name ?? 'N/A',
+                        'governorate' => $pickup->delegation?->governorate ?? 'N/A',
+                        'requested_pickup_date' => $pickup->requested_pickup_date ? $pickup->requested_pickup_date->format('d/m/Y H:i') : null,
+                        'status' => $pickup->status,
+                        'client_name' => $pickup->client?->name ?? 'N/A',
+                        'type' => 'available_pickup'
+                    ];
                 });
-            })
-            ->with(['delegation', 'client'])
-            ->orderBy('requested_pickup_date', 'asc')
-            ->get()
-            ->map(function($pickup) {
-                return [
-                    'id' => $pickup->id,
-                    'pickup_address' => $pickup->pickup_address,
-                    'pickup_contact_name' => $pickup->pickup_contact_name,
-                    'pickup_phone' => $pickup->pickup_phone,
-                    'pickup_notes' => $pickup->pickup_notes,
-                    'delegation_name' => $pickup->delegation?->name ?? 'N/A',
-                    'governorate' => $pickup->delegation?->governorate ?? 'N/A',
-                    'requested_pickup_date' => $pickup->requested_pickup_date?->format('d/m/Y H:i'),
-                    'status' => $pickup->status,
-                    'client_name' => $pickup->client?->name ?? 'N/A',
-                    'type' => 'available_pickup'
-                ];
-            });
 
-        return response()->json($pickups);
+            return response()->json($pickups);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur apiAvailablePickups:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Erreur lors du chargement des pickups: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -1724,19 +1794,297 @@ class SimpleDelivererController extends Controller
     }
 
     /**
-     * Scanner simple - Vue
+     * Scanner simple - Vue (AFFICHE TOUS LES COLIS)
+     * 
+     * STATUTS RAMASSAGE (pickup): CREATED, AVAILABLE
+     * STATUTS LIVRAISON (delivery): AVAILABLE, CREATED, AT_DEPOT, OUT_FOR_DELIVERY, PICKED_UP
      */
     public function scanSimple()
     {
-        return view('deliverer.scan-production');
+        $user = Auth::user();
+        
+        // Charger TOUS les colis (peu importe statut ou assignation)
+        $packages = Package::select('id', 'package_code', 'status', 'assigned_deliverer_id')
+            ->get()
+            ->map(function($pkg) use ($user) {
+                $cleanCode = str_replace(['_', '-', ' '], '', strtoupper($pkg->package_code));
+                return [
+                    'c' => $pkg->package_code,
+                    'c2' => $cleanCode,
+                    's' => $pkg->status,
+                    'p' => in_array($pkg->status, ['CREATED', 'AVAILABLE']) ? 1 : 0,
+                    'd' => in_array($pkg->status, ['AVAILABLE', 'CREATED', 'AT_DEPOT', 'OUT_FOR_DELIVERY', 'PICKED_UP']) ? 1 : 0,
+                    'id' => $pkg->id,
+                    'assigned' => $pkg->assigned_deliverer_id === $user->id ? 1 : 0
+                ];
+            });
+        
+        return view('deliverer.scan-production', compact('packages'));
     }
 
     /**
-     * Scanner multi - Vue
+     * Scanner multi - Vue (AFFICHE TOUS LES COLIS)
+     * 
+     * STATUTS RAMASSAGE (pickup): CREATED, AVAILABLE
+     * STATUTS LIVRAISON (delivery): AVAILABLE, CREATED, AT_DEPOT, OUT_FOR_DELIVERY, PICKED_UP
      */
     public function scanMulti()
     {
-        return view('deliverer.multi-scanner-production');
+        $user = Auth::user();
+        
+        // Charger TOUS les colis (peu importe statut ou assignation)
+        $packages = Package::select('id', 'package_code', 'status', 'assigned_deliverer_id')
+            ->get()
+            ->map(function($pkg) use ($user) {
+                $cleanCode = str_replace(['_', '-', ' '], '', strtoupper($pkg->package_code));
+                return [
+                    'c' => $pkg->package_code,
+                    'c2' => $cleanCode,
+                    's' => $pkg->status,
+                    'p' => in_array($pkg->status, ['CREATED', 'AVAILABLE']) ? 1 : 0,
+                    'd' => in_array($pkg->status, ['AVAILABLE', 'CREATED', 'AT_DEPOT', 'OUT_FOR_DELIVERY', 'PICKED_UP']) ? 1 : 0,
+                    'id' => $pkg->id,
+                    'assigned' => $pkg->assigned_deliverer_id === $user->id ? 1 : 0
+                ];
+            });
+        
+        return view('deliverer.multi-scanner-production', compact('packages'));
+    }
+
+    /**
+     * Ramassage simple d'un colis (depuis task-detail)
+     */
+    public function simplePickup(Package $package)
+    {
+        $user = Auth::user();
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier que le colis peut être ramassé
+            if (!in_array($package->status, ['AVAILABLE', 'ACCEPTED', 'CREATED', 'VERIFIED'])) {
+                return redirect()->back()->with('error', 'Ce colis ne peut pas être ramassé (statut: ' . $package->status . ')');
+            }
+
+            // Assigner au livreur et changer le statut
+            $updateData = [
+                'status' => 'PICKED_UP',
+                'assigned_deliverer_id' => $user->id,
+                'assigned_at' => now()
+            ];
+            
+            // Ajouter picked_up_at seulement s'il n'est pas déjà défini
+            if (!$package->picked_up_at) {
+                $updateData['picked_up_at'] = now();
+            }
+            
+            $package->update($updateData);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', '✅ Colis ramassé avec succès !');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur simplePickup:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors du ramassage: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Livraison simple d'un colis (depuis task-detail)
+     */
+    public function simpleDeliver(Package $package)
+    {
+        $user = Auth::user();
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier que le colis peut être livré
+            if (!in_array($package->status, ['PICKED_UP', 'OUT_FOR_DELIVERY'])) {
+                return redirect()->back()->with('error', 'Ce colis ne peut pas être livré (statut: ' . $package->status . ')');
+            }
+
+            // Vérifier que le colis est assigné au livreur
+            if ($package->assigned_deliverer_id !== $user->id) {
+                return redirect()->back()->with('error', 'Ce colis n\'est pas assigné à vous');
+            }
+
+            // Changer le statut en DELIVERED
+            $package->update([
+                'status' => 'DELIVERED',
+                'delivered_at' => now()
+            ]);
+
+            // Ajouter le COD au wallet du livreur si applicable
+            if ($package->cod_amount > 0) {
+                $wallet = \App\Models\UserWallet::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['balance' => 0, 'pending_amount' => 0, 'frozen_amount' => 0, 'advance_balance' => 0]
+                );
+
+                $wallet->addFunds(
+                    $package->cod_amount,
+                    "COD collecté - Colis #{$package->package_code}",
+                    "COD_DELIVERY_{$package->id}"
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('deliverer.tournee')->with('success', '✅ Colis livré avec succès !');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur simpleDeliver:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la livraison: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Marquer un colis comme client indisponible (avec commentaire obligatoire)
+     */
+    public function simpleUnavailable(Package $package, Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'comment' => 'required|string|min:5|max:500'
+        ], [
+            'comment.required' => 'Le commentaire est obligatoire',
+            'comment.min' => 'Le commentaire doit contenir au moins 5 caractères',
+            'comment.max' => 'Le commentaire ne peut pas dépasser 500 caractères'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier que le colis peut être marqué indisponible
+            if (!in_array($package->status, ['PICKED_UP', 'OUT_FOR_DELIVERY'])) {
+                return redirect()->back()->with('error', 'Ce colis ne peut pas être marqué indisponible (statut: ' . $package->status . ')');
+            }
+
+            // Vérifier que le colis est assigné au livreur
+            if ($package->assigned_deliverer_id !== $user->id) {
+                return redirect()->back()->with('error', 'Ce colis n\'est pas assigné à vous');
+            }
+
+            // Mettre à jour avec commentaire
+            $package->update([
+                'status' => 'UNAVAILABLE',
+                'unavailable_attempts' => ($package->unavailable_attempts ?? 0) + 1,
+                'notes' => ($package->notes ? $package->notes . "\n\n" : '') . 
+                          '❗ Indisponible (' . now()->format('d/m/Y H:i') . ') par ' . $user->name . ': ' . $request->comment
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('deliverer.tournee')->with('warning', '⚠️ Client marqué indisponible');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur simpleUnavailable:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Marquer un colis comme refusé par le client (avec commentaire obligatoire)
+     */
+    public function simpleRefused(Package $package, Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'comment' => 'required|string|min:5|max:500'
+        ], [
+            'comment.required' => 'Le commentaire est obligatoire',
+            'comment.min' => 'Le commentaire doit contenir au moins 5 caractères',
+            'comment.max' => 'Le commentaire ne peut pas dépasser 500 caractères'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier que le colis peut être marqué refusé
+            if (!in_array($package->status, ['PICKED_UP', 'OUT_FOR_DELIVERY'])) {
+                return redirect()->back()->with('error', 'Ce colis ne peut pas être marqué refusé (statut: ' . $package->status . ')');
+            }
+
+            // Vérifier que le colis est assigné au livreur
+            if ($package->assigned_deliverer_id !== $user->id) {
+                return redirect()->back()->with('error', 'Ce colis n\'est pas assigné à vous');
+            }
+
+            // Marquer comme refusé avec commentaire
+            $package->update([
+                'status' => 'REFUSED',
+                'delivery_attempts' => ($package->delivery_attempts ?? 0) + 1,
+                'notes' => ($package->notes ? $package->notes . "\n\n" : '') . 
+                          '❌ Refusé (' . now()->format('d/m/Y H:i') . ') par ' . $user->name . ': ' . $request->comment
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('deliverer.tournee')->with('error', '❌ Colis refusé par le client');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur simpleRefused:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reporter la livraison à une date ultérieure (dans les 7 prochains jours)
+     */
+    public function simpleScheduled(Package $package, Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'scheduled_date' => 'required|date|after:today|before:' . date('Y-m-d', strtotime('+8 days')),
+            'comment' => 'required|string|min:5|max:500'
+        ], [
+            'scheduled_date.required' => 'La date de livraison est obligatoire',
+            'scheduled_date.after' => 'La date doit être ultérieure à aujourd\'hui',
+            'scheduled_date.before' => 'La date ne peut pas dépasser 7 jours',
+            'comment.required' => 'Le commentaire est obligatoire',
+            'comment.min' => 'Le commentaire doit contenir au moins 5 caractères'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier que le colis peut être reporté
+            if (!in_array($package->status, ['PICKED_UP', 'OUT_FOR_DELIVERY'])) {
+                return redirect()->back()->with('error', 'Ce colis ne peut pas être reporté (statut: ' . $package->status . ')');
+            }
+
+            // Vérifier que le colis est assigné au livreur
+            if ($package->assigned_deliverer_id !== $user->id) {
+                return redirect()->back()->with('error', 'Ce colis n\'est pas assigné à vous');
+            }
+
+            // Reporter la livraison
+            $package->update([
+                'status' => 'SCHEDULED',
+                'scheduled_delivery_date' => $request->scheduled_date,
+                'notes' => ($package->notes ? $package->notes . "\n\n" : '') . 
+                          '📅 Reporté au ' . date('d/m/Y', strtotime($request->scheduled_date)) . 
+                          ' (' . now()->format('d/m/Y H:i') . ') par ' . $user->name . ': ' . $request->comment
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('deliverer.tournee')->with('success', '📅 Livraison reportée au ' . date('d/m/Y', strtotime($request->scheduled_date)));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur simpleScheduled:', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
     }
 
 }

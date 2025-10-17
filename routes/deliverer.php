@@ -35,11 +35,18 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
     
     // ==================== SCANNER OPTIMISÉ ====================
     Route::get('/scan', [SimpleDelivererController::class, 'scanSimple'])->name('scan.simple');
-    Route::post('/scan/submit', [SimpleDelivererController::class, 'processScan'])->name('scan.submit');
+    Route::post('/scan/submit', [SimpleDelivererController::class, 'scanSubmit'])->name('scan.submit');
     Route::post('/scan/process', [SimpleDelivererController::class, 'processScan'])->name('scan.process');
     Route::get('/scan/multi', [SimpleDelivererController::class, 'scanMulti'])->name('scan.multi');
     Route::post('/scan/multi/process', [SimpleDelivererController::class, 'processMultiScan'])->name('scan.multi.process');
     Route::post('/scan/multi/validate', [SimpleDelivererController::class, 'validateMultiScan'])->name('scan.multi.validate');
+    
+    // ==================== ACTIONS COLIS SIMPLES ====================
+    Route::post('/simple/pickup/{package}', [SimpleDelivererController::class, 'simplePickup'])->name('simple.pickup');
+    Route::post('/simple/deliver/{package}', [SimpleDelivererController::class, 'simpleDeliver'])->name('simple.deliver');
+    Route::post('/simple/unavailable/{package}', [SimpleDelivererController::class, 'simpleUnavailable'])->name('simple.unavailable');
+    Route::post('/simple/refused/{package}', [SimpleDelivererController::class, 'simpleRefused'])->name('simple.refused');
+    Route::post('/simple/scheduled/{package}', [SimpleDelivererController::class, 'simpleScheduled'])->name('simple.scheduled');
 
     // ==================== SIGNATURE ====================
     Route::get('/signature/{package}', [DelivererActionsController::class, 'signatureCapture'])->name('signature.capture');

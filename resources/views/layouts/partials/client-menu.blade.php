@@ -29,6 +29,16 @@
         <span class="font-medium">Nouveau Colis</span>
     </a>
 
+    {{-- Import CSV --}}
+    <a href="{{ route('client.packages.import.csv') }}" 
+       class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-smooth"
+       :class="currentRoute.includes('import') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <span class="font-medium">Import CSV</span>
+    </a>
+
     {{-- Pickup Requests --}}
     <a href="{{ route('client.pickup-requests.index') }}" 
        class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-smooth"

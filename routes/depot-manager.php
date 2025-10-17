@@ -3,6 +3,7 @@
 use App\Http\Controllers\DepotManager\DepotManagerDashboardController;
 use App\Http\Controllers\DepotManager\DepotManagerDelivererController;
 use App\Http\Controllers\DepotManager\DepotManagerPackageController;
+use App\Http\Controllers\DepotManager\ExchangePackageController;
 use App\Http\Controllers\Api\PaymentDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -179,6 +180,14 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
     // ==================== API ROUTES COLIS ====================
     Route::prefix('api/packages')->name('api.packages.')->group(function () {
         Route::post('/{package}/assign', [DepotManagerPackageController::class, 'assignDeliverer'])->name('assign');
+    });
+
+    // ==================== GESTION COLIS ÉCHANGES ====================
+    Route::prefix('exchanges')->name('exchanges.')->group(function() {
+        Route::get('/', [ExchangePackageController::class, 'index'])->name('index');
+        Route::post('/{package}/process', [ExchangePackageController::class, 'processExchange'])->name('process');
+        Route::get('/history', [ExchangePackageController::class, 'history'])->name('history');
+        Route::get('/{returnPackage}/print', [ExchangePackageController::class, 'printReturnReceipt'])->name('print');
     });
 
 });

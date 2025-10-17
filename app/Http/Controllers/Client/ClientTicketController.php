@@ -133,6 +133,7 @@ class ClientTicketController extends Controller
                 $q->where('is_internal', false)->orderBy('created_at', 'asc');
             },
             'messages.sender',
+            'client',
             'complaint',
             'package',
             'assignedTo'

@@ -453,4 +453,99 @@ class ClientPackageImportController extends Controller
 
         return $package;
     }
+
+    /**
+     * API: Obtenir la progression d'un import
+     */
+    public function apiImportProgress($batchId)
+    {
+        $user = Auth::user();
+        $batch = ImportBatch::where('user_id', $user->id)->findOrFail($batchId);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'batch_code' => $batch->batch_code,
+                'status' => $batch->status,
+                'status_display' => $batch->getStatusDisplayAttribute(),
+                'total_rows' => $batch->total_rows,
+                'processed_rows' => $batch->processed_rows,
+                'successful_rows' => $batch->successful_rows,
+                'failed_rows' => $batch->failed_rows,
+                'success_rate' => $batch->getSuccessRateAttribute(),
+                'processing_time' => $batch->getFormattedProcessingTimeAttribute(),
+                'started_at' => $batch->started_at?->format('d/m/Y H:i:s'),
+                'completed_at' => $batch->completed_at?->format('d/m/Y H:i:s'),
+            ]
+        ]);
+    }
+
+    /**
+     * API: Obtenir les erreurs d'un import
+     */
+    public function apiImportErrors($batchId)
+    {
+        $user = Auth::user();
+        $batch = ImportBatch::where('user_id', $user->id)->findOrFail($batchId);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'has_errors' => $batch->hasErrors(),
+                'failed_rows' => $batch->failed_rows,
+                'errors' => $batch->errors ?? [],
+                'top_errors' => $batch->getTopErrors(10)
+            ]
+        ]);
+    }
+
+    /**
+     * API: Valider un fichier CSV avant import
+     */
+    public function apiValidateCsv(Request $request)
+    {
+        $user = Auth::user();
+        
+        $validated = $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
+            'has_header' => 'boolean',
+            'encoding' => 'in:UTF-8,ISO-8859-1',
+            'delimiter' => 'in:comma,semicolon,tab'
+        ]);
+
+        try {
+            $file = $request->file('csv_file');
+            $filePath = $file->store('imports/csv/temp', 'local');
+            
+            // Analyser le fichier
+            $csvData = $this->parseCsvFile($filePath, $validated);
+            
+            // Valider les données
+            $validationResult = $this->validateCsvData($csvData['rows'], $user);
+            
+            // Nettoyer le fichier temporaire
+            Storage::delete($filePath);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_rows' => count($csvData['rows']),
+                    'total_errors' => $validationResult['total_errors'],
+                    'errors' => $validationResult['errors'],
+                    'estimated_escrow' => $validationResult['total_escrow_needed'],
+                    'is_valid' => $validationResult['total_errors'] === 0
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            if (isset($filePath)) {
+                Storage::delete($filePath);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
 }

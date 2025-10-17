@@ -26,6 +26,30 @@
 @section('content')
 <div class="max-w-4xl mx-auto" x-data="csvImportForm()">
     
+    <!-- Télécharger Template - Card Principale -->
+    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6 mb-6 shadow-lg">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">📥 Télécharger le Template CSV</h3>
+                    <p class="text-sm text-gray-600">Fichier exemple avec toutes les colonnes nécessaires</p>
+                </div>
+            </div>
+            <a href="{{ route('client.packages.import.template') }}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Télécharger le Template
+            </a>
+        </div>
+    </div>
+
     <!-- Informations importantes -->
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
         <div class="flex items-start space-x-3 flex-col sm:flex-row">
@@ -35,7 +59,7 @@
             <div class="flex-1 flex-col sm:flex-row">
                 <h3 class="font-semibold text-blue-900 mb-2">📋 Instructions d'import</h3>
                 <ul class="text-sm text-blue-800 space-y-1">
-                    <li>• Utilisez le template CSV fourni pour structurer vos données</li>
+                    <li>• <strong>Téléchargez d'abord le template CSV</strong> ci-dessus pour avoir le bon format</li>
                     <li>• Maximum 500 colis par import</li>
                     <li>• Taille de fichier maximale : 5 MB</li>
                     <li>• Formats acceptés : CSV, TXT</li>

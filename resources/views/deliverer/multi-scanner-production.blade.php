@@ -9,52 +9,135 @@
         background: white;
         border-radius: 1.25rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .modern-card:hover {
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
     }
     .stat-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
     }
-    #camera-view {
+    .stat-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+    }
+    #camera-container {
         position: relative;
         width: 100%;
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
-        border-radius: 1rem;
+        border-radius: 1.5rem;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        background: #000;
     }
     #camera-video {
         width: 100%;
         height: auto;
+        display: block;
+    }
+    #qr-canvas {
+        display: none;
+    }
+    .scan-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+    }
+    .scan-frame {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 60%;
+        border: 3px solid #10B981;
+        border-radius: 1rem;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
     }
     .scan-line {
         position: absolute;
         top: 50%;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #10B981, transparent);
+        left: 10%;
+        right: 10%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #10B981, #10B981, transparent);
         animation: scan 2s ease-in-out infinite;
+        box-shadow: 0 0 10px #10B981;
     }
     @keyframes scan {
-        0%, 100% { transform: translateY(-20px); }
-        50% { transform: translateY(20px); }
+        0% { transform: translateY(-150px); }
+        100% { transform: translateY(150px); }
     }
     .code-input {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: bold;
         text-align: center;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         border: 3px solid #667eea;
         border-radius: 1rem;
-        padding: 1.5rem;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
     }
     .code-input:focus {
         border-color: #10B981;
         box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        transform: scale(1.02);
+    }
+    .scan-mode-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(16, 185, 129, 0.9);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .scanned-item {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-slideDown {
+        animation: slideDown 0.4s ease-out;
+    }
+    .active:scale-98 {
+        transform: scale(0.98);
     }
 </style>
 @endpush
@@ -62,8 +145,8 @@
 @section('content')
 <div class="min-h-screen bg-gray-50" x-data="simpleScannerApp()" x-init="init()">
     
-    <!-- Header -->
-    <div class="relative safe-top">
+    <!-- Header avec safe-area iOS -->
+    <div class="relative" style="padding-top: env(safe-area-inset-top, 0px);">
         <div class="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600"></div>
         <div class="relative px-6 py-6">
             <div class="flex items-center justify-between">
@@ -90,7 +173,30 @@
         </div>
     </div>
 
-    <div class="p-4 pb-32">
+    <!-- Messages session avec safe-area iOS -->
+    @if(session('success'))
+    <div class="mx-4 mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-5 py-4 rounded-2xl shadow-lg animate-slideDown">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-semibold">{{ session('success') }}</span>
+        </div>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="mx-4 mt-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-4 rounded-2xl shadow-lg animate-slideDown">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-semibold">{{ session('error') }}</span>
+        </div>
+    </div>
+    @endif
+
+    <div class="p-4" style="padding-bottom: 180px;">
         
         <!-- Stats -->
         <div class="mb-6">
@@ -101,14 +207,24 @@
             </div>
         </div>
 
-        <!-- Caméra -->
+        <!-- Caméra Améliorée -->
         <div x-show="cameraActive" class="mb-6" x-transition>
-            <div id="camera-view">
+            <div id="camera-container">
                 <video id="camera-video" autoplay playsinline></video>
-                <canvas id="qr-canvas" style="display:none;"></canvas>
-                <div class="scan-line"></div>
-                <div class="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-semibold">
-                    🎥 Caméra Active
+                <canvas id="qr-canvas"></canvas>
+                <div class="scan-overlay">
+                    <div class="scan-frame"></div>
+                    <div class="scan-line"></div>
+                </div>
+                <div class="scan-mode-badge">
+                    <span x-show="scanMode === 'qr'">📱 QR Code</span>
+                    <span x-show="scanMode === 'barcode'">📊 Code-Barres</span>
+                </div>
+                <div class="absolute top-4 left-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        <span>🎥 Caméra Active</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,16 +234,14 @@
             <label class="block text-sm font-bold text-gray-800 mb-3">🎯 Action</label>
             <div class="grid grid-cols-2 gap-3">
                 <button @click="scanAction = 'pickup'" 
-                        :class="scanAction === 'pickup' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'"
-                        class="p-4 rounded-xl font-bold">
-                    <div class="text-2xl mb-1">📦</div>
-                    <div class="text-sm">Ramassage</div>
+                        :class="scanAction === 'pickup' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'"
+                        class="py-4 rounded-xl font-bold transition-all active:scale-95">
+                    📦 Ramassage
                 </button>
-                <button @click="scanAction = 'delivering'" 
-                        :class="scanAction === 'delivering' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'"
-                        class="p-4 rounded-xl font-bold">
-                    <div class="text-2xl mb-1">🚚</div>
-                    <div class="text-sm">Livraison</div>
+                <button @click="scanAction = 'delivery'" 
+                        :class="scanAction === 'delivery' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'"
+                        class="py-4 rounded-xl font-bold transition-all active:scale-95">
+                    🚚 Livraison
                 </button>
             </div>
         </div>
@@ -190,31 +304,31 @@
                 
                 <div class="space-y-2 max-h-96 overflow-y-auto">
                     <template x-for="(item, index) in scannedCodes" :key="index">
-                        <div class="p-3 rounded-lg flex items-center justify-between"
-                             :class="item.assigned ? 'bg-blue-50 border-2 border-blue-300' : 'bg-amber-50 border-2 border-amber-300'">
+                        <div class="scanned-item p-4 rounded-xl flex items-center justify-between shadow-sm hover:shadow-md transition-all"
+                             :class="item.assigned ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300'">
                             <div class="flex items-center space-x-3 flex-1">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
-                                     :class="item.assigned ? 'bg-blue-500' : 'bg-amber-500'">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md"
+                                     :class="item.assigned ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-amber-500 to-orange-600'">
                                     <span x-text="index + 1"></span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-gray-900" x-text="item.code"></span>
-                                        <span x-show="item.assigned" class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full border border-green-300">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-bold text-gray-900 text-base" x-text="item.code"></span>
+                                        <span x-show="item.assigned" class="text-xs px-2 py-1 bg-green-500 text-white rounded-lg font-semibold shadow-sm">
                                             ✓ Assigné
                                         </span>
-                                        <span x-show="!item.assigned" class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full border border-amber-300">
+                                        <span x-show="!item.assigned" class="text-xs px-2 py-1 bg-amber-500 text-white rounded-lg font-semibold shadow-sm">
                                             ℹ️ Non assigné
                                         </span>
                                     </div>
-                                    <div class="text-xs" 
+                                    <div class="text-xs font-medium" 
                                          :class="item.assigned ? 'text-blue-700' : 'text-amber-700'" 
                                          x-text="item.message"></div>
                                 </div>
                             </div>
-                            <button @click="removeCode(index)" class="p-2 bg-red-500 text-white rounded-full hover:bg-red-600">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            <button @click="removeCode(index)" class="p-2.5 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all active:scale-95 shadow-md">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
@@ -223,17 +337,20 @@
             </div>
         </div>
 
-        <!-- Bouton Validation DIRECT (SANS API) -->
+        <!-- Bouton Validation FIXE EN BAS -->
         <div x-show="scannedCodes.length > 0" 
-             class="fixed left-0 right-0 bottom-20 p-4" style="background: rgba(255,255,255,0.95)">
-            <form id="validation-form" method="POST" action="{{ route('deliverer.scan.submit') }}">
+             class="fixed left-0 right-0 p-4 z-50" 
+             style="bottom: 80px; background: linear-gradient(to top, rgba(255,255,255,1) 80%, rgba(255,255,255,0.95) 100%); padding-bottom: env(safe-area-inset-bottom, 1rem);">
+            <form id="validation-form" method="POST" action="{{ route('deliverer.scan.multi.validate') }}">
                 @csrf
                 <input type="hidden" name="action" x-model="scanAction">
-                <input type="hidden" name="codes" x-bind:value="JSON.stringify(scannedCodes.map(item => item.code))">
+                <template x-for="(item, index) in scannedCodes" :key="index">
+                    <input type="hidden" :name="'codes[' + index + ']'" :value="item.code">
+                </template>
                 
                 <button type="button" @click="submitForm()" 
                         :disabled="processing"
-                        class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-2xl disabled:opacity-50 shadow-lg">
+                        class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-5 rounded-2xl disabled:opacity-50 shadow-2xl transition-all active:scale-98">
                     <span x-show="!processing" class="text-lg">
                         ✅ Valider <span x-text="scannedCodes.length"></span> colis (<span x-text="scanAction === 'pickup' ? 'Ramassage' : 'Livraison'"></span>)
                     </span>
@@ -519,82 +636,95 @@ function simpleScannerApp() {
             }
         },
         
-        // DÉMARRER CAMÉRA
+        // DÉMARRER CAMÉRA - CORRIGÉ
         async startCamera() {
             try {
                 const video = document.getElementById('camera-video');
-                if (!video) {
-                    console.error('Élément vidéo non trouvé');
+                const canvas = document.getElementById('qr-canvas');
+                
+                if (!video || !canvas) {
+                    console.error('Élément vidéo ou canvas non trouvé');
                     return;
                 }
 
                 this.statusText = 'Démarrage caméra...';
+                showToast('🎥 Démarrage de la caméra...', 'info');
 
-                // Démarrer flux vidéo
+                // Démarrer flux vidéo SANS Quagga d'abord
                 this.videoStream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: { ideal: 'environment' },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1920, max: 1920 },
+                        height: { ideal: 1080, max: 1080 }
                     }
                 });
                 
                 video.srcObject = this.videoStream;
-                await video.play();
+                
+                // Attendre que la vidéo soit prête
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
 
                 this.cameraActive = true;
                 this.statusText = '📷 Scan actif';
                 
-                // Démarrer scan ALTERNATIF (Quagga puis jsQR)
-                this.startAlternateScanning();
+                // Démarrer le scan HYBRIDE (QR + Barcode)
+                this.startHybridScanning();
                 
-                showToast('Caméra prête', 'success');
+                showToast('✅ Caméra prête !', 'success');
+                console.log('✅ Caméra démarrée avec succès');
                 
             } catch (error) {
                 console.error('Erreur caméra:', error);
-                showToast('Erreur caméra: ' + error.message, 'error');
+                showToast('❌ Erreur caméra: ' + error.message, 'error');
                 this.statusText = 'Erreur caméra';
             }
         },
         
-        // SCAN ALTERNATIF: Barcode 2x puis QR 1x
-        startAlternateScanning() {
-            // Initialiser Quagga pour codes-barres
-            this.initQuagga();
+        // SCAN HYBRIDE: QR prioritaire + Barcode en backup
+        startHybridScanning() {
+            console.log('🔄 Démarrage scan hybride QR + Barcode');
             
-            // Alterner avec jsQR toutes les 600ms
+            // PRIORITÉ 1: Scanner QR en continu (plus rapide)
             this.scanInterval = setInterval(() => {
                 this.scanCycle++;
                 
-                // 2 cycles barcode, 1 cycle QR
-                if (this.scanCycle % 3 === 0) {
+                // QR Code 2x sur 3 (prioritaire)
+                if (this.scanCycle % 3 !== 2) {
                     this.scanMode = 'qr';
                     this.scanQRCode();
                 } else {
                     this.scanMode = 'barcode';
                 }
-            }, 600);
+            }, 300); // 300ms pour meilleure réactivité
             
-            console.log('🔄 Scan alternatif démarré');
+            // PRIORITÉ 2: Démarrer Quagga en parallèle (codes-barres)
+            setTimeout(() => {
+                this.initQuagga();
+            }, 500); // Délai pour laisser la caméra se stabiliser
         },
         
-        // INITIALISER QUAGGA (Codes-barres)
+        // INITIALISER QUAGGA (Codes-barres) - NE REMPLACE PAS LA VIDÉO
         initQuagga() {
             if (typeof Quagga === 'undefined') {
-                console.error('❌ Quagga non chargé');
+                console.warn('⚠️ Quagga non chargé - scan code-barres désactivé');
                 return;
             }
 
             try {
+                // Configuration Quagga pour utiliser le flux existant
                 Quagga.init({
                     inputStream: {
                         type: "LiveStream",
                         target: document.getElementById('camera-video'),
                         constraints: {
-                            width: { min: 640, ideal: 1280, max: 1920 },
-                            height: { min: 480, ideal: 720, max: 1080 },
-                            facingMode: "environment",
-                            aspectRatio: { min: 1, max: 2 }
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 },
+                            facingMode: "environment"
                         }
                     },
                     decoder: {
@@ -603,34 +733,32 @@ function simpleScannerApp() {
                             "ean_reader",
                             "ean_8_reader",
                             "code_39_reader",
-                            "code_93_reader",
-                            "upc_reader",
-                            "upc_e_reader"
+                            "upc_reader"
                         ],
-                        // AMÉLIORATION: Paramètres pour meilleure détection
                         multiple: false
                     },
                     locate: true,
                     locator: {
-                        patchSize: "medium",
-                        halfSample: true
+                        patchSize: "large",
+                        halfSample: false
                     },
-                    // AMÉLIORATION: Filtrer faux positifs
-                    numOfWorkers: navigator.hardwareConcurrency || 4,
-                    frequency: 10
+                    numOfWorkers: 2,
+                    frequency: 5
                 }, (err) => {
                     if (err) {
-                        console.error('Erreur Quagga:', err);
+                        console.error('❌ Erreur Quagga:', err);
                         return;
                     }
                     Quagga.start();
-                    console.log('✅ Quagga démarré');
+                    console.log('✅ Quagga (code-barres) démarré');
                 });
 
+                // Callback détection code-barres
                 Quagga.onDetected((result) => {
                     if (this.scanMode === 'barcode' && result?.codeResult?.code) {
-                        // AMÉLIORATION: Vérifier la qualité du scan
                         const code = result.codeResult.code.trim();
+                        
+                        // Vérifier qualité
                         const errors = result.codeResult.decodedCodes
                             .filter(x => x.error !== undefined)
                             .map(x => x.error);
@@ -638,21 +766,19 @@ function simpleScannerApp() {
                             ? errors.reduce((a, b) => a + b, 0) / errors.length 
                             : 0;
                         
-                        // AMÉLIORATION: Seuil de qualité (0.1 = 10% d'erreur max)
-                        // Plus le seuil est bas, plus on est strict
-                        if (avgError > 0.15) {
-                            console.log('⚠️ Code-barres rejeté (qualité faible):', avgError.toFixed(3));
+                        if (avgError > 0.2) {
+                            console.log('⚠️ Code-barres ignoré (qualité: ' + avgError.toFixed(3) + ')');
                             return;
                         }
                         
                         if (code.length >= 4) {
-                            console.log('✅ Code-barres détecté (qualité:', avgError.toFixed(3), ')');
+                            console.log('✅ Code-barres détecté:', code, '(qualité:', avgError.toFixed(3), ')');
                             this.handleScannedCode(code, 'BARCODE');
                         }
                     }
                 });
             } catch (error) {
-                console.error('Erreur init Quagga:', error);
+                console.error('❌ Erreur init Quagga:', error);
             }
         },
         

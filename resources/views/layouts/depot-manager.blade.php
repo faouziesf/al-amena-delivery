@@ -166,6 +166,29 @@
                     </div>
                 </div>
 
+                <!-- Colis Échanges (déroulant) -->
+                <div x-data="{ open: {{ request()->routeIs('depot-manager.exchanges.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open"
+                            class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group {{ request()->routeIs('depot-manager.exchanges.*') ? 'bg-red-100 text-red-700 shadow-sm' : 'text-gray-700 hover:bg-red-50 hover:text-red-600' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                            <span class="font-medium">🔄 Colis Échanges</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition class="ml-8 mt-2 space-y-1">
+                        <a href="{{ route('depot-manager.exchanges.index') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            À traiter
+                        </a>
+                        <a href="{{ route('depot-manager.exchanges.history') }}" class="block px-4 py-2 text-sm text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded">📜 Historique</a>
+                    </div>
+                </div>
+
             </nav>
 
             <!-- User Profile -->

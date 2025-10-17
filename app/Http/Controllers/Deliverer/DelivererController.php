@@ -32,7 +32,15 @@ class DelivererController extends Controller
     protected function getDelivererGouvernorats()
     {
         $user = Auth::user();
-        return $user->deliverer_gouvernorats ?? [];
+        $gouvernorats = $user->deliverer_gouvernorats ?? [];
+        
+        // Si c'est une string JSON, décoder
+        if (is_string($gouvernorats)) {
+            $gouvernorats = json_decode($gouvernorats, true) ?? [];
+        }
+        
+        // Si c'est vide ou null, retourner tableau vide
+        return is_array($gouvernorats) ? $gouvernorats : [];
     }
 
     /**
@@ -70,14 +78,9 @@ class DelivererController extends Controller
 
         // 1. LIVRAISONS STANDARD 🚚
         $deliveries = Package::where('assigned_deliverer_id', $user->id)
-            ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP'])
+            ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY'])
             ->whereNull('return_package_id') // Exclure les colis de retour
             ->whereNull('payment_withdrawal_id') // Exclure les colis de paiement
-            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
-                return $q->whereHas('delegationTo', function($subQ) use ($gouvernorats) {
-                    $subQ->whereIn('governorate', $gouvernorats);
-                });
-            })
             ->with(['delegationTo', 'sender'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -105,12 +108,7 @@ class DelivererController extends Controller
         // 2. RAMASSAGES (PICKUPS) 📦
         $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
             ->whereIn('status', ['assigned', 'pending'])
-            ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
-                return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
-                    $subQ->whereIn('governorate', $gouvernorats);
-                });
-            })
-            ->with('delegation')
+            ->with(['delegation', 'client'])
             ->orderBy('requested_pickup_date', 'asc')
             ->get();
 
@@ -285,10 +283,25 @@ class DelivererController extends Controller
         $user = Auth::user();
         $wallet = UserWallet::firstOrCreate(
             ['user_id' => $user->id],
-            ['balance' => 0, 'pending_amount' => 0, 'frozen_amount' => 0]
+            ['balance' => 0, 'pending_amount' => 0, 'frozen_amount' => 0, 'advance_balance' => 0]
         );
 
-        return view('deliverer.wallet-modern', compact('wallet'));
+        // Récupérer les transactions récentes
+        $transactions = \App\Models\WalletTransaction::where('user_wallet_id', $wallet->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Calculer le montant collecté aujourd'hui (COD)
+        $todayCollected = \App\Models\Package::where('assigned_deliverer_id', $user->id)
+            ->where('status', 'DELIVERED')
+            ->whereDate('delivered_at', today())
+            ->sum('cod_amount');
+
+        // Nombre total de transactions
+        $transactionCount = \App\Models\WalletTransaction::where('user_wallet_id', $wallet->id)->count();
+
+        return view('deliverer.wallet-modern', compact('wallet', 'transactions', 'todayCollected', 'transactionCount'));
     }
 
     /**

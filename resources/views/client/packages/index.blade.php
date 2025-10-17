@@ -33,7 +33,23 @@
                 </svg>
                 <span class="font-medium">Rapide</span>
             </a>
+            <a href="{{ route('client.packages.import.csv') }}" 
+               class="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg touch-active transition-smooth shadow-md text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <span class="font-medium">Import CSV</span>
+            </a>
         </div>
+        
+        <!-- Template Download Button -->
+        <a href="{{ route('client.packages.import.template') }}" 
+           class="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-2 border-purple-300 rounded-lg hover:from-purple-200 hover:to-pink-200 touch-active transition-smooth text-sm font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span>📥 Télécharger le Template CSV</span>
+        </a>
     </div>
 
     <!-- Desktop Header -->
@@ -58,6 +74,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                         <span class="font-medium">Création Rapide</span>
+                    </a>
+                    <a href="{{ route('client.packages.import.csv') }}" 
+                       class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-smooth shadow-md text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span class="font-medium">Import CSV</span>
+                    </a>
+                    <a href="{{ route('client.packages.import.template') }}" 
+                       class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-smooth shadow-md text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span class="font-medium">Template CSV</span>
                     </a>
                 </div>
             </div>
