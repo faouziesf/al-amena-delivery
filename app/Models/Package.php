@@ -11,17 +11,28 @@ class Package extends Model
 {
     use HasFactory;
 
+    // Constantes pour les types de colis
+    const TYPE_NORMAL = 'NORMAL';
+    const TYPE_RETURN = 'RETURN';
+    const TYPE_PAYMENT = 'PAYMENT';
+    const TYPE_EXCHANGE = 'EXCHANGE';
+
     protected $fillable = [
-        'package_code', 'sender_id', 'sender_data', 'delegation_from',
+        'package_code', 
+        'package_type',            // Type de colis (NORMAL, RETURN, PAYMENT, EXCHANGE)
+        'sender_id', 'sender_data', 'delegation_from',
         'recipient_data', 'delegation_to', 'content_description', 'notes',
         'cod_amount', 'delivery_fee', 'return_fee', 'status',
         'assigned_deliverer_id', 'assigned_at', 'delivery_attempts',
         'cod_modifiable_by_commercial', 'amount_in_escrow',
-        'supplier_data',           // JSON des données fournisseur
-        'pickup_delegation_id',    // Délégation de pickup
-        'pickup_address',          // Adresse complète de pickup
-        'pickup_phone',            // Téléphone de contact pickup
-        'pickup_notes',            // Notes spéciales pour le pickup
+        // Colonnes pour colis de RETOUR
+        'return_package_code',     // Code RET-XXXXXXXX
+        'original_package_id',     // ID du colis original
+        'return_reason',           // Raison du retour
+        'return_notes',            // Notes de retour
+        'return_requested_at',     // Date demande retour
+        'return_accepted_at',      // Date acceptation retour
+        // Colonnes conservées
         'package_weight',          // Poids du colis (optionnel)
         'package_dimensions',      // Dimensions JSON (optionnel)
         'package_value',           // Valeur déclarée (optionnel)
@@ -46,19 +57,17 @@ class Package extends Model
         'advance_used_for_fees', // Montant payé depuis l'avance
         'balance_used_for_fees', // Montant payé depuis le solde
         'fee_payment_source',    // Source du paiement ('advance', 'balance', 'mixed')
-        // Nouveaux champs pour système de retours
+        // Champs système de retours
         'unavailable_attempts',
         'awaiting_return_since',
         'return_in_progress_since',
         'returned_to_client_at',
-        'return_reason',
-        'return_package_id',
+        // 'return_package_id', // OBSOLETE - supprimé car return_packages n'existe plus
     ];
 
     protected $casts = [
         'sender_data' => 'array',
         'recipient_data' => 'array',
-        'supplier_data' => 'array',
         'package_dimensions' => 'array',
         'cod_amount' => 'decimal:3',
         'delivery_fee' => 'decimal:3',
@@ -78,10 +87,12 @@ class Package extends Model
         'est_echange' => 'boolean',
         'advance_used_for_fees' => 'decimal:3',
         'balance_used_for_fees' => 'decimal:3',
-        // Nouveaux casts pour système de retours
+        // Casts pour système de retours
         'awaiting_return_since' => 'datetime',
         'return_in_progress_since' => 'datetime',
         'returned_to_client_at' => 'datetime',
+        'return_requested_at' => 'datetime',
+        'return_accepted_at' => 'datetime',
     ];
 
     // Relations
@@ -105,10 +116,13 @@ class Package extends Model
         return $this->belongsTo(User::class, 'assigned_deliverer_id');
     }
 
-    public function returnPackage()
+    public function paymentWithdrawal()
     {
-        return $this->belongsTo(ReturnPackage::class, 'return_package_id');
+        return $this->belongsTo(\App\Models\WithdrawalRequest::class, 'payment_withdrawal_id');
     }
+
+    // OBSOLETE - returnPackage() supprimé car return_packages n'existe plus
+    // Utiliser returnPackages() (hasMany via original_package_id)
 
     // Alias relationships for compatibility
     public function client()
@@ -135,6 +149,11 @@ class Package extends Model
     public function statusHistory()
     {
         return $this->hasMany(PackageStatusHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    public function statusHistories()
+    {
+        return $this->statusHistory();
     }
 
     public function withdrawalRequest()
@@ -577,5 +596,110 @@ class Package extends Model
                   ->groupBy('delegation_to')
                   ->orderBy('total', 'desc')
                   ->get();
+    }
+
+    // ==================== MÉTHODES POUR GESTION DES TYPES ====================
+
+    /**
+     * Vérifier si c'est un colis normal
+     */
+    public function isNormal(): bool
+    {
+        return $this->package_type === self::TYPE_NORMAL;
+    }
+
+    /**
+     * Vérifier si c'est un colis de retour
+     */
+    public function isReturn(): bool
+    {
+        return $this->package_type === self::TYPE_RETURN;
+    }
+
+    /**
+     * Vérifier si c'est un colis de paiement
+     */
+    public function isPayment(): bool
+    {
+        return $this->package_type === self::TYPE_PAYMENT;
+    }
+
+    /**
+     * Vérifier si c'est un colis d'échange
+     */
+    public function isExchange(): bool
+    {
+        return $this->package_type === self::TYPE_EXCHANGE;
+    }
+
+    /**
+     * Relation vers le colis original (pour les retours)
+     */
+    public function originalPackage()
+    {
+        return $this->belongsTo(Package::class, 'original_package_id');
+    }
+
+    /**
+     * Relation vers les colis de retour créés depuis ce colis
+     */
+    public function returnPackages()
+    {
+        return $this->hasMany(Package::class, 'original_package_id')
+                    ->where('package_type', self::TYPE_RETURN);
+    }
+
+    /**
+     * Obtenir le code de tracking principal (package_code ou return_package_code)
+     */
+    public function getTrackingCodeAttribute(): string
+    {
+        return $this->return_package_code ?? $this->package_code;
+    }
+
+    /**
+     * Obtenir le type de colis formaté
+     */
+    public function getTypeDisplayAttribute(): string
+    {
+        return match($this->package_type) {
+            self::TYPE_NORMAL => '📦 Colis Normal',
+            self::TYPE_RETURN => '↩️ Colis Retour',
+            self::TYPE_PAYMENT => '💰 Colis Paiement',
+            self::TYPE_EXCHANGE => '🔄 Colis Échange',
+            default => '📦 Colis'
+        };
+    }
+
+    /**
+     * Scope pour filtrer par type
+     */
+    public function scopeOfType($query, string $type)
+    {
+        return $query->where('package_type', $type);
+    }
+
+    /**
+     * Scope pour les colis normaux uniquement
+     */
+    public function scopeNormalOnly($query)
+    {
+        return $query->where('package_type', self::TYPE_NORMAL);
+    }
+
+    /**
+     * Scope pour les colis de retour uniquement
+     */
+    public function scopeReturnOnly($query)
+    {
+        return $query->where('package_type', self::TYPE_RETURN);
+    }
+
+    /**
+     * Scope pour les colis de paiement uniquement
+     */
+    public function scopePaymentOnly($query)
+    {
+        return $query->where('package_type', self::TYPE_PAYMENT);
     }
 }

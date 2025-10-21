@@ -13,6 +13,10 @@ class Kernel extends ConsoleKernel
         Commands\Commercial\RecoverPendingTransactions::class,
         Commands\Commercial\GenerateDailyReport::class,
         Commands\FinancialAutomation::class,
+        Commands\AutoChangeDeliveredToPaid::class,
+        Commands\AutoAssignPackagesToDeliverers::class,
+        Commands\DiagnosePickups::class,
+        Commands\FixPickupDelegations::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -138,6 +142,32 @@ class Kernel extends ConsoleKernel
             })
             ->onFailure(function () {
                 \Log::error('Échec du job ProcessReturnedPackagesJob');
+            });
+
+        // === AUTOMATISATION COLIS ===
+
+        // Changer DELIVERED → PAID automatiquement à 20:00
+        $schedule->command('auto:delivered-to-paid')
+            ->dailyAt('20:00')
+            ->name('auto-delivered-to-paid')
+            ->runInBackground()
+            ->onSuccess(function () {
+                \Log::info('Changement auto DELIVERED→PAID exécuté avec succès');
+            })
+            ->onFailure(function () {
+                \Log::error('Échec du changement auto DELIVERED→PAID');
+            });
+
+        // Assigner automatiquement les colis aux livreurs - toutes les 30 minutes
+        $schedule->command('auto:assign-packages')
+            ->everyThirtyMinutes()
+            ->name('auto-assign-packages')
+            ->runInBackground()
+            ->onSuccess(function () {
+                \Log::info('Assignation auto colis exécutée avec succès');
+            })
+            ->onFailure(function () {
+                \Log::error('Échec assignation auto colis');
             });
     }
 

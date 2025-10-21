@@ -31,9 +31,8 @@
                 <div class="flex items-center space-x-4">
                     <!-- Actions rapides -->
                     @if(!$ticket->isResolved() && !$ticket->isClosed())
-                        <form action="{{ route('commercial.tickets.update-status', $ticket) }}" method="POST" class="inline">
+                        <form action="{{ route('commercial.tickets.update-status', $ticket) }}" method="POST" class="inline w-full">
                             @csrf
-                            @method('PUT')
                             <input type="hidden" name="status" value="RESOLVED">
                             <button type="submit" class="flex items-center space-x-1 px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -283,7 +282,6 @@
                                     @if(!$ticket->isResolved() && !$ticket->isClosed())
                                         <form action="{{ route('commercial.tickets.update-status', $ticket) }}" method="POST" class="inline w-full">
                                             @csrf
-                                            @method('PUT')
                                             <input type="hidden" name="status" value="RESOLVED">
                                             <button type="submit" class="w-full flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors duration-200 shadow-sm">
                                                 <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -297,7 +295,6 @@
                                     @if($ticket->priority !== 'HIGH')
                                         <form action="{{ route('commercial.tickets.update-priority', $ticket) }}" method="POST" class="inline w-full">
                                             @csrf
-                                            @method('PUT')
                                             <input type="hidden" name="priority" value="HIGH">
                                             <button type="submit" class="w-full flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors duration-200 shadow-sm">
                                                 <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">

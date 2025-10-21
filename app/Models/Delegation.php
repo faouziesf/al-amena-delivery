@@ -34,6 +34,12 @@ class Delegation extends Model
         return $query->where('zone', $zone);
     }
 
+    // Accessors
+    public function getGovernorateAttribute()
+    {
+        return $this->zone;
+    }
+
     // Helper methods
     public function isActive()
     {

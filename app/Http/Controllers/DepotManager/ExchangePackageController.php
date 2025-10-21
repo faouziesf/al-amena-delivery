@@ -27,13 +27,18 @@ class ExchangePackageController extends Controller
             $gouvernorats = [];
         }
         
+        // Normaliser les gouvernorats (UPPERCASE + underscores)
+        $gouvernorats = array_map(function($gov) {
+            return strtoupper(str_replace(' ', '_', trim($gov)));
+        }, $gouvernorats);
+        
         // Récupérer les colis échanges livrés dans les gouvernorats du chef dépôt
         $exchangePackages = Package::where('est_echange', true)
             ->where('status', 'DELIVERED')
             ->whereNull('return_package_id') // Pas encore traité
             ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
                 return $q->whereHas('delegationTo', function($subQ) use ($gouvernorats) {
-                    $subQ->whereIn('governorate', $gouvernorats);
+                    $subQ->whereIn('zone', $gouvernorats);  // Utiliser 'zone' au lieu de 'governorate'
                 });
             })
             ->with(['sender', 'delegationFrom', 'delegationTo', 'assignedDeliverer'])
@@ -112,12 +117,17 @@ class ExchangePackageController extends Controller
             $gouvernorats = [];
         }
         
+        // Normaliser les gouvernorats (UPPERCASE + underscores)
+        $gouvernorats = array_map(function($gov) {
+            return strtoupper(str_replace(' ', '_', trim($gov)));
+        }, $gouvernorats);
+        
         $processedExchanges = Package::where('est_echange', true)
             ->where('status', 'DELIVERED')
             ->whereNotNull('return_package_id') // Déjà traité
             ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
                 return $q->whereHas('delegationTo', function($subQ) use ($gouvernorats) {
-                    $subQ->whereIn('governorate', $gouvernorats);
+                    $subQ->whereIn('zone', $gouvernorats);  // Utiliser 'zone' au lieu de 'governorate'
                 });
             })
             ->with(['sender', 'returnPackage'])

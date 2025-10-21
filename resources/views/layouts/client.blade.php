@@ -154,10 +154,22 @@
         }
     </style>
 </head>
+@php
+    $wallet = Auth::user()->wallet;
+    $balance = $wallet->balance ?? 0;
+    $frozen = $wallet->frozen_amount ?? 0;
+    $advance = $wallet->advance_balance ?? 0;
+    $netBalance = $balance - $frozen + $advance;
+    $isNegativeOrZero = $netBalance <= 0;
+@endphp
 <body x-data="{ 
     sidebarOpen: false, 
     currentRoute: '{{ Route::currentRouteName() }}',
-    userBalance: {{ Auth::user()->wallet->balance ?? 0 }},
+    userBalance: {{ $balance }},
+    frozenAmount: {{ $frozen }},
+    advanceBalance: {{ $advance }},
+    netBalance: {{ $netBalance }},
+    isNegativeOrZero: {{ $isNegativeOrZero ? 'true' : 'false' }},
     userName: '{{ Auth::user()->name }}',
     userEmail: '{{ Auth::user()->email }}',
     userInitial: '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}'
@@ -182,12 +194,13 @@
 
             <!-- Wallet Balance -->
             <a href="{{ route('client.wallet.index') }}" 
-               class="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 rounded-full border border-green-200 touch-active transition-smooth">
-                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="flex items-center space-x-2 px-3 py-2 rounded-xl border transition-smooth"
+               :class="isNegativeOrZero ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200 hover:from-red-100 hover:to-rose-100' : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100'">
+                <svg class="w-4 h-4" :class="isNegativeOrZero ? 'text-red-600' : 'text-green-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span class="text-sm font-bold text-green-700" x-text="userBalance.toFixed(3)"></span>
-                <span class="text-xs text-green-600">DT</span>
+                <span class="text-sm font-bold" :class="isNegativeOrZero ? 'text-red-700' : 'text-green-700'" x-text="netBalance.toFixed(3)"></span>
+                <span class="text-xs" :class="isNegativeOrZero ? 'text-red-600' : 'text-green-600'">DT</span>
             </a>
         </div>
     </header>
@@ -278,11 +291,12 @@
                 </div>
             </div>
             <a href="{{ route('client.wallet.index') }}" 
-               class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 border border-green-200 transition-smooth">
-                <span class="text-sm font-medium text-gray-700">Solde</span>
+               class="flex items-center justify-between p-3 rounded-xl border transition-smooth"
+               :class="isNegativeOrZero ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200 hover:from-red-100 hover:to-rose-100' : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100'">
+                <span class="text-sm font-medium text-gray-700">Solde Net</span>
                 <div class="flex items-center space-x-1">
-                    <span class="text-lg font-bold text-green-600" x-text="userBalance.toFixed(3)"></span>
-                    <span class="text-xs text-green-600">DT</span>
+                    <span class="text-lg font-bold" :class="isNegativeOrZero ? 'text-red-600' : 'text-green-600'" x-text="netBalance.toFixed(3)"></span>
+                    <span class="text-xs" :class="isNegativeOrZero ? 'text-red-600' : 'text-green-600'">DT</span>
                 </div>
             </a>
         </div>

@@ -55,12 +55,15 @@ class ClientPackageController extends Controller
      */
     private function getPackageStats($user)
     {
+        // Exclure les colis RETURN et PAYMENT des statistiques
+        $baseQuery = $user->sentPackages()->whereNotIn('package_type', ['RETURN', 'PAYMENT']);
+        
         return [
-            'total' => $user->sentPackages()->count(),
-            'pending' => $user->sentPackages()->where('status', 'AVAILABLE')->count(),
-            'in_progress' => $user->sentPackages()->whereIn('status', ['CREATED', 'ACCEPTED', 'PICKED_UP'])->count(),
-            'delivered' => $user->sentPackages()->whereIn('status', ['DELIVERED', 'PAID'])->count(),
-            'returned' => $user->sentPackages()->where('status', 'RETURNED')->count(),
+            'total' => $baseQuery->count(),
+            'pending' => (clone $baseQuery)->where('status', 'AVAILABLE')->count(),
+            'in_progress' => (clone $baseQuery)->whereIn('status', ['CREATED', 'ACCEPTED', 'PICKED_UP'])->count(),
+            'delivered' => (clone $baseQuery)->whereIn('status', ['DELIVERED', 'PAID'])->count(),
+            'returned' => (clone $baseQuery)->where('status', 'RETURNED')->count(),
         ];
     }
 
@@ -70,7 +73,9 @@ class ClientPackageController extends Controller
     private function getPackagesByTab($user, $tab, $request)
     {
         $query = Package::where('sender_id', $user->id)
-            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress']);
+            ->with(['delegationFrom', 'delegationTo', 'assignedDeliverer', 'pickupAddress'])
+            // IMPORTANT: Exclure les colis RETURN et PAYMENT (ce sont des colis virtuels internes)
+            ->whereNotIn('package_type', ['RETURN', 'PAYMENT']);
 
         // Filtrer par onglet
         switch ($tab) {

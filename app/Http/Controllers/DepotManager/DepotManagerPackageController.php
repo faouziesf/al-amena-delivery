@@ -1181,13 +1181,32 @@ class DepotManagerPackageController extends Controller
 
         $delegationFrom = $package->delegationFrom->name ?? 'N/A';
         $delegationTo = $package->delegationTo->name ?? 'N/A';
+        
+        // Si c'est un colis de paiement, récupérer les infos du withdrawal
+        $withdrawalInfo = null;
+        if ($package->payment_withdrawal_id) {
+            $withdrawal = \App\Models\WithdrawalRequest::find($package->payment_withdrawal_id);
+            if ($withdrawal) {
+                $withdrawalInfo = [
+                    'request_code' => $withdrawal->request_code,
+                    'amount' => $withdrawal->amount,
+                    'method' => $withdrawal->method,
+                    'method_display' => $withdrawal->method_display,
+                    'delivery_address' => $withdrawal->delivery_address ?? $recipientData['address'],
+                    'delivery_phone' => $withdrawal->delivery_phone ?? $recipientData['phone'],
+                    'delivery_city' => $withdrawal->delivery_city ?? $recipientData['city'],
+                    'notes' => $withdrawal->notes,
+                ];
+            }
+        }
 
         return view('depot-manager.packages.delivery-receipt', compact(
             'package',
             'recipientData',
             'senderData',
             'delegationFrom',
-            'delegationTo'
+            'delegationTo',
+            'withdrawalInfo'
         ));
     }
 

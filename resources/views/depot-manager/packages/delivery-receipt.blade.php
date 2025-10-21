@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bon de Livraison - {{ $package->package_code }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         @page {
             size: A4;
@@ -159,6 +161,41 @@
         .print-button:hover {
             background-color: #047857;
         }
+        
+        /* Styles pour codes-barres et QR code */
+        .codes-section {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 15px 0;
+            gap: 20px;
+        }
+        .code-item {
+            text-align: center;
+            flex: 1;
+        }
+        .code-label {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        #barcode {
+            max-width: 100%;
+            height: auto;
+        }
+        #qrcode {
+            display: inline-block;
+        }
+        #qrcode img {
+            width: 120px !important;
+            height: 120px !important;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -171,6 +208,18 @@
             <div>Service de Livraison Express</div>
             <div class="receipt-title">BON DE LIVRAISON</div>
             <div class="package-code">{{ $package->package_code }}</div>
+        </div>
+
+        <!-- Code-Barres et QR Code -->
+        <div class="codes-section">
+            <div class="code-item">
+                <svg id="barcode"></svg>
+                <div class="code-label">CODE-BARRES</div>
+            </div>
+            <div class="code-item">
+                <div id="qrcode"></div>
+                <div class="code-label">QR CODE</div>
+            </div>
         </div>
 
         <!-- Layout en grille pour optimiser l'espace -->
@@ -217,8 +266,35 @@
                 </div>
             </div>
 
-            <!-- Montant COD -->
-            @if($package->cod_amount > 0)
+            <!-- Informations Paiement (si colis de paiement) -->
+            @if($withdrawalInfo)
+            <div class="cod-section" style="background-color: #fef3c7; border-color: #f59e0b;">
+                <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #92400e;">
+                    💰 COLIS DE PAIEMENT
+                </div>
+                <div style="font-size: 20px; font-weight: bold; color: #92400e; margin-bottom: 10px;">
+                    {{ number_format($withdrawalInfo['amount'], 3) }} DT
+                </div>
+                <div style="font-size: 11px; line-height: 1.6; text-align: left;">
+                    <div><strong>📋 Code demande :</strong> {{ $withdrawalInfo['request_code'] }}</div>
+                    <div><strong>📦 Méthode :</strong> {{ $withdrawalInfo['method_display'] }}</div>
+                    @if($withdrawalInfo['delivery_address'])
+                    <div><strong>📍 Adresse livraison :</strong> {{ $withdrawalInfo['delivery_address'] }}</div>
+                    @endif
+                    @if($withdrawalInfo['delivery_phone'])
+                    <div><strong>📞 Téléphone livraison :</strong> {{ $withdrawalInfo['delivery_phone'] }}</div>
+                    @endif
+                    @if($withdrawalInfo['notes'])
+                    <div style="margin-top: 5px;"><strong>📝 Notes :</strong> {{ $withdrawalInfo['notes'] }}</div>
+                    @endif
+                </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #92400e; background-color: #fde68a; padding: 5px; border-radius: 3px;">
+                    ⚠️ <strong>IMPORTANT :</strong> Remettre l'enveloppe au client avec signature obligatoire
+                </div>
+            </div>
+            
+            <!-- Montant COD (si applicable) -->
+            @elseif($package->cod_amount > 0)
             <div class="cod-section">
                 <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">
                     💰 MONTANT À PERCEVOIR
@@ -287,5 +363,37 @@
             <div>Document généré le {{ now()->format('d/m/Y à H:i') }}</div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const packageCode = "{{ $package->package_code }}";
+
+            // Générer le code-barres
+            try {
+                JsBarcode("#barcode", packageCode, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 60,
+                    displayValue: true,
+                    fontSize: 14,
+                    margin: 10
+                });
+            } catch (e) {
+                console.error("Erreur de génération du code-barres:", e);
+                document.getElementById('barcode').outerHTML = '<div style="padding: 20px; text-align: center;">' + packageCode + '</div>';
+            }
+
+            // Générer le QR Code
+            try {
+                const qr = qrcode(0, 'M');
+                qr.addData(packageCode);
+                qr.make();
+                document.getElementById('qrcode').innerHTML = qr.createImgTag(4, 8);
+            } catch (e) {
+                console.error("Erreur de génération du QR Code:", e);
+                document.getElementById('qrcode').innerHTML = '<div style="padding: 20px; text-align: center; font-size: 10px;">' + packageCode + '</div>';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -313,6 +313,9 @@ class SimpleDelivererController extends Controller
                 ->with('success', 'Colis trouvé et assigné !');
         }
 
+        // Les colis de retour et de paiement sont maintenant dans la table packages
+        // Donc ils sont déjà gérés par findPackageByCode() ci-dessus
+
         // Rechercher pickup
         $pickup = PickupRequest::where('pickup_code', $code)->first();
         if ($pickup) {
@@ -636,21 +639,13 @@ class SimpleDelivererController extends Controller
         // Rechercher avec TOUTES les variantes (EXACTEMENT comme chef dépôt)
         foreach ($searchVariants as $variant) {
             $package = DB::table('packages')
-                ->where('package_code', $variant)
+                ->where(function($query) use ($variant) {
+                    $query->where('package_code', $variant)
+                          ->orWhere('return_package_code', $variant)
+                          ->orWhere('tracking_number', $variant);
+                })
                 ->whereIn('status', $acceptedStatuses)
-                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
-                ->first();
-            
-            if ($package) {
-                // Convertir en modèle Eloquent
-                return Package::find($package->id);
-            }
-            
-            // Chercher aussi par tracking_number
-            $package = DB::table('packages')
-                ->where('tracking_number', $variant)
-                ->whereIn('status', $acceptedStatuses)
-                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->select('id', 'package_code', 'return_package_code', 'package_type', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
                 ->first();
             
             if ($package) {
@@ -663,20 +658,13 @@ class SimpleDelivererController extends Controller
         $cleanForLike = str_replace(['_', '-', ' '], '', $cleanCode);
         if (strlen($cleanForLike) >= 6) {
             $package = DB::table('packages')
-                ->whereRaw('REPLACE(REPLACE(REPLACE(UPPER(package_code), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
+                ->where(function($query) use ($cleanForLike) {
+                    $query->whereRaw('REPLACE(REPLACE(REPLACE(UPPER(package_code), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
+                          ->orWhereRaw('REPLACE(REPLACE(REPLACE(UPPER(return_package_code), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
+                          ->orWhereRaw('REPLACE(REPLACE(REPLACE(UPPER(tracking_number), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike]);
+                })
                 ->whereIn('status', $acceptedStatuses)
-                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
-                ->first();
-            
-            if ($package) {
-                return Package::find($package->id);
-            }
-            
-            // Essayer aussi avec tracking_number
-            $package = DB::table('packages')
-                ->whereRaw('REPLACE(REPLACE(REPLACE(UPPER(tracking_number), "_", ""), "-", ""), " ", "") = ?', [$cleanForLike])
-                ->whereIn('status', $acceptedStatuses)
-                ->select('id', 'package_code', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
+                ->select('id', 'package_code', 'return_package_code', 'package_type', 'status', 'tracking_number', 'assigned_deliverer_id', 'cod_amount')
                 ->first();
             
             if ($package) {
@@ -1427,11 +1415,16 @@ class SimpleDelivererController extends Controller
                 $gouvernorats = [];
             }
             
-            $pickups = PickupRequest::where('status', 'pending')
-                ->where('assigned_deliverer_id', null)
+            // Normaliser les gouvernorats (UPPERCASE + underscores)
+            $gouvernorats = array_map(function($gov) {
+                return strtoupper(str_replace(' ', '_', trim($gov)));
+            }, $gouvernorats);
+            
+            $pickups = PickupRequest::whereIn('status', ['pending', 'awaiting_assignment'])
+                ->whereNull('assigned_deliverer_id')
                 ->when(!empty($gouvernorats), function($q) use ($gouvernorats) {
                     return $q->whereHas('delegation', function($subQ) use ($gouvernorats) {
-                        $subQ->whereIn('governorate', $gouvernorats);
+                        $subQ->whereIn('zone', $gouvernorats);  // Utiliser 'zone' au lieu de 'governorate'
                     });
                 })
                 ->with(['delegation', 'client'])

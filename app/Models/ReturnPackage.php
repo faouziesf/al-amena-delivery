@@ -3,43 +3,58 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ReturnPackage extends Model
+/**
+ * Alias/Wrapper pour les colis de retour
+ * Pointe vers la table packages avec package_type = 'RETURN'
+ * Pour compatibilité avec l'ancien code
+ */
+class ReturnPackage extends Package
 {
-    use HasFactory, SoftDeletes;
-
+    use HasFactory;
+    
+    // Utiliser la même table que Package
+    protected $table = 'packages';
+    
+    /**
+     * Scope global pour filtrer uniquement les retours
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::addGlobalScope('return_only', function ($builder) {
+            $builder->where('package_type', Package::TYPE_RETURN);
+        });
+        
+        // Lors de la création, définir automatiquement le type
+        static::creating(function ($model) {
+            $model->package_type = Package::TYPE_RETURN;
+        });
+    }
+    
+    // Mapping des anciens champs vers les nouveaux
     protected $fillable = [
-        'original_package_id',
+        'package_code',
         'return_package_code',
-        'cod',
-        'status',
-        'sender_info',
-        'recipient_info',
+        'original_package_id',
+        'sender_id',
+        'sender_data', // Remplace sender_info
+        'recipient_data', // Remplace recipient_info
+        'delegation_from',
+        'delegation_to',
         'return_reason',
-        'comment',
-        'created_by',
-        'printed_at',
-        'delivered_at',
+        'notes', // Remplace comment
+        'cod_amount', // Remplace cod
+        'status',
         'assigned_deliverer_id',
-    ];
-
-    protected $casts = [
-        'sender_info' => 'array',
-        'recipient_info' => 'array',
-        'printed_at' => 'datetime',
-        'delivered_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'delivered_at',
     ];
 
     /**
      * Relations
      */
-
     public function originalPackage(): BelongsTo
     {
         return $this->belongsTo(Package::class, 'original_package_id');
@@ -47,7 +62,7 @@ class ReturnPackage extends Model
 
     public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'sender_id'); // sender_id = created_by
     }
 
     public function assignedDeliverer(): BelongsTo

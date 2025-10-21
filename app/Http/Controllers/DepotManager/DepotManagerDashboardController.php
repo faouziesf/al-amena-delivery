@@ -98,6 +98,69 @@ class DepotManagerDashboardController extends Controller
         $stats = $user->getDepotStats();
         $stats['depot_wallet_balance'] = $user->depot_wallet_balance ?? 0;
 
+        // Récupérer les gouvernorats assignés au chef de dépôt
+        $assignedGouvernorats = $user->assigned_gouvernorats_array ?? [];
+
+        // Récupérer les IDs de délégations correspondant aux gouvernorats
+        $delegationIds = [];
+        if (!empty($assignedGouvernorats)) {
+            $delegationIds = \App\Models\Delegation::whereIn('gouvernorat', $assignedGouvernorats)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // Charger les paiements en espèce à préparer
+        $paymentsQuery = \App\Models\WithdrawalRequest::with([
+            'client' => function($q) {
+                $q->select('id', 'name', 'email', 'phone', 'address', 'city', 'delegation_id', 'assigned_delegation');
+            }
+        ])
+        ->whereIn('method', ['CASH_DELIVERY', 'CASH', 'COD'])
+        ->whereIn('status', ['PENDING', 'APPROVED', 'READY_FOR_DELIVERY']);
+
+        // Filtrer par délégation si des gouvernorats sont assignés
+        if (!empty($delegationIds)) {
+            $paymentsQuery->where(function($q) use ($delegationIds) {
+                // Paiements dont le client a une délégation dans les gouvernorats gérés
+                $q->whereHas('client', function($clientQuery) use ($delegationIds) {
+                    $clientQuery->whereIn('delegation_id', $delegationIds)
+                        ->orWhereIn('assigned_delegation', $delegationIds);
+                })
+                // OU paiements dont le client a des colis vers ces délégations
+                ->orWhereHas('client', function($clientQuery) use ($delegationIds) {
+                    $clientQuery->whereHas('sentPackages', function($packageQuery) use ($delegationIds) {
+                        $packageQuery->whereIn('delegation_to', $delegationIds);
+                    });
+                });
+            });
+        }
+
+        $payments = $paymentsQuery->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'request_code' => $payment->request_code,
+                    'amount' => $payment->amount,
+                    'status' => $payment->status,
+                    'method' => $payment->method,
+                    'created_at' => $payment->created_at->toDateTimeString(),
+                    'created_at_formatted' => $payment->created_at->format('d/m/Y H:i'),
+                    'client' => $payment->client ? [
+                        'id' => $payment->client->id,
+                        'name' => $payment->client->name,
+                        'phone' => $payment->client->phone,
+                        'email' => $payment->client->email,
+                        'address' => $payment->client->address,
+                        'city' => $payment->client->city,
+                    ] : null,
+                    'assigned_package' => $payment->assignedPackage ? [
+                        'id' => $payment->assignedPackage->id,
+                        'package_code' => $payment->assignedPackage->package_code,
+                    ] : null,
+                ];
+            });
+
         return response()->json([
             'success' => true,
             'stats' => $stats,
@@ -106,6 +169,7 @@ class DepotManagerDashboardController extends Controller
                 'address' => $user->depot_address,
                 'gouvernorats' => $user->assigned_gouvernorats
             ],
+            'payments_to_prep' => $payments,
             'updated_at' => now()->format('H:i:s')
         ]);
     }

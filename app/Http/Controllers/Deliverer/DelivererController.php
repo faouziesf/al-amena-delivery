@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\PickupRequest;
 use App\Models\ReturnPackage;
+use App\Models\Transaction;
 use App\Models\WithdrawalRequest;
 use App\Models\UserWallet;
 use App\Models\Delegation;
@@ -79,8 +80,10 @@ class DelivererController extends Controller
         // 1. LIVRAISONS STANDARD 🚚
         $deliveries = Package::where('assigned_deliverer_id', $user->id)
             ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'PICKED_UP', 'OUT_FOR_DELIVERY'])
-            ->whereNull('return_package_id') // Exclure les colis de retour
-            ->whereNull('payment_withdrawal_id') // Exclure les colis de paiement
+            ->where(function($q) {
+                $q->whereNull('package_type')
+                  ->orWhere('package_type', Package::TYPE_NORMAL);
+            })
             ->with(['delegationTo', 'sender'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -107,7 +110,7 @@ class DelivererController extends Controller
 
         // 2. RAMASSAGES (PICKUPS) 📦
         $pickups = PickupRequest::where('assigned_deliverer_id', $user->id)
-            ->whereIn('status', ['assigned', 'pending'])
+            ->whereIn('status', ['assigned', 'awaiting_pickup', 'in_progress'])
             ->with(['delegation', 'client'])
             ->orderBy('requested_pickup_date', 'asc')
             ->get();
@@ -133,21 +136,22 @@ class DelivererController extends Controller
             ]);
         }
 
-        // 3. RETOURS FOURNISSEUR ↩️
-        $returns = ReturnPackage::where('assigned_deliverer_id', $user->id)
-            ->whereIn('status', ['AT_DEPOT', 'ASSIGNED'])
+        // 3. RETOURS FOURNISSEUR ↩️ (depuis table packages)
+        $returns = Package::where('assigned_deliverer_id', $user->id)
+            ->where('package_type', Package::TYPE_RETURN)
+            ->whereIn('status', ['AT_DEPOT', 'ASSIGNED', 'AVAILABLE', 'ACCEPTED', 'OUT_FOR_DELIVERY'])
             ->with(['originalPackage.delegationFrom'])
             ->get();
 
         foreach ($returns as $returnPkg) {
-            $recipientInfo = $returnPkg->recipient_info ?? [];
+            $recipientInfo = $returnPkg->recipient_data ?? [];
             
             $tasks->push([
-                'id' => 'return_' . $returnPkg->id,
+                'id' => $returnPkg->id,
                 'type' => 'retour',
                 'icon' => '↩️',
                 'priority' => 7,
-                'package_code' => $returnPkg->return_package_code,
+                'package_code' => $returnPkg->return_package_code ?? $returnPkg->package_code,
                 'recipient_name' => $recipientInfo['name'] ?? 'Fournisseur',
                 'recipient_address' => $recipientInfo['address'] ?? 'N/A',
                 'recipient_phone' => $recipientInfo['phone'] ?? 'N/A',
@@ -156,41 +160,41 @@ class DelivererController extends Controller
                 'est_echange' => false,
                 'requires_signature' => true, // OBLIGATOIRE pour retours
                 'date' => $returnPkg->created_at,
-                'delegation' => $returnPkg->originalPackage->delegationFrom->name ?? 'N/A',
+                'delegation' => $returnPkg->originalPackage?->delegationFrom?->name ?? 'N/A',
                 'return_reason' => $returnPkg->return_reason,
                 'model' => $returnPkg
             ]);
         }
 
-        // 4. PAIEMENTS ESPÈCE 💰
-        $payments = WithdrawalRequest::where('assigned_deliverer_id', $user->id)
-            ->where('method', 'CASH_DELIVERY')
-            ->where('status', 'APPROVED')
-            ->whereNull('delivered_at')
-            ->with(['client', 'assignedPackage'])
+        // 4. PAIEMENTS ESPÈCE 💰 (depuis table packages)
+        $payments = Package::where('assigned_deliverer_id', $user->id)
+            ->where('package_type', Package::TYPE_PAYMENT)
+            ->whereIn('status', ['AVAILABLE', 'ACCEPTED', 'OUT_FOR_DELIVERY'])
+            ->with(['paymentWithdrawal.client'])
             ->get();
 
-        foreach ($payments as $payment) {
-            $clientInfo = $payment->bank_details ?? [];
+        foreach ($payments as $paymentPkg) {
+            $withdrawal = $paymentPkg->paymentWithdrawal;
+            $recipientInfo = $paymentPkg->recipient_data ?? [];
             
             $tasks->push([
-                'id' => 'payment_' . $payment->id,
+                'id' => $paymentPkg->id,
                 'type' => 'paiement',
                 'icon' => '💰',
                 'priority' => 9,
-                'package_code' => $payment->delivery_receipt_code ?? 'PAY-' . $payment->id,
-                'recipient_name' => $payment->client->name ?? 'Client',
-                'recipient_address' => $clientInfo['address'] ?? $payment->client->address ?? 'N/A',
-                'recipient_phone' => $payment->client->phone ?? 'N/A',
+                'package_code' => $paymentPkg->package_code,
+                'recipient_name' => $recipientInfo['name'] ?? 'Client',
+                'recipient_address' => $recipientInfo['address'] ?? 'N/A',
+                'recipient_phone' => $recipientInfo['phone'] ?? 'N/A',
                 'cod_amount' => 0, // Toujours 0 (c'est un paiement sortant)
-                'payment_amount' => $payment->amount,
-                'status' => 'PENDING',
+                'payment_amount' => $withdrawal->amount ?? 0,
+                'status' => $paymentPkg->status,
                 'est_echange' => false,
                 'requires_signature' => true, // OBLIGATOIRE pour paiements
-                'date' => $payment->created_at,
-                'delegation' => 'N/A',
-                'withdrawal_id' => $payment->id,
-                'model' => $payment
+                'date' => $paymentPkg->created_at,
+                'delegation' => $paymentPkg->delegationTo?->name ?? 'N/A',
+                'withdrawal_id' => $withdrawal->id ?? null,
+                'model' => $paymentPkg
             ]);
         }
 
@@ -286,8 +290,9 @@ class DelivererController extends Controller
             ['balance' => 0, 'pending_amount' => 0, 'frozen_amount' => 0, 'advance_balance' => 0]
         );
 
-        // Récupérer les transactions récentes
-        $transactions = \App\Models\WalletTransaction::where('user_wallet_id', $wallet->id)
+        // Récupérer les transactions récentes (utiliser Transaction à la place)
+        $transactions = \App\Models\Transaction::where('user_id', $user->id)
+            ->whereIn('type', ['CREDIT', 'DEBIT', 'PAYMENT'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -299,7 +304,9 @@ class DelivererController extends Controller
             ->sum('cod_amount');
 
         // Nombre total de transactions
-        $transactionCount = \App\Models\WalletTransaction::where('user_wallet_id', $wallet->id)->count();
+        $transactionCount = \App\Models\Transaction::where('user_id', $user->id)
+            ->whereIn('type', ['CREDIT', 'DEBIT', 'PAYMENT'])
+            ->count();
 
         return view('deliverer.wallet-modern', compact('wallet', 'transactions', 'todayCollected', 'transactionCount'));
     }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Depot;
 
 use App\Http\Controllers\Controller;
 use App\Models\Package;
-use App\Models\ReturnPackage;
+// ReturnPackage model n'existe plus - tout est dans Package maintenant
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -342,27 +342,38 @@ class DepotReturnScanController extends Controller
                     continue;
                 }
 
-                // Créer le colis retour
-                $returnPackage = ReturnPackage::create([
+                // Générer le code retour
+                $returnCode = 'RET-' . strtoupper(substr(str_replace('-', '', \Illuminate\Support\Str::uuid()), 0, 8));
+                
+                // Créer le colis retour dans la table packages (nouvelle structure)
+                $returnPackage = Package::create([
+                    'package_code' => $returnCode,
+                    'package_type' => Package::TYPE_RETURN, // Type RETURN
+                    'return_package_code' => $returnCode,
                     'original_package_id' => $originalPackage->id,
-                    'return_package_code' => ReturnPackage::generateReturnCode(),
-                    'cod' => 0, // Pas de COD sur les retours
-                    'status' => 'AT_DEPOT',
-                    'sender_info' => ReturnPackage::getCompanyInfo(),
-                    'recipient_info' => [
+                    'sender_id' => auth()->id(), // Chef de dépôt
+                    'sender_data' => [
+                        'name' => 'AL-AMENA DELIVERY',
+                        'phone' => '+216 50 127 192',
+                        'address' => 'Dépôt Principal',
+                    ],
+                    'delegation_from' => $originalPackage->delegation_to, // Inversion
+                    'recipient_data' => [
                         'name' => $originalPackage->sender->name ?? 'Client',
                         'phone' => $originalPackage->sender->phone ?? '',
-                        'address' => $originalPackage->sender->address ?? '',
-                        'city' => $originalPackage->sender->city ?? '',
+                        'address' => $originalPackage->sender->address ?? $originalPackage->sender_data['address'] ?? '',
+                        'city' => $originalPackage->sender->city ?? $originalPackage->sender_data['city'] ?? '',
                     ],
-                    'return_reason' => $originalPackage->return_reason,
-                    'comment' => "Colis retour créé suite au scan dépôt",
-                    'created_by' => auth()->id(),
-                ]);
-
-                // Lier le colis retour au colis original
-                $originalPackage->update([
-                    'return_package_id' => $returnPackage->id,
+                    'delegation_to' => $originalPackage->delegation_from, // Inversion
+                    'content_description' => 'Colis de retour - ' . ($originalPackage->content_description ?? ''),
+                    'notes' => "Colis retour créé suite au scan dépôt",
+                    'return_reason' => $originalPackage->return_reason ?? 'Retour standard',
+                    'return_accepted_at' => now(),
+                    'cod_amount' => 0, // Pas de COD sur les retours
+                    'delivery_fee' => $originalPackage->return_fee ?? 0,
+                    'return_fee' => 0,
+                    'status' => 'AT_DEPOT',
+                    'requires_signature' => true,
                 ]);
 
                 $createdReturnPackages[] = [
@@ -435,7 +446,9 @@ class DepotReturnScanController extends Controller
      */
     public function manageReturns()
     {
-        $returnPackages = ReturnPackage::with(['originalPackage', 'createdBy', 'assignedDeliverer'])
+        // Utiliser Package avec filter sur package_type = 'RETURN'
+        $returnPackages = Package::where('package_type', Package::TYPE_RETURN)
+            ->with(['originalPackage', 'sender', 'assignedDeliverer'])
             ->latest()
             ->paginate(20);
 
@@ -447,9 +460,14 @@ class DepotReturnScanController extends Controller
     /**
      * Détails d'un colis retour
      */
-    public function showReturnPackage(ReturnPackage $returnPackage)
+    public function showReturnPackage(Package $returnPackage)
     {
-        $returnPackage->load(['originalPackage.sender', 'createdBy', 'assignedDeliverer']);
+        // Vérifier que c'est bien un retour
+        if ($returnPackage->package_type !== Package::TYPE_RETURN) {
+            abort(404, 'Colis de retour non trouvé');
+        }
+        
+        $returnPackage->load(['originalPackage.sender', 'sender', 'assignedDeliverer']);
 
         return view('depot.returns.show', [
             'returnPackage' => $returnPackage,
@@ -459,8 +477,13 @@ class DepotReturnScanController extends Controller
     /**
      * Imprimer le bordereau d'un colis retour
      */
-    public function printReturnLabel(ReturnPackage $returnPackage)
+    public function printReturnLabel(Package $returnPackage)
     {
+        // Vérifier que c'est bien un retour
+        if ($returnPackage->package_type !== Package::TYPE_RETURN) {
+            abort(404, 'Colis de retour non trouvé');
+        }
+        
         // Charger les relations nécessaires
         $returnPackage->load(['originalPackage.pickupAddress', 'originalPackage.sender']);
         
@@ -478,21 +501,22 @@ class DepotReturnScanController extends Controller
                 'postal_code' => $pickupAddress->postal_code ?? '',
             ];
         } elseif ($returnPackage->originalPackage) {
-            // Fallback vers les anciennes données de pickup du colis
+            // Fallback vers le sender_data du colis original
             $package = $returnPackage->originalPackage;
+            $senderData = $package->sender_data ?? [];
             $pickupInfo = [
-                'name' => $package->sender->name ?? 'N/A',
-                'contact_name' => $package->sender->name ?? 'N/A',
-                'phone' => $package->pickup_phone ?? $package->sender->phone ?? 'N/A',
+                'name' => $package->sender->name ?? $senderData['name'] ?? 'N/A',
+                'contact_name' => $package->sender->name ?? $senderData['name'] ?? 'N/A',
+                'phone' => $package->sender->phone ?? $senderData['phone'] ?? 'N/A',
                 'tel2' => '',
-                'address' => $package->pickup_address ?? 'N/A',
-                'city' => '',
+                'address' => $senderData['address'] ?? 'N/A',
+                'city' => $senderData['city'] ?? '',
                 'postal_code' => '',
             ];
         }
         
-        // Marquer comme imprimé
-        $returnPackage->markAsPrinted();
+        // Marquer comme imprimé (mettre à jour un champ si nécessaire)
+        // $returnPackage->update(['printed_at' => now()]);
 
         return view('depot.returns.print-label', [
             'returnPackage' => $returnPackage,

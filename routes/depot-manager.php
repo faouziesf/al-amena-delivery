@@ -3,7 +3,9 @@
 use App\Http\Controllers\DepotManager\DepotManagerDashboardController;
 use App\Http\Controllers\DepotManager\DepotManagerDelivererController;
 use App\Http\Controllers\DepotManager\DepotManagerPackageController;
+use App\Http\Controllers\DepotManager\DepotManagerNotificationController;
 use App\Http\Controllers\DepotManager\ExchangePackageController;
+use App\Http\Controllers\DepotManager\ExchangeController;
 use App\Http\Controllers\Api\PaymentDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -164,6 +166,9 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
         });
     });
 
+    // ==================== ROUTES PAIEMENTS ====================
+    Route::get('/payments/{withdrawal}/details', [PaymentDashboardController::class, 'showDetails'])->name('payments.details');
+    
     // ==================== API ROUTES PAIEMENTS ====================
     Route::prefix('api/payments')->name('api.payments.')->group(function () {
         Route::get('/dashboard', [PaymentDashboardController::class, 'depotDashboard'])->name('dashboard');
@@ -184,10 +189,28 @@ Route::middleware(['auth', 'verified', 'role:DEPOT_MANAGER'])->prefix('depot-man
 
     // ==================== GESTION COLIS ÉCHANGES ====================
     Route::prefix('exchanges')->name('exchanges.')->group(function() {
-        Route::get('/', [ExchangePackageController::class, 'index'])->name('index');
-        Route::post('/{package}/process', [ExchangePackageController::class, 'processExchange'])->name('process');
+        Route::get('/', [ExchangeController::class, 'index'])->name('index');
         Route::get('/history', [ExchangePackageController::class, 'history'])->name('history');
-        Route::get('/{returnPackage}/print', [ExchangePackageController::class, 'printReturnReceipt'])->name('print');
+        Route::post('/{package}/process', [ExchangePackageController::class, 'processExchange'])->name('process');
+        Route::post('/create-returns', [ExchangeController::class, 'createReturns'])->name('create-returns');
+        Route::get('/print-returns', [ExchangeController::class, 'printReturns'])->name('print-returns');
+        Route::get('/{exchange}/show', [ExchangeController::class, 'show'])->name('show');
+        Route::get('/return-receipt/{returnPackage}', [ExchangePackageController::class, 'printReturnReceipt'])->name('return-receipt');
+    });
+
+    // ==================== NOTIFICATIONS ====================
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [DepotManagerNotificationController::class, 'index'])->name('index');
+        Route::post('/{notification}/mark-read', [DepotManagerNotificationController::class, 'markAsRead'])->name('mark.read');
+        Route::post('/mark-all-read', [DepotManagerNotificationController::class, 'markAllAsRead'])->name('mark.all.read');
+        Route::delete('/{notification}', [DepotManagerNotificationController::class, 'delete'])->name('delete');
+    });
+
+    // API Notifications
+    Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/unread-count', [DepotManagerNotificationController::class, 'apiUnreadCount'])->name('unread.count');
+        Route::get('/recent', [DepotManagerNotificationController::class, 'apiRecent'])->name('recent');
+        Route::post('/{notification}/mark-read', [DepotManagerNotificationController::class, 'apiMarkRead'])->name('mark.read');
     });
 
 });

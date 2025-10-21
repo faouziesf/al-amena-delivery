@@ -3,6 +3,7 @@
 use App\Http\Controllers\Deliverer\DelivererController;
 use App\Http\Controllers\Deliverer\DelivererActionsController;
 use App\Http\Controllers\Deliverer\DelivererClientTopupController;
+use App\Http\Controllers\Deliverer\DelivererNotificationController;
 use App\Http\Controllers\Deliverer\SimpleDelivererController;
 use Illuminate\Support\Facades\Route;
 
@@ -118,6 +119,19 @@ Route::middleware(['auth', 'verified', 'role:DELIVERER'])->prefix('deliverer')->
         // Scan & Verify
         Route::post('/scan/verify', [SimpleDelivererController::class, 'processScan'])->name('scan.verify');
         Route::post('/verify/package', [SimpleDelivererController::class, 'processScan'])->name('verify.package');
+        
+        // Notifications
+        Route::get('/notifications/unread-count', [DelivererNotificationController::class, 'apiUnreadCount'])->name('notifications.unread.count');
+        Route::get('/notifications/recent', [DelivererNotificationController::class, 'apiRecent'])->name('notifications.recent');
+        Route::post('/notifications/{notification}/mark-read', [DelivererNotificationController::class, 'apiMarkRead'])->name('notifications.mark.read');
+    });
+
+    // ==================== NOTIFICATIONS ====================
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [DelivererNotificationController::class, 'index'])->name('index');
+        Route::post('/{notification}/mark-read', [DelivererNotificationController::class, 'markAsRead'])->name('mark.read');
+        Route::post('/mark-all-read', [DelivererNotificationController::class, 'markAllAsRead'])->name('mark.all.read');
+        Route::delete('/{notification}', [DelivererNotificationController::class, 'delete'])->name('delete');
     });
 
     // ==================== FALLBACK - GESTION ERREURS ====================

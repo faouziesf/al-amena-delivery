@@ -8,6 +8,8 @@ use App\Http\Controllers\Supervisor\ReportController;
 use App\Http\Controllers\Supervisor\SettingsController;
 use App\Http\Controllers\Supervisor\PackageController;
 use App\Http\Controllers\Supervisor\SupervisorTicketController;
+use App\Http\Controllers\Supervisor\SupervisorNotificationController;
+use App\Http\Controllers\Supervisor\ActionLogController;
 use App\Services\FinancialTransactionService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -161,6 +163,22 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         return redirect()->route('depot.scan.dashboard');
     })->name('depot.scan');
 
+    // ==================== ACTION LOGS (TRAÇABILITÉ) ====================
+    Route::prefix('action-logs')->name('action-logs.')->group(function () {
+        Route::get('/', [ActionLogController::class, 'index'])->name('index');
+        Route::get('/{actionLog}', [ActionLogController::class, 'show'])->name('show');
+        Route::get('/export/csv', [ActionLogController::class, 'export'])->name('export');
+        Route::get('/stats', [ActionLogController::class, 'stats'])->name('stats');
+    });
+
+    // ==================== NOTIFICATIONS ====================
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [SupervisorNotificationController::class, 'index'])->name('index');
+        Route::post('/{notification}/mark-read', [SupervisorNotificationController::class, 'markAsRead'])->name('mark.read');
+        Route::post('/mark-all-read', [SupervisorNotificationController::class, 'markAllAsRead'])->name('mark.all.read');
+        Route::delete('/{notification}', [SupervisorNotificationController::class, 'delete'])->name('delete');
+    });
+
     // ==================== PARAMÈTRES SYSTÈME ====================
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('index');
@@ -222,6 +240,10 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         // Financial APIs
         Route::get('/financial/summary', [ReportController::class, 'apiFinancialSummary'])->name('financial.summary');
         Route::get('/financial/trends', [ReportController::class, 'apiFinancialTrends'])->name('financial.trends');
+        
+        // Notification APIs
+        Route::get('/notifications/unread-count', [SupervisorNotificationController::class, 'apiUnreadCount'])->name('notifications.unread.count');
+        Route::get('/notifications/recent', [SupervisorNotificationController::class, 'apiRecent'])->name('notifications.recent');
     });
 });
 

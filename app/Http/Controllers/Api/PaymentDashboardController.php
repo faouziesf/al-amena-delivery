@@ -500,42 +500,69 @@ class PaymentDashboardController extends Controller
                 ], 403);
             }
 
-            if ($withdrawal->status !== 'READY_FOR_DELIVERY' || $withdrawal->method !== 'CASH_DELIVERY') {
+            // Vérifier que le paiement est dans un statut valide pour créer un colis
+            $validStatuses = ['READY_FOR_DELIVERY', 'APPROVED', 'PENDING'];
+            $validMethods = ['CASH_DELIVERY', 'CASH', 'COD'];
+            
+            if (!in_array($withdrawal->status, $validStatuses) || !in_array($withdrawal->method, $validMethods)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ce paiement ne peut pas être transformé en colis.'
+                    'message' => "Ce paiement ne peut pas être transformé en colis. Statut actuel: {$withdrawal->status}, Méthode: {$withdrawal->method}"
                 ], 400);
             }
 
             DB::transaction(function () use ($withdrawal, $user) {
                 $packageCode = 'PAY_' . strtoupper(Str::random(8));
 
+                // Récupérer la délégation du client
+                $clientDelegation = null;
+                if ($withdrawal->client->delegation_id) {
+                    $clientDelegation = $withdrawal->client->delegation_id;
+                } elseif ($withdrawal->client->assigned_delegation) {
+                    $clientDelegation = is_numeric($withdrawal->client->assigned_delegation) 
+                        ? $withdrawal->client->assigned_delegation 
+                        : 1;
+                } else {
+                    // Essayer de trouver depuis les colis récents
+                    $recentPackage = Package::where('sender_id', $withdrawal->client->id)
+                        ->whereNotNull('delegation_to')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    $clientDelegation = $recentPackage ? $recentPackage->delegation_to : 1;
+                }
+
+                // Récupérer les informations de livraison du client
+                $deliveryAddress = $withdrawal->delivery_address ?? $withdrawal->client->address ?? '';
+                $deliveryPhone = $withdrawal->delivery_phone ?? $withdrawal->client->phone ?? '';
+                $deliveryCity = $withdrawal->delivery_city ?? $withdrawal->client->city ?? 'Non spécifié';
+                
                 // Créer le colis de paiement selon la structure réelle
                 $package = Package::create([
                     'package_code' => $packageCode,
+                    'package_type' => Package::TYPE_PAYMENT, // Type PAYMENT
                     'sender_id' => $user->id, // Le Chef de Dépôt devient l'expéditeur
                     'sender_data' => [
-                        'name' => $user->name,
-                        'phone' => $user->phone ?? 'N/A',
+                        'name' => $user->depot_name ?? $user->name,
+                        'phone' => $user->phone ?? '+21650127192',
                         'address' => 'Dépôt ' . ($user->depot_name ?? 'Principal'),
                     ],
                     'delegation_from' => $user->delegation_id ?? 1,
                     'recipient_data' => [
                         'name' => $withdrawal->client->name,
-                        'phone' => $withdrawal->client->phone,
-                        'address' => $withdrawal->client->address,
-                        'city' => $withdrawal->client->city ?? 'Non spécifié',
+                        'phone' => $deliveryPhone,
+                        'address' => $deliveryAddress,
+                        'city' => $deliveryCity,
                     ],
-                    'delegation_to' => $withdrawal->client->assigned_delegation ?? 1, // Défaut délégation 1 si non assigné
-                    'content_description' => "Paiement Fournisseur #{$withdrawal->request_code}",
-                    'notes' => 'Colis de paiement généré automatiquement',
-                    'cod_amount' => $withdrawal->amount, // Le montant à payer
-                    'delivery_fee' => 0, // Pas de frais de livraison
+                    'delegation_to' => (int) $clientDelegation,
+                    'content_description' => "Enveloppe de Paiement #{$withdrawal->request_code}",
+                    'notes' => "Montant: {$withdrawal->amount} DT - Paiement généré automatiquement",
+                    'cod_amount' => 0, // ✅ COD = 0 (c'est juste une enveloppe, pas de COD)
+                    'delivery_fee' => 0,
                     'return_fee' => 0,
                     'status' => 'AVAILABLE',
                     'requires_signature' => true,
-                    'special_instructions' => 'PAIEMENT ESPÈCES - Signature obligatoire du client',
-                    'payment_method' => 'COD',
+                    'special_instructions' => "ENVELOPPE DE PAIEMENT - Montant: {$withdrawal->amount} DT - Signature obligatoire",
+                    'payment_method' => null, // Pas de COD
                     'payment_withdrawal_id' => $withdrawal->id, // Lier au paiement
                 ]);
 
@@ -610,6 +637,23 @@ class PaymentDashboardController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Afficher les détails d'un paiement
+     */
+    public function showDetails(WithdrawalRequest $withdrawal)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'DEPOT_MANAGER') {
+            abort(403, 'Accès réservé aux chefs de dépôt.');
+        }
+
+        // Charger les relations
+        $withdrawal->load(['client.wallet', 'assignedPackage.assignedDeliverer']);
+
+        return view('depot-manager.payments.payment-details', compact('withdrawal'));
     }
 
     /**

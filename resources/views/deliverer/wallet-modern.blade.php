@@ -68,36 +68,80 @@
             </div>
             
             @if(isset($transactions) && $transactions->count() > 0)
+            @php
+                $grouped = $transactions->groupBy(function($t) {
+                    if ($t->created_at->isToday()) return 'Aujourd\'hui';
+                    if ($t->created_at->isYesterday()) return 'Hier';
+                    if ($t->created_at->isCurrentWeek()) return 'Cette semaine';
+                    return 'Plus ancien';
+                });
+            @endphp
+            
             <div class="divide-y divide-gray-100">
-                @foreach($transactions as $transaction)
-                <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center
-                                @if($transaction->type === 'credit') bg-green-100
-                                @else bg-red-100
-                                @endif">
-                                <span class="text-xl">
-                                    @if($transaction->type === 'credit') ➕
-                                    @else ➖
-                                    @endif
-                                </span>
+                @foreach($grouped as $period => $periodTransactions)
+                    <div class="px-6 py-3 bg-gray-50">
+                        <h3 class="text-xs font-bold text-gray-600 uppercase">{{ $period }}</h3>
+                    </div>
+                    @foreach($periodTransactions as $transaction)
+                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center
+                                    @if($transaction->type === 'CREDIT') bg-green-100
+                                    @elseif($transaction->type === 'DEBIT') bg-red-100
+                                    @else bg-blue-100
+                                    @endif">
+                                    <span class="text-xl">
+                                        @if(str_contains(strtoupper($transaction->description ?? ''), 'LIVRAISON') || str_contains(strtoupper($transaction->description ?? ''), 'DELIVERY'))
+                                            💰
+                                        @elseif(str_contains(strtoupper($transaction->description ?? ''), 'RAMASSAGE') || str_contains(strtoupper($transaction->description ?? ''), 'PICKUP'))
+                                            📦
+                                        @elseif(str_contains(strtoupper($transaction->description ?? ''), 'RETRAIT') || str_contains(strtoupper($transaction->description ?? ''), 'WITHDRAWAL'))
+                                            💸
+                                        @elseif(str_contains(strtoupper($transaction->description ?? ''), 'PÉNALITÉ') || str_contains(strtoupper($transaction->description ?? ''), 'PENALTY'))
+                                            ⚠️
+                                        @elseif($transaction->type === 'CREDIT')
+                                            ➕
+                                        @else
+                                            ➖
+                                        @endif
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 text-sm">
+                                        @if($transaction->package_id && $transaction->package)
+                                            💰 Livraison #{{ $transaction->package->package_code }}
+                                            @if(isset($transaction->package->recipient_data['name']))
+                                                <span class="text-xs text-gray-500">- {{ $transaction->package->recipient_data['name'] }}</span>
+                                            @endif
+                                        @elseif(str_contains(strtoupper($transaction->description ?? ''), 'PICKUP') || str_contains(strtoupper($transaction->description ?? ''), 'RAMASSAGE'))
+                                            📦 {{ $transaction->description }}
+                                        @else
+                                            {{ $transaction->description }}
+                                        @endif
+                                    </div>
+                                    <div class="text-xs text-gray-500 flex items-center gap-2">
+                                        <span>{{ $transaction->created_at->format('d/m/Y H:i') }}</span>
+                                        @if($transaction->type)
+                                            <span class="px-2 py-0.5 bg-gray-100 rounded text-xs">{{ $transaction->type }}</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="font-semibold text-gray-900 text-sm">{{ $transaction->description }}</div>
-                                <div class="text-xs text-gray-500">{{ $transaction->created_at->format('d/m/Y H:i') }}</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-lg
-                                @if($transaction->type === 'credit') text-green-600
-                                @else text-red-600
-                                @endif">
-                                @if($transaction->type === 'credit')+@else-@endif{{ number_format($transaction->amount, 3) }} DT
+                            <div class="text-right">
+                                <div class="font-bold text-lg
+                                    @if($transaction->type === 'CREDIT') text-green-600
+                                    @else text-red-600
+                                    @endif">
+                                    @if($transaction->type === 'CREDIT')+@else-@endif{{ number_format($transaction->amount, 3) }} DT
+                                </div>
+                                @if($transaction->balance_after)
+                                <div class="text-xs text-gray-500">Solde: {{ number_format($transaction->balance_after, 3) }} DT</div>
+                                @endif
                             </div>
                         </div>
                     </div>
-                </div>
+                    @endforeach
                 @endforeach
             </div>
             @else

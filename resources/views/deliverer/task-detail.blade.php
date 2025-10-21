@@ -190,39 +190,51 @@
 
             <!-- Actions -->
             <div class="space-y-3">
-                @if($package->status === 'AVAILABLE' || $package->status === 'ACCEPTED' || $package->status === 'CREATED')
-                    <form action="{{ route('deliverer.simple.pickup', $package) }}" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
-                            📦 Marquer comme Ramassé
+                @php
+                    // Statuts finaux où aucune action n'est possible
+                    $finalStatuses = ['DELIVERED', 'PAID', 'RETURNED', 'RETURN_CONFIRMED', 'RETURN_IN_PROGRESS'];
+                    $canTakeActions = !in_array($package->status, $finalStatuses);
+                @endphp
+
+                @if($canTakeActions)
+                    @if($package->status === 'AVAILABLE' || $package->status === 'ACCEPTED' || $package->status === 'CREATED')
+                        <form action="{{ route('deliverer.simple.pickup', $package) }}" method="POST">
+                            @csrf
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
+                                📦 Marquer comme Ramassé
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($package->status === 'PICKED_UP' || $package->status === 'OUT_FOR_DELIVERY' || $package->status === 'UNAVAILABLE' || $package->status === 'REFUSED' || $package->status === 'SCHEDULED')
+                        <form action="{{ route('deliverer.simple.deliver', $package) }}" method="POST">
+                            @csrf
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
+                                ✅ Marquer comme Livré
+                            </button>
+                        </form>
+
+                        <button @click="$dispatch('open-modal', 'unavailable-modal')" 
+                                class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
+                            ⚠️ Client Indisponible
                         </button>
-                    </form>
-                @endif
 
-                @if($package->status === 'PICKED_UP' || $package->status === 'OUT_FOR_DELIVERY')
-                    <form action="{{ route('deliverer.simple.deliver', $package) }}" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
-                            ✅ Marquer comme Livré
+                        <button @click="$dispatch('open-modal', 'refused-modal')" 
+                                class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
+                            ❌ Refusé par le Client
                         </button>
-                    </form>
 
-                    <button @click="$dispatch('open-modal', 'unavailable-modal')" 
-                            class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
-                        ⚠️ Client Indisponible
-                    </button>
-
-                    <button @click="$dispatch('open-modal', 'refused-modal')" 
-                            class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
-                        ❌ Refusé par le Client
-                    </button>
-
-                    <button @click="$dispatch('open-modal', 'scheduled-modal')" 
-                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
-                        📅 Reporter la Livraison
-                    </button>
+                        <button @click="$dispatch('open-modal', 'scheduled-modal')" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95">
+                            📅 Reporter la Livraison
+                        </button>
+                    @endif
+                @else
+                    <div class="w-full bg-gray-100 text-gray-600 py-4 rounded-xl font-semibold text-center">
+                        ℹ️ Colis dans un statut final - Aucune action disponible
+                    </div>
                 @endif
 
                 <!-- Appeler le client -->
