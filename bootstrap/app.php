@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'ngrok.cors' => \App\Http\Middleware\NgrokCorsMiddleware::class,
+            'api.token.auth' => \App\Http\Middleware\ApiTokenAuth::class,
+            'api.logger' => \App\Http\Middleware\ApiLogger::class,
         ]);
 
         // Middleware groups for specific roles

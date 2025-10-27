@@ -64,3 +64,26 @@ Route::prefix('deliverer')->name('api.deliverer.')->middleware(['auth:sanctum'])
     // Géolocalisation
     Route::post('/location/update', [\App\Http\Controllers\Deliverer\DelivererApiController::class, 'updateLocation'])->name('location.update');
 });
+
+// ==================== Client API Routes (v1) ====================
+Route::prefix('v1/client')->name('api.v1.client.')->middleware(['api.token.auth', 'api.logger', 'throttle:120,1'])->group(function () {
+    
+    // Gestion des colis
+    Route::post('/packages', [\App\Http\Controllers\Api\ApiPackageController::class, 'store'])
+        ->middleware('throttle:60,1')
+        ->name('packages.store');
+    
+    Route::get('/packages', [\App\Http\Controllers\Api\ApiPackageController::class, 'index'])
+        ->name('packages.index');
+    
+    Route::get('/packages/{tracking_number}', [\App\Http\Controllers\Api\ApiPackageController::class, 'show'])
+        ->name('packages.show');
+    
+    // Générer les étiquettes PDF
+    Route::post('/packages/labels', [\App\Http\Controllers\Api\ApiPackageController::class, 'generateLabels'])
+        ->name('packages.labels');
+    
+    // Statistiques
+    Route::get('/stats', [\App\Http\Controllers\Api\ApiStatsController::class, 'index'])
+        ->name('stats');
+});

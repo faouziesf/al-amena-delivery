@@ -136,6 +136,16 @@
         <span class="font-medium">Mon Profil</span>
     </a>
 
+    {{-- API & Intégrations --}}
+    <a href="{{ route('client.api.index') }}" 
+       class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-smooth"
+       :class="currentRoute.includes('api') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="font-medium">API & Intégrations</span>
+    </a>
+
     {{-- Notifications --}}
     <a href="{{ route('client.notifications.index') }}" 
        class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-smooth"

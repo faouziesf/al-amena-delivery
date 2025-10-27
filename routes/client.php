@@ -276,6 +276,15 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':CLIENT'])->
         Route::post('/payment-received', [ClientWalletController::class, 'webhookPaymentReceived'])->name('payment.received');
         Route::post('/withdrawal-processed', [ClientWalletController::class, 'webhookWithdrawalProcessed'])->name('withdrawal.processed');
     });
+
+    // ==================== GESTION TOKEN API ====================
+    Route::prefix('settings/api')->name('api.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Client\ClientApiTokenController::class, 'index'])->name('index');
+        Route::post('/token/generate', [\App\Http\Controllers\Client\ClientApiTokenController::class, 'generate'])->name('token.generate');
+        Route::post('/token/regenerate', [\App\Http\Controllers\Client\ClientApiTokenController::class, 'regenerate'])->name('token.regenerate');
+        Route::delete('/token', [\App\Http\Controllers\Client\ClientApiTokenController::class, 'delete'])->name('token.delete');
+        Route::get('/history', [\App\Http\Controllers\Client\ClientApiTokenController::class, 'history'])->name('history');
+    });
 });
 
 /*
