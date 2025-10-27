@@ -5,75 +5,127 @@ namespace App\Http\Controllers\Supervisor;
 use App\Http\Controllers\Controller;
 use App\Models\ActionLog;
 use App\Models\User;
+use App\Services\ActionLogService;
 use Illuminate\Http\Request;
 
 class ActionLogController extends Controller
 {
+    protected $actionLogService;
+
+    public function __construct(ActionLogService $actionLogService)
+    {
+        $this->actionLogService = $actionLogService;
+    }
+
     /**
-     * Afficher la liste des action logs avec filtres
+     * Affiche tous les logs d'actions
      */
     public function index(Request $request)
     {
-        $query = ActionLog::query()->with('user');
+        $query = ActionLog::with('user');
 
         // Filtres
-        if ($request->filled('user_id')) {
+        if ($request->has('user_id') && $request->user_id) {
             $query->where('user_id', $request->user_id);
         }
 
-        if ($request->filled('role')) {
-            $query->where('user_role', $request->role);
+        if ($request->has('action_type') && $request->action_type) {
+            $query->where('action_type', $request->action_type);
         }
 
-        if ($request->filled('action')) {
-            $query->where('action_type', 'LIKE', "%{$request->action}%");
+        if ($request->has('target_type') && $request->target_type) {
+            $query->where('target_type', $request->target_type);
         }
 
-        if ($request->filled('entity_type')) {
-            $query->where('target_type', $request->entity_type);
+        if ($request->has('user_role') && $request->user_role) {
+            $query->where('user_role', $request->user_role);
         }
 
-        if ($request->filled('date_from')) {
+        if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
 
-        if ($request->filled('date_to')) {
+        if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('description', 'LIKE', "%{$request->search}%")
-                  ->orWhere('user_name', 'LIKE', "%{$request->search}%");
-            });
+        // Filtre par période prédéfinie
+        if ($request->has('period') && $request->period) {
+            $period = $request->period;
+            match($period) {
+                'today' => $query->whereDate('created_at', today()),
+                'yesterday' => $query->whereDate('created_at', now()->subDay()),
+                'week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+                'month' => $query->whereMonth('created_at', now()->month),
+                '7days' => $query->where('created_at', '>=', now()->subDays(7)),
+                '30days' => $query->where('created_at', '>=', now()->subDays(30)),
+                default => null,
+            };
         }
 
-        $logs = $query->latest()->paginate(50);
+        // Tri
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
 
-        // Pour les filtres
-        $users = User::select('id', 'name', 'role')->orderBy('name')->get();
-        $roles = User::select('role')->distinct()->pluck('role');
-        $actions = ActionLog::select('action_type')->distinct()->whereNotNull('action_type')->orderBy('action_type')->pluck('action_type');
-        $entityTypes = ActionLog::select('target_type')->distinct()->whereNotNull('target_type')->orderBy('target_type')->pluck('target_type');
+        $logs = $query->paginate($request->get('per_page', 50));
 
-        return view('supervisor.action-logs.index', compact('logs', 'users', 'roles', 'actions', 'entityTypes'));
+        // Données pour les filtres
+        $users = User::select('id', 'name', 'email', 'role')
+                    ->orderBy('name')
+                    ->get();
+
+        $actionTypes = ActionLog::select('action_type')
+                                ->distinct()
+                                ->orderBy('action_type')
+                                ->pluck('action_type');
+
+        $targetTypes = ActionLog::select('target_type')
+                                ->distinct()
+                                ->whereNotNull('target_type')
+                                ->orderBy('target_type')
+                                ->pluck('target_type');
+
+        $roles = ['CLIENT', 'DELIVERER', 'COMMERCIAL', 'SUPERVISOR', 'DEPOT_MANAGER'];
+
+        // Alias pour compatibilité avec la vue
+        $actions = $actionTypes;
+        $entityTypes = $targetTypes;
+
+        return view('supervisor.action-logs.index', compact(
+            'logs',
+            'users',
+            'actionTypes',
+            'actions',
+            'targetTypes',
+            'entityTypes',
+            'roles'
+        ));
     }
 
     /**
-     * Afficher le détail d'un log
+     * Affiche les détails d'un log
      */
-    public function show(ActionLog $actionLog)
+    public function show(ActionLog $log)
     {
-        $actionLog->load('user');
-        return view('supervisor.action-logs.show', compact('actionLog'));
+        $log->load('user');
+        // Alias pour compatibilité avec la vue
+        $actionLog = $log;
+        return view('supervisor.action-logs.show', compact('log', 'actionLog'));
     }
 
     /**
-     * Export CSV des logs
+     * Affiche uniquement les logs critiques
      */
-    public function export(Request $request)
+    public function critical(Request $request)
     {
-        $query = ActionLog::query()->with('user');
+        $filters = [
+            'user_id' => $request->get('user_id'),
+            'target_type' => $request->get('target_type'),
+            'date_from' => $request->get('date_from'),
+            'date_to' => $request->get('date_to'),
+            'per_page' => $request->get('per_page', 50),
+        ];
 
         // Appliquer mêmes filtres
         if ($request->filled('user_id')) {

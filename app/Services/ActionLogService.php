@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\ActionLog;
 use App\Models\User;
+use App\Models\CriticalActionConfig;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\CriticalActionAlert;
 
 class ActionLogService
 {
@@ -16,7 +19,7 @@ class ActionLogService
         try {
             $user = auth()->user();
             
-            ActionLog::create([
+            $actionLog = ActionLog::create([
                 'user_id' => $user ? $user->id : null,
                 'user_role' => $user ? $user->role : null,
                 'action_type' => $action,
@@ -28,12 +31,52 @@ class ActionLogService
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->userAgent(),
             ]);
+
+            // Vérifier si c'est une action critique
+            $this->checkCriticalAction($actionLog, $oldValue, $newValue);
         } catch (\Exception $e) {
             // Log dans les fichiers si erreur BDD
             Log::error("Erreur enregistrement action log: " . $e->getMessage(), [
                 'action' => $action,
                 'user_id' => auth()->id(),
             ]);
+        }
+    }
+
+    /**
+     * Vérifie si une action est critique et notifie les superviseurs
+     */
+    private function checkCriticalAction(ActionLog $actionLog, ?array $oldValue, ?array $newValue)
+    {
+        // Préparer les données pour évaluation
+        $data = array_merge(
+            $oldValue ?? [],
+            $newValue ?? [],
+            $actionLog->additional_data ?? []
+        );
+
+        // Vérifier si l'action est critique
+        if (CriticalActionConfig::isActionCritical($actionLog->action_type, $actionLog->target_type, $data)) {
+            // Notifier les superviseurs
+            $this->notifySupervisors($actionLog);
+        }
+    }
+
+    /**
+     * Notifie tous les superviseurs actifs d'une action critique
+     */
+    private function notifySupervisors(ActionLog $actionLog)
+    {
+        try {
+            $supervisors = User::where('role', 'SUPERVISOR')
+                ->where('account_status', 'ACTIVE')
+                ->get();
+
+            foreach ($supervisors as $supervisor) {
+                $supervisor->notify(new CriticalActionAlert($actionLog));
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur notification superviseurs pour action critique: " . $e->getMessage());
         }
     }
 
@@ -199,5 +242,112 @@ class ActionLogService
                 'user_id' => $userId
             ], $details)
         );
+    }
+
+    /**
+     * Log un changement de rôle utilisateur (action critique)
+     */
+    public function logRoleChanged(int $userId, string $oldRole, string $newRole, array $additionalData = [])
+    {
+        $this->log(
+            "USER_ROLE_CHANGED",
+            'User',
+            $userId,
+            ['role' => $oldRole],
+            ['role' => $newRole],
+            $additionalData
+        );
+    }
+
+    /**
+     * Log une validation financière (action critique)
+     */
+    public function logFinancialValidation(string $entityType, int $entityId, array $oldData, array $newData)
+    {
+        $this->log(
+            "FINANCIAL_VALIDATION",
+            $entityType,
+            $entityId,
+            $oldData,
+            $newData
+        );
+    }
+
+    /**
+     * Log une impersonation (superviseur se connectant en tant qu'utilisateur)
+     */
+    public function logImpersonation(int $supervisorId, int $targetUserId, string $action = 'START')
+    {
+        $targetUser = User::find($targetUserId);
+        
+        $this->logForUser(
+            $supervisorId,
+            "IMPERSONATION_" . strtoupper($action),
+            'User',
+            $targetUserId,
+            null,
+            [
+                'target_user_name' => $targetUser->name ?? 'Unknown',
+                'target_user_email' => $targetUser->email ?? 'Unknown',
+                'target_user_role' => $targetUser->role ?? 'Unknown',
+            ]
+        );
+    }
+
+    /**
+     * Log une modification de paramètre système (action critique)
+     */
+    public function logSystemSettingChanged(string $settingKey, $oldValue, $newValue)
+    {
+        $this->log(
+            "SYSTEM_SETTING_CHANGED",
+            'SystemSetting',
+            null,
+            ['key' => $settingKey, 'value' => $oldValue],
+            ['key' => $settingKey, 'value' => $newValue]
+        );
+    }
+
+    /**
+     * Récupère les logs d'actions critiques
+     */
+    public function getCriticalLogs($filters = [])
+    {
+        $criticalActions = CriticalActionConfig::getAllCriticalActions();
+        $actionTypes = collect($criticalActions)->pluck('action_type')->toArray();
+
+        $query = ActionLog::whereIn('action_type', $actionTypes)
+            ->with('user')
+            ->orderBy('created_at', 'desc');
+
+        // Appliquer les filtres
+        if (isset($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (isset($filters['target_type'])) {
+            $query->where('target_type', $filters['target_type']);
+        }
+
+        if (isset($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (isset($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query->paginate($filters['per_page'] ?? 50);
+    }
+
+    /**
+     * Récupère l'activité récente d'un utilisateur
+     */
+    public function getUserActivity(int $userId, int $limit = 20)
+    {
+        return ActionLog::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
     }
 }

@@ -116,7 +116,7 @@ class SupervisorDashboardController extends Controller
                 ]),
         ])->sortByDesc('time')->take(10);
 
-        return view('supervisor.dashboard', compact(
+        return view('supervisor.dashboard-new', compact(
             'stats',
             'usersByRole',
             'packagesByStatus',

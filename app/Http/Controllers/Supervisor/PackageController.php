@@ -65,6 +65,7 @@ class PackageController extends Controller
             'picked_up_packages' => Package::where('status', 'PICKED_UP')->count(),
             'delivered_packages' => Package::where('status', 'DELIVERED')->count(),
             'returned_packages' => Package::where('status', 'RETURNED')->count(),
+            'cancelled_packages' => Package::where('status', 'CANCELLED')->count(),
         ];
 
         $delegations = \App\Models\Delegation::where('active', true)->get();

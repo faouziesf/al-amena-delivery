@@ -10,6 +10,11 @@ use App\Http\Controllers\Supervisor\PackageController;
 use App\Http\Controllers\Supervisor\SupervisorTicketController;
 use App\Http\Controllers\Supervisor\SupervisorNotificationController;
 use App\Http\Controllers\Supervisor\ActionLogController;
+use App\Http\Controllers\Supervisor\EnhancedActionLogController;
+use App\Http\Controllers\Supervisor\FinancialManagementController;
+use App\Http\Controllers\Supervisor\VehicleManagementController;
+use App\Http\Controllers\Supervisor\FinancialReportController;
+use App\Http\Controllers\Supervisor\GlobalSearchController;
 use App\Services\FinancialTransactionService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -81,6 +86,13 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         // Gestion wallet chef dépôt
         Route::post('/{user}/depot-wallet/manage', [UserController::class, 'manageDepotWallet'])->name('depot-wallet.manage');
         Route::get('/{user}/depot-wallet/history', [UserController::class, 'depotWalletHistory'])->name('depot-wallet.history');
+
+        // NOUVELLES FONCTIONNALITÉS: Vue par rôle et impersonation
+        Route::get('/by-role/{role}', [UserController::class, 'byRole'])->name('by-role');
+        Route::get('/{user}/activity', [UserController::class, 'activity'])->name('activity');
+        Route::post('/{user}/impersonate', [UserController::class, 'impersonate'])->name('impersonate');
+        Route::post('/stop-impersonation', [UserController::class, 'stopImpersonation'])->name('stop-impersonation');
+        Route::post('/{user}/generate-temp-password', [UserController::class, 'generateTempPassword'])->name('generate-temp-password');
     });
 
     // ==================== GESTION SYSTÈME ====================
@@ -166,6 +178,7 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
     // ==================== ACTION LOGS (TRAÇABILITÉ) ====================
     Route::prefix('action-logs')->name('action-logs.')->group(function () {
         Route::get('/', [ActionLogController::class, 'index'])->name('index');
+        Route::get('/critical', [EnhancedActionLogController::class, 'critical'])->name('critical');
         Route::get('/{actionLog}', [ActionLogController::class, 'show'])->name('show');
         Route::get('/export/csv', [ActionLogController::class, 'export'])->name('export');
         Route::get('/stats', [ActionLogController::class, 'stats'])->name('stats');
@@ -216,6 +229,84 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         Route::get('/transactions/export', [SystemController::class, 'exportTransactions'])->name('transactions.export');
     });
 
+    // ==================== GESTION FINANCIÈRE ====================
+    Route::prefix('financial')->name('financial.')->group(function () {
+        
+        // Charges fixes
+        Route::prefix('charges')->name('charges.')->group(function () {
+            Route::get('/', [FinancialManagementController::class, 'indexCharges'])->name('index');
+            Route::get('/create', [FinancialManagementController::class, 'createCharge'])->name('create');
+            Route::post('/', [FinancialManagementController::class, 'storeCharge'])->name('store');
+            Route::get('/{charge}', [FinancialManagementController::class, 'showCharge'])->name('show');
+            Route::get('/{charge}/edit', [FinancialManagementController::class, 'editCharge'])->name('edit');
+            Route::put('/{charge}', [FinancialManagementController::class, 'updateCharge'])->name('update');
+            Route::delete('/{charge}', [FinancialManagementController::class, 'destroyCharge'])->name('destroy');
+            
+            // Import/Export
+            Route::get('/export', [FinancialManagementController::class, 'exportCharges'])->name('export');
+            Route::get('/import/template', [FinancialManagementController::class, 'importChargesTemplate'])->name('import.template');
+            Route::post('/import', [FinancialManagementController::class, 'importCharges'])->name('import');
+        });
+
+        // Actifs amortissables
+        Route::prefix('assets')->name('assets.')->group(function () {
+            Route::get('/', [FinancialManagementController::class, 'indexAssets'])->name('index');
+            Route::get('/create', [FinancialManagementController::class, 'createAsset'])->name('create');
+            Route::post('/', [FinancialManagementController::class, 'storeAsset'])->name('store');
+            Route::get('/{asset}', [FinancialManagementController::class, 'showAsset'])->name('show');
+            Route::get('/{asset}/edit', [FinancialManagementController::class, 'editAsset'])->name('edit');
+            Route::put('/{asset}', [FinancialManagementController::class, 'updateAsset'])->name('update');
+            Route::delete('/{asset}', [FinancialManagementController::class, 'destroyAsset'])->name('destroy');
+        });
+
+        // Rapports financiers
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [FinancialReportController::class, 'index'])->name('index');
+            Route::post('/generate', [FinancialReportController::class, 'generate'])->name('generate');
+            Route::get('/preview', [FinancialReportController::class, 'preview'])->name('preview');
+            Route::get('/export', [FinancialReportController::class, 'export'])->name('export');
+            Route::get('/export-predefined', [FinancialReportController::class, 'exportPredefined'])->name('export-predefined');
+            Route::get('/compare', [FinancialReportController::class, 'compare'])->name('compare');
+            Route::get('/charts', [FinancialReportController::class, 'charts'])->name('charts');
+        });
+    });
+
+    // ==================== GESTION VÉHICULES ====================
+    Route::prefix('vehicles')->name('vehicles.')->group(function () {
+        // CRUD véhicules
+        Route::get('/', [VehicleManagementController::class, 'index'])->name('index');
+        Route::get('/create', [VehicleManagementController::class, 'create'])->name('create');
+        Route::post('/', [VehicleManagementController::class, 'store'])->name('store');
+        Route::get('/{vehicle}', [VehicleManagementController::class, 'show'])->name('show');
+        Route::get('/{vehicle}/edit', [VehicleManagementController::class, 'edit'])->name('edit');
+        Route::put('/{vehicle}', [VehicleManagementController::class, 'update'])->name('update');
+        Route::delete('/{vehicle}', [VehicleManagementController::class, 'destroy'])->name('destroy');
+
+        // Relevés kilométriques
+        Route::prefix('{vehicle}/readings')->name('readings.')->group(function () {
+            Route::get('/create', [VehicleManagementController::class, 'createReading'])->name('create');
+            Route::post('/', [VehicleManagementController::class, 'storeReading'])->name('store');
+            Route::get('/history', [VehicleManagementController::class, 'readingsHistory'])->name('history');
+        });
+
+        // Maintenance
+        Route::post('/{vehicle}/record-maintenance', [VehicleManagementController::class, 'recordMaintenance'])->name('record-maintenance');
+
+        // Alertes
+        Route::get('/alerts', [VehicleManagementController::class, 'alerts'])->name('alerts');
+        Route::post('/alerts/{alert}/mark-read', [VehicleManagementController::class, 'markAlertRead'])->name('alerts.mark-read');
+        Route::post('/{vehicle}/alerts/mark-all-read', [VehicleManagementController::class, 'markVehicleAlertsRead'])->name('alerts.mark-all-read');
+    });
+
+    // ==================== RECHERCHE INTELLIGENTE ====================
+    Route::prefix('search')->name('search.')->group(function () {
+        Route::get('/', [GlobalSearchController::class, 'index'])->name('index');
+        Route::get('/results', [GlobalSearchController::class, 'results'])->name('results');
+        Route::get('/suggestions', [GlobalSearchController::class, 'suggestions'])->name('suggestions');
+        Route::get('/advanced', [GlobalSearchController::class, 'advanced'])->name('advanced');
+        Route::post('/api', [GlobalSearchController::class, 'search'])->name('api');
+    });
+
     // ==================== API ENDPOINTS SUPERVISEUR ====================
     Route::prefix('api')->name('api.')->group(function () {
         
@@ -244,6 +335,19 @@ Route::middleware(['auth', 'verified', 'role:SUPERVISOR'])->prefix('supervisor')
         // Notification APIs
         Route::get('/notifications/unread-count', [SupervisorNotificationController::class, 'apiUnreadCount'])->name('notifications.unread.count');
         Route::get('/notifications/recent', [SupervisorNotificationController::class, 'apiRecent'])->name('notifications.recent');
+
+        // Financial APIs
+        Route::get('/financial/dashboard', [FinancialReportController::class, 'dashboard'])->name('financial.dashboard');
+        Route::get('/financial/charges-breakdown', [FinancialReportController::class, 'chargesBreakdown'])->name('financial.charges.breakdown');
+
+        // Vehicle APIs
+        Route::get('/vehicles/{vehicle}/stats', [VehicleManagementController::class, 'apiVehicleStats'])->name('vehicles.stats');
+
+        // User APIs
+        Route::get('/users/list', [UserController::class, 'apiUsersList'])->name('users.list');
+
+        // Action Log APIs
+        Route::get('/action-logs/recent', [EnhancedActionLogController::class, 'apiRecent'])->name('action-logs.recent');
     });
 });
 

@@ -7,13 +7,22 @@ use App\Models\User;
 use App\Models\UserWallet;
 use App\Models\Package;
 use App\Models\Complaint;
+use App\Services\ActionLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    protected $actionLogService;
+
+    public function __construct(ActionLogService $actionLogService)
+    {
+        $this->actionLogService = $actionLogService;
+    }
     public function index(Request $request)
     {
         $query = User::with(['wallet']);
@@ -47,9 +56,16 @@ class UserController extends Controller
             'deliverers' => User::where('role', 'DELIVERER')->count(),
             'commercials' => User::where('role', 'COMMERCIAL')->count(),
             'depot_managers' => User::where('role', 'DEPOT_MANAGER')->count(),
+            'total' => User::count(),
+            'active' => User::where('status', 'ACTIVE')->count(),
+            'pending' => User::where('status', 'PENDING')->count(),
+            'suspended' => User::where('status', 'SUSPENDED')->count(),
         ];
 
-        return view('supervisor.users.index', compact('users', 'stats'));
+        // Définir un rôle par défaut pour la vue index
+        $role = 'ALL';
+
+        return view('supervisor.users.by-role', compact('users', 'stats', 'role'));
     }
 
     public function create()
@@ -502,5 +518,180 @@ class UserController extends Controller
         $transactions = $user->getDepotWalletTransactions(100);
 
         return view('supervisor.users.depot-wallet-history', compact('user', 'transactions'));
+    }
+
+    /**
+     * Vue des utilisateurs par rôle
+     */
+    public function byRole($role)
+    {
+        $validRoles = ['CLIENT', 'DELIVERER', 'COMMERCIAL', 'DEPOT_MANAGER'];
+        
+        if (!in_array($role, $validRoles)) {
+            abort(404);
+        }
+
+        $users = User::where('role', $role)
+            ->with(['wallet'])
+            ->withCount(['sentPackages' => function($query) {
+                $query->whereIn('status', ['DELIVERED', 'RETURNED']);
+            }])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $stats = [
+            'total' => User::where('role', $role)->count(),
+            'active' => User::where('role', $role)->where('account_status', 'ACTIVE')->count(),
+            'pending' => User::where('role', $role)->where('account_status', 'PENDING')->count(),
+            'suspended' => User::where('role', $role)->where('account_status', 'SUSPENDED')->count(),
+        ];
+
+        return view('supervisor.users.by-role', compact('users', 'role', 'stats'));
+    }
+
+    /**
+     * Activité récente d'un utilisateur
+     */
+    public function activity(User $user)
+    {
+        $recentActivity = $this->actionLogService->getUserActivity($user->id, 50);
+
+        return view('supervisor.users.activity', compact('user', 'recentActivity'));
+    }
+
+    /**
+     * Impersonation: Se connecter en tant qu'utilisateur
+     */
+    public function impersonate(User $user)
+    {
+        // Vérifier que l'utilisateur cible n'est pas un superviseur
+        if ($user->role === 'SUPERVISOR') {
+            return redirect()->back()
+                ->with('error', 'Impossible de se connecter en tant que superviseur.');
+        }
+
+        // Vérifier que l'utilisateur cible est actif
+        if ($user->account_status !== 'ACTIVE') {
+            return redirect()->back()
+                ->with('error', 'Impossible de se connecter en tant qu\'utilisateur inactif.');
+        }
+
+        // Enregistrer le superviseur original dans la session
+        session()->put('impersonator_id', Auth::id());
+        session()->put('impersonating', true);
+
+        // Logger l'action
+        $this->actionLogService->logImpersonation(Auth::id(), $user->id, 'START');
+
+        // Se connecter en tant qu'utilisateur
+        Auth::login($user);
+
+        // Rediriger vers le dashboard approprié
+        $dashboard = match($user->role) {
+            'CLIENT' => route('client.dashboard'),
+            'DELIVERER' => route('deliverer.dashboard'),
+            'COMMERCIAL' => route('commercial.dashboard'),
+            'DEPOT_MANAGER' => route('depot-manager.dashboard'),
+            default => route('dashboard'),
+        };
+
+        return redirect($dashboard)
+            ->with('success', "Vous êtes maintenant connecté en tant que {$user->name}");
+    }
+
+    /**
+     * Arrêter l'impersonation
+     */
+    public function stopImpersonation()
+    {
+        if (!session()->has('impersonator_id')) {
+            return redirect()->route('supervisor.dashboard')
+                ->with('error', 'Aucune impersonation en cours.');
+        }
+
+        $impersonatorId = session()->get('impersonator_id');
+        $currentUserId = Auth::id();
+
+        // Logger la fin de l'impersonation
+        $this->actionLogService->logImpersonation($impersonatorId, $currentUserId, 'STOP');
+
+        // Récupérer le superviseur original
+        $supervisor = User::find($impersonatorId);
+
+        if (!$supervisor) {
+            session()->forget(['impersonator_id', 'impersonating']);
+            Auth::logout();
+            return redirect()->route('login')
+                ->with('error', 'Superviseur introuvable.');
+        }
+
+        // Retirer les données de session
+        session()->forget(['impersonator_id', 'impersonating']);
+
+        // Se reconnecter en tant que superviseur
+        Auth::login($supervisor);
+
+        return redirect()->route('supervisor.dashboard')
+            ->with('success', 'Impersonation terminée avec succès.');
+    }
+
+    /**
+     * Génère un mot de passe temporaire sécurisé
+     */
+    public function generateTempPassword(User $user)
+    {
+        // Générer un mot de passe temporaire fort
+        $tempPassword = Str::random(12);
+        
+        // Hash et sauvegarder
+        $user->update([
+            'password' => Hash::make($tempPassword),
+            'password_reset_required' => true, // Nécessite un champ dans la migration
+        ]);
+
+        // Logger l'action
+        $this->actionLogService->log(
+            'PASSWORD_RESET_GENERATED',
+            'User',
+            $user->id,
+            null,
+            ['reset_by' => Auth::id()]
+        );
+
+        // TODO: Envoyer l'email avec le mot de passe temporaire
+        // Mail::to($user->email)->send(new TemporaryPasswordEmail($tempPassword));
+
+        return redirect()->back()
+            ->with('success', 'Mot de passe temporaire généré avec succès.')
+            ->with('temp_password', $tempPassword); // Afficher une seule fois
+    }
+
+    /**
+     * API: Liste des utilisateurs pour sélection
+     */
+    public function apiUsersList(Request $request)
+    {
+        $role = $request->get('role');
+        $search = $request->get('search');
+
+        $query = User::select('id', 'name', 'email', 'phone', 'role', 'account_status');
+
+        if ($role) {
+            $query->where('role', $role);
+        }
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $users = $query->where('account_status', 'ACTIVE')
+            ->limit(50)
+            ->get();
+
+        return response()->json($users);
     }
 }
